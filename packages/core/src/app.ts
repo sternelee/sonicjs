@@ -55,6 +55,7 @@ export interface Bindings {
   IMAGES_ACCOUNT_ID?: string
   IMAGES_API_TOKEN?: string
   ENVIRONMENT?: string
+  CORS_ORIGINS?: string
   JWT_SECRET?: string
   BUCKET_NAME?: string
   GOOGLE_MAPS_API_KEY?: string
