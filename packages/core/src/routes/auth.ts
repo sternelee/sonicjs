@@ -254,7 +254,19 @@ authRoutes.post('/login', async (c) => {
       if (!isValidPassword) {
         return c.json({ error: 'Invalid email or password' }, 401)
       }
-      
+
+      // Transparent password hash migration: re-hash legacy SHA-256 to PBKDF2
+      if (AuthManager.isLegacyHash(user.password_hash)) {
+        try {
+          const newHash = await AuthManager.hashPassword(password)
+          await db.prepare('UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?')
+            .bind(newHash, Date.now(), user.id)
+            .run()
+        } catch (rehashError) {
+          console.error('Password rehash failed (non-fatal):', rehashError)
+        }
+      }
+
       // Generate JWT token
       const token = await AuthManager.generateToken(user.id, user.email, user.role, c.env.JWT_SECRET)
 
@@ -555,7 +567,19 @@ authRoutes.post('/login/form', async (c) => {
         </div>
       `)
     }
-    
+
+    // Transparent password hash migration: re-hash legacy SHA-256 to PBKDF2
+    if (AuthManager.isLegacyHash(user.password_hash)) {
+      try {
+        const newHash = await AuthManager.hashPassword(password)
+        await db.prepare('UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?')
+          .bind(newHash, Date.now(), user.id)
+          .run()
+      } catch (rehashError) {
+        console.error('Password rehash failed (non-fatal):', rehashError)
+      }
+    }
+
     // Generate JWT token
     const token = await AuthManager.generateToken(user.id, user.email, user.role, c.env.JWT_SECRET)
 
@@ -574,7 +598,7 @@ authRoutes.post('/login/form', async (c) => {
     await db.prepare('UPDATE users SET last_login_at = ? WHERE id = ?')
       .bind(new Date().getTime(), user.id)
       .run()
-    
+
     return c.html(html`
       <div id="form-response">
         <div class="rounded-lg bg-green-100 dark:bg-lime-500/10 p-4 ring-1 ring-green-400 dark:ring-lime-500/20">
