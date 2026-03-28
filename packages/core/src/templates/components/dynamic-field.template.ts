@@ -1406,8 +1406,15 @@ function getStructuredFieldScript(): string {
               if (!item || !list) return;
 
               if (action === 'remove-item') {
-                item.remove();
-                updateHiddenInput();
+                if (typeof requestRepeaterDelete === 'function') {
+                  requestRepeaterDelete(() => {
+                    item.remove();
+                    updateHiddenInput();
+                  });
+                } else {
+                  item.remove();
+                  updateHiddenInput();
+                }
                 return;
               }
 
@@ -1599,8 +1606,15 @@ function getBlocksFieldScript(): string {
               if (!item || !list) return;
 
               if (action === 'remove-block') {
-                item.remove();
-                updateHiddenInput();
+                if (typeof requestRepeaterDelete === 'function') {
+                  requestRepeaterDelete(() => {
+                    item.remove();
+                    updateHiddenInput();
+                  }, 'block');
+                } else {
+                  item.remove();
+                  updateHiddenInput();
+                }
                 return;
               }
 

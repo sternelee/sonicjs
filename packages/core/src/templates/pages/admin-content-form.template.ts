@@ -422,6 +422,28 @@ export function renderContentFormPage(data: ContentFormData): string {
     onConfirm: `performDeleteContent('${data.id}')`
   })}
 
+    ${renderConfirmationDialog({
+      id: 'delete-repeater-item-confirm',
+      title: 'Delete Item',
+      message: 'Are you sure you want to delete this item? This action cannot be undone.',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      iconColor: 'red',
+      confirmClass: 'bg-red-500 hover:bg-red-400',
+      onConfirm: 'performRepeaterDelete()'
+    })}
+
+    ${renderConfirmationDialog({
+      id: 'delete-block-confirm',
+      title: 'Delete Block',
+      message: 'Are you sure you want to delete this block? This action cannot be undone.',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      iconColor: 'red',
+      confirmClass: 'bg-red-500 hover:bg-red-400',
+      onConfirm: 'performRepeaterDelete()'
+    })}
+
     ${getConfirmationDialogScript()}
 
     ${data.tinymceEnabled ? getTinyMCEScript(data.tinymceSettings?.apiKey) : '<!-- TinyMCE plugin not active -->'}
@@ -976,6 +998,29 @@ export function renderContentFormPage(data: ContentFormData): string {
             alert('Error deleting content');
           }
         });
+      }
+
+      // Repeater/blocks delete confirmation
+      let pendingRepeaterDelete = null;
+      function requestRepeaterDelete(callback, type = 'item') {
+        pendingRepeaterDelete = callback;
+        if (typeof showConfirmDialog === 'function') {
+          showConfirmDialog(type === 'block' ? 'delete-block-confirm' : 'delete-repeater-item-confirm');
+          return;
+        }
+        if (confirm('Remove this item? This action cannot be undone.')) {
+          if (typeof pendingRepeaterDelete === 'function') {
+            pendingRepeaterDelete();
+          }
+        }
+        pendingRepeaterDelete = null;
+      }
+
+      function performRepeaterDelete() {
+        if (typeof pendingRepeaterDelete === 'function') {
+          pendingRepeaterDelete();
+        }
+        pendingRepeaterDelete = null;
       }
 
       function showVersionHistory(contentId) {
