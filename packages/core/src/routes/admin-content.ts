@@ -2,7 +2,7 @@ import type { D1Database } from '@cloudflare/workers-types'
 import { Hono } from 'hono'
 import { html } from 'hono/html'
 import type { Bindings, Variables } from '../app'
-import { requireAuth } from '../middleware'
+import { requireAuth, requireRole } from '../middleware'
 import { isPluginActive } from '../middleware/plugin-middleware'
 import { CACHE_CONFIGS, getCacheService } from '../services/cache'
 import { PluginService } from '../services/plugin-service'
@@ -10,6 +10,7 @@ import { ContentVersion, renderVersionHistory, VersionHistoryData } from '../tem
 import { ContentFormData, renderContentFormPage } from '../templates/pages/admin-content-form.template'
 import { ContentListPageData, renderContentListPage } from '../templates/pages/admin-content-list.template'
 import { getBlocksFieldConfig, parseBlocksValue } from '../utils/blocks'
+import { escapeHtml, sanitizeRichText } from '../utils/sanitize'
 
 const adminContentRoutes = new Hono<{ Bindings: Bindings; Variables: Variables }>()
 
@@ -1053,7 +1054,7 @@ adminContentRoutes.put('/:id', async (c) => {
 })
 
 // Content preview
-adminContentRoutes.post('/preview', async (c) => {
+adminContentRoutes.post('/preview', requireRole(['admin', 'editor', 'author']), async (c) => {
   try {
     const formData = await c.req.formData()
     const collectionId = formData.get('collection_id') as string
@@ -1070,6 +1071,12 @@ adminContentRoutes.post('/preview', async (c) => {
     // Extract field data for preview (skip validation)
     const { data } = extractFieldData(fields, formData, { skipValidation: true })
 
+    // Sanitize user-controlled values before rendering
+    const safeTitle = escapeHtml(data.title || 'Untitled')
+    const safeStatus = escapeHtml(String(formData.get('status') || 'draft'))
+    const safeMetaDesc = data.meta_description ? escapeHtml(data.meta_description) : ''
+    const safeContent = data.content ? sanitizeRichText(data.content) : '<p>No content provided.</p>'
+
     // Generate preview HTML
     const previewHTML = `
       <!DOCTYPE html>
@@ -1077,7 +1084,7 @@ adminContentRoutes.post('/preview', async (c) => {
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Preview: ${data.title || 'Untitled'}</title>
+        <title>Preview: ${safeTitle}</title>
         <style>
           body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
           h1 { color: #333; }
@@ -1086,23 +1093,23 @@ adminContentRoutes.post('/preview', async (c) => {
         </style>
       </head>
       <body>
-        <h1>${data.title || 'Untitled'}</h1>
+        <h1>${safeTitle}</h1>
         <div class="meta">
-          <strong>Collection:</strong> ${collection.display_name}<br>
-          <strong>Status:</strong> ${formData.get('status') || 'draft'}<br>
-          ${data.meta_description ? `<strong>Description:</strong> ${data.meta_description}<br>` : ''}
+          <strong>Collection:</strong> ${escapeHtml(collection.display_name)}<br>
+          <strong>Status:</strong> ${safeStatus}<br>
+          ${safeMetaDesc ? `<strong>Description:</strong> ${safeMetaDesc}<br>` : ''}
         </div>
         <div class="content">
-          ${data.content || '<p>No content provided.</p>'}
+          ${safeContent}
         </div>
-        
+
         <h3>All Fields:</h3>
         <table border="1" style="border-collapse: collapse; width: 100%;">
           <tr><th>Field</th><th>Value</th></tr>
           ${fields.map(field => `
             <tr>
-              <td><strong>${field.field_label}</strong></td>
-              <td>${data[field.field_name] || '<em>empty</em>'}</td>
+              <td><strong>${escapeHtml(field.field_label)}</strong></td>
+              <td>${data[field.field_name] ? escapeHtml(String(data[field.field_name])) : '<em>empty</em>'}</td>
             </tr>
           `).join('')}
         </table>
@@ -1506,7 +1513,7 @@ adminContentRoutes.post('/:id/restore/:version', async (c) => {
 })
 
 // Preview specific version
-adminContentRoutes.get('/:id/version/:version/preview', async (c) => {
+adminContentRoutes.get('/:id/version/:version/preview', requireRole(['admin', 'editor', 'author']), async (c) => {
   try {
     const id = c.req.param('id')
     const version = parseInt(c.req.param('version'))
@@ -1528,6 +1535,12 @@ adminContentRoutes.get('/:id/version/:version/preview', async (c) => {
 
     const data = JSON.parse(versionData.data || '{}')
 
+    // Sanitize user-controlled values before rendering
+    const safeTitle = escapeHtml(data.title || 'Untitled')
+    const safeContent = data.content ? sanitizeRichText(data.content) : '<p>No content provided.</p>'
+    const safeExcerpt = data.excerpt ? escapeHtml(data.excerpt) : ''
+    const safeCollectionName = escapeHtml(versionData.collection_name || '')
+
     // Generate preview HTML
     const previewHTML = `
       <!DOCTYPE html>
@@ -1535,7 +1548,7 @@ adminContentRoutes.get('/:id/version/:version/preview', async (c) => {
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Version ${version} Preview: ${data.title || 'Untitled'}</title>
+        <title>Version ${version} Preview: ${safeTitle}</title>
         <style>
           body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
           h1 { color: #333; }
@@ -1547,22 +1560,22 @@ adminContentRoutes.get('/:id/version/:version/preview', async (c) => {
       <body>
         <div class="meta">
           <span class="version-badge">Version ${version}</span>
-          <strong>Collection:</strong> ${versionData.collection_name}<br>
+          <strong>Collection:</strong> ${safeCollectionName}<br>
           <strong>Created:</strong> ${new Date(versionData.created_at).toLocaleString()}<br>
           <em>This is a historical version preview</em>
         </div>
-        
-        <h1>${data.title || 'Untitled'}</h1>
-        
+
+        <h1>${safeTitle}</h1>
+
         <div class="content">
-          ${data.content || '<p>No content provided.</p>'}
+          ${safeContent}
         </div>
-        
-        ${data.excerpt ? `<h3>Excerpt:</h3><p>${data.excerpt}</p>` : ''}
-        
+
+        ${safeExcerpt ? `<h3>Excerpt:</h3><p>${safeExcerpt}</p>` : ''}
+
         <h3>All Field Data:</h3>
         <pre style="background: #f5f5f5; padding: 15px; border-radius: 5px; overflow-x: auto;">
-${JSON.stringify(data, null, 2)}
+${escapeHtml(JSON.stringify(data, null, 2))}
         </pre>
       </body>
       </html>
