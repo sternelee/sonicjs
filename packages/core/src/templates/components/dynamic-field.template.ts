@@ -16,6 +16,7 @@ function getReadFieldValueScript(): string {
           const textarea = fieldWrapper.querySelector('textarea');
           const inputs = Array.from(fieldWrapper.querySelectorAll('input'));
           const checkbox = inputs.find((input) => input.type === 'checkbox');
+          const checkedRadio = inputs.find((input) => input.type === 'radio' && input.checked);
           const nonHiddenInput = inputs.find((input) => input.type !== 'hidden' && input.type !== 'checkbox');
           const hiddenInput = inputs.find((input) => input.type === 'hidden');
 
@@ -36,6 +37,10 @@ function getReadFieldValueScript(): string {
 
           if (fieldType === 'boolean' && checkbox) {
             return checkbox.checked;
+          }
+
+          if (fieldType === 'radio') {
+            return checkedRadio ? checkedRadio.value : '';
           }
 
           if (select) {
@@ -572,6 +577,52 @@ export function renderDynamicField(field: FieldDefinition, options: FieldRenderO
             >
           </div>
         ` : ''}
+      `
+      break
+
+    case 'radio':
+      const radioOptions =
+        opts.options ||
+        (Array.isArray(opts.enum)
+          ? opts.enum.map((optionValue: string, index: number) => ({
+              value: optionValue,
+              label: opts.enumLabels?.[index] || optionValue,
+            }))
+          : [])
+      const selectedRadioValue =
+        value !== undefined && value !== null
+          ? String(value)
+          : opts.default
+            ? String(opts.default)
+            : ''
+
+      const isInline = opts.inline === true
+      fieldHTML = `
+        <div class="${isInline ? 'flex flex-wrap gap-4' : 'space-y-3'}">
+          ${radioOptions
+            .map((option: any, index: number) => {
+              const optionValue = typeof option === 'string' ? option : option.value
+              const optionLabel = typeof option === 'string' ? option : option.label
+              const inputId = `${fieldId}-option-${index}`
+              const checked = selectedRadioValue === String(optionValue) ? 'checked' : ''
+              return `
+                <label for="${inputId}" class="flex items-center gap-3 text-sm text-zinc-700 dark:text-zinc-300">
+                  <input
+                    type="radio"
+                    id="${inputId}"
+                    name="${fieldName}"
+                    value="${escapeHtml(optionValue)}"
+                    class="h-4 w-4 text-zinc-900 focus:ring-zinc-400 dark:text-white dark:focus:ring-white"
+                    ${checked}
+                    ${required}
+                    ${disabled ? 'disabled' : ''}
+                  >
+                  <span>${escapeHtml(optionLabel)}</span>
+                </label>
+              `
+            })
+            .join('')}
+        </div>
       `
       break
 
