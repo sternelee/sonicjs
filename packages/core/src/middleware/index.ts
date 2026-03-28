@@ -19,6 +19,9 @@ export { metricsMiddleware } from './metrics'
 // CSRF protection middleware
 export { csrfProtection, generateCsrfToken, validateCsrfToken } from './csrf'
 
+// Rate limiting middleware
+export { rateLimit } from './rate-limit'
+
 // Re-export types and functions that are referenced but implemented in monolith
 // These are placeholder exports to maintain API compatibility
 export type Permission = string

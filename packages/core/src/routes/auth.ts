@@ -3,7 +3,7 @@ import { Hono } from 'hono'
 import { z } from 'zod'
 import { setCookie } from 'hono/cookie'
 import { html } from 'hono/html'
-import { AuthManager, requireAuth, generateCsrfToken } from '../middleware'
+import { AuthManager, requireAuth, generateCsrfToken, rateLimit } from '../middleware'
 import { renderLoginPage, LoginPageData } from '../templates/pages/auth-login.template'
 import { renderRegisterPage, RegisterPageData } from '../templates/pages/auth-register.template'
 import { getCacheService, CACHE_CONFIGS } from '../services'
@@ -98,6 +98,7 @@ const loginSchema = z.object({
 
 // Register new user
 authRoutes.post('/register',
+  rateLimit({ max: 3, windowMs: 60 * 1000, keyPrefix: 'register' }),
   async (c) => {
     try {
       const db = c.env.DB
@@ -216,7 +217,9 @@ authRoutes.post('/register',
 )
 
 // Login user
-authRoutes.post('/login', async (c) => {
+authRoutes.post('/login',
+  rateLimit({ max: 5, windowMs: 60 * 1000, keyPrefix: 'login' }),
+  async (c) => {
     try {
       const body = await c.req.json()
       const validation = loginSchema.safeParse(body)
@@ -391,7 +394,9 @@ authRoutes.post('/refresh', requireAuth(), async (c) => {
 })
 
 // Form-based registration handler (for HTML forms)
-authRoutes.post('/register/form', async (c) => {
+authRoutes.post('/register/form',
+  rateLimit({ max: 3, windowMs: 60 * 1000, keyPrefix: 'register' }),
+  async (c) => {
   try {
     const db = c.env.DB
 
@@ -523,7 +528,9 @@ authRoutes.post('/register/form', async (c) => {
 })
 
 // Form-based login handler (for HTML forms)
-authRoutes.post('/login/form', async (c) => {
+authRoutes.post('/login/form',
+  rateLimit({ max: 5, windowMs: 60 * 1000, keyPrefix: 'login' }),
+  async (c) => {
   try {
     const formData = await c.req.formData()
     const email = formData.get('email') as string
@@ -629,7 +636,9 @@ authRoutes.post('/login/form', async (c) => {
 })
 
 // Test seeding endpoint (only for development/testing)
-authRoutes.post('/seed-admin', async (c) => {
+authRoutes.post('/seed-admin',
+  rateLimit({ max: 2, windowMs: 60 * 1000, keyPrefix: 'seed-admin' }),
+  async (c) => {
   try {
     const db = c.env.DB
     
@@ -978,7 +987,9 @@ authRoutes.post('/accept-invitation', async (c) => {
 })
 
 // Request password reset
-authRoutes.post('/request-password-reset', async (c) => {
+authRoutes.post('/request-password-reset',
+  rateLimit({ max: 3, windowMs: 15 * 60 * 1000, keyPrefix: 'password-reset' }),
+  async (c) => {
   try {
     const formData = await c.req.formData()
     const email = formData.get('email')?.toString()?.trim()?.toLowerCase()
