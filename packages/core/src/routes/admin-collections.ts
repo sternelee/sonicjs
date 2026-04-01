@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import { html } from 'hono/html'
 import { requireAuth } from '../middleware'
 import { isPluginActive } from '../middleware/plugin-middleware'
+import { normalizeFieldType } from './admin-collections-field-types'
 import { renderCollectionsListPage } from '../templates/pages/admin-collections-list.template'
 import { renderCollectionFormPage } from '../templates/pages/admin-collections-form.template'
 
@@ -683,12 +684,14 @@ adminCollectionsRoutes.post('/:id/fields', async (c) => {
         ...parsedOptions
       }
 
+      const normalizedFieldType = normalizeFieldType(fieldType)
+
       // Handle special field types
-      if (fieldType === 'richtext') {
+      if (normalizedFieldType === 'richtext') {
         fieldConfig.format = 'richtext'
-      } else if (fieldType === 'date') {
+      } else if (normalizedFieldType === 'date') {
         fieldConfig.format = 'date-time'
-      } else if (fieldType === 'select') {
+      } else if (normalizedFieldType === 'select') {
         fieldConfig.enum = (parsedOptions as any).options || []
       } else if (fieldType === 'radio') {
         fieldConfig.type = 'radio'
@@ -697,20 +700,14 @@ adminCollectionsRoutes.post('/:id/fields', async (c) => {
         }
       } else if (fieldType === 'media') {
         fieldConfig.format = 'media'
-      } else if (fieldType === 'slug') {
+      } else if (normalizedFieldType === 'slug') {
         fieldConfig.type = 'slug'
         fieldConfig.format = 'slug'
-      } else if (fieldType === 'quill') {
+      } else if (normalizedFieldType === 'quill') {
         fieldConfig.type = 'quill'
-      } else if (fieldType === 'mdxeditor') {
-        fieldConfig.type = 'mdxeditor'
-      } else if (fieldType === 'tinymce') {
-        fieldConfig.type = 'tinymce'
-      } else if (fieldType === 'easymde') {
-        fieldConfig.type = 'easymde'
-      } else if (fieldType === 'markdown') {
+      } else if (normalizedFieldType === 'markdown') {
         fieldConfig.type = 'markdown'
-      } else if (fieldType === 'reference') {
+      } else if (normalizedFieldType === 'reference') {
         fieldConfig.type = 'reference'
       }
 
