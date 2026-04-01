@@ -517,17 +517,19 @@ var package_default = {
     zod: "^3.0.0 || ^4.0.0"
   },
   dependencies: {
+    "csv-parse": "^6.2.1",
     "drizzle-zod": "^0.8.3",
     "highlight.js": "^11.11.1",
     marked: "^16.4.1",
-    semver: "^7.7.3"
+    semver: "^7.7.3",
+    "tiny-lru": "^13.0.0"
   },
   devDependencies: {
-    "@vitest/coverage-v8": "^4.0.5",
     "@cloudflare/workers-types": "^4.20251014.0",
     "@types/node": "^24.9.2",
     "@typescript-eslint/eslint-plugin": "^8.50.0",
     "@typescript-eslint/parser": "^8.50.0",
+    "@vitest/coverage-v8": "^4.0.5",
     "drizzle-orm": "^0.44.7",
     eslint: "^9.39.2",
     glob: "^10.5.0",
@@ -598,5 +600,5 @@ function parseBlocksValue(value, config) {
 }
 
 export { QueryFilterBuilder, SONICJS_VERSION, TemplateRenderer, buildQuery, generateSlug, getBlocksFieldConfig, getCoreVersion, package_default, parseBlocksValue, renderTemplate, templateRenderer };
-//# sourceMappingURL=chunk-5XAI2XUF.js.map
-//# sourceMappingURL=chunk-5XAI2XUF.js.map
+//# sourceMappingURL=chunk-2NBN6X3V.js.map
+//# sourceMappingURL=chunk-2NBN6X3V.js.map

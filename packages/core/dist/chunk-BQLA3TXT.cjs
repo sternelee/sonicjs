@@ -519,17 +519,19 @@ var package_default = {
     zod: "^3.0.0 || ^4.0.0"
   },
   dependencies: {
+    "csv-parse": "^6.2.1",
     "drizzle-zod": "^0.8.3",
     "highlight.js": "^11.11.1",
     marked: "^16.4.1",
-    semver: "^7.7.3"
+    semver: "^7.7.3",
+    "tiny-lru": "^13.0.0"
   },
   devDependencies: {
-    "@vitest/coverage-v8": "^4.0.5",
     "@cloudflare/workers-types": "^4.20251014.0",
     "@types/node": "^24.9.2",
     "@typescript-eslint/eslint-plugin": "^8.50.0",
     "@typescript-eslint/parser": "^8.50.0",
+    "@vitest/coverage-v8": "^4.0.5",
     "drizzle-orm": "^0.44.7",
     eslint: "^9.39.2",
     glob: "^10.5.0",
@@ -610,5 +612,5 @@ exports.package_default = package_default;
 exports.parseBlocksValue = parseBlocksValue;
 exports.renderTemplate = renderTemplate;
 exports.templateRenderer = templateRenderer;
-//# sourceMappingURL=chunk-JDIM5AG7.cjs.map
-//# sourceMappingURL=chunk-JDIM5AG7.cjs.map
+//# sourceMappingURL=chunk-BQLA3TXT.cjs.map
+//# sourceMappingURL=chunk-BQLA3TXT.cjs.map
