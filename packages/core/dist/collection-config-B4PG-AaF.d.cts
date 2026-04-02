@@ -32,6 +32,8 @@ interface FieldConfig {
     properties?: Record<string, FieldConfig>;
     blocks?: BlockDefinitions;
     discriminator?: string;
+    collapsed?: boolean;
+    objectLayout?: 'nested' | 'flat';
     format?: string;
     widget?: string;
     dependsOn?: string;

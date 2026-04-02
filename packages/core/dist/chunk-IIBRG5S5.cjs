@@ -111,6 +111,14 @@ function validateCollectionConfig(config) {
       if (fieldConfig.type === "reference" && !fieldConfig.collection) {
         errors.push(`Reference field "${fieldName}" is missing collection property`);
       }
+      const layoutValue = fieldConfig.objectLayout;
+      if (layoutValue !== void 0) {
+        if (fieldConfig.type !== "object") {
+          errors.push(`Field "${fieldName}" uses objectLayout but is not an object field`);
+        } else if (!["nested", "flat"].includes(layoutValue)) {
+          errors.push(`Object field "${fieldName}" has invalid objectLayout. Use "nested" or "flat"`);
+        }
+      }
       if (["select", "multiselect", "radio"].includes(fieldConfig.type) && !fieldConfig.enum) {
         errors.push(`Select field "${fieldName}" is missing enum options`);
       }
@@ -829,5 +837,5 @@ exports.registerCollections = registerCollections;
 exports.syncCollection = syncCollection;
 exports.syncCollections = syncCollections;
 exports.validateCollectionConfig = validateCollectionConfig;
-//# sourceMappingURL=chunk-MPT5PA6U.cjs.map
-//# sourceMappingURL=chunk-MPT5PA6U.cjs.map
+//# sourceMappingURL=chunk-IIBRG5S5.cjs.map
+//# sourceMappingURL=chunk-IIBRG5S5.cjs.map
