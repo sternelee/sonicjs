@@ -717,6 +717,7 @@ function renderOTPLoginSettingsContent(plugin: any, settings: PluginSettings): s
   const maxAttempts = settings.maxAttempts || 3
   const rateLimitPerHour = settings.rateLimitPerHour || 5
   const allowNewUserRegistration = settings.allowNewUserRegistration || false
+  const logoUrl = settings.logoUrl || ''
 
   return `
     <div class="space-y-6">
@@ -901,6 +902,7 @@ function renderOTPLoginSettingsContent(plugin: any, settings: PluginSettings): s
 
         <div class="bg-white rounded-lg overflow-hidden shadow-lg">
           <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px 20px; text-align: center;">
+            ${logoUrl ? `<img src="${logoUrl}" alt="Logo" style="max-width: 150px; height: auto; margin: 0 auto 16px;">` : ''}
             <h3 style="margin: 0 0 8px 0; font-size: 24px; font-weight: 600;">Your Login Code</h3>
             <p style="margin: 0; opacity: 0.95; font-size: 14px;">Enter this code to sign in to ${siteName}</p>
           </div>

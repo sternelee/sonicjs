@@ -149,7 +149,8 @@ export function createOTPLoginPlugin(): Plugin {
           email: normalizedEmail,
           ipAddress,
           timestamp: new Date().toISOString(),
-          appName: siteName
+          appName: siteName,
+          logoUrl: settings.logoUrl || ''
         })
 
         // Load email plugin settings from database

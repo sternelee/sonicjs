@@ -11,6 +11,7 @@ export interface OTPSettings {
   maxAttempts: number
   rateLimitPerHour: number
   allowNewUserRegistration: boolean
+  logoUrl?: string
 }
 
 export interface OTPCode {
