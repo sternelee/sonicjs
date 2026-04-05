@@ -307,6 +307,10 @@ export type {
 // Plugin SDK (Beta)
 export { PluginBuilder, PluginHelpers } from './plugins/sdk'
 
+// OAuth Providers Plugin
+export { oauthProvidersPlugin, createOAuthProvidersPlugin } from './plugins/core-plugins/oauth-providers'
+export { OAuthService, BUILT_IN_PROVIDERS } from './plugins/core-plugins/oauth-providers/oauth-service'
+
 // ============================================================================
 // Version
 // ============================================================================

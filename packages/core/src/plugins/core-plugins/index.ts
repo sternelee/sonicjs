@@ -24,6 +24,8 @@ export { turnstilePlugin } from './turnstile-plugin'
 export { TurnstileService, verifyTurnstile, createTurnstileMiddleware } from './turnstile-plugin'
 export { aiSearchPlugin } from './ai-search-plugin'
 export { AISearchService, IndexManager } from './ai-search-plugin'
+export { oauthProvidersPlugin, createOAuthProvidersPlugin } from './oauth-providers'
+export { OAuthService, BUILT_IN_PROVIDERS } from './oauth-providers/oauth-service'
 export { globalVariablesPlugin, createGlobalVariablesPlugin } from './global-variables-plugin'
 export { resolveVariables, resolveVariablesInObject } from './global-variables-plugin'
 
@@ -44,6 +46,7 @@ export const CORE_PLUGIN_IDS = [
   'otp-login',
   'turnstile',
   'ai-search',
+  'oauth-providers',
   'global-variables'
 ] as const
 
