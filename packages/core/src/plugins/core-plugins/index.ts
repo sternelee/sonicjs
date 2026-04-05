@@ -24,6 +24,8 @@ export { turnstilePlugin } from './turnstile-plugin'
 export { TurnstileService, verifyTurnstile, createTurnstileMiddleware } from './turnstile-plugin'
 export { aiSearchPlugin } from './ai-search-plugin'
 export { AISearchService, IndexManager } from './ai-search-plugin'
+export { globalVariablesPlugin, createGlobalVariablesPlugin } from './global-variables-plugin'
+export { resolveVariables, resolveVariablesInObject } from './global-variables-plugin'
 
 // Core plugins list - now imported from auto-generated registry
 export const CORE_PLUGIN_IDS = [
@@ -41,7 +43,8 @@ export const CORE_PLUGIN_IDS = [
   'email',
   'otp-login',
   'turnstile',
-  'ai-search'
+  'ai-search',
+  'global-variables'
 ] as const
 
 export type CorePluginNames = (typeof CORE_PLUGIN_IDS)[number]

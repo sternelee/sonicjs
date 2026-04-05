@@ -189,6 +189,24 @@ export class PluginBootstrapService {
         index_media: false,
       },
     },
+    {
+      id: "global-variables",
+      name: "global-variables",
+      display_name: "Global Variables",
+      description:
+        "Dynamic content variables with inline token support. Use {variable_key} syntax in rich text fields for server-side resolution.",
+      version: "1.0.0-beta.1",
+      author: "SonicJS Team",
+      category: "content",
+      icon: "🔤",
+      permissions: ["global-variables:manage", "global-variables:view"],
+      dependencies: [],
+      settings: {
+        enableResolution: true,
+        cacheEnabled: true,
+        cacheTTL: 300,
+      },
+    },
   ];
 
   /**
