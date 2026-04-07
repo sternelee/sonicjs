@@ -239,6 +239,13 @@ export const bundledMigrations: BundledMigration[] = [
     filename: '033_form_content_integration.sql',
     description: 'Migration 033: Form Content Integration',
     sql: "-- Migration 033: Form-Content Integration\n-- Adds bridge columns to link forms to collections and submissions to content items\n\n-- Add source_type and source_id to collections for form-derived collections\nALTER TABLE collections ADD COLUMN source_type TEXT DEFAULT 'user';\nALTER TABLE collections ADD COLUMN source_id TEXT;\n\n-- Index for efficient lookup of form-derived collections\nCREATE INDEX IF NOT EXISTS idx_collections_source ON collections(source_type, source_id);\n\n-- Add content_id to form_submissions for linking to content items\nALTER TABLE form_submissions ADD COLUMN content_id TEXT REFERENCES content(id);\n\n-- Index for efficient lookup by content_id\nCREATE INDEX IF NOT EXISTS idx_form_submissions_content_id ON form_submissions(content_id);\n\n-- Create system user for anonymous form submissions\nINSERT OR IGNORE INTO users (id, email, username, first_name, last_name, password_hash, role, is_active, created_at, updated_at)\nVALUES ('system-form-submission', 'system-forms@sonicjs.internal', 'system-forms', 'Form', 'Submission', NULL, 'viewer', 0, strftime('%s','now') * 1000, strftime('%s','now') * 1000);\n"
+  },
+  {
+    id: '034',
+    name: 'User Profile Custom Data',
+    filename: '0011_user_profiles_data.sql',
+    description: 'Migration 034: Add custom data column to user_profiles for plugin-defined fields',
+    sql: "-- Migration 0011: Add custom data column to user_profiles\n-- Stores plugin-defined custom profile fields as JSON\n-- Used by the user-profiles plugin for developer-defined fields\n\nALTER TABLE user_profiles ADD COLUMN data TEXT DEFAULT '{}';\n"
   }
 ]
 
