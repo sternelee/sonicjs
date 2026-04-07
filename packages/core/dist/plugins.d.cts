@@ -1,8 +1,8 @@
-export { H as HookSystemImpl, a as HookUtils, P as PluginManager, b as PluginRegistryImpl, c as PluginValidator, S as ScopedHookSystem } from './plugin-manager-GcIeb226.cjs';
+export { H as HookSystemImpl, a as HookUtils, P as PluginManager, b as PluginRegistryImpl, c as PluginValidator, S as ScopedHookSystem } from './plugin-manager-BoM3Q7o7.cjs';
 import { D1Database } from '@cloudflare/workers-types';
 import * as hono from 'hono';
 import { Context, Next } from 'hono';
-import './plugin-0Xogrln-.cjs';
+import './plugin-DDYetMF-.cjs';
 import 'zod';
 
 interface TurnstileSettings {

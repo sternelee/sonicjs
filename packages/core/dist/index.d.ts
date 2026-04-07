@@ -1,12 +1,12 @@
 export { B as Bindings, S as SonicJSApp, a as SonicJSConfig, V as Variables, c as createSonicJSApp, s as setupCoreMiddleware, b as setupCoreRoutes } from './app-Ozl9agJG.js';
-import { s as schema } from './plugin-bootstrap-CD63DZ-p.js';
-export { C as Collection, a as Content, b as CorePlugin, P as DbPlugin, c as DbPluginHook, L as LogCategory, d as LogConfig, e as LogEntry, f as LogFilter, g as LogLevel, h as Logger, M as Media, i as Migration, j as MigrationService, k as MigrationStatus, N as NewCollection, l as NewContent, m as NewLogConfig, n as NewMedia, o as NewPlugin, p as NewPluginActivityLog, q as NewPluginAsset, r as NewPluginHook, t as NewPluginRoute, u as NewSystemLog, v as NewUser, w as NewWorkflowHistory, x as PluginActivityLog, y as PluginAsset, z as PluginBootstrapService, A as PluginRoute, B as PluginServiceClass, S as SystemLog, U as User, W as WorkflowHistory, D as apiTokens, E as backfillFormSubmissions, F as cleanupRemovedCollections, G as collections, H as content, I as contentVersions, J as createContentFromSubmission, K as deriveCollectionSchemaFromFormio, O as deriveSubmissionTitle, Q as fullCollectionSync, R as getAvailableCollectionNames, T as getLogger, V as getManagedCollections, X as initLogger, Y as insertCollectionSchema, Z as insertContentSchema, _ as insertLogConfigSchema, $ as insertMediaSchema, a0 as insertPluginActivityLogSchema, a1 as insertPluginAssetSchema, a2 as insertPluginHookSchema, a3 as insertPluginRouteSchema, a4 as insertPluginSchema, a5 as insertSystemLogSchema, a6 as insertUserSchema, a7 as insertWorkflowHistorySchema, a8 as isCollectionManaged, a9 as loadCollectionConfig, aa as loadCollectionConfigs, ab as logConfig, ac as mapFormStatusToContentStatus, ad as media, ae as pluginActivityLog, af as pluginAssets, ag as pluginHooks, ah as pluginRoutes, ai as plugins, aj as registerCollections, ak as selectCollectionSchema, al as selectContentSchema, am as selectLogConfigSchema, an as selectMediaSchema, ao as selectPluginActivityLogSchema, ap as selectPluginAssetSchema, aq as selectPluginHookSchema, ar as selectPluginRouteSchema, as as selectPluginSchema, at as selectSystemLogSchema, au as selectUserSchema, av as selectWorkflowHistorySchema, aw as syncAllFormCollections, ax as syncCollection, ay as syncCollections, az as syncFormCollection, aA as systemLogs, aB as users, aC as validateCollectionConfig, aD as workflowHistory } from './plugin-bootstrap-CD63DZ-p.js';
+import { B as schema } from './plugin-bootstrap-DXBAYaqM.js';
+export { D as Collection, E as Content, C as CorePlugin, F as DbPlugin, G as DbPluginHook, L as LogCategory, H as LogConfig, a as LogEntry, b as LogFilter, c as LogLevel, d as Logger, I as Media, M as Migration, e as MigrationService, f as MigrationStatus, N as NewCollection, J as NewContent, K as NewLogConfig, O as NewMedia, Q as NewPlugin, R as NewPluginActivityLog, S as NewPluginAsset, T as NewPluginHook, U as NewPluginRoute, V as NewSystemLog, W as NewUser, X as NewWorkflowHistory, Y as PluginActivityLog, Z as PluginAsset, P as PluginBootstrapService, _ as PluginRoute, g as PluginServiceClass, $ as SystemLog, a0 as User, a1 as WorkflowHistory, a2 as apiTokens, h as backfillFormSubmissions, i as cleanupRemovedCollections, a3 as collections, a4 as content, a5 as contentVersions, j as createContentFromSubmission, k as deriveCollectionSchemaFromFormio, l as deriveSubmissionTitle, m as fullCollectionSync, n as getAvailableCollectionNames, o as getLogger, p as getManagedCollections, q as initLogger, a6 as insertCollectionSchema, a7 as insertContentSchema, a8 as insertLogConfigSchema, a9 as insertMediaSchema, aa as insertPluginActivityLogSchema, ab as insertPluginAssetSchema, ac as insertPluginHookSchema, ad as insertPluginRouteSchema, ae as insertPluginSchema, af as insertSystemLogSchema, ag as insertUserSchema, ah as insertWorkflowHistorySchema, r as isCollectionManaged, s as loadCollectionConfig, t as loadCollectionConfigs, ai as logConfig, u as mapFormStatusToContentStatus, aj as media, ak as pluginActivityLog, al as pluginAssets, am as pluginHooks, an as pluginRoutes, ao as plugins, v as registerCollections, ap as selectCollectionSchema, aq as selectContentSchema, ar as selectLogConfigSchema, as as selectMediaSchema, at as selectPluginActivityLogSchema, au as selectPluginAssetSchema, av as selectPluginHookSchema, aw as selectPluginRouteSchema, ax as selectPluginSchema, ay as selectSystemLogSchema, az as selectUserSchema, aA as selectWorkflowHistorySchema, w as syncAllFormCollections, x as syncCollection, y as syncCollections, z as syncFormCollection, aB as systemLogs, aC as users, A as validateCollectionConfig, aD as workflowHistory } from './plugin-bootstrap-DXBAYaqM.js';
 export { AuthManager, Permission, PermissionManager, UserPermissions, bootstrapMiddleware, cacheHeaders, compressionMiddleware, detailedLoggingMiddleware, getActivePlugins, isPluginActive, logActivity, loggingMiddleware, optionalAuth, performanceLoggingMiddleware, requireActivePlugin, requireActivePlugins, requireAnyPermission, requireAuth, requirePermission, requireRole, securityHeaders, securityLoggingMiddleware } from './middleware.js';
-export { H as HookSystemImpl, a as HookUtils, P as PluginManagerClass, b as PluginRegistryImpl, c as PluginValidatorClass, S as ScopedHookSystemClass } from './plugin-manager-Clf2gXwj.js';
+export { H as HookSystemImpl, a as HookUtils, P as PluginManagerClass, b as PluginRegistryImpl, c as PluginValidatorClass, S as ScopedHookSystemClass } from './plugin-manager-Efx9RyDX.js';
 export { ROUTES_INFO, adminApiRoutes, adminCheckboxRoutes, adminCodeExamplesRoutes, adminCollectionsRoutes, adminContentRoutes, adminDashboardRoutes, adminDesignRoutes, adminLogsRoutes, adminMediaRoutes, adminPluginRoutes, adminSettingsRoutes, adminTestimonialsRoutes, adminUsersRoutes, apiContentCrudRoutes, apiMediaRoutes, apiRoutes, apiSystemRoutes, authRoutes } from './routes.js';
 export { A as AlertData, C as ConfirmationDialogOptions, F as Filter, a as FilterBarData, b as FilterOption, c as FormData, d as FormField, P as PaginationData, T as TableColumn, e as TableData, g as getConfirmationDialogScript, r as renderAlert, f as renderConfirmationDialog, h as renderFilterBar, i as renderForm, j as renderFormField, k as renderPagination, l as renderTable } from './filter-bar.template-DlVYMk-T.js';
 export { C as CollectionConfig, b as CollectionConfigModule, c as CollectionSchema, d as CollectionSyncResult, F as FieldConfig, e as FieldType } from './collection-config-B4PG-AaF.js';
-export { A as AuthService, C as ContentService, H as HOOKS, a as HookContext, b as HookHandler, c as HookName, d as HookSystem, M as MediaService, P as Plugin, f as PluginAdminPage, g as PluginBuilderOptions, h as PluginComponent, i as PluginConfig, j as PluginContext, k as PluginHook, l as PluginLogger, m as PluginManager, n as PluginMenuItem, o as PluginMiddleware, p as PluginModel, q as PluginRegistry, r as PluginRoutes, s as PluginService, t as PluginStatus, u as PluginValidationResult, v as PluginValidator, S as ScopedHookSystem } from './plugin-0Xogrln-.js';
+export { A as AuthService, C as ContentService, H as HOOKS, a as HookContext, b as HookHandler, c as HookName, d as HookSystem, M as MediaService, P as Plugin, f as PluginAdminPage, g as PluginBuilderOptions, h as PluginComponent, i as PluginConfig, j as PluginContext, k as PluginHook, l as PluginLogger, m as PluginManager, n as PluginMenuItem, o as PluginMiddleware, p as PluginModel, q as PluginRegistry, r as PluginRoutes, s as PluginService, t as PluginStatus, u as PluginValidationResult, v as PluginValidator, S as ScopedHookSystem } from './plugin-DDYetMF-.js';
 export { P as PluginManifest } from './plugin-manifest-Dpy8wxIB.js';
 export { F as FilterCondition, a as FilterGroup, b as FilterOperator, Q as QueryFilter, c as QueryFilterBuilder, d as QueryResult, S as SONICJS_VERSION, T as TemplateRenderer, e as buildQuery, f as escapeHtml, g as getCoreVersion, m as metricsTracker, r as renderTemplate, s as sanitizeInput, h as sanitizeObject, t as templateRenderer } from './version-ChpccWQ1.js';
 import * as drizzle_orm_d1 from 'drizzle-orm/d1';
@@ -517,6 +517,126 @@ declare class PluginHelpers {
 }
 
 /**
+ * OAuth Providers Plugin
+ *
+ * OAuth2/OIDC social login support for SonicJS.
+ * Phase 1: Core OAuth2 authorization code flow with GitHub and Google providers.
+ *
+ * Routes:
+ *   GET  /auth/oauth/:provider          → Redirect to provider authorization
+ *   GET  /auth/oauth/:provider/callback → Handle OAuth callback
+ *   POST /auth/oauth/link               → Link OAuth provider to logged-in account
+ *   POST /auth/oauth/unlink             → Unlink OAuth provider from account
+ *   GET  /auth/oauth/accounts           → List linked OAuth accounts for current user
+ */
+
+declare function createOAuthProvidersPlugin(): Plugin;
+declare const oauthProvidersPlugin: Plugin;
+
+/**
+ * OAuth Service
+ * Handles OAuth2 authorization code flow, token exchange, and user info fetching.
+ * Provider-agnostic — each provider is a simple config object.
+ */
+
+interface OAuthProviderConfig {
+    id: string;
+    name: string;
+    authorizeUrl: string;
+    tokenUrl: string;
+    userInfoUrl: string;
+    scopes: string[];
+    /** Map provider profile JSON to a normalized user profile */
+    mapProfile: (profile: Record<string, any>) => OAuthUserProfile;
+}
+interface OAuthUserProfile {
+    providerAccountId: string;
+    email: string;
+    name: string;
+    avatar?: string;
+}
+declare const BUILT_IN_PROVIDERS: Record<string, OAuthProviderConfig>;
+interface OAuthAccount {
+    id: string;
+    user_id: string;
+    provider: string;
+    provider_account_id: string;
+    access_token: string | null;
+    refresh_token: string | null;
+    token_expires_at: number | null;
+    profile_data: string | null;
+    created_at: number;
+    updated_at: number;
+}
+declare class OAuthService {
+    private db;
+    constructor(db: D1Database$1);
+    /**
+     * Build the authorization redirect URL for a provider.
+     */
+    buildAuthorizeUrl(provider: OAuthProviderConfig, clientId: string, redirectUri: string, state: string): string;
+    /**
+     * Exchange authorization code for tokens using native fetch.
+     */
+    exchangeCode(provider: OAuthProviderConfig, clientId: string, clientSecret: string, code: string, redirectUri: string): Promise<{
+        access_token: string;
+        refresh_token?: string;
+        expires_in?: number;
+    }>;
+    /**
+     * Fetch user profile from the provider's userinfo endpoint.
+     */
+    fetchUserProfile(provider: OAuthProviderConfig, accessToken: string): Promise<OAuthUserProfile>;
+    /**
+     * Find an existing OAuth account link.
+     */
+    findOAuthAccount(provider: string, providerAccountId: string): Promise<OAuthAccount | null>;
+    /**
+     * Find all OAuth accounts for a user.
+     */
+    findUserOAuthAccounts(userId: string): Promise<OAuthAccount[]>;
+    /**
+     * Create a new OAuth account link.
+     */
+    createOAuthAccount(params: {
+        userId: string;
+        provider: string;
+        providerAccountId: string;
+        accessToken: string;
+        refreshToken?: string;
+        tokenExpiresAt?: number;
+        profileData?: string;
+    }): Promise<OAuthAccount>;
+    /**
+     * Update tokens for an existing OAuth account.
+     */
+    updateOAuthTokens(id: string, accessToken: string, refreshToken?: string, tokenExpiresAt?: number): Promise<void>;
+    /**
+     * Unlink an OAuth account from a user (only if they have another auth method).
+     */
+    unlinkOAuthAccount(userId: string, provider: string): Promise<boolean>;
+    /**
+     * Find a user by email.
+     */
+    findUserByEmail(email: string): Promise<{
+        id: string;
+        email: string;
+        role: string;
+        is_active: number;
+        first_name: string;
+        last_name: string;
+    } | null>;
+    /**
+     * Create a new user from an OAuth profile.
+     */
+    createUserFromOAuth(profile: OAuthUserProfile): Promise<string>;
+    /**
+     * Generate a cryptographically random state parameter for CSRF protection.
+     */
+    generateState(): string;
+}
+
+/**
  * @sonicjs/core - Main Entry Point
  *
  * Core framework for SonicJS headless CMS
@@ -536,4 +656,4 @@ declare class PluginHelpers {
 
 declare const VERSION: string;
 
-export { PluginBuilder, PluginHelpers, VERSION, createDb };
+export { BUILT_IN_PROVIDERS, OAuthService, PluginBuilder, PluginHelpers, VERSION, createDb, createOAuthProvidersPlugin, oauthProvidersPlugin };

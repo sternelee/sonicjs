@@ -1,6 +1,6 @@
 'use strict';
 
-var chunkE2GKK5HX_cjs = require('./chunk-E2GKK5HX.cjs');
+var chunkQLPFENZ2_cjs = require('./chunk-QLPFENZ2.cjs');
 var chunkP3XDZL6Q_cjs = require('./chunk-P3XDZL6Q.cjs');
 var chunkRCQ2HIQD_cjs = require('./chunk-RCQ2HIQD.cjs');
 var chunkMNWKYY5E_cjs = require('./chunk-MNWKYY5E.cjs');
@@ -10,43 +10,43 @@ require('./chunk-IGJUBJBW.cjs');
 
 Object.defineProperty(exports, "QueryFilterBuilder", {
   enumerable: true,
-  get: function () { return chunkE2GKK5HX_cjs.QueryFilterBuilder; }
+  get: function () { return chunkQLPFENZ2_cjs.QueryFilterBuilder; }
 });
 Object.defineProperty(exports, "SONICJS_VERSION", {
   enumerable: true,
-  get: function () { return chunkE2GKK5HX_cjs.SONICJS_VERSION; }
+  get: function () { return chunkQLPFENZ2_cjs.SONICJS_VERSION; }
 });
 Object.defineProperty(exports, "TemplateRenderer", {
   enumerable: true,
-  get: function () { return chunkE2GKK5HX_cjs.TemplateRenderer; }
+  get: function () { return chunkQLPFENZ2_cjs.TemplateRenderer; }
 });
 Object.defineProperty(exports, "buildQuery", {
   enumerable: true,
-  get: function () { return chunkE2GKK5HX_cjs.buildQuery; }
+  get: function () { return chunkQLPFENZ2_cjs.buildQuery; }
 });
 Object.defineProperty(exports, "generateSlug", {
   enumerable: true,
-  get: function () { return chunkE2GKK5HX_cjs.generateSlug; }
+  get: function () { return chunkQLPFENZ2_cjs.generateSlug; }
 });
 Object.defineProperty(exports, "getBlocksFieldConfig", {
   enumerable: true,
-  get: function () { return chunkE2GKK5HX_cjs.getBlocksFieldConfig; }
+  get: function () { return chunkQLPFENZ2_cjs.getBlocksFieldConfig; }
 });
 Object.defineProperty(exports, "getCoreVersion", {
   enumerable: true,
-  get: function () { return chunkE2GKK5HX_cjs.getCoreVersion; }
+  get: function () { return chunkQLPFENZ2_cjs.getCoreVersion; }
 });
 Object.defineProperty(exports, "parseBlocksValue", {
   enumerable: true,
-  get: function () { return chunkE2GKK5HX_cjs.parseBlocksValue; }
+  get: function () { return chunkQLPFENZ2_cjs.parseBlocksValue; }
 });
 Object.defineProperty(exports, "renderTemplate", {
   enumerable: true,
-  get: function () { return chunkE2GKK5HX_cjs.renderTemplate; }
+  get: function () { return chunkQLPFENZ2_cjs.renderTemplate; }
 });
 Object.defineProperty(exports, "templateRenderer", {
   enumerable: true,
-  get: function () { return chunkE2GKK5HX_cjs.templateRenderer; }
+  get: function () { return chunkQLPFENZ2_cjs.templateRenderer; }
 });
 Object.defineProperty(exports, "generateInstallationId", {
   enumerable: true,

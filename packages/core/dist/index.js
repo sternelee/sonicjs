@@ -1,26 +1,26 @@
-import { renderConfirmationDialog, getConfirmationDialogScript, api_default, api_media_default, api_system_default, admin_api_default, router, adminCollectionsRoutes, adminFormsRoutes, adminSettingsRoutes, public_forms_default, router2, admin_content_default, adminMediaRoutes, adminPluginRoutes, adminLogsRoutes, userRoutes, auth_default, test_cleanup_default } from './chunk-5HORPWB4.js';
-export { ROUTES_INFO, admin_api_default as adminApiRoutes, adminCheckboxRoutes, admin_code_examples_default as adminCodeExamplesRoutes, adminCollectionsRoutes, admin_content_default as adminContentRoutes, router as adminDashboardRoutes, adminDesignRoutes, adminLogsRoutes, adminMediaRoutes, adminPluginRoutes, adminSettingsRoutes, admin_testimonials_default as adminTestimonialsRoutes, userRoutes as adminUsersRoutes, api_content_crud_default as apiContentCrudRoutes, api_media_default as apiMediaRoutes, api_default as apiRoutes, api_system_default as apiSystemRoutes, auth_default as authRoutes } from './chunk-5HORPWB4.js';
+import { renderConfirmationDialog, getConfirmationDialogScript, api_default, api_media_default, api_system_default, admin_api_default, router, adminCollectionsRoutes, adminFormsRoutes, adminSettingsRoutes, public_forms_default, router2, admin_content_default, adminMediaRoutes, adminPluginRoutes, adminLogsRoutes, userRoutes, auth_default, test_cleanup_default } from './chunk-PRMA32PX.js';
+export { ROUTES_INFO, admin_api_default as adminApiRoutes, adminCheckboxRoutes, admin_code_examples_default as adminCodeExamplesRoutes, adminCollectionsRoutes, admin_content_default as adminContentRoutes, router as adminDashboardRoutes, adminDesignRoutes, adminLogsRoutes, adminMediaRoutes, adminPluginRoutes, adminSettingsRoutes, admin_testimonials_default as adminTestimonialsRoutes, userRoutes as adminUsersRoutes, api_content_crud_default as apiContentCrudRoutes, api_media_default as apiMediaRoutes, api_default as apiRoutes, api_system_default as apiSystemRoutes, auth_default as authRoutes } from './chunk-PRMA32PX.js';
 import { SettingsService, setAppInstance, schema_exports } from './chunk-VJCLJH3X.js';
 export { Logger, apiTokens, collections, content, contentVersions, getLogger, initLogger, insertCollectionSchema, insertContentSchema, insertLogConfigSchema, insertMediaSchema, insertPluginActivityLogSchema, insertPluginAssetSchema, insertPluginHookSchema, insertPluginRouteSchema, insertPluginSchema, insertSystemLogSchema, insertUserSchema, insertWorkflowHistorySchema, logConfig, media, pluginActivityLog, pluginAssets, pluginHooks, pluginRoutes, plugins, selectCollectionSchema, selectContentSchema, selectLogConfigSchema, selectMediaSchema, selectPluginActivityLogSchema, selectPluginAssetSchema, selectPluginHookSchema, selectPluginRouteSchema, selectPluginSchema, selectSystemLogSchema, selectUserSchema, selectWorkflowHistorySchema, systemLogs, users, workflowHistory } from './chunk-VJCLJH3X.js';
-import { requireAuth, AuthManager, metricsMiddleware, bootstrapMiddleware, securityHeadersMiddleware, csrfProtection } from './chunk-GFC6QQR4.js';
-export { AuthManager, PermissionManager, bootstrapMiddleware, cacheHeaders, compressionMiddleware, detailedLoggingMiddleware, getActivePlugins, isPluginActive, logActivity, loggingMiddleware, optionalAuth, performanceLoggingMiddleware, requireActivePlugin, requireActivePlugins, requireAnyPermission, requireAuth, requirePermission, requireRole, securityHeadersMiddleware as securityHeaders, securityLoggingMiddleware } from './chunk-GFC6QQR4.js';
-export { PluginBootstrapService, PluginService as PluginServiceClass, backfillFormSubmissions, cleanupRemovedCollections, createContentFromSubmission, deriveCollectionSchemaFromFormio, deriveSubmissionTitle, fullCollectionSync, getAvailableCollectionNames, getManagedCollections, isCollectionManaged, loadCollectionConfig, loadCollectionConfigs, mapFormStatusToContentStatus, registerCollections, syncAllFormCollections, syncCollection, syncCollections, syncFormCollection, validateCollectionConfig } from './chunk-BUPNX3ZM.js';
-export { MigrationService } from './chunk-7PFGQ2PQ.js';
+import { requireAuth, AuthManager, metricsMiddleware, bootstrapMiddleware, securityHeadersMiddleware, csrfProtection } from './chunk-YVZTESZ4.js';
+export { AuthManager, PermissionManager, bootstrapMiddleware, cacheHeaders, compressionMiddleware, detailedLoggingMiddleware, getActivePlugins, isPluginActive, logActivity, loggingMiddleware, optionalAuth, performanceLoggingMiddleware, requireActivePlugin, requireActivePlugins, requireAnyPermission, requireAuth, requirePermission, requireRole, securityHeadersMiddleware as securityHeaders, securityLoggingMiddleware } from './chunk-YVZTESZ4.js';
+export { PluginBootstrapService, PluginService as PluginServiceClass, backfillFormSubmissions, cleanupRemovedCollections, createContentFromSubmission, deriveCollectionSchemaFromFormio, deriveSubmissionTitle, fullCollectionSync, getAvailableCollectionNames, getManagedCollections, isCollectionManaged, loadCollectionConfig, loadCollectionConfigs, mapFormStatusToContentStatus, registerCollections, syncAllFormCollections, syncCollection, syncCollections, syncFormCollection, validateCollectionConfig } from './chunk-NMLFKXWW.js';
+export { MigrationService } from './chunk-GUPNZOGX.js';
 export { renderFilterBar } from './chunk-74XCYEI7.js';
 import { init_admin_layout_catalyst_template, renderAdminLayout, renderAdminLayoutCatalyst } from './chunk-JJS7JZCH.js';
 export { getConfirmationDialogScript, renderAlert, renderConfirmationDialog, renderForm, renderFormField, renderPagination, renderTable } from './chunk-JJS7JZCH.js';
-export { HookSystemImpl, HookUtils, PluginManager as PluginManagerClass, PluginRegistryImpl, PluginValidator as PluginValidatorClass, ScopedHookSystem as ScopedHookSystemClass } from './chunk-CJYFSKH7.js';
+export { HookSystemImpl, HookUtils, PluginManager as PluginManagerClass, PluginRegistryImpl, PluginValidator as PluginValidatorClass, ScopedHookSystem as ScopedHookSystemClass } from './chunk-2MXF4RYZ.js';
 import { PluginBuilder } from './chunk-J5WGMRSU.js';
 export { PluginBuilder, PluginHelpers } from './chunk-J5WGMRSU.js';
-import { package_default, getCoreVersion } from './chunk-YXTFJPMN.js';
-export { QueryFilterBuilder, SONICJS_VERSION, TemplateRenderer, buildQuery, getCoreVersion, renderTemplate, templateRenderer } from './chunk-YXTFJPMN.js';
+import { package_default, getCoreVersion } from './chunk-BUU2US2Z.js';
+export { QueryFilterBuilder, SONICJS_VERSION, TemplateRenderer, buildQuery, getCoreVersion, renderTemplate, templateRenderer } from './chunk-BUU2US2Z.js';
 import './chunk-X7ZAEI5S.js';
 export { metricsTracker } from './chunk-FICTAGD4.js';
 export { escapeHtml, sanitizeInput, sanitizeObject } from './chunk-TQABQWOP.js';
-export { HOOKS } from './chunk-LOUJRBXV.js';
+export { HOOKS } from './chunk-QXOZI5Q2.js';
 import './chunk-V4OQ3NZ2.js';
 import { Hono } from 'hono';
-import { setCookie } from 'hono/cookie';
+import { setCookie, getCookie } from 'hono/cookie';
 import { z } from 'zod';
 import { drizzle } from 'drizzle-orm/d1';
 
@@ -1826,7 +1826,8 @@ function createOTPLoginPlugin() {
           email: normalizedEmail,
           ipAddress,
           timestamp: (/* @__PURE__ */ new Date()).toISOString(),
-          appName: siteName
+          appName: siteName,
+          logoUrl: settings.logoUrl || ""
         });
         const emailPlugin2 = await db.prepare(`
           SELECT settings FROM plugins WHERE id = 'email'
@@ -2000,6 +2001,567 @@ function createOTPLoginPlugin() {
   return builder.build();
 }
 var otpLoginPlugin = createOTPLoginPlugin();
+
+// src/plugins/core-plugins/oauth-providers/oauth-service.ts
+var GITHUB_PROVIDER = {
+  id: "github",
+  name: "GitHub",
+  authorizeUrl: "https://github.com/login/oauth/authorize",
+  tokenUrl: "https://github.com/login/oauth/access_token",
+  userInfoUrl: "https://api.github.com/user",
+  scopes: ["read:user", "user:email"],
+  mapProfile: (profile) => ({
+    providerAccountId: String(profile.id),
+    email: profile.email || "",
+    name: profile.name || profile.login || "",
+    avatar: profile.avatar_url || void 0
+  })
+};
+var GOOGLE_PROVIDER = {
+  id: "google",
+  name: "Google",
+  authorizeUrl: "https://accounts.google.com/o/oauth2/v2/auth",
+  tokenUrl: "https://oauth2.googleapis.com/token",
+  userInfoUrl: "https://www.googleapis.com/oauth2/v2/userinfo",
+  scopes: ["openid", "email", "profile"],
+  mapProfile: (profile) => ({
+    providerAccountId: String(profile.id),
+    email: profile.email || "",
+    name: profile.name || "",
+    avatar: profile.picture || void 0
+  })
+};
+var BUILT_IN_PROVIDERS = {
+  github: GITHUB_PROVIDER,
+  google: GOOGLE_PROVIDER
+};
+var OAuthService = class {
+  constructor(db) {
+    this.db = db;
+  }
+  /**
+   * Build the authorization redirect URL for a provider.
+   */
+  buildAuthorizeUrl(provider, clientId, redirectUri, state) {
+    const params = new URLSearchParams({
+      client_id: clientId,
+      redirect_uri: redirectUri,
+      response_type: "code",
+      scope: provider.scopes.join(" "),
+      state
+    });
+    if (provider.id === "google") {
+      params.set("access_type", "offline");
+      params.set("prompt", "consent");
+    }
+    return `${provider.authorizeUrl}?${params.toString()}`;
+  }
+  /**
+   * Exchange authorization code for tokens using native fetch.
+   */
+  async exchangeCode(provider, clientId, clientSecret, code, redirectUri) {
+    const body = {
+      client_id: clientId,
+      client_secret: clientSecret,
+      code,
+      redirect_uri: redirectUri,
+      grant_type: "authorization_code"
+    };
+    const response = await fetch(provider.tokenUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Accept": "application/json"
+      },
+      body: new URLSearchParams(body).toString()
+    });
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Token exchange failed (${response.status}): ${errorText}`);
+    }
+    const data = await response.json();
+    if (data.error) {
+      throw new Error(`Token exchange error: ${data.error_description || data.error}`);
+    }
+    return {
+      access_token: data.access_token,
+      refresh_token: data.refresh_token,
+      expires_in: data.expires_in ? Number(data.expires_in) : void 0
+    };
+  }
+  /**
+   * Fetch user profile from the provider's userinfo endpoint.
+   */
+  async fetchUserProfile(provider, accessToken) {
+    const headers = {
+      "Authorization": `Bearer ${accessToken}`,
+      "Accept": "application/json"
+    };
+    if (provider.id === "github") {
+      headers["Authorization"] = `token ${accessToken}`;
+    }
+    const response = await fetch(provider.userInfoUrl, { headers });
+    if (!response.ok) {
+      throw new Error(`Failed to fetch user profile (${response.status})`);
+    }
+    const profile = await response.json();
+    if (provider.id === "github" && !profile.email) {
+      const emailResponse = await fetch("https://api.github.com/user/emails", {
+        headers: {
+          "Authorization": `token ${accessToken}`,
+          "Accept": "application/json"
+        }
+      });
+      if (emailResponse.ok) {
+        const emails = await emailResponse.json();
+        const primaryEmail = emails.find((e) => e.primary && e.verified);
+        if (primaryEmail) {
+          profile.email = primaryEmail.email;
+        }
+      }
+    }
+    return provider.mapProfile(profile);
+  }
+  // ─── Database Operations ────────────────────────────────────────────────
+  /**
+   * Find an existing OAuth account link.
+   */
+  async findOAuthAccount(provider, providerAccountId) {
+    return await this.db.prepare(`
+      SELECT * FROM oauth_accounts
+      WHERE provider = ? AND provider_account_id = ?
+    `).bind(provider, providerAccountId).first();
+  }
+  /**
+   * Find all OAuth accounts for a user.
+   */
+  async findUserOAuthAccounts(userId) {
+    const result = await this.db.prepare(`
+      SELECT * FROM oauth_accounts WHERE user_id = ?
+    `).bind(userId).all();
+    return result.results || [];
+  }
+  /**
+   * Create a new OAuth account link.
+   */
+  async createOAuthAccount(params) {
+    const id = crypto.randomUUID();
+    const now = Date.now();
+    await this.db.prepare(`
+      INSERT INTO oauth_accounts (
+        id, user_id, provider, provider_account_id,
+        access_token, refresh_token, token_expires_at,
+        profile_data, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(
+      id,
+      params.userId,
+      params.provider,
+      params.providerAccountId,
+      params.accessToken,
+      params.refreshToken || null,
+      params.tokenExpiresAt || null,
+      params.profileData || null,
+      now,
+      now
+    ).run();
+    return {
+      id,
+      user_id: params.userId,
+      provider: params.provider,
+      provider_account_id: params.providerAccountId,
+      access_token: params.accessToken,
+      refresh_token: params.refreshToken || null,
+      token_expires_at: params.tokenExpiresAt || null,
+      profile_data: params.profileData || null,
+      created_at: now,
+      updated_at: now
+    };
+  }
+  /**
+   * Update tokens for an existing OAuth account.
+   */
+  async updateOAuthTokens(id, accessToken, refreshToken, tokenExpiresAt) {
+    await this.db.prepare(`
+      UPDATE oauth_accounts
+      SET access_token = ?, refresh_token = ?, token_expires_at = ?, updated_at = ?
+      WHERE id = ?
+    `).bind(accessToken, refreshToken || null, tokenExpiresAt || null, Date.now(), id).run();
+  }
+  /**
+   * Unlink an OAuth account from a user (only if they have another auth method).
+   */
+  async unlinkOAuthAccount(userId, provider) {
+    const user = await this.db.prepare(`
+      SELECT password_hash FROM users WHERE id = ?
+    `).bind(userId).first();
+    const otherLinks = await this.db.prepare(`
+      SELECT COUNT(*) as count FROM oauth_accounts
+      WHERE user_id = ? AND provider != ?
+    `).bind(userId, provider).first();
+    const hasPassword = !!user?.password_hash;
+    const hasOtherLinks = (otherLinks?.count || 0) > 0;
+    if (!hasPassword && !hasOtherLinks) {
+      return false;
+    }
+    await this.db.prepare(`
+      DELETE FROM oauth_accounts WHERE user_id = ? AND provider = ?
+    `).bind(userId, provider).run();
+    return true;
+  }
+  /**
+   * Find a user by email.
+   */
+  async findUserByEmail(email) {
+    return await this.db.prepare(`
+      SELECT id, email, role, is_active, first_name, last_name
+      FROM users WHERE email = ?
+    `).bind(email.toLowerCase()).first();
+  }
+  /**
+   * Create a new user from an OAuth profile.
+   */
+  async createUserFromOAuth(profile) {
+    const id = crypto.randomUUID();
+    const now = Date.now();
+    const email = profile.email.toLowerCase();
+    const nameParts = (profile.name || email.split("@")[0] || "User").split(" ");
+    const firstName = nameParts[0] || "User";
+    const lastName = nameParts.slice(1).join(" ") || "";
+    const username = email.split("@")[0] || id.substring(0, 8);
+    const existing = await this.db.prepare(
+      "SELECT id FROM users WHERE username = ?"
+    ).bind(username).first();
+    const finalUsername = existing ? `${username}-${id.substring(0, 6)}` : username;
+    await this.db.prepare(`
+      INSERT INTO users (
+        id, email, username, first_name, last_name,
+        password_hash, role, avatar, is_active, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, NULL, 'viewer', ?, 1, ?, ?)
+    `).bind(
+      id,
+      email,
+      finalUsername,
+      firstName,
+      lastName,
+      profile.avatar || null,
+      now,
+      now
+    ).run();
+    return id;
+  }
+  /**
+   * Generate a cryptographically random state parameter for CSRF protection.
+   */
+  generateState() {
+    const bytes = new Uint8Array(32);
+    crypto.getRandomValues(bytes);
+    return Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
+  }
+};
+
+// src/plugins/core-plugins/oauth-providers/index.ts
+var STATE_COOKIE_NAME = "oauth_state";
+var STATE_COOKIE_MAX_AGE = 600;
+function createOAuthProvidersPlugin() {
+  const builder = PluginBuilder.create({
+    name: "oauth-providers",
+    version: "1.0.0-beta.1",
+    description: "OAuth2/OIDC social login with GitHub, Google, and more"
+  });
+  builder.metadata({
+    author: {
+      name: "SonicJS Team",
+      email: "team@sonicjs.com"
+    },
+    license: "MIT",
+    compatibility: "^2.0.0"
+  });
+  function getCallbackUrl(c, provider) {
+    const proto = c.req.header("x-forwarded-proto") || "https";
+    const host = c.req.header("host") || "localhost";
+    return `${proto}://${host}/auth/oauth/${provider}/callback`;
+  }
+  async function loadSettings(db) {
+    const row = await db.prepare(
+      `SELECT settings FROM plugins WHERE id = 'oauth-providers'`
+    ).first();
+    if (!row?.settings) return null;
+    try {
+      return JSON.parse(row.settings);
+    } catch {
+      return null;
+    }
+  }
+  function getProviderCredentials(settings, providerId) {
+    if (!settings?.providers?.[providerId]) return null;
+    const p = settings.providers[providerId];
+    if (!p.enabled || !p.clientId || !p.clientSecret) return null;
+    return { clientId: p.clientId, clientSecret: p.clientSecret };
+  }
+  const oauthAPI = new Hono();
+  oauthAPI.get("/:provider", async (c) => {
+    try {
+      const providerId = c.req.param("provider");
+      const providerConfig = BUILT_IN_PROVIDERS[providerId];
+      if (!providerConfig) {
+        return c.json({ error: `Unknown OAuth provider: ${providerId}` }, 400);
+      }
+      const db = c.env.DB;
+      const settings = await loadSettings(db);
+      const creds = getProviderCredentials(settings, providerId);
+      if (!creds) {
+        return c.json({
+          error: `OAuth provider "${providerId}" is not configured or not enabled`
+        }, 400);
+      }
+      const oauthService = new OAuthService(db);
+      const state = oauthService.generateState();
+      const redirectUri = getCallbackUrl(c, providerId);
+      setCookie(c, STATE_COOKIE_NAME, state, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "Lax",
+        // Lax required for OAuth redirect flow
+        maxAge: STATE_COOKIE_MAX_AGE,
+        path: "/auth/oauth"
+      });
+      const authorizeUrl = oauthService.buildAuthorizeUrl(
+        providerConfig,
+        creds.clientId,
+        redirectUri,
+        state
+      );
+      return c.redirect(authorizeUrl);
+    } catch (error) {
+      console.error("OAuth authorize error:", error);
+      return c.json({ error: "Failed to initiate OAuth flow" }, 500);
+    }
+  });
+  oauthAPI.get("/:provider/callback", async (c) => {
+    try {
+      const providerId = c.req.param("provider");
+      const providerConfig = BUILT_IN_PROVIDERS[providerId];
+      if (!providerConfig) {
+        return c.redirect("/auth/login?error=Unknown OAuth provider");
+      }
+      const stateParam = c.req.query("state");
+      const stateCookie = getCookie(c, STATE_COOKIE_NAME);
+      if (!stateParam || !stateCookie || stateParam !== stateCookie) {
+        return c.redirect("/auth/login?error=Invalid OAuth state. Please try again.");
+      }
+      setCookie(c, STATE_COOKIE_NAME, "", {
+        httpOnly: true,
+        secure: true,
+        sameSite: "Lax",
+        maxAge: 0,
+        path: "/auth/oauth"
+      });
+      const errorParam = c.req.query("error");
+      if (errorParam) {
+        const errorDesc = c.req.query("error_description") || errorParam;
+        return c.redirect(`/auth/login?error=${encodeURIComponent(errorDesc)}`);
+      }
+      const code = c.req.query("code");
+      if (!code) {
+        return c.redirect("/auth/login?error=No authorization code received");
+      }
+      const db = c.env.DB;
+      const settings = await loadSettings(db);
+      const creds = getProviderCredentials(settings, providerId);
+      if (!creds) {
+        return c.redirect("/auth/login?error=OAuth provider not configured");
+      }
+      const oauthService = new OAuthService(db);
+      const redirectUri = getCallbackUrl(c, providerId);
+      const tokens = await oauthService.exchangeCode(
+        providerConfig,
+        creds.clientId,
+        creds.clientSecret,
+        code,
+        redirectUri
+      );
+      const profile = await oauthService.fetchUserProfile(providerConfig, tokens.access_token);
+      if (!profile.email) {
+        return c.redirect("/auth/login?error=Could not retrieve email from OAuth provider. Please ensure your email is public or grant email permission.");
+      }
+      const tokenExpiresAt = tokens.expires_in ? Date.now() + tokens.expires_in * 1e3 : null;
+      const existingOAuth = await oauthService.findOAuthAccount(providerId, profile.providerAccountId);
+      if (existingOAuth) {
+        await oauthService.updateOAuthTokens(
+          existingOAuth.id,
+          tokens.access_token,
+          tokens.refresh_token,
+          tokenExpiresAt ?? void 0
+        );
+        const user = await db.prepare(
+          "SELECT id, email, role, is_active FROM users WHERE id = ?"
+        ).bind(existingOAuth.user_id).first();
+        if (!user || !user.is_active) {
+          return c.redirect("/auth/login?error=Account is deactivated");
+        }
+        const jwt2 = await AuthManager.generateToken(
+          user.id,
+          user.email,
+          user.role,
+          c.env.JWT_SECRET
+        );
+        AuthManager.setAuthCookie(c, jwt2, { sameSite: "Lax" });
+        return c.redirect("/admin");
+      }
+      const existingUser = await oauthService.findUserByEmail(profile.email);
+      if (existingUser) {
+        if (!existingUser.is_active) {
+          return c.redirect("/auth/login?error=Account is deactivated");
+        }
+        await oauthService.createOAuthAccount({
+          userId: existingUser.id,
+          provider: providerId,
+          providerAccountId: profile.providerAccountId,
+          accessToken: tokens.access_token,
+          refreshToken: tokens.refresh_token,
+          tokenExpiresAt: tokenExpiresAt ?? void 0,
+          profileData: JSON.stringify(profile)
+        });
+        const jwt2 = await AuthManager.generateToken(
+          existingUser.id,
+          existingUser.email,
+          existingUser.role,
+          c.env.JWT_SECRET
+        );
+        AuthManager.setAuthCookie(c, jwt2, { sameSite: "Lax" });
+        return c.redirect("/admin");
+      }
+      const newUserId = await oauthService.createUserFromOAuth(profile);
+      await oauthService.createOAuthAccount({
+        userId: newUserId,
+        provider: providerId,
+        providerAccountId: profile.providerAccountId,
+        accessToken: tokens.access_token,
+        refreshToken: tokens.refresh_token,
+        tokenExpiresAt: tokenExpiresAt ?? void 0,
+        profileData: JSON.stringify(profile)
+      });
+      const jwt = await AuthManager.generateToken(
+        newUserId,
+        profile.email.toLowerCase(),
+        "viewer",
+        c.env.JWT_SECRET
+      );
+      AuthManager.setAuthCookie(c, jwt, { sameSite: "Lax" });
+      return c.redirect("/admin");
+    } catch (error) {
+      console.error("OAuth callback error:", error);
+      const message = error instanceof Error ? error.message : "OAuth authentication failed";
+      return c.redirect(`/auth/login?error=${encodeURIComponent(message)}`);
+    }
+  });
+  oauthAPI.post("/link", async (c) => {
+    try {
+      const user = c.get("user");
+      if (!user) {
+        return c.json({ error: "Authentication required" }, 401);
+      }
+      const body = await c.req.json();
+      const { provider } = body;
+      if (!provider || !BUILT_IN_PROVIDERS[provider]) {
+        return c.json({ error: "Invalid provider" }, 400);
+      }
+      const db = c.env.DB;
+      const settings = await loadSettings(db);
+      const creds = getProviderCredentials(settings, provider);
+      if (!creds) {
+        return c.json({ error: `OAuth provider "${provider}" is not configured` }, 400);
+      }
+      const oauthService = new OAuthService(db);
+      const state = oauthService.generateState();
+      const redirectUri = getCallbackUrl(c, provider);
+      setCookie(c, STATE_COOKIE_NAME, state, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "Lax",
+        maxAge: STATE_COOKIE_MAX_AGE,
+        path: "/auth/oauth"
+      });
+      const authorizeUrl = oauthService.buildAuthorizeUrl(
+        BUILT_IN_PROVIDERS[provider],
+        creds.clientId,
+        redirectUri,
+        state
+      );
+      return c.json({ redirectUrl: authorizeUrl });
+    } catch (error) {
+      console.error("OAuth link error:", error);
+      return c.json({ error: "Failed to initiate account linking" }, 500);
+    }
+  });
+  oauthAPI.post("/unlink", async (c) => {
+    try {
+      const user = c.get("user");
+      if (!user) {
+        return c.json({ error: "Authentication required" }, 401);
+      }
+      const body = await c.req.json();
+      const { provider } = body;
+      if (!provider) {
+        return c.json({ error: "Provider is required" }, 400);
+      }
+      const db = c.env.DB;
+      const oauthService = new OAuthService(db);
+      const success = await oauthService.unlinkOAuthAccount(user.userId, provider);
+      if (!success) {
+        return c.json({
+          error: "Cannot unlink the only authentication method. Set a password first."
+        }, 400);
+      }
+      return c.json({ success: true, message: `${provider} account unlinked` });
+    } catch (error) {
+      console.error("OAuth unlink error:", error);
+      return c.json({ error: "Failed to unlink account" }, 500);
+    }
+  });
+  oauthAPI.get("/accounts", async (c) => {
+    try {
+      const user = c.get("user");
+      if (!user) {
+        return c.json({ error: "Authentication required" }, 401);
+      }
+      const db = c.env.DB;
+      const oauthService = new OAuthService(db);
+      const accounts = await oauthService.findUserOAuthAccounts(user.userId);
+      return c.json({
+        accounts: accounts.map((a) => ({
+          provider: a.provider,
+          providerAccountId: a.provider_account_id,
+          linkedAt: a.created_at
+        }))
+      });
+    } catch (error) {
+      console.error("OAuth accounts error:", error);
+      return c.json({ error: "Failed to fetch linked accounts" }, 500);
+    }
+  });
+  builder.addRoute("/auth/oauth", oauthAPI, {
+    description: "OAuth2 social login endpoints",
+    requiresAuth: false,
+    priority: 100
+  });
+  builder.addMenuItem("OAuth Providers", "/admin/plugins/oauth-providers", {
+    icon: "shield",
+    order: 86,
+    permissions: ["oauth:manage"]
+  });
+  builder.lifecycle({
+    activate: async () => {
+      console.info("\u2705 OAuth Providers plugin activated");
+    },
+    deactivate: async () => {
+      console.info("\u274C OAuth Providers plugin deactivated");
+    }
+  });
+  return builder.build();
+}
+var oauthProvidersPlugin = createOAuthProvidersPlugin();
 
 // src/plugins/core-plugins/ai-search-plugin/services/embedding.service.ts
 var EmbeddingService = class {
@@ -6024,6 +6586,11 @@ function createSonicJSApp(config = {}) {
     }
   }
   app2.route("/admin/cache", cache_default.getRoutes());
+  if (oauthProvidersPlugin.routes && oauthProvidersPlugin.routes.length > 0) {
+    for (const route of oauthProvidersPlugin.routes) {
+      app2.route(route.path, route.handler);
+    }
+  }
   if (otpLoginPlugin.routes && otpLoginPlugin.routes.length > 0) {
     for (const route of otpLoginPlugin.routes) {
       app2.route(route.path, route.handler);
@@ -6119,6 +6686,6 @@ function createDb(d1) {
 // src/index.ts
 var VERSION = package_default.version;
 
-export { VERSION, createDb, createSonicJSApp, setupCoreMiddleware, setupCoreRoutes };
+export { BUILT_IN_PROVIDERS, OAuthService, VERSION, createDb, createOAuthProvidersPlugin, createSonicJSApp, oauthProvidersPlugin, setupCoreMiddleware, setupCoreRoutes };
 //# sourceMappingURL=index.js.map
 //# sourceMappingURL=index.js.map

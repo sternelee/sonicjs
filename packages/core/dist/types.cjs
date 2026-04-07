@@ -1,13 +1,13 @@
 'use strict';
 
-var chunkKYGRJCZM_cjs = require('./chunk-KYGRJCZM.cjs');
+var chunkQTFKZBLC_cjs = require('./chunk-QTFKZBLC.cjs');
 require('./chunk-IGJUBJBW.cjs');
 
 
 
 Object.defineProperty(exports, "HOOKS", {
   enumerable: true,
-  get: function () { return chunkKYGRJCZM_cjs.HOOKS; }
+  get: function () { return chunkQTFKZBLC_cjs.HOOKS; }
 });
 //# sourceMappingURL=types.cjs.map
 //# sourceMappingURL=types.cjs.map
