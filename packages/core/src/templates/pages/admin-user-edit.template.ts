@@ -251,6 +251,36 @@ export function renderUserEditPage(data: UserEditPageData): string {
                 </div>
               </div>
 
+              <!-- Set Password -->
+              <div class="mb-8">
+                <h3 class="text-base font-semibold text-zinc-950 dark:text-white mb-4">Set Password</h3>
+                <p class="text-sm text-zinc-500 dark:text-zinc-400 mb-4">Leave blank to keep the current password</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label class="block text-sm font-medium text-zinc-950 dark:text-white mb-2">New Password</label>
+                    <input
+                      type="password"
+                      name="new_password"
+                      minlength="8"
+                      placeholder="Minimum 8 characters"
+                      autocomplete="new-password"
+                      class="w-full rounded-lg bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-zinc-950 dark:text-white shadow-sm ring-1 ring-inset ring-zinc-950/10 dark:ring-white/10 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-950 dark:focus:ring-white transition-shadow"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-zinc-950 dark:text-white mb-2">Confirm Password</label>
+                    <input
+                      type="password"
+                      name="confirm_password"
+                      minlength="8"
+                      placeholder="Repeat new password"
+                      autocomplete="new-password"
+                      class="w-full rounded-lg bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-zinc-950 dark:text-white shadow-sm ring-1 ring-inset ring-zinc-950/10 dark:ring-white/10 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-950 dark:focus:ring-white transition-shadow"
+                    />
+                  </div>
+                </div>
+              </div>
+
               <!-- Account Status -->
               <div class="mb-8">
                 <h3 class="text-base font-semibold text-zinc-950 dark:text-white mb-4">Account Status</h3>

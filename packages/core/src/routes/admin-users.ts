@@ -541,6 +541,8 @@ userRoutes.get('/users', async (c) => {
       formattedCreatedAt: new Date(u.created_at).toLocaleDateString()
     }))
 
+    const successMessage = c.req.query('success') || undefined
+
     const pageData: UsersListPageData = {
       users,
       currentPage: page,
@@ -549,6 +551,7 @@ userRoutes.get('/users', async (c) => {
       searchFilter: search,
       roleFilter,
       statusFilter,
+      success: successMessage,
       pagination: {
         currentPage: page,
         totalPages: Math.ceil(totalUsers / limit),
@@ -715,8 +718,9 @@ userRoutes.post('/users/new', async (c) => {
       c.req.header('user-agent')
     )
 
-    // Redirect to user edit page
-    return c.redirect(`/admin/users/${userId}/edit?success=User created successfully`)
+    // Redirect to user list (use HX-Redirect for HTMX requests)
+    c.header('HX-Redirect', '/admin/users?success=User created successfully')
+    return c.body(null, 200)
 
   } catch (error) {
     console.error('User creation error:', error)
@@ -899,6 +903,10 @@ userRoutes.put('/users/:id', async (c) => {
     const isActive = formData.get('is_active') === '1'
     const emailVerified = formData.get('email_verified') === '1'
 
+    // Optional password change
+    const newPassword = formData.get('new_password')?.toString() || ''
+    const confirmPassword = formData.get('confirm_password')?.toString() || ''
+
     // Extract profile fields
     const profileDisplayName = sanitizeInput(formData.get('profile_display_name')?.toString()) || null
     const profileBio = sanitizeInput(formData.get('profile_bio')?.toString()) || null
@@ -926,6 +934,24 @@ userRoutes.put('/users/:id', async (c) => {
         message: 'Please enter a valid email address.',
         dismissible: true
       }))
+    }
+
+    // Validate password if provided
+    if (newPassword) {
+      if (newPassword.length < 8) {
+        return c.html(renderAlert({
+          type: 'error',
+          message: 'Password must be at least 8 characters long.',
+          dismissible: true
+        }))
+      }
+      if (newPassword !== confirmPassword) {
+        return c.html(renderAlert({
+          type: 'error',
+          message: 'Passwords do not match.',
+          dismissible: true
+        }))
+      }
     }
 
     // Validate website URL if provided
@@ -971,6 +997,15 @@ userRoutes.put('/users/:id', async (c) => {
       Date.now(), userId
     ).run()
 
+    // Update password if provided
+    if (newPassword) {
+      const passwordHash = await AuthManager.hashPassword(newPassword)
+      const updatePasswordStmt = db.prepare(`
+        UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?
+      `)
+      await updatePasswordStmt.bind(passwordHash, Date.now(), userId).run()
+    }
+
     // Check if any profile field has data
     const hasProfileData = profileDisplayName || profileBio || profileCompany ||
       profileJobTitle || profileWebsite || profileLocation || profileDateOfBirth
@@ -1011,7 +1046,7 @@ userRoutes.put('/users/:id', async (c) => {
     // Log the activity
     await logActivity(
       db, user!.userId, 'user.update', 'users', userId,
-      { fields: ['first_name', 'last_name', 'username', 'email', 'phone', 'role', 'is_active', 'email_verified', 'profile'] },
+      { fields: ['first_name', 'last_name', 'username', 'email', 'phone', 'role', 'is_active', 'email_verified', 'profile', ...(newPassword ? ['password'] : [])] },
       c.req.header('x-forwarded-for') || c.req.header('cf-connecting-ip'),
       c.req.header('user-agent')
     )
