@@ -1,14 +1,15 @@
-import { renderConfirmationDialog, getConfirmationDialogScript, api_default, api_media_default, api_system_default, admin_api_default, router, adminCollectionsRoutes, adminFormsRoutes, adminSettingsRoutes, public_forms_default, router2, admin_content_default, adminMediaRoutes, adminPluginRoutes, adminLogsRoutes, userRoutes, auth_default, test_cleanup_default } from './chunk-PRMA32PX.js';
-export { ROUTES_INFO, admin_api_default as adminApiRoutes, adminCheckboxRoutes, admin_code_examples_default as adminCodeExamplesRoutes, adminCollectionsRoutes, admin_content_default as adminContentRoutes, router as adminDashboardRoutes, adminDesignRoutes, adminLogsRoutes, adminMediaRoutes, adminPluginRoutes, adminSettingsRoutes, admin_testimonials_default as adminTestimonialsRoutes, userRoutes as adminUsersRoutes, api_content_crud_default as apiContentCrudRoutes, api_media_default as apiMediaRoutes, api_default as apiRoutes, api_system_default as apiSystemRoutes, auth_default as authRoutes } from './chunk-PRMA32PX.js';
-import { SettingsService, setAppInstance, schema_exports } from './chunk-VJCLJH3X.js';
-export { Logger, apiTokens, collections, content, contentVersions, getLogger, initLogger, insertCollectionSchema, insertContentSchema, insertLogConfigSchema, insertMediaSchema, insertPluginActivityLogSchema, insertPluginAssetSchema, insertPluginHookSchema, insertPluginRouteSchema, insertPluginSchema, insertSystemLogSchema, insertUserSchema, insertWorkflowHistorySchema, logConfig, media, pluginActivityLog, pluginAssets, pluginHooks, pluginRoutes, plugins, selectCollectionSchema, selectContentSchema, selectLogConfigSchema, selectMediaSchema, selectPluginActivityLogSchema, selectPluginAssetSchema, selectPluginHookSchema, selectPluginRouteSchema, selectPluginSchema, selectSystemLogSchema, selectUserSchema, selectWorkflowHistorySchema, systemLogs, users, workflowHistory } from './chunk-VJCLJH3X.js';
-import { requireAuth, AuthManager, metricsMiddleware, bootstrapMiddleware, securityHeadersMiddleware, csrfProtection } from './chunk-YVZTESZ4.js';
-export { AuthManager, PermissionManager, bootstrapMiddleware, cacheHeaders, compressionMiddleware, detailedLoggingMiddleware, getActivePlugins, isPluginActive, logActivity, loggingMiddleware, optionalAuth, performanceLoggingMiddleware, requireActivePlugin, requireActivePlugins, requireAnyPermission, requireAuth, requirePermission, requireRole, securityHeadersMiddleware as securityHeaders, securityLoggingMiddleware } from './chunk-YVZTESZ4.js';
-export { PluginBootstrapService, PluginService as PluginServiceClass, backfillFormSubmissions, cleanupRemovedCollections, createContentFromSubmission, deriveCollectionSchemaFromFormio, deriveSubmissionTitle, fullCollectionSync, getAvailableCollectionNames, getManagedCollections, isCollectionManaged, loadCollectionConfig, loadCollectionConfigs, mapFormStatusToContentStatus, registerCollections, syncAllFormCollections, syncCollection, syncCollections, syncFormCollection, validateCollectionConfig } from './chunk-NMLFKXWW.js';
-export { MigrationService } from './chunk-GUPNZOGX.js';
-export { renderFilterBar } from './chunk-74XCYEI7.js';
-import { init_admin_layout_catalyst_template, renderAdminLayout, renderAdminLayoutCatalyst } from './chunk-JJS7JZCH.js';
-export { getConfirmationDialogScript, renderAlert, renderConfirmationDialog, renderForm, renderFormField, renderPagination, renderTable } from './chunk-JJS7JZCH.js';
+import { renderConfirmationDialog, getConfirmationDialogScript, api_default, api_media_default, api_system_default, admin_api_default, router, adminCollectionsRoutes, adminFormsRoutes, adminSettingsRoutes, public_forms_default, router2, admin_content_default, adminMediaRoutes, userProfilesPlugin, adminPluginRoutes, adminLogsRoutes, userRoutes, auth_default, test_cleanup_default } from './chunk-KROKL7JV.js';
+export { ROUTES_INFO, admin_api_default as adminApiRoutes, adminCheckboxRoutes, admin_code_examples_default as adminCodeExamplesRoutes, adminCollectionsRoutes, admin_content_default as adminContentRoutes, router as adminDashboardRoutes, adminDesignRoutes, adminLogsRoutes, adminMediaRoutes, adminPluginRoutes, adminSettingsRoutes, admin_testimonials_default as adminTestimonialsRoutes, userRoutes as adminUsersRoutes, api_content_crud_default as apiContentCrudRoutes, api_media_default as apiMediaRoutes, api_default as apiRoutes, api_system_default as apiSystemRoutes, auth_default as authRoutes, createUserProfilesPlugin, defineUserProfile, getUserProfileConfig, userProfilesPlugin } from './chunk-KROKL7JV.js';
+import { SettingsService, setAppInstance, schema_exports } from './chunk-TBJY2FF7.js';
+export { Logger, apiTokens, collections, content, contentVersions, getLogger, initLogger, insertCollectionSchema, insertContentSchema, insertLogConfigSchema, insertMediaSchema, insertPluginActivityLogSchema, insertPluginAssetSchema, insertPluginHookSchema, insertPluginRouteSchema, insertPluginSchema, insertSystemLogSchema, insertUserSchema, insertWorkflowHistorySchema, logConfig, media, pluginActivityLog, pluginAssets, pluginHooks, pluginRoutes, plugins, selectCollectionSchema, selectContentSchema, selectLogConfigSchema, selectMediaSchema, selectPluginActivityLogSchema, selectPluginAssetSchema, selectPluginHookSchema, selectPluginRouteSchema, selectPluginSchema, selectSystemLogSchema, selectUserSchema, selectWorkflowHistorySchema, systemLogs, users, workflowHistory } from './chunk-TBJY2FF7.js';
+import { requireAuth, AuthManager, metricsMiddleware, bootstrapMiddleware, securityHeadersMiddleware, csrfProtection } from './chunk-N4EHVSDJ.js';
+export { AuthManager, PermissionManager, bootstrapMiddleware, cacheHeaders, compressionMiddleware, detailedLoggingMiddleware, getActivePlugins, isPluginActive, logActivity, loggingMiddleware, optionalAuth, performanceLoggingMiddleware, requireActivePlugin, requireActivePlugins, requireAnyPermission, requireAuth, requirePermission, requireRole, securityHeadersMiddleware as securityHeaders, securityLoggingMiddleware } from './chunk-N4EHVSDJ.js';
+import { PluginService } from './chunk-H3XXBAMO.js';
+export { PluginBootstrapService, PluginService as PluginServiceClass, backfillFormSubmissions, cleanupRemovedCollections, createContentFromSubmission, deriveCollectionSchemaFromFormio, deriveSubmissionTitle, fullCollectionSync, getAvailableCollectionNames, getManagedCollections, isCollectionManaged, loadCollectionConfig, loadCollectionConfigs, mapFormStatusToContentStatus, registerCollections, syncAllFormCollections, syncCollection, syncCollections, syncFormCollection, validateCollectionConfig } from './chunk-H3XXBAMO.js';
+export { MigrationService } from './chunk-K4D7FJT3.js';
+export { renderFilterBar } from './chunk-BWZBKLOC.js';
+import { init_admin_layout_catalyst_template, renderAdminLayout, renderAdminLayoutCatalyst } from './chunk-76TX6XND.js';
+export { getConfirmationDialogScript, renderAlert, renderConfirmationDialog, renderForm, renderFormField, renderPagination, renderTable } from './chunk-76TX6XND.js';
 export { HookSystemImpl, HookUtils, PluginManager as PluginManagerClass, PluginRegistryImpl, PluginValidator as PluginValidatorClass, ScopedHookSystem as ScopedHookSystemClass } from './chunk-2MXF4RYZ.js';
 import { PluginBuilder } from './chunk-J5WGMRSU.js';
 export { PluginBuilder, PluginHelpers } from './chunk-J5WGMRSU.js';
@@ -4693,6 +4694,1636 @@ function renderMagicLinkEmail(magicLink, expiryMinutes) {
 }
 createMagicLinkAuthPlugin();
 
+// src/plugins/core-plugins/security-audit-plugin/types.ts
+var DEFAULT_SETTINGS2 = {
+  retention: {
+    daysToKeep: 90,
+    maxEvents: 1e5,
+    autoPurge: true
+  },
+  bruteForce: {
+    enabled: true,
+    maxFailedAttemptsPerIP: 10,
+    maxFailedAttemptsPerEmail: 5,
+    windowMinutes: 15,
+    lockoutDurationMinutes: 30,
+    alertThreshold: 20
+  },
+  logging: {
+    logSuccessfulLogins: true,
+    logLogouts: true,
+    logRegistrations: true,
+    logPasswordResets: true,
+    logPermissionDenied: true
+  }
+};
+
+// src/plugins/core-plugins/security-audit-plugin/services/security-audit-service.ts
+var SecurityAuditService = class {
+  constructor(db, settings = DEFAULT_SETTINGS2) {
+    this.db = db;
+    this.settings = settings;
+  }
+  async logEvent(event) {
+    const id = crypto.randomUUID();
+    const now = Date.now();
+    await this.db.prepare(`
+      INSERT INTO security_events (id, event_type, severity, user_id, email, ip_address, user_agent, country_code, request_path, request_method, details, fingerprint, blocked, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(
+      id,
+      event.eventType,
+      event.severity || "info",
+      event.userId || null,
+      event.email || null,
+      event.ipAddress || null,
+      event.userAgent || null,
+      event.countryCode || null,
+      event.requestPath || null,
+      event.requestMethod || null,
+      event.details ? JSON.stringify(event.details) : null,
+      event.fingerprint || null,
+      event.blocked ? 1 : 0,
+      now
+    ).run();
+    return id;
+  }
+  async getEvents(filters = {}) {
+    const conditions = [];
+    const params = [];
+    if (filters.eventType) {
+      if (Array.isArray(filters.eventType)) {
+        conditions.push(`event_type IN (${filters.eventType.map(() => "?").join(",")})`);
+        params.push(...filters.eventType);
+      } else {
+        conditions.push("event_type = ?");
+        params.push(filters.eventType);
+      }
+    }
+    if (filters.severity) {
+      if (Array.isArray(filters.severity)) {
+        conditions.push(`severity IN (${filters.severity.map(() => "?").join(",")})`);
+        params.push(...filters.severity);
+      } else {
+        conditions.push("severity = ?");
+        params.push(filters.severity);
+      }
+    }
+    if (filters.email) {
+      conditions.push("email LIKE ?");
+      params.push(`%${filters.email}%`);
+    }
+    if (filters.ipAddress) {
+      conditions.push("ip_address LIKE ?");
+      params.push(`%${filters.ipAddress}%`);
+    }
+    if (filters.search) {
+      conditions.push("(email LIKE ? OR ip_address LIKE ? OR details LIKE ?)");
+      params.push(`%${filters.search}%`, `%${filters.search}%`, `%${filters.search}%`);
+    }
+    if (filters.startDate) {
+      conditions.push("created_at >= ?");
+      params.push(filters.startDate);
+    }
+    if (filters.endDate) {
+      conditions.push("created_at <= ?");
+      params.push(filters.endDate);
+    }
+    if (filters.blocked !== void 0) {
+      conditions.push("blocked = ?");
+      params.push(filters.blocked ? 1 : 0);
+    }
+    const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+    const sortBy = filters.sortBy || "created_at";
+    const sortOrder = filters.sortOrder || "desc";
+    const page = filters.page || 1;
+    const limit = filters.limit || 50;
+    const offset = (page - 1) * limit;
+    const countResult = await this.db.prepare(
+      `SELECT COUNT(*) as count FROM security_events ${where}`
+    ).bind(...params).first();
+    const total = countResult?.count || 0;
+    const results = await this.db.prepare(
+      `SELECT * FROM security_events ${where} ORDER BY ${sortBy} ${sortOrder} LIMIT ? OFFSET ?`
+    ).bind(...params, limit, offset).all();
+    const events = (results.results || []).map((row) => ({
+      id: row.id,
+      eventType: row.event_type,
+      severity: row.severity,
+      userId: row.user_id,
+      email: row.email,
+      ipAddress: row.ip_address,
+      userAgent: row.user_agent,
+      countryCode: row.country_code,
+      requestPath: row.request_path,
+      requestMethod: row.request_method,
+      details: row.details ? JSON.parse(row.details) : null,
+      fingerprint: row.fingerprint,
+      blocked: !!row.blocked,
+      createdAt: row.created_at
+    }));
+    return { events, total };
+  }
+  async getEvent(id) {
+    const row = await this.db.prepare(
+      "SELECT * FROM security_events WHERE id = ?"
+    ).bind(id).first();
+    if (!row) return null;
+    return {
+      id: row.id,
+      eventType: row.event_type,
+      severity: row.severity,
+      userId: row.user_id,
+      email: row.email,
+      ipAddress: row.ip_address,
+      userAgent: row.user_agent,
+      countryCode: row.country_code,
+      requestPath: row.request_path,
+      requestMethod: row.request_method,
+      details: row.details ? JSON.parse(row.details) : null,
+      fingerprint: row.fingerprint,
+      blocked: !!row.blocked,
+      createdAt: row.created_at
+    };
+  }
+  async getStats() {
+    const now = Date.now();
+    const h24 = now - 24 * 60 * 60 * 1e3;
+    const h48 = now - 48 * 60 * 60 * 1e3;
+    const totalResult = await this.db.prepare(
+      "SELECT COUNT(*) as count FROM security_events"
+    ).first();
+    const failed24hResult = await this.db.prepare(
+      "SELECT COUNT(*) as count FROM security_events WHERE event_type = 'login_failure' AND created_at >= ?"
+    ).bind(h24).first();
+    const failedPrior24hResult = await this.db.prepare(
+      "SELECT COUNT(*) as count FROM security_events WHERE event_type = 'login_failure' AND created_at >= ? AND created_at < ?"
+    ).bind(h48, h24).first();
+    const failed24h = failed24hResult?.count || 0;
+    const failedPrior24h = failedPrior24hResult?.count || 0;
+    const trend = failedPrior24h > 0 ? Math.round((failed24h - failedPrior24h) / failedPrior24h * 100) : failed24h > 0 ? 100 : 0;
+    const lockoutWindow = now - this.settings.bruteForce.lockoutDurationMinutes * 60 * 1e3;
+    const lockoutsResult = await this.db.prepare(
+      "SELECT COUNT(DISTINCT ip_address) as count FROM security_events WHERE event_type = 'account_lockout' AND created_at >= ?"
+    ).bind(lockoutWindow).first();
+    const windowStart = now - this.settings.bruteForce.windowMinutes * 60 * 1e3;
+    const flaggedResult = await this.db.prepare(
+      `SELECT COUNT(*) as count FROM (
+        SELECT ip_address FROM security_events
+        WHERE event_type = 'login_failure' AND created_at >= ?
+        GROUP BY ip_address HAVING COUNT(*) >= ?
+      )`
+    ).bind(windowStart, this.settings.bruteForce.maxFailedAttemptsPerIP).first();
+    const typeResults = await this.db.prepare(
+      "SELECT event_type, COUNT(*) as count FROM security_events WHERE created_at >= ? GROUP BY event_type"
+    ).bind(h24).all();
+    const eventsByType = {};
+    for (const row of typeResults.results || []) {
+      eventsByType[row.event_type] = row.count;
+    }
+    const severityResults = await this.db.prepare(
+      "SELECT severity, COUNT(*) as count FROM security_events WHERE created_at >= ? GROUP BY severity"
+    ).bind(h24).all();
+    const eventsBySeverity = {};
+    for (const row of severityResults.results || []) {
+      eventsBySeverity[row.severity] = row.count;
+    }
+    return {
+      totalEvents: totalResult?.count || 0,
+      failedLogins24h: failed24h,
+      failedLoginsTrend: trend,
+      activeLockouts: lockoutsResult?.count || 0,
+      flaggedIPs: flaggedResult?.count || 0,
+      eventsByType,
+      eventsBySeverity
+    };
+  }
+  async getTopIPs(limit = 10) {
+    const now = Date.now();
+    const h24 = now - 24 * 60 * 60 * 1e3;
+    const results = await this.db.prepare(`
+      SELECT
+        ip_address,
+        country_code,
+        COUNT(*) as failed_attempts,
+        MAX(created_at) as last_seen
+      FROM security_events
+      WHERE event_type = 'login_failure' AND created_at >= ?
+      GROUP BY ip_address
+      ORDER BY failed_attempts DESC
+      LIMIT ?
+    `).bind(h24, limit).all();
+    const lockoutWindow = now - this.settings.bruteForce.lockoutDurationMinutes * 60 * 1e3;
+    const lockoutResults = await this.db.prepare(
+      "SELECT DISTINCT ip_address FROM security_events WHERE event_type = 'account_lockout' AND created_at >= ?"
+    ).bind(lockoutWindow).all();
+    const lockedIPs = new Set((lockoutResults.results || []).map((r) => r.ip_address));
+    return (results.results || []).map((row) => ({
+      ipAddress: row.ip_address,
+      countryCode: row.country_code,
+      failedAttempts: row.failed_attempts,
+      lastSeen: row.last_seen,
+      locked: lockedIPs.has(row.ip_address)
+    }));
+  }
+  async getHourlyTrend(hours = 24) {
+    const now = Date.now();
+    const start = now - hours * 60 * 60 * 1e3;
+    const buckets = [];
+    for (let i = 0; i < hours; i++) {
+      const bucketStart = start + i * 60 * 60 * 1e3;
+      const date = new Date(bucketStart);
+      buckets.push({
+        hour: `${date.getUTCHours().toString().padStart(2, "0")}:00`,
+        count: 0
+      });
+    }
+    const results = await this.db.prepare(`
+      SELECT
+        CAST((created_at - ?) / 3600000 AS INTEGER) as bucket,
+        COUNT(*) as count
+      FROM security_events
+      WHERE event_type = 'login_failure' AND created_at >= ?
+      GROUP BY bucket
+      ORDER BY bucket
+    `).bind(start, start).all();
+    for (const row of results.results || []) {
+      const idx = row.bucket;
+      if (idx >= 0 && idx < buckets.length) {
+        buckets[idx].count = row.count;
+      }
+    }
+    return buckets;
+  }
+  async purgeOldEvents(daysToKeep) {
+    const days = daysToKeep || this.settings.retention.daysToKeep;
+    const cutoff = Date.now() - days * 24 * 60 * 60 * 1e3;
+    const result = await this.db.prepare(
+      "DELETE FROM security_events WHERE created_at < ?"
+    ).bind(cutoff).run();
+    return result.meta?.changes || 0;
+  }
+  async getRecentCriticalEvents(limit = 20) {
+    const results = await this.db.prepare(
+      "SELECT * FROM security_events WHERE severity = 'critical' ORDER BY created_at DESC LIMIT ?"
+    ).bind(limit).all();
+    return (results.results || []).map((row) => ({
+      id: row.id,
+      eventType: row.event_type,
+      severity: row.severity,
+      userId: row.user_id,
+      email: row.email,
+      ipAddress: row.ip_address,
+      userAgent: row.user_agent,
+      countryCode: row.country_code,
+      requestPath: row.request_path,
+      requestMethod: row.request_method,
+      details: row.details ? JSON.parse(row.details) : null,
+      fingerprint: row.fingerprint,
+      blocked: !!row.blocked,
+      createdAt: row.created_at
+    }));
+  }
+};
+
+// src/plugins/core-plugins/security-audit-plugin/components/dashboard-page.ts
+init_admin_layout_catalyst_template();
+function formatTimestamp(ts) {
+  const date = new Date(ts);
+  const now = Date.now();
+  const diff = now - ts;
+  if (diff < 6e4) return "just now";
+  if (diff < 36e5) return `${Math.floor(diff / 6e4)}m ago`;
+  if (diff < 864e5) return `${Math.floor(diff / 36e5)}h ago`;
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+}
+function severityBadge(severity) {
+  const colors = {
+    info: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+    warning: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+    critical: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+  };
+  return `<span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${colors[severity] || colors.info}">${severity}</span>`;
+}
+function eventTypeBadge(type) {
+  const labels = {
+    login_success: "Login OK",
+    login_failure: "Login Failed",
+    registration: "Registration",
+    account_lockout: "Lockout",
+    suspicious_activity: "Suspicious",
+    logout: "Logout",
+    password_reset_request: "Password Reset",
+    permission_denied: "Access Denied"
+  };
+  return labels[type] || type;
+}
+function trendArrow(trend) {
+  if (trend > 0) return `<span class="text-red-500">+${trend}%</span>`;
+  if (trend < 0) return `<span class="text-emerald-500">${trend}%</span>`;
+  return `<span class="text-zinc-400">0%</span>`;
+}
+function renderBarChart(data) {
+  if (data.length === 0) return '<p class="text-zinc-500 text-sm">No data available</p>';
+  const max = Math.max(...data.map((d) => d.count), 1);
+  const bars = data.map((d) => {
+    const height = Math.max(d.count / max * 100, 2);
+    const color = d.count === 0 ? "bg-zinc-200 dark:bg-zinc-700" : d.count >= max * 0.75 ? "bg-red-500" : d.count >= max * 0.5 ? "bg-amber-500" : "bg-cyan-500";
+    return `
+      <div class="flex flex-col items-center flex-1 min-w-0 group relative">
+        <div class="w-full flex flex-col items-center justify-end" style="height: 120px">
+          <div class="absolute bottom-8 hidden group-hover:block bg-zinc-900 text-white text-xs rounded px-2 py-1 whitespace-nowrap z-10">
+            ${d.hour}: ${d.count} failed
+          </div>
+          <div class="${color} w-full max-w-[12px] rounded-t transition-all" style="height: ${height}%"></div>
+        </div>
+        <span class="text-[9px] text-zinc-400 mt-1 ${data.length > 12 ? "hidden sm:block" : ""}">${d.hour}</span>
+      </div>
+    `;
+  }).join("");
+  return `<div class="flex items-end gap-px">${bars}</div>`;
+}
+function renderSecurityDashboard(data) {
+  const { stats, topIPs, hourlyTrend, recentCritical, user, version, dynamicMenuItems } = data;
+  const content2 = `
+    <div>
+      <div class="sm:flex sm:items-center sm:justify-between mb-6">
+        <div class="sm:flex-auto">
+          <h1 class="text-2xl/8 font-semibold text-zinc-950 dark:text-white sm:text-xl/8">Security Dashboard</h1>
+          <p class="mt-2 text-sm/6 text-zinc-500 dark:text-zinc-400">
+            Monitor login attempts, brute-force detection, and security events.
+          </p>
+        </div>
+        <div class="mt-4 sm:mt-0 sm:ml-16 flex gap-x-2">
+          <a href="/admin/plugins/security-audit/events"
+            class="inline-flex items-center justify-center rounded-lg bg-white dark:bg-zinc-800 px-3.5 py-2.5 text-sm font-semibold text-zinc-950 dark:text-white hover:bg-zinc-50 dark:hover:bg-zinc-700 ring-1 ring-inset ring-zinc-950/10 dark:ring-white/10 transition-colors shadow-sm">
+            View Event Log
+          </a>
+          <a href="/api/security-audit/export?format=csv"
+            class="inline-flex items-center justify-center rounded-lg bg-zinc-950 dark:bg-white px-3.5 py-2.5 text-sm font-semibold text-white dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-colors shadow-sm">
+            Export CSV
+          </a>
+        </div>
+      </div>
+
+      <!-- Summary Cards -->
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
+        <div class="rounded-xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl p-5 ring-1 ring-zinc-950/5 dark:ring-white/10 shadow-sm">
+          <p class="text-sm font-medium text-zinc-500 dark:text-zinc-400">Total Events</p>
+          <p class="mt-2 text-3xl font-bold text-zinc-950 dark:text-white">${stats.totalEvents.toLocaleString()}</p>
+        </div>
+        <div class="rounded-xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl p-5 ring-1 ring-zinc-950/5 dark:ring-white/10 shadow-sm">
+          <p class="text-sm font-medium text-zinc-500 dark:text-zinc-400">Failed Logins (24h)</p>
+          <p class="mt-2 text-3xl font-bold text-zinc-950 dark:text-white">
+            ${stats.failedLogins24h}
+            <span class="ml-2 text-sm font-normal">${trendArrow(stats.failedLoginsTrend)}</span>
+          </p>
+        </div>
+        <div class="rounded-xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl p-5 ring-1 ring-zinc-950/5 dark:ring-white/10 shadow-sm">
+          <p class="text-sm font-medium text-zinc-500 dark:text-zinc-400">Active Lockouts</p>
+          <p class="mt-2 text-3xl font-bold ${stats.activeLockouts > 0 ? "text-red-600 dark:text-red-400" : "text-zinc-950 dark:text-white"}">${stats.activeLockouts}</p>
+        </div>
+        <div class="rounded-xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl p-5 ring-1 ring-zinc-950/5 dark:ring-white/10 shadow-sm">
+          <p class="text-sm font-medium text-zinc-500 dark:text-zinc-400">Flagged IPs</p>
+          <p class="mt-2 text-3xl font-bold ${stats.flaggedIPs > 0 ? "text-amber-600 dark:text-amber-400" : "text-zinc-950 dark:text-white"}">${stats.flaggedIPs}</p>
+        </div>
+      </div>
+
+      <!-- Charts Row -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <!-- Failed Login Trend -->
+        <div class="rounded-xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl p-5 ring-1 ring-zinc-950/5 dark:ring-white/10 shadow-sm">
+          <h2 class="text-sm font-semibold text-zinc-950 dark:text-white mb-4">Failed Login Attempts (24h)</h2>
+          ${renderBarChart(hourlyTrend)}
+        </div>
+
+        <!-- Events by Type -->
+        <div class="rounded-xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl p-5 ring-1 ring-zinc-950/5 dark:ring-white/10 shadow-sm">
+          <h2 class="text-sm font-semibold text-zinc-950 dark:text-white mb-4">Events by Type (24h)</h2>
+          <div class="space-y-3">
+            ${Object.entries(stats.eventsByType).length === 0 ? '<p class="text-zinc-500 text-sm">No events in the last 24 hours</p>' : Object.entries(stats.eventsByType).sort(([, a], [, b]) => b - a).map(([type, count]) => {
+    const total = Object.values(stats.eventsByType).reduce((s, v) => s + v, 0);
+    const pct = total > 0 ? Math.round(count / total * 100) : 0;
+    return `
+                    <div>
+                      <div class="flex justify-between text-sm mb-1">
+                        <span class="text-zinc-600 dark:text-zinc-300">${eventTypeBadge(type)}</span>
+                        <span class="text-zinc-500 dark:text-zinc-400">${count}</span>
+                      </div>
+                      <div class="w-full bg-zinc-100 dark:bg-zinc-800 rounded-full h-1.5">
+                        <div class="h-1.5 rounded-full ${type === "login_failure" ? "bg-red-500" : type === "login_success" ? "bg-emerald-500" : "bg-cyan-500"}" style="width: ${pct}%"></div>
+                      </div>
+                    </div>
+                  `;
+  }).join("")}
+          </div>
+        </div>
+      </div>
+
+      <!-- Top IPs and Recent Critical -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Top IPs -->
+        <div class="rounded-xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl ring-1 ring-zinc-950/5 dark:ring-white/10 shadow-sm overflow-hidden">
+          <div class="p-5 border-b border-zinc-100 dark:border-zinc-800">
+            <h2 class="text-sm font-semibold text-zinc-950 dark:text-white">Top IPs by Failed Logins (24h)</h2>
+          </div>
+          ${topIPs.length === 0 ? '<div class="p-5"><p class="text-zinc-500 text-sm">No failed login attempts</p></div>' : `<table class="min-w-full">
+              <thead>
+                <tr class="border-b border-zinc-100 dark:border-zinc-800">
+                  <th class="px-5 py-3 text-left text-xs font-medium text-zinc-500 uppercase">IP Address</th>
+                  <th class="px-5 py-3 text-left text-xs font-medium text-zinc-500 uppercase">Country</th>
+                  <th class="px-5 py-3 text-right text-xs font-medium text-zinc-500 uppercase">Attempts</th>
+                  <th class="px-5 py-3 text-right text-xs font-medium text-zinc-500 uppercase">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${topIPs.map((ip) => `
+                  <tr class="border-b border-zinc-50 dark:border-zinc-800/50 hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
+                    <td class="px-5 py-3 text-sm font-mono text-zinc-900 dark:text-zinc-100">${ip.ipAddress}</td>
+                    <td class="px-5 py-3 text-sm text-zinc-600 dark:text-zinc-400">${ip.countryCode || "-"}</td>
+                    <td class="px-5 py-3 text-sm text-right font-semibold ${ip.failedAttempts >= 10 ? "text-red-600 dark:text-red-400" : "text-zinc-900 dark:text-zinc-100"}">${ip.failedAttempts}</td>
+                    <td class="px-5 py-3 text-sm text-right">
+                      ${ip.locked ? '<span class="inline-flex items-center rounded-md bg-red-100 dark:bg-red-900/30 px-2 py-1 text-xs font-medium text-red-700 dark:text-red-400">Locked</span>' : '<span class="inline-flex items-center rounded-md bg-emerald-100 dark:bg-emerald-900/30 px-2 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-400">Active</span>'}
+                    </td>
+                  </tr>
+                `).join("")}
+              </tbody>
+            </table>`}
+        </div>
+
+        <!-- Recent Critical Events -->
+        <div class="rounded-xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl ring-1 ring-zinc-950/5 dark:ring-white/10 shadow-sm overflow-hidden">
+          <div class="p-5 border-b border-zinc-100 dark:border-zinc-800">
+            <h2 class="text-sm font-semibold text-zinc-950 dark:text-white">Recent Critical Events</h2>
+          </div>
+          ${recentCritical.length === 0 ? '<div class="p-5"><p class="text-zinc-500 text-sm">No critical events</p></div>' : `<div class="divide-y divide-zinc-100 dark:divide-zinc-800">
+              ${recentCritical.slice(0, 10).map((event) => `
+                <div class="px-5 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      ${severityBadge(event.severity)}
+                      <span class="text-sm font-medium text-zinc-900 dark:text-zinc-100">${eventTypeBadge(event.eventType)}</span>
+                    </div>
+                    <span class="text-xs text-zinc-400">${formatTimestamp(event.createdAt)}</span>
+                  </div>
+                  <div class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                    ${event.ipAddress ? `IP: ${event.ipAddress}` : ""}
+                    ${event.email ? ` | ${event.email}` : ""}
+                  </div>
+                </div>
+              `).join("")}
+            </div>`}
+        </div>
+      </div>
+    </div>
+  `;
+  const layoutData = {
+    title: "Security Dashboard",
+    pageTitle: "Security Dashboard",
+    currentPath: "/admin/plugins/security-audit",
+    user,
+    content: content2,
+    version,
+    dynamicMenuItems
+  };
+  return renderAdminLayoutCatalyst(layoutData);
+}
+
+// src/plugins/core-plugins/security-audit-plugin/components/event-log-page.ts
+init_admin_layout_catalyst_template();
+function formatTimestamp2(ts) {
+  const date = new Date(ts);
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit"
+  });
+}
+function severityBadge2(severity) {
+  const colors = {
+    info: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+    warning: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+    critical: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+  };
+  return `<span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${colors[severity] || colors.info}">${severity}</span>`;
+}
+function eventTypeBadge2(type) {
+  const colors = {
+    login_success: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+    login_failure: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+    registration: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+    account_lockout: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+    suspicious_activity: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+    logout: "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400",
+    password_reset_request: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+    permission_denied: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
+  };
+  const labels = {
+    login_success: "Login OK",
+    login_failure: "Login Failed",
+    registration: "Registration",
+    account_lockout: "Lockout",
+    suspicious_activity: "Suspicious",
+    logout: "Logout",
+    password_reset_request: "Password Reset",
+    permission_denied: "Access Denied"
+  };
+  const color = colors[type] || "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400";
+  return `<span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${color}">${labels[type] || type}</span>`;
+}
+function buildFilterUrl(filters, overrides = {}) {
+  const params = new URLSearchParams();
+  if (filters.eventType && !overrides.type) params.set("type", String(filters.eventType));
+  if (filters.severity && !overrides.severity) params.set("severity", String(filters.severity));
+  if (filters.email && !overrides.email) params.set("email", filters.email);
+  if (filters.ipAddress && !overrides.ip) params.set("ip", filters.ipAddress);
+  if (filters.search && !overrides.search) params.set("search", filters.search);
+  for (const [key, value] of Object.entries(overrides)) {
+    if (value) params.set(key, value);
+  }
+  const qs = params.toString();
+  return `/admin/plugins/security-audit/events${qs ? "?" + qs : ""}`;
+}
+function renderEventLogPage(data) {
+  const { events, pagination, filters, user, version, dynamicMenuItems } = data;
+  const content2 = `
+    <div>
+      <div class="sm:flex sm:items-center sm:justify-between mb-6">
+        <div class="sm:flex-auto">
+          <h1 class="text-2xl/8 font-semibold text-zinc-950 dark:text-white sm:text-xl/8">Security Event Log</h1>
+          <p class="mt-2 text-sm/6 text-zinc-500 dark:text-zinc-400">
+            Browse and filter all security events. Showing ${pagination.startItem}-${pagination.endItem} of ${pagination.totalItems}.
+          </p>
+        </div>
+        <div class="mt-4 sm:mt-0 sm:ml-16 flex gap-x-2">
+          <a href="/admin/plugins/security-audit"
+            class="inline-flex items-center justify-center rounded-lg bg-white dark:bg-zinc-800 px-3.5 py-2.5 text-sm font-semibold text-zinc-950 dark:text-white hover:bg-zinc-50 dark:hover:bg-zinc-700 ring-1 ring-inset ring-zinc-950/10 dark:ring-white/10 transition-colors shadow-sm">
+            Dashboard
+          </a>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="rounded-xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl p-5 ring-1 ring-zinc-950/5 dark:ring-white/10 shadow-sm mb-6">
+        <form method="GET" action="/admin/plugins/security-audit/events" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div>
+            <label class="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1">Event Type</label>
+            <select name="type" class="w-full rounded-lg border-0 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-zinc-900 dark:text-white ring-1 ring-inset ring-zinc-300 dark:ring-zinc-700 focus:ring-2 focus:ring-cyan-500">
+              <option value="">All Types</option>
+              <option value="login_success" ${filters.eventType === "login_success" ? "selected" : ""}>Login Success</option>
+              <option value="login_failure" ${filters.eventType === "login_failure" ? "selected" : ""}>Login Failure</option>
+              <option value="registration" ${filters.eventType === "registration" ? "selected" : ""}>Registration</option>
+              <option value="account_lockout" ${filters.eventType === "account_lockout" ? "selected" : ""}>Account Lockout</option>
+              <option value="suspicious_activity" ${filters.eventType === "suspicious_activity" ? "selected" : ""}>Suspicious Activity</option>
+              <option value="logout" ${filters.eventType === "logout" ? "selected" : ""}>Logout</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1">Severity</label>
+            <select name="severity" class="w-full rounded-lg border-0 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-zinc-900 dark:text-white ring-1 ring-inset ring-zinc-300 dark:ring-zinc-700 focus:ring-2 focus:ring-cyan-500">
+              <option value="">All Severities</option>
+              <option value="info" ${filters.severity === "info" ? "selected" : ""}>Info</option>
+              <option value="warning" ${filters.severity === "warning" ? "selected" : ""}>Warning</option>
+              <option value="critical" ${filters.severity === "critical" ? "selected" : ""}>Critical</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1">Email</label>
+            <input type="text" name="email" value="${filters.email || ""}" placeholder="Filter by email"
+              class="w-full rounded-lg border-0 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-zinc-900 dark:text-white ring-1 ring-inset ring-zinc-300 dark:ring-zinc-700 focus:ring-2 focus:ring-cyan-500 placeholder:text-zinc-400">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1">IP Address</label>
+            <input type="text" name="ip" value="${filters.ipAddress || ""}" placeholder="Filter by IP"
+              class="w-full rounded-lg border-0 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-zinc-900 dark:text-white ring-1 ring-inset ring-zinc-300 dark:ring-zinc-700 focus:ring-2 focus:ring-cyan-500 placeholder:text-zinc-400">
+          </div>
+          <div class="flex items-end gap-2">
+            <button type="submit"
+              class="flex-1 rounded-lg bg-cyan-600 px-3 py-2 text-sm font-semibold text-white hover:bg-cyan-500 transition-colors shadow-sm">
+              Filter
+            </button>
+            <a href="/admin/plugins/security-audit/events"
+              class="rounded-lg bg-zinc-100 dark:bg-zinc-800 px-3 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">
+              Clear
+            </a>
+          </div>
+        </form>
+      </div>
+
+      <!-- Events Table -->
+      <div class="rounded-xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl ring-1 ring-zinc-950/5 dark:ring-white/10 shadow-sm overflow-hidden">
+        ${events.length === 0 ? `<div class="p-12 text-center">
+              <svg class="mx-auto h-12 w-12 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+              </svg>
+              <h3 class="mt-2 text-sm font-semibold text-zinc-900 dark:text-white">No events found</h3>
+              <p class="mt-1 text-sm text-zinc-500">No security events match your current filters.</p>
+            </div>` : `<div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-zinc-200 dark:divide-zinc-800">
+              <thead>
+                <tr>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">Time</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">Type</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">Severity</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">Email</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">IP Address</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">Country</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">Status</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
+                ${events.map((event) => `
+                  <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/50 cursor-pointer" onclick="this.querySelector('.event-details').classList.toggle('hidden')">
+                    <td class="px-4 py-3 text-sm text-zinc-600 dark:text-zinc-300 whitespace-nowrap">${formatTimestamp2(event.createdAt)}</td>
+                    <td class="px-4 py-3">${eventTypeBadge2(event.eventType)}</td>
+                    <td class="px-4 py-3">${severityBadge2(event.severity)}</td>
+                    <td class="px-4 py-3 text-sm text-zinc-600 dark:text-zinc-300 max-w-[200px] truncate">${event.email || "-"}</td>
+                    <td class="px-4 py-3 text-sm font-mono text-zinc-600 dark:text-zinc-300">${event.ipAddress || "-"}</td>
+                    <td class="px-4 py-3 text-sm text-zinc-600 dark:text-zinc-300">${event.countryCode || "-"}</td>
+                    <td class="px-4 py-3">
+                      ${event.blocked ? '<span class="inline-flex items-center rounded-md bg-red-100 dark:bg-red-900/30 px-2 py-1 text-xs font-medium text-red-700 dark:text-red-400">Blocked</span>' : '<span class="inline-flex items-center rounded-md bg-emerald-100 dark:bg-emerald-900/30 px-2 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-400">Allowed</span>'}
+                    </td>
+                  </tr>
+                  <tr class="event-details hidden">
+                    <td colspan="7" class="px-4 py-3 bg-zinc-50 dark:bg-zinc-800/30">
+                      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+                        <div><span class="font-medium text-zinc-500">Event ID:</span> <span class="text-zinc-700 dark:text-zinc-300 font-mono">${event.id.substring(0, 8)}...</span></div>
+                        <div><span class="font-medium text-zinc-500">User Agent:</span> <span class="text-zinc-700 dark:text-zinc-300 truncate block max-w-[300px]">${event.userAgent || "-"}</span></div>
+                        <div><span class="font-medium text-zinc-500">Path:</span> <span class="text-zinc-700 dark:text-zinc-300">${event.requestPath || "-"}</span></div>
+                        <div><span class="font-medium text-zinc-500">Fingerprint:</span> <span class="text-zinc-700 dark:text-zinc-300 font-mono">${event.fingerprint || "-"}</span></div>
+                        ${event.details ? `<div class="col-span-full"><span class="font-medium text-zinc-500">Details:</span> <pre class="text-zinc-700 dark:text-zinc-300 mt-1 bg-zinc-100 dark:bg-zinc-900 rounded p-2 overflow-x-auto">${JSON.stringify(event.details, null, 2)}</pre></div>` : ""}
+                      </div>
+                    </td>
+                  </tr>
+                `).join("")}
+              </tbody>
+            </table>
+          </div>`}
+
+        <!-- Pagination -->
+        ${pagination.totalPages > 1 ? `
+          <div class="flex items-center justify-between border-t border-zinc-200 dark:border-zinc-800 px-4 py-3">
+            <div class="text-sm text-zinc-500">
+              Page ${pagination.currentPage} of ${pagination.totalPages}
+            </div>
+            <div class="flex gap-1">
+              ${pagination.currentPage > 1 ? `
+                <a href="${buildFilterUrl(filters, { page: String(pagination.currentPage - 1) })}"
+                  class="rounded-lg px-3 py-1.5 text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+                  Previous
+                </a>
+              ` : ""}
+              ${pagination.currentPage < pagination.totalPages ? `
+                <a href="${buildFilterUrl(filters, { page: String(pagination.currentPage + 1) })}"
+                  class="rounded-lg px-3 py-1.5 text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+                  Next
+                </a>
+              ` : ""}
+            </div>
+          </div>
+        ` : ""}
+      </div>
+    </div>
+  `;
+  const layoutData = {
+    title: "Security Event Log",
+    pageTitle: "Security Event Log",
+    currentPath: "/admin/plugins/security-audit/events",
+    user,
+    content: content2,
+    version,
+    dynamicMenuItems
+  };
+  return renderAdminLayoutCatalyst(layoutData);
+}
+
+// src/plugins/core-plugins/security-audit-plugin/components/settings-page.ts
+init_admin_layout_catalyst_template();
+function renderSecuritySettingsPage(data) {
+  const { settings, user, version, message, dynamicMenuItems } = data;
+  const content2 = `
+    <div>
+      <div class="sm:flex sm:items-center sm:justify-between mb-6">
+        <div class="sm:flex-auto">
+          <h1 class="text-2xl/8 font-semibold text-zinc-950 dark:text-white sm:text-xl/8">Security Audit Settings</h1>
+          <p class="mt-2 text-sm/6 text-zinc-500 dark:text-zinc-400">
+            Configure brute-force detection thresholds, event logging, and data retention.
+          </p>
+        </div>
+        <div class="mt-4 sm:mt-0 sm:ml-16 flex gap-x-2">
+          <a href="/admin/plugins/security-audit"
+            class="inline-flex items-center justify-center rounded-lg bg-white dark:bg-zinc-800 px-3.5 py-2.5 text-sm font-semibold text-zinc-950 dark:text-white hover:bg-zinc-50 dark:hover:bg-zinc-700 ring-1 ring-inset ring-zinc-950/10 dark:ring-white/10 transition-colors shadow-sm">
+            Dashboard
+          </a>
+        </div>
+      </div>
+
+      ${message ? `
+        <div class="mb-6 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 p-4 ring-1 ring-emerald-200 dark:ring-emerald-800">
+          <p class="text-sm text-emerald-800 dark:text-emerald-300">${message}</p>
+        </div>
+      ` : ""}
+
+      <form method="POST" action="/admin/plugins/security-audit/settings"
+        class="space-y-6"
+        hx-post="/admin/plugins/security-audit/settings"
+        hx-swap="none"
+        hx-on::after-request="if(event.detail.successful) { window.showNotification && window.showNotification('Settings saved', 'success'); } else { window.showNotification && window.showNotification('Failed to save', 'error'); }">
+
+        <!-- Brute Force Detection -->
+        <div class="rounded-xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl p-6 ring-1 ring-zinc-950/5 dark:ring-white/10 shadow-sm">
+          <h2 class="text-base font-semibold text-zinc-950 dark:text-white mb-4">Brute-Force Detection</h2>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div>
+              <label class="flex items-center gap-2 mb-4">
+                <input type="checkbox" name="bruteForce.enabled" value="true" ${settings.bruteForce.enabled ? "checked" : ""}
+                  class="rounded border-zinc-300 text-cyan-600 focus:ring-cyan-500">
+                <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Enable brute-force detection</span>
+              </label>
+            </div>
+            <div></div><div></div>
+            <div>
+              <label class="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1">Max Failed Attempts per IP</label>
+              <input type="number" name="bruteForce.maxFailedAttemptsPerIP" value="${settings.bruteForce.maxFailedAttemptsPerIP}" min="1" max="100"
+                class="w-full rounded-lg border-0 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-zinc-900 dark:text-white ring-1 ring-inset ring-zinc-300 dark:ring-zinc-700 focus:ring-2 focus:ring-cyan-500">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1">Max Failed Attempts per Email</label>
+              <input type="number" name="bruteForce.maxFailedAttemptsPerEmail" value="${settings.bruteForce.maxFailedAttemptsPerEmail}" min="1" max="100"
+                class="w-full rounded-lg border-0 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-zinc-900 dark:text-white ring-1 ring-inset ring-zinc-300 dark:ring-zinc-700 focus:ring-2 focus:ring-cyan-500">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1">Window (minutes)</label>
+              <input type="number" name="bruteForce.windowMinutes" value="${settings.bruteForce.windowMinutes}" min="1" max="1440"
+                class="w-full rounded-lg border-0 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-zinc-900 dark:text-white ring-1 ring-inset ring-zinc-300 dark:ring-zinc-700 focus:ring-2 focus:ring-cyan-500">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1">Lockout Duration (minutes)</label>
+              <input type="number" name="bruteForce.lockoutDurationMinutes" value="${settings.bruteForce.lockoutDurationMinutes}" min="1" max="1440"
+                class="w-full rounded-lg border-0 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-zinc-900 dark:text-white ring-1 ring-inset ring-zinc-300 dark:ring-zinc-700 focus:ring-2 focus:ring-cyan-500">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1">Alert Threshold</label>
+              <input type="number" name="bruteForce.alertThreshold" value="${settings.bruteForce.alertThreshold}" min="1" max="1000"
+                class="w-full rounded-lg border-0 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-zinc-900 dark:text-white ring-1 ring-inset ring-zinc-300 dark:ring-zinc-700 focus:ring-2 focus:ring-cyan-500">
+              <p class="mt-1 text-xs text-zinc-400">Events above this count trigger critical severity</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Event Logging -->
+        <div class="rounded-xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl p-6 ring-1 ring-zinc-950/5 dark:ring-white/10 shadow-sm">
+          <h2 class="text-base font-semibold text-zinc-950 dark:text-white mb-4">Event Logging</h2>
+          <div class="space-y-3">
+            <label class="flex items-center gap-2">
+              <input type="checkbox" name="logging.logSuccessfulLogins" value="true" ${settings.logging.logSuccessfulLogins ? "checked" : ""}
+                class="rounded border-zinc-300 text-cyan-600 focus:ring-cyan-500">
+              <span class="text-sm text-zinc-700 dark:text-zinc-300">Log successful logins</span>
+            </label>
+            <label class="flex items-center gap-2">
+              <input type="checkbox" name="logging.logLogouts" value="true" ${settings.logging.logLogouts ? "checked" : ""}
+                class="rounded border-zinc-300 text-cyan-600 focus:ring-cyan-500">
+              <span class="text-sm text-zinc-700 dark:text-zinc-300">Log logouts</span>
+            </label>
+            <label class="flex items-center gap-2">
+              <input type="checkbox" name="logging.logRegistrations" value="true" ${settings.logging.logRegistrations ? "checked" : ""}
+                class="rounded border-zinc-300 text-cyan-600 focus:ring-cyan-500">
+              <span class="text-sm text-zinc-700 dark:text-zinc-300">Log registrations</span>
+            </label>
+            <label class="flex items-center gap-2">
+              <input type="checkbox" name="logging.logPasswordResets" value="true" ${settings.logging.logPasswordResets ? "checked" : ""}
+                class="rounded border-zinc-300 text-cyan-600 focus:ring-cyan-500">
+              <span class="text-sm text-zinc-700 dark:text-zinc-300">Log password resets</span>
+            </label>
+            <label class="flex items-center gap-2">
+              <input type="checkbox" name="logging.logPermissionDenied" value="true" ${settings.logging.logPermissionDenied ? "checked" : ""}
+                class="rounded border-zinc-300 text-cyan-600 focus:ring-cyan-500">
+              <span class="text-sm text-zinc-700 dark:text-zinc-300">Log permission denied events</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Data Retention -->
+        <div class="rounded-xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl p-6 ring-1 ring-zinc-950/5 dark:ring-white/10 shadow-sm">
+          <h2 class="text-base font-semibold text-zinc-950 dark:text-white mb-4">Data Retention</h2>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1">Days to Keep</label>
+              <input type="number" name="retention.daysToKeep" value="${settings.retention.daysToKeep}" min="1" max="365"
+                class="w-full rounded-lg border-0 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-zinc-900 dark:text-white ring-1 ring-inset ring-zinc-300 dark:ring-zinc-700 focus:ring-2 focus:ring-cyan-500">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1">Max Events</label>
+              <input type="number" name="retention.maxEvents" value="${settings.retention.maxEvents}" min="1000" max="1000000"
+                class="w-full rounded-lg border-0 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-zinc-900 dark:text-white ring-1 ring-inset ring-zinc-300 dark:ring-zinc-700 focus:ring-2 focus:ring-cyan-500">
+            </div>
+            <div>
+              <label class="flex items-center gap-2 mt-5">
+                <input type="checkbox" name="retention.autoPurge" value="true" ${settings.retention.autoPurge ? "checked" : ""}
+                  class="rounded border-zinc-300 text-cyan-600 focus:ring-cyan-500">
+                <span class="text-sm text-zinc-700 dark:text-zinc-300">Auto-purge old events</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex items-center justify-between">
+          <button type="button"
+            onclick="if(confirm('Purge events older than retention period?')) fetch('/api/security-audit/events/purge', {method:'POST',headers:{'Content-Type':'application/json'}}).then(r=>r.json()).then(d=>window.showNotification && window.showNotification('Purged '+d.deleted+' events','success'))"
+            class="rounded-lg bg-red-50 dark:bg-red-900/20 px-4 py-2.5 text-sm font-medium text-red-700 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 ring-1 ring-red-200 dark:ring-red-800 transition-colors">
+            Purge Old Events
+          </button>
+          <button type="submit"
+            class="rounded-lg bg-cyan-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-cyan-500 transition-colors shadow-sm">
+            Save Settings
+          </button>
+        </div>
+      </form>
+    </div>
+  `;
+  const layoutData = {
+    title: "Security Audit Settings",
+    pageTitle: "Security Audit Settings",
+    currentPath: "/admin/plugins/security-audit/settings",
+    user,
+    content: content2,
+    version,
+    dynamicMenuItems
+  };
+  return renderAdminLayoutCatalyst(layoutData);
+}
+
+// src/plugins/core-plugins/security-audit-plugin/routes/admin.ts
+var adminRoutes2 = new Hono();
+adminRoutes2.use("*", requireAuth());
+adminRoutes2.use("*", async (c, next) => {
+  const user = c.get("user");
+  if (user?.role !== "admin") {
+    return c.text("Access denied", 403);
+  }
+  return next();
+});
+async function getSettings(db) {
+  try {
+    const pluginService = new PluginService(db);
+    const plugin2 = await pluginService.getPlugin("security-audit");
+    if (plugin2?.settings) {
+      const settings = typeof plugin2.settings === "string" ? JSON.parse(plugin2.settings) : plugin2.settings;
+      return { ...DEFAULT_SETTINGS2, ...settings };
+    }
+  } catch {
+  }
+  return DEFAULT_SETTINGS2;
+}
+adminRoutes2.get("/", async (c) => {
+  const db = c.env.DB;
+  const user = c.get("user");
+  const settings = await getSettings(db);
+  const service = new SecurityAuditService(db, settings);
+  const [stats, topIPs, hourlyTrend, recentCritical] = await Promise.all([
+    service.getStats(),
+    service.getTopIPs(10),
+    service.getHourlyTrend(24),
+    service.getRecentCriticalEvents(20)
+  ]);
+  const pageData = {
+    stats,
+    topIPs,
+    hourlyTrend,
+    recentCritical,
+    user: user ? { name: user.email, email: user.email, role: user.role } : void 0,
+    version: c.get("appVersion"),
+    dynamicMenuItems: c.get("pluginMenuItems")
+  };
+  return c.html(renderSecurityDashboard(pageData));
+});
+adminRoutes2.get("/events", async (c) => {
+  const db = c.env.DB;
+  const user = c.get("user");
+  const settings = await getSettings(db);
+  const service = new SecurityAuditService(db, settings);
+  const page = parseInt(c.req.query("page") || "1");
+  const limit = 50;
+  const filters = {
+    eventType: c.req.query("type") || void 0,
+    severity: c.req.query("severity") || void 0,
+    email: c.req.query("email") || void 0,
+    ipAddress: c.req.query("ip") || void 0,
+    search: c.req.query("search") || void 0,
+    page,
+    limit
+  };
+  const { events, total } = await service.getEvents(filters);
+  const totalPages = Math.ceil(total / limit);
+  const pageData = {
+    events,
+    pagination: {
+      currentPage: page,
+      totalPages,
+      totalItems: total,
+      itemsPerPage: limit,
+      startItem: total === 0 ? 0 : (page - 1) * limit + 1,
+      endItem: Math.min(page * limit, total)
+    },
+    filters,
+    user: user ? { name: user.email, email: user.email, role: user.role } : void 0,
+    version: c.get("appVersion"),
+    dynamicMenuItems: c.get("pluginMenuItems")
+  };
+  return c.html(renderEventLogPage(pageData));
+});
+adminRoutes2.get("/settings", async (c) => {
+  const db = c.env.DB;
+  const user = c.get("user");
+  const settings = await getSettings(db);
+  const pageData = {
+    settings,
+    user: user ? { name: user.email, email: user.email, role: user.role } : void 0,
+    version: c.get("appVersion"),
+    message: c.req.query("message") || void 0,
+    dynamicMenuItems: c.get("pluginMenuItems")
+  };
+  return c.html(renderSecuritySettingsPage(pageData));
+});
+adminRoutes2.post("/settings", async (c) => {
+  const db = c.env.DB;
+  const body = await c.req.parseBody();
+  const settings = {
+    bruteForce: {
+      enabled: body["bruteForce.enabled"] === "true",
+      maxFailedAttemptsPerIP: parseInt(body["bruteForce.maxFailedAttemptsPerIP"]) || 10,
+      maxFailedAttemptsPerEmail: parseInt(body["bruteForce.maxFailedAttemptsPerEmail"]) || 5,
+      windowMinutes: parseInt(body["bruteForce.windowMinutes"]) || 15,
+      lockoutDurationMinutes: parseInt(body["bruteForce.lockoutDurationMinutes"]) || 30,
+      alertThreshold: parseInt(body["bruteForce.alertThreshold"]) || 20
+    },
+    logging: {
+      logSuccessfulLogins: body["logging.logSuccessfulLogins"] === "true",
+      logLogouts: body["logging.logLogouts"] === "true",
+      logRegistrations: body["logging.logRegistrations"] === "true",
+      logPasswordResets: body["logging.logPasswordResets"] === "true",
+      logPermissionDenied: body["logging.logPermissionDenied"] === "true"
+    },
+    retention: {
+      daysToKeep: parseInt(body["retention.daysToKeep"]) || 90,
+      maxEvents: parseInt(body["retention.maxEvents"]) || 1e5,
+      autoPurge: body["retention.autoPurge"] === "true"
+    }
+  };
+  const pluginService = new PluginService(db);
+  await pluginService.updatePluginSettings("security-audit", settings);
+  if (c.req.header("HX-Request")) {
+    return c.json({ success: true });
+  }
+  return c.redirect("/admin/plugins/security-audit/settings?message=Settings saved successfully");
+});
+
+// src/plugins/core-plugins/security-audit-plugin/services/brute-force-detector.ts
+var KV_PREFIX = "security:bf:";
+var LOCK_PREFIX = "security:locked:";
+var BruteForceDetector = class {
+  constructor(kv, settings) {
+    this.kv = kv;
+    this.settings = settings || DEFAULT_SETTINGS2.bruteForce;
+  }
+  settings;
+  async recordFailedAttempt(ip, email) {
+    if (!this.settings.enabled) {
+      return { ipCount: 0, emailCount: 0, shouldLockIP: false, shouldLockEmail: false, isSuspicious: false };
+    }
+    const windowMs = this.settings.windowMinutes * 60 * 1e3;
+    const ipKey = `${KV_PREFIX}ip:${ip}`;
+    const ipCount = await this.incrementCounter(ipKey, windowMs);
+    const emailKey = `${KV_PREFIX}email:${email}`;
+    const emailCount = await this.incrementCounter(emailKey, windowMs);
+    const ipEmailsKey = `${KV_PREFIX}ip-emails:${ip}`;
+    await this.addToSet(ipEmailsKey, email, windowMs);
+    const emailsFromIP = await this.getSetSize(ipEmailsKey);
+    const isSuspicious = emailsFromIP >= 5;
+    const shouldLockIP = ipCount >= this.settings.maxFailedAttemptsPerIP;
+    const shouldLockEmail = emailCount >= this.settings.maxFailedAttemptsPerEmail;
+    return { ipCount, emailCount, shouldLockIP, shouldLockEmail, isSuspicious };
+  }
+  async isLocked(ip, email) {
+    if (!this.settings.enabled) {
+      return { locked: false };
+    }
+    const ipLocked = await this.kv.get(`${LOCK_PREFIX}ip:${ip}`);
+    if (ipLocked) {
+      return { locked: true, reason: "IP address temporarily locked due to excessive failed login attempts" };
+    }
+    const emailLocked = await this.kv.get(`${LOCK_PREFIX}email:${email}`);
+    if (emailLocked) {
+      return { locked: true, reason: "Account temporarily locked due to excessive failed login attempts" };
+    }
+    return { locked: false };
+  }
+  async lockIP(ip) {
+    const ttl = this.settings.lockoutDurationMinutes * 60;
+    await this.kv.put(`${LOCK_PREFIX}ip:${ip}`, JSON.stringify({
+      lockedAt: Date.now(),
+      reason: "brute_force_ip"
+    }), { expirationTtl: ttl });
+  }
+  async lockEmail(email) {
+    const ttl = this.settings.lockoutDurationMinutes * 60;
+    await this.kv.put(`${LOCK_PREFIX}email:${email}`, JSON.stringify({
+      lockedAt: Date.now(),
+      reason: "brute_force_email"
+    }), { expirationTtl: ttl });
+  }
+  async unlockIP(ip) {
+    await this.kv.delete(`${LOCK_PREFIX}ip:${ip}`);
+  }
+  async unlockEmail(email) {
+    await this.kv.delete(`${LOCK_PREFIX}email:${email}`);
+  }
+  async getActiveLockouts() {
+    const ipLocks = await this.kv.list({ prefix: `${LOCK_PREFIX}ip:` });
+    const emailLocks = await this.kv.list({ prefix: `${LOCK_PREFIX}email:` });
+    const lockouts = [];
+    for (const key of ipLocks.keys) {
+      const data = await this.kv.get(key.name);
+      if (data) {
+        const parsed = JSON.parse(data);
+        lockouts.push({
+          key: key.name,
+          type: "ip",
+          value: key.name.replace(`${LOCK_PREFIX}ip:`, ""),
+          lockedAt: parsed.lockedAt
+        });
+      }
+    }
+    for (const key of emailLocks.keys) {
+      const data = await this.kv.get(key.name);
+      if (data) {
+        const parsed = JSON.parse(data);
+        lockouts.push({
+          key: key.name,
+          type: "email",
+          value: key.name.replace(`${LOCK_PREFIX}email:`, ""),
+          lockedAt: parsed.lockedAt
+        });
+      }
+    }
+    return lockouts;
+  }
+  async releaseLockout(key) {
+    await this.kv.delete(key);
+  }
+  isAboveAlertThreshold(count) {
+    return count >= this.settings.alertThreshold;
+  }
+  async incrementCounter(key, windowMs) {
+    const existing = await this.kv.get(key);
+    const now = Date.now();
+    let entries = [];
+    if (existing) {
+      try {
+        entries = JSON.parse(existing);
+      } catch {
+        entries = [];
+      }
+    }
+    const cutoff = now - windowMs;
+    entries = entries.filter((ts) => ts > cutoff);
+    entries.push(now);
+    const ttlSeconds = Math.ceil(windowMs / 1e3);
+    await this.kv.put(key, JSON.stringify(entries), { expirationTtl: ttlSeconds });
+    return entries.length;
+  }
+  async addToSet(key, value, windowMs) {
+    const existing = await this.kv.get(key);
+    let set = {};
+    const now = Date.now();
+    const cutoff = now - windowMs;
+    if (existing) {
+      try {
+        set = JSON.parse(existing);
+      } catch {
+        set = {};
+      }
+    }
+    for (const [k, ts] of Object.entries(set)) {
+      if (ts < cutoff) delete set[k];
+    }
+    set[value] = now;
+    const ttlSeconds = Math.ceil(windowMs / 1e3);
+    await this.kv.put(key, JSON.stringify(set), { expirationTtl: ttlSeconds });
+  }
+  async getSetSize(key) {
+    const existing = await this.kv.get(key);
+    if (!existing) return 0;
+    try {
+      const set = JSON.parse(existing);
+      return Object.keys(set).length;
+    } catch {
+      return 0;
+    }
+  }
+};
+
+// src/plugins/core-plugins/security-audit-plugin/routes/api.ts
+var apiRoutes2 = new Hono();
+apiRoutes2.use("*", requireAuth());
+apiRoutes2.use("*", async (c, next) => {
+  const user = c.get("user");
+  if (user?.role !== "admin") {
+    return c.json({ error: "Access denied" }, 403);
+  }
+  return next();
+});
+async function getSettings2(db) {
+  try {
+    const pluginService = new PluginService(db);
+    const plugin2 = await pluginService.getPlugin("security-audit");
+    if (plugin2?.settings) {
+      const settings = typeof plugin2.settings === "string" ? JSON.parse(plugin2.settings) : plugin2.settings;
+      return { ...DEFAULT_SETTINGS2, ...settings };
+    }
+  } catch {
+  }
+  return DEFAULT_SETTINGS2;
+}
+apiRoutes2.get("/events", async (c) => {
+  const db = c.env.DB;
+  const settings = await getSettings2(db);
+  const service = new SecurityAuditService(db, settings);
+  const filters = {
+    eventType: c.req.query("type"),
+    severity: c.req.query("severity"),
+    email: c.req.query("email") || void 0,
+    ipAddress: c.req.query("ip") || void 0,
+    search: c.req.query("search") || void 0,
+    startDate: c.req.query("start") ? parseInt(c.req.query("start")) : void 0,
+    endDate: c.req.query("end") ? parseInt(c.req.query("end")) : void 0,
+    page: c.req.query("page") ? parseInt(c.req.query("page")) : 1,
+    limit: c.req.query("limit") ? Math.min(parseInt(c.req.query("limit")), 100) : 50,
+    sortBy: c.req.query("sortBy") || "created_at",
+    sortOrder: c.req.query("sortOrder") || "desc"
+  };
+  const result = await service.getEvents(filters);
+  return c.json(result);
+});
+apiRoutes2.get("/events/:id", async (c) => {
+  const db = c.env.DB;
+  const settings = await getSettings2(db);
+  const service = new SecurityAuditService(db, settings);
+  const event = await service.getEvent(c.req.param("id"));
+  if (!event) {
+    return c.json({ error: "Event not found" }, 404);
+  }
+  return c.json(event);
+});
+apiRoutes2.get("/stats", async (c) => {
+  const db = c.env.DB;
+  const settings = await getSettings2(db);
+  const service = new SecurityAuditService(db, settings);
+  const stats = await service.getStats();
+  return c.json(stats);
+});
+apiRoutes2.get("/stats/ips", async (c) => {
+  const db = c.env.DB;
+  const settings = await getSettings2(db);
+  const service = new SecurityAuditService(db, settings);
+  const limit = c.req.query("limit") ? parseInt(c.req.query("limit")) : 10;
+  const ips = await service.getTopIPs(limit);
+  return c.json(ips);
+});
+apiRoutes2.get("/stats/trend", async (c) => {
+  const db = c.env.DB;
+  const settings = await getSettings2(db);
+  const service = new SecurityAuditService(db, settings);
+  const hours = c.req.query("hours") ? parseInt(c.req.query("hours")) : 24;
+  const trend = await service.getHourlyTrend(hours);
+  return c.json(trend);
+});
+apiRoutes2.get("/lockouts", async (c) => {
+  const kv = c.env.CACHE_KV;
+  const db = c.env.DB;
+  const settings = await getSettings2(db);
+  const detector = new BruteForceDetector(kv, settings.bruteForce);
+  const lockouts = await detector.getActiveLockouts();
+  return c.json(lockouts);
+});
+apiRoutes2.delete("/lockouts/:key", async (c) => {
+  const kv = c.env.CACHE_KV;
+  const key = decodeURIComponent(c.req.param("key"));
+  const db = c.env.DB;
+  const settings = await getSettings2(db);
+  const detector = new BruteForceDetector(kv, settings.bruteForce);
+  await detector.releaseLockout(key);
+  return c.json({ success: true });
+});
+apiRoutes2.post("/events/purge", async (c) => {
+  const db = c.env.DB;
+  const settings = await getSettings2(db);
+  const service = new SecurityAuditService(db, settings);
+  const body = await c.req.json().catch(() => ({}));
+  const deleted = await service.purgeOldEvents(body.daysToKeep);
+  return c.json({ success: true, deleted });
+});
+apiRoutes2.get("/export", async (c) => {
+  const db = c.env.DB;
+  const settings = await getSettings2(db);
+  const service = new SecurityAuditService(db, settings);
+  const format = c.req.query("format") || "json";
+  const filters = {
+    eventType: c.req.query("type"),
+    severity: c.req.query("severity"),
+    startDate: c.req.query("start") ? parseInt(c.req.query("start")) : void 0,
+    endDate: c.req.query("end") ? parseInt(c.req.query("end")) : void 0,
+    limit: 1e4,
+    page: 1
+  };
+  const { events } = await service.getEvents(filters);
+  if (format === "csv") {
+    const headers = ["id", "event_type", "severity", "email", "ip_address", "country_code", "blocked", "created_at"];
+    const csvRows = [headers.join(",")];
+    for (const event of events) {
+      csvRows.push([
+        event.id,
+        event.eventType,
+        event.severity,
+        event.email || "",
+        event.ipAddress || "",
+        event.countryCode || "",
+        event.blocked ? "1" : "0",
+        new Date(event.createdAt).toISOString()
+      ].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(","));
+    }
+    return new Response(csvRows.join("\n"), {
+      headers: {
+        "Content-Type": "text/csv",
+        "Content-Disposition": `attachment; filename="security-events-${Date.now()}.csv"`
+      }
+    });
+  }
+  return c.json(events);
+});
+
+// src/plugins/core-plugins/security-audit-plugin/middleware/audit-middleware.ts
+function extractRequestInfo(c) {
+  const ip = c.req.header("cf-connecting-ip") || c.req.header("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  const userAgent = c.req.header("user-agent") || "unknown";
+  const countryCode = c.req.header("cf-ipcountry") || null;
+  const path = new URL(c.req.url).pathname;
+  const method = c.req.method;
+  return { ip, userAgent, countryCode, path, method };
+}
+function generateFingerprint(ip, userAgent) {
+  const str = `${ip}:${userAgent}`;
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash |= 0;
+  }
+  return Math.abs(hash).toString(36);
+}
+async function getPluginSettings(db) {
+  try {
+    const pluginService = new PluginService(db);
+    const plugin2 = await pluginService.getPlugin("security-audit");
+    if (plugin2?.settings) {
+      const settings = typeof plugin2.settings === "string" ? JSON.parse(plugin2.settings) : plugin2.settings;
+      return { ...DEFAULT_SETTINGS2, ...settings };
+    }
+  } catch {
+  }
+  return DEFAULT_SETTINGS2;
+}
+async function isPluginActive2(db) {
+  try {
+    const result = await db.prepare(
+      "SELECT status FROM plugins WHERE id = 'security-audit'"
+    ).first();
+    return result?.status === "active";
+  } catch {
+    return false;
+  }
+}
+function securityAuditMiddleware() {
+  return async (c, next) => {
+    const path = new URL(c.req.url).pathname;
+    if (!path.startsWith("/auth/")) {
+      return next();
+    }
+    const db = c.env.DB;
+    if (!await isPluginActive2(db)) {
+      return next();
+    }
+    const settings = await getPluginSettings(db);
+    const { ip, userAgent, countryCode, method } = extractRequestInfo(c);
+    const fingerprint = generateFingerprint(ip, userAgent);
+    const isLoginPost = (path === "/auth/login" || path === "/auth/login/form") && method === "POST";
+    let preExtractedEmail = "";
+    if (isLoginPost) {
+      try {
+        if (path === "/auth/login/form") {
+          const clonedReq = c.req.raw.clone();
+          const formData = await clonedReq.formData();
+          preExtractedEmail = (formData.get("email") || "").toLowerCase();
+        } else {
+          const body = await c.req.json();
+          preExtractedEmail = body?.email?.toLowerCase() || "";
+        }
+      } catch {
+      }
+      if (preExtractedEmail && settings.bruteForce.enabled) {
+        const detector = new BruteForceDetector(c.env.CACHE_KV, settings.bruteForce);
+        const lockStatus = await detector.isLocked(ip, preExtractedEmail);
+        if (lockStatus.locked) {
+          const service = new SecurityAuditService(db, settings);
+          const logPromise2 = service.logEvent({
+            eventType: "login_failure",
+            severity: "warning",
+            email: preExtractedEmail,
+            ipAddress: ip,
+            userAgent,
+            countryCode: countryCode || void 0,
+            requestPath: path,
+            requestMethod: method,
+            fingerprint,
+            blocked: true,
+            details: { reason: lockStatus.reason }
+          });
+          if (c.executionCtx?.waitUntil) {
+            c.executionCtx.waitUntil(logPromise2);
+          }
+          return c.json({
+            error: lockStatus.reason || "Too many failed attempts. Please try again later."
+          }, 429);
+        }
+      }
+    }
+    await next();
+    const logPromise = logAuthEvent(c, db, settings, ip, userAgent, countryCode, fingerprint, path, method, preExtractedEmail);
+    if (c.executionCtx?.waitUntil) {
+      c.executionCtx.waitUntil(logPromise);
+    }
+  };
+}
+async function logAuthEvent(c, db, settings, ip, userAgent, countryCode, fingerprint, path, method, preExtractedEmail = "") {
+  try {
+    const service = new SecurityAuditService(db, settings);
+    const status = c.res.status;
+    const isLoginPost = (path === "/auth/login" || path === "/auth/login/form") && method === "POST";
+    const isFormLogin = path === "/auth/login/form";
+    if (isLoginPost) {
+      let loginSucceeded;
+      if (isFormLogin) {
+        const hxRedirect = c.res.headers.get("HX-Redirect");
+        const setCookieHeader = c.res.headers.get("set-cookie") || "";
+        loginSucceeded = !!(hxRedirect?.includes("/admin") || setCookieHeader.includes("auth_token"));
+      } else {
+        loginSucceeded = status === 200;
+      }
+      if (loginSucceeded) {
+        if (!settings.logging.logSuccessfulLogins) return;
+        let email = preExtractedEmail;
+        let userId = "";
+        if (!isFormLogin) {
+          try {
+            const cloned = c.res.clone();
+            const body = await cloned.json();
+            email = body?.user?.email || email;
+            userId = body?.user?.id || "";
+          } catch {
+          }
+        }
+        await service.logEvent({
+          eventType: "login_success",
+          severity: "info",
+          userId: userId || void 0,
+          email: email || void 0,
+          ipAddress: ip,
+          userAgent,
+          countryCode: countryCode || void 0,
+          requestPath: path,
+          requestMethod: method,
+          fingerprint
+        });
+      } else {
+        const email = preExtractedEmail;
+        await service.logEvent({
+          eventType: "login_failure",
+          severity: "warning",
+          email: email || void 0,
+          ipAddress: ip,
+          userAgent,
+          countryCode: countryCode || void 0,
+          requestPath: path,
+          requestMethod: method,
+          fingerprint,
+          details: { statusCode: status }
+        });
+        if (email && settings.bruteForce.enabled) {
+          const detector = new BruteForceDetector(c.env.CACHE_KV, settings.bruteForce);
+          const result = await detector.recordFailedAttempt(ip, email);
+          if (result.shouldLockIP) {
+            await detector.lockIP(ip);
+            await service.logEvent({
+              eventType: "account_lockout",
+              severity: "critical",
+              email,
+              ipAddress: ip,
+              userAgent,
+              countryCode: countryCode || void 0,
+              requestPath: path,
+              requestMethod: method,
+              fingerprint,
+              details: { reason: "brute_force_ip", attemptCount: result.ipCount }
+            });
+          }
+          if (result.shouldLockEmail) {
+            await detector.lockEmail(email);
+            await service.logEvent({
+              eventType: "account_lockout",
+              severity: "critical",
+              email,
+              ipAddress: ip,
+              userAgent,
+              countryCode: countryCode || void 0,
+              requestPath: path,
+              requestMethod: method,
+              fingerprint,
+              details: { reason: "brute_force_email", attemptCount: result.emailCount }
+            });
+          }
+          if (result.isSuspicious) {
+            await service.logEvent({
+              eventType: "suspicious_activity",
+              severity: "critical",
+              ipAddress: ip,
+              userAgent,
+              countryCode: countryCode || void 0,
+              requestPath: path,
+              requestMethod: method,
+              fingerprint,
+              details: { reason: "multiple_emails_from_ip", ipCount: result.ipCount }
+            });
+          }
+        }
+      }
+    }
+    if (path === "/auth/register" && method === "POST" && settings.logging.logRegistrations) {
+      if (status === 201 || status === 200) {
+        let email = "";
+        let userId = "";
+        try {
+          const cloned = c.res.clone();
+          const body = await cloned.json();
+          email = body?.user?.email || "";
+          userId = body?.user?.id || "";
+        } catch {
+        }
+        await service.logEvent({
+          eventType: "registration",
+          severity: "info",
+          userId: userId || void 0,
+          email: email || void 0,
+          ipAddress: ip,
+          userAgent,
+          countryCode: countryCode || void 0,
+          requestPath: path,
+          requestMethod: method,
+          fingerprint
+        });
+      }
+    }
+    if (path === "/auth/logout" && settings.logging.logLogouts) {
+      const user = c.get("user");
+      await service.logEvent({
+        eventType: "logout",
+        severity: "info",
+        userId: user?.userId,
+        email: user?.email,
+        ipAddress: ip,
+        userAgent,
+        countryCode: countryCode || void 0,
+        requestPath: path,
+        requestMethod: method,
+        fingerprint
+      });
+    }
+  } catch (error) {
+    console.error("[SecurityAudit] Error logging auth event:", error);
+  }
+}
+
+// src/plugins/core-plugins/security-audit-plugin/index.ts
+function createSecurityAuditPlugin() {
+  const builder = PluginBuilder.create({
+    name: "security-audit",
+    version: "1.0.0-beta.1",
+    description: "Security event logging, brute-force detection, and analytics dashboard"
+  });
+  builder.metadata({
+    author: { name: "SonicJS Team" },
+    license: "MIT"
+  });
+  builder.addRoute("/admin/plugins/security-audit", adminRoutes2, {
+    description: "Security audit dashboard and admin pages",
+    requiresAuth: true,
+    priority: 50
+  });
+  builder.addRoute("/api/security-audit", apiRoutes2, {
+    description: "Security audit API endpoints",
+    requiresAuth: true,
+    priority: 50
+  });
+  builder.addMenuItem("Security", "/admin/plugins/security-audit", {
+    icon: `<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>`,
+    order: 85
+  });
+  builder.lifecycle({
+    install: async (context) => {
+      console.log("[SecurityAudit] Plugin installed");
+    },
+    activate: async (context) => {
+      console.log("[SecurityAudit] Plugin activated");
+    },
+    deactivate: async (context) => {
+      console.log("[SecurityAudit] Plugin deactivated");
+    },
+    uninstall: async (context) => {
+      console.log("[SecurityAudit] Plugin uninstalled");
+    }
+  });
+  return builder.build();
+}
+var securityAuditPlugin = createSecurityAuditPlugin();
+
+// src/middleware/plugin-menu.ts
+var MENU_PLUGINS = [
+  securityAuditPlugin
+];
+var MARKER = "<!-- DYNAMIC_PLUGIN_MENU -->";
+function renderMenuItem(item, currentPath) {
+  const isActive = currentPath === item.path || currentPath.startsWith(item.path);
+  const fallbackIcon = `<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>`;
+  return `
+    <span class="relative">
+      ${isActive ? '<span class="absolute inset-y-2 -left-4 w-0.5 rounded-full bg-cyan-500 dark:bg-cyan-400"></span>' : ""}
+      <a
+        href="${item.path}"
+        class="flex w-full items-center gap-3 rounded-lg px-2 py-2.5 text-left text-sm/5 font-medium ${isActive ? "text-zinc-950 dark:text-white" : "text-zinc-950 hover:bg-zinc-950/5 dark:text-white dark:hover:bg-white/5"}"
+        ${isActive ? 'data-current="true"' : ""}
+      >
+        <span class="shrink-0 ${isActive ? "fill-zinc-950 dark:fill-white" : "fill-zinc-500 dark:fill-zinc-400"}">
+          ${item.icon || fallbackIcon}
+        </span>
+        <span class="truncate">${item.label}</span>
+      </a>
+    </span>`;
+}
+function pluginMenuMiddleware() {
+  return async (c, next) => {
+    const path = new URL(c.req.url).pathname;
+    if (!path.startsWith("/admin")) {
+      return next();
+    }
+    let activeMenuItems = [];
+    try {
+      const db = c.env.DB;
+      const pluginNames = MENU_PLUGINS.map((p) => p.name);
+      if (pluginNames.length > 0) {
+        const placeholders = pluginNames.map(() => "?").join(",");
+        const result = await db.prepare(
+          `SELECT name FROM plugins WHERE name IN (${placeholders}) AND status = 'active'`
+        ).bind(...pluginNames).all();
+        const activeNames = new Set((result.results || []).map((r) => r.name));
+        for (const plugin2 of MENU_PLUGINS) {
+          if (activeNames.has(plugin2.name) && plugin2.menuItems) {
+            activeMenuItems.push(...plugin2.menuItems);
+          }
+        }
+        activeMenuItems.sort((a, b) => (a.order || 0) - (b.order || 0));
+      }
+    } catch {
+    }
+    c.set("pluginMenuItems", activeMenuItems.map((m) => ({ label: m.label, path: m.path, icon: m.icon || "" })));
+    await next();
+    if (activeMenuItems.length > 0 && c.res.headers.get("content-type")?.includes("text/html")) {
+      const status = c.res.status;
+      const headers = new Headers(c.res.headers);
+      const html = await c.res.text();
+      if (html.includes(MARKER)) {
+        const renderedItems = activeMenuItems.map((item) => renderMenuItem(item, path)).join("");
+        const newHtml = html.split(MARKER).join(renderedItems);
+        c.res = new Response(newHtml, { status, headers });
+      } else {
+        c.res = new Response(html, { status, headers });
+      }
+    }
+  };
+}
+
 // src/plugins/cache/services/cache-config.ts
 var CACHE_CONFIGS = {
   // Content (high read, low write)
@@ -6565,6 +8196,7 @@ function createSonicJSApp(config = {}) {
       app2.use("*", middleware);
     }
   }
+  app2.use("/admin/*", pluginMenuMiddleware());
   app2.route("/api", api_default);
   app2.route("/api/media", api_media_default);
   app2.route("/api/system", api_system_default);
@@ -6580,6 +8212,12 @@ function createSonicJSApp(config = {}) {
   app2.route("/admin/seed-data", createSeedDataAdminRoutes());
   app2.route("/admin/content", admin_content_default);
   app2.route("/admin/media", adminMediaRoutes);
+  app2.use("/auth/*", securityAuditMiddleware());
+  if (securityAuditPlugin.routes && securityAuditPlugin.routes.length > 0) {
+    for (const route of securityAuditPlugin.routes) {
+      app2.route(route.path, route.handler);
+    }
+  }
   if (aiSearchPlugin.routes && aiSearchPlugin.routes.length > 0) {
     for (const route of aiSearchPlugin.routes) {
       app2.route(route.path, route.handler);
@@ -6588,6 +8226,11 @@ function createSonicJSApp(config = {}) {
   app2.route("/admin/cache", cache_default.getRoutes());
   if (oauthProvidersPlugin.routes && oauthProvidersPlugin.routes.length > 0) {
     for (const route of oauthProvidersPlugin.routes) {
+      app2.route(route.path, route.handler);
+    }
+  }
+  if (userProfilesPlugin.routes && userProfilesPlugin.routes.length > 0) {
+    for (const route of userProfilesPlugin.routes) {
       app2.route(route.path, route.handler);
     }
   }

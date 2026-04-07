@@ -602,6 +602,8 @@ function renderCatalystSidebar(
       allMenuItems.push(...dynamicMenuItems);
     }
   }
+  // Marker for middleware-injected plugin menu items (used when dynamicMenuItems is not passed explicitly)
+  const pluginMenuMarker = (!dynamicMenuItems || dynamicMenuItems.length === 0) ? '<!-- DYNAMIC_PLUGIN_MENU -->' : '';
 
   const closeButton = isMobile
     ? `
@@ -666,6 +668,7 @@ function renderCatalystSidebar(
             `;
             })
             .join("")}
+          ${pluginMenuMarker}
         </div>
       </div>
 

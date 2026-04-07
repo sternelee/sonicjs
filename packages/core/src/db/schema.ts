@@ -333,6 +333,37 @@ export type LogConfig = typeof logConfig.$inferSelect;
 export type NewLogConfig = typeof logConfig.$inferInsert;
 
 // =====================================================
+// Security Audit Plugin Tables
+// =====================================================
+
+export const securityEvents = sqliteTable('security_events', {
+  id: text('id').primaryKey(),
+  eventType: text('event_type').notNull(),
+  severity: text('severity').notNull().default('info'),
+  userId: text('user_id'),
+  email: text('email'),
+  ipAddress: text('ip_address'),
+  userAgent: text('user_agent'),
+  countryCode: text('country_code'),
+  requestPath: text('request_path'),
+  requestMethod: text('request_method'),
+  details: text('details', { mode: 'json' }),
+  fingerprint: text('fingerprint'),
+  blocked: integer('blocked').notNull().default(0),
+  createdAt: integer('created_at').notNull().$defaultFn(() => Date.now()),
+});
+
+export const insertSecurityEventSchema = createInsertSchema(securityEvents, {
+  eventType: (schema: any) => schema.min(1),
+  severity: (schema: any) => schema.min(1),
+});
+
+export const selectSecurityEventSchema = createSelectSchema(securityEvents);
+
+export type SecurityEventRecord = typeof securityEvents.$inferSelect;
+export type NewSecurityEventRecord = typeof securityEvents.$inferInsert;
+
+// =====================================================
 // Form.io Integration Tables
 // =====================================================
 

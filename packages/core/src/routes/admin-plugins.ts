@@ -120,6 +120,19 @@ const AVAILABLE_PLUGINS = [
     is_core: true
   },
   {
+    id: 'security-audit',
+    name: 'security-audit',
+    display_name: 'Security Audit',
+    description: 'Security event logging, brute-force detection, and analytics dashboard. Monitors login attempts, registrations, lockouts, and suspicious activity.',
+    version: '1.0.0-beta.1',
+    author: 'SonicJS Team',
+    category: 'security',
+    icon: '🛡️',
+    permissions: ['security-audit:view', 'security-audit:manage'],
+    dependencies: [],
+    is_core: false
+  },
+  {
     id: 'ai-search',
     name: 'ai-search-plugin',
     display_name: 'AI Search',
@@ -237,7 +250,7 @@ adminPluginRoutes.get('/:id', async (c) => {
     const pluginId = c.req.param('id')
 
     // Skip plugins that have their own custom settings pages (not using component system)
-    const pluginsWithCustomPages = ['ai-search']
+    const pluginsWithCustomPages = ['ai-search', 'security-audit']
     if (pluginsWithCustomPages.includes(pluginId)) {
       // Let the plugin's own route handle this
       return c.text('', 404) // Return 404 so Hono continues to next route
@@ -623,6 +636,47 @@ adminPluginRoutes.post('/install', async (c) => {
       })
 
       return c.json({ success: true, plugin: easyMdxPlugin })
+    }
+
+    // Handle Security Audit plugin installation
+    if (body.name === 'security-audit') {
+      const securityAuditPlugin = await pluginService.installPlugin({
+        id: 'security-audit',
+        name: 'security-audit',
+        display_name: 'Security Audit',
+        description: 'Security event logging, brute-force detection, and analytics dashboard. Monitors login attempts, registrations, lockouts, and suspicious activity.',
+        version: '1.0.0-beta.1',
+        author: 'SonicJS Team',
+        category: 'security',
+        icon: '🛡️',
+        permissions: ['security-audit:view', 'security-audit:manage'],
+        dependencies: [],
+        is_core: false,
+        settings: {
+          retention: {
+            daysToKeep: 90,
+            maxEvents: 100000,
+            autoPurge: true
+          },
+          bruteForce: {
+            enabled: true,
+            maxFailedAttemptsPerIP: 10,
+            maxFailedAttemptsPerEmail: 5,
+            windowMinutes: 15,
+            lockoutDurationMinutes: 30,
+            alertThreshold: 20
+          },
+          logging: {
+            logSuccessfulLogins: true,
+            logLogouts: true,
+            logRegistrations: true,
+            logPasswordResets: true,
+            logPermissionDenied: true
+          }
+        }
+      })
+
+      return c.json({ success: true, plugin: securityAuditPlugin })
     }
 
     // Handle AI Search plugin installation
