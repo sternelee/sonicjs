@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS user_profiles (
   website TEXT,
   location TEXT,
   date_of_birth INTEGER,
+  data TEXT DEFAULT '{}',
 
   created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
   updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000)
