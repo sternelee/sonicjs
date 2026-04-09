@@ -41,6 +41,7 @@ import { aiSearchPlugin } from './plugins/core-plugins/ai-search-plugin'
 import { createMagicLinkAuthPlugin } from './plugins/available/magic-link-auth'
 import { securityAuditPlugin } from './plugins/core-plugins/security-audit-plugin'
 import { securityAuditMiddleware } from './plugins/core-plugins/security-audit-plugin'
+import { stripePlugin } from './plugins/core-plugins/stripe-plugin'
 import { pluginMenuMiddleware } from './middleware/plugin-menu'
 import cachePlugin from './plugins/cache'
 import { faviconSvg } from './assets/favicon'
@@ -260,6 +261,13 @@ export function createSonicJSApp(config: SonicJSConfig = {}): SonicJSApp {
 
   // Test cleanup routes (only for development/test environments)
   app.route('/', testCleanupRoutes)
+
+  // Plugin routes - Stripe (subscriptions, webhook, checkout)
+  if (stripePlugin.routes && stripePlugin.routes.length > 0) {
+    for (const route of stripePlugin.routes) {
+      app.route(route.path, route.handler as any)
+    }
+  }
 
   // Plugin routes - Email
   if (emailPlugin.routes && emailPlugin.routes.length > 0) {

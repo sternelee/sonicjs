@@ -1,0 +1,56 @@
+{
+  "id": "stripe",
+  "name": "Stripe Subscriptions",
+  "version": "1.0.0-beta.1",
+  "description": "Stripe subscription management with webhook handling, checkout sessions, and subscription gating",
+  "author": "SonicJS Team",
+  "category": "payments",
+  "icon": "credit-card",
+  "core": true,
+  "dependencies": [],
+  "settings": {
+    "schema": {
+      "stripeSecretKey": {
+        "type": "password",
+        "label": "Stripe Secret Key",
+        "description": "Your Stripe secret API key (sk_...)",
+        "required": true
+      },
+      "stripeWebhookSecret": {
+        "type": "password",
+        "label": "Webhook Signing Secret",
+        "description": "Stripe webhook endpoint signing secret (whsec_...)",
+        "required": true
+      },
+      "stripePriceId": {
+        "type": "text",
+        "label": "Default Price ID",
+        "description": "Default Stripe Price ID for checkout sessions (price_...)",
+        "required": false
+      },
+      "successUrl": {
+        "type": "text",
+        "label": "Checkout Success URL",
+        "description": "URL to redirect to after successful checkout",
+        "default": "/admin/dashboard"
+      },
+      "cancelUrl": {
+        "type": "text",
+        "label": "Checkout Cancel URL",
+        "description": "URL to redirect to if checkout is cancelled",
+        "default": "/admin/dashboard"
+      }
+    }
+  },
+  "permissions": {
+    "stripe:manage": "Manage Stripe settings and view all subscriptions",
+    "stripe:view": "View subscription status"
+  },
+  "hooks": {
+    "stripe:subscription.created": "Fired when a new subscription is created",
+    "stripe:subscription.updated": "Fired when a subscription is updated",
+    "stripe:subscription.deleted": "Fired when a subscription is cancelled/deleted",
+    "stripe:payment.succeeded": "Fired when a payment succeeds",
+    "stripe:payment.failed": "Fired when a payment fails"
+  }
+}
