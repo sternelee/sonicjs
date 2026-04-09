@@ -32,6 +32,7 @@ export { securityAuditPlugin, createSecurityAuditPlugin } from './security-audit
 export { SecurityAuditService, BruteForceDetector, securityAuditMiddleware } from './security-audit-plugin'
 export { userProfilesPlugin, createUserProfilesPlugin, defineUserProfile, getUserProfileConfig } from './user-profiles'
 export type { ProfileFieldDefinition, UserProfileConfig } from './user-profiles'
+export { stripePlugin, createStripePlugin, SubscriptionService, StripeAPI, requireSubscription } from './stripe-plugin'
 
 // Core plugins list - now imported from auto-generated registry
 export const CORE_PLUGIN_IDS = [
@@ -53,7 +54,8 @@ export const CORE_PLUGIN_IDS = [
   'oauth-providers',
   'global-variables',
   'security-audit',
-  'user-profiles'
+  'user-profiles',
+  'stripe'
 ] as const
 
 export type CorePluginNames = (typeof CORE_PLUGIN_IDS)[number]
