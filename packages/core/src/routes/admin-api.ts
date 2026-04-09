@@ -719,13 +719,16 @@ adminApiRoutes.post('/migrations/run', async (c) => {
     return c.json({
       success: result.success,
       message: result.message,
-      applied: result.applied
+      applied: result.applied,
+      errors: result.errors
     })
   } catch (error) {
     console.error('Error running migrations:', error)
+    const errorMessage = error instanceof Error ? error.message : String(error)
     return c.json({
       success: false,
-      error: 'Failed to run migrations'
+      error: `Failed to run migrations: ${errorMessage}`,
+      errors: [errorMessage]
     }, 500)
   }
 })
