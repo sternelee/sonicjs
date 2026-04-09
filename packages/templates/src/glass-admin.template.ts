@@ -67,7 +67,7 @@ export function renderGlassAdminTemplate(): string {
                             </button>
                             
                             <!-- Dropdown Menu -->
-                            <div id="userDropdown" class="hidden absolute right-0 mt-2 w-48 backdrop-blur-md bg-black/95 rounded-xl border border-white/10 shadow-xl z-[9999]">
+                            <div class="userDropdown hidden absolute right-0 mt-2 w-48 backdrop-blur-md bg-black/95 rounded-xl border border-white/10 shadow-xl z-[9999]">
                                 <div class="py-2">
                                     <a href="#" class="flex items-center px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/10 transition-colors">
                                         <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -111,16 +111,20 @@ export function renderGlassAdminTemplate(): string {
         
         <script>
             function toggleUserDropdown() {
-                const dropdown = document.getElementById('userDropdown');
-                dropdown.classList.toggle('hidden');
+                const dropdowns = document.querySelectorAll('.userDropdown');
+                dropdowns.forEach(function(dropdown) {
+                    dropdown.classList.toggle('hidden');
+                });
             }
-            
+
             // Close dropdown when clicking outside
             document.addEventListener('click', function(event) {
-                const dropdown = document.getElementById('userDropdown');
+                const dropdowns = document.querySelectorAll('.userDropdown');
                 const button = event.target.closest('button');
                 if (!button || !button.getAttribute('onclick')) {
-                    dropdown.classList.add('hidden');
+                    dropdowns.forEach(function(dropdown) {
+                        dropdown.classList.add('hidden');
+                    });
                 }
             });
         </script>

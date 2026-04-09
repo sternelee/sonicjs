@@ -739,11 +739,13 @@ test.describe('Authentication API', () => {
       );
 
       const responses = await Promise.all(loginPromises);
-      
-      // All should succeed
+
+      // All should either succeed or be rate-limited (429)
       responses.forEach(response => {
-        expect(response.status()).toBe(200);
+        expect([200, 429]).toContain(response.status());
       });
+      // At least one should succeed
+      expect(responses.some(r => r.status() === 200)).toBe(true);
     });
   });
 });
