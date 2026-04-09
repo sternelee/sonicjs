@@ -228,6 +228,27 @@ export class MigrationService {
       }
     }
 
+    // Check if forms tables exist (migration 029)
+    // Migration 029 was reassigned between releases: older versions used it for "Ai Search Plugin",
+    // newer versions use it for "Add Forms System". This handles the case where 029 is marked as
+    // applied (from the old AI Search migration) but the forms tables don't actually exist.
+    const hasFormsTables = await this.checkTablesExist(['forms', 'form_submissions', 'form_files'])
+    if (!appliedMigrations.has('029') && hasFormsTables) {
+      appliedMigrations.set('029', {
+        id: '029',
+        applied_at: new Date().toISOString(),
+        name: 'Add Forms System',
+        filename: '029_add_forms_system.sql'
+      })
+      await this.markMigrationApplied('029', 'Add Forms System', '029_add_forms_system.sql')
+    } else if (appliedMigrations.has('029') && !hasFormsTables) {
+      // Migration was marked as applied (possibly from old "Ai Search Plugin" migration)
+      // but forms tables don't exist - remove it so the forms migration will re-run
+      console.log('[Migration] Migration 029 marked as applied but forms tables missing - will re-run')
+      appliedMigrations.delete('029')
+      await this.removeMigrationApplied('029')
+    }
+
     // Check if user_profiles table exists (migration 032)
     // Table may already exist from app-level migration (my-sonicjs-app/migrations/018_user_profiles.sql)
     if (!appliedMigrations.has('032')) {
@@ -361,7 +382,7 @@ export class MigrationService {
   /**
    * Run pending migrations
    */
-  async runPendingMigrations(): Promise<{ success: boolean; message: string; applied: string[] }> {
+  async runPendingMigrations(): Promise<{ success: boolean; message: string; applied: string[]; errors: string[] }> {
     await this.initializeMigrationsTable()
 
     const status = await this.getMigrationStatus()
@@ -371,7 +392,8 @@ export class MigrationService {
       return {
         success: true,
         message: 'All migrations are up to date',
-        applied: []
+        applied: [],
+        errors: []
       }
     }
 
@@ -399,7 +421,8 @@ export class MigrationService {
       return {
         success: false,
         message: `Failed to apply migrations: ${errors.join('; ')}`,
-        applied
+        applied,
+        errors
       }
     }
 
@@ -408,7 +431,8 @@ export class MigrationService {
       message: applied.length > 0
         ? `Applied ${applied.length} migration(s)${errors.length > 0 ? ` (${errors.length} failed)` : ''}`
         : 'No migrations applied',
-      applied
+      applied,
+      errors
     }
   }
 
