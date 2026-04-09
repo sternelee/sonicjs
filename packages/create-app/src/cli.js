@@ -434,6 +434,17 @@ async function copyTemplate(templateName, targetDir, options) {
     if (fs.existsSync(examplePath)) {
       await fs.remove(examplePath)
     }
+
+    // Also remove the blog post import and registration from index.ts
+    const indexPath = path.join(targetDir, 'src/index.ts')
+    if (fs.existsSync(indexPath)) {
+      let indexContent = await fs.readFile(indexPath, 'utf-8')
+      // Remove the import line
+      indexContent = indexContent.replace(/^import blogPostsCollection from ['"]\.\/collections\/blog-posts\.collection['"];?\n/m, '')
+      // Remove the registration entry from registerCollections array
+      indexContent = indexContent.replace(/\s*blogPostsCollection,?\n/, '\n')
+      await fs.writeFile(indexPath, indexContent, 'utf-8')
+    }
   }
 
   // Create admin seed script with provided credentials (only if creating admin user)
