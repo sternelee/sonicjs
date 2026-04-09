@@ -196,6 +196,7 @@ declare class MigrationService {
         success: boolean;
         message: string;
         applied: string[];
+        errors: string[];
     }>;
     /**
      * Apply a specific migration

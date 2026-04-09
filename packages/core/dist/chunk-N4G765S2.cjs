@@ -1910,6 +1910,20 @@ var MigrationService = class {
         await this.markMigrationApplied("018", "Settings Table", "018_settings_table.sql");
       }
     }
+    const hasFormsTables = await this.checkTablesExist(["forms", "form_submissions", "form_files"]);
+    if (!appliedMigrations.has("029") && hasFormsTables) {
+      appliedMigrations.set("029", {
+        id: "029",
+        applied_at: (/* @__PURE__ */ new Date()).toISOString(),
+        name: "Add Forms System",
+        filename: "029_add_forms_system.sql"
+      });
+      await this.markMigrationApplied("029", "Add Forms System", "029_add_forms_system.sql");
+    } else if (appliedMigrations.has("029") && !hasFormsTables) {
+      console.log("[Migration] Migration 029 marked as applied but forms tables missing - will re-run");
+      appliedMigrations.delete("029");
+      await this.removeMigrationApplied("029");
+    }
     if (!appliedMigrations.has("032")) {
       const hasUserProfilesTable = await this.checkTablesExist(["user_profiles"]);
       if (hasUserProfilesTable) {
@@ -2027,7 +2041,8 @@ var MigrationService = class {
       return {
         success: true,
         message: "All migrations are up to date",
-        applied: []
+        applied: [],
+        errors: []
       };
     }
     const applied = [];
@@ -2049,13 +2064,15 @@ var MigrationService = class {
       return {
         success: false,
         message: `Failed to apply migrations: ${errors.join("; ")}`,
-        applied
+        applied,
+        errors
       };
     }
     return {
       success: true,
       message: applied.length > 0 ? `Applied ${applied.length} migration(s)${errors.length > 0 ? ` (${errors.length} failed)` : ""}` : "No migrations applied",
-      applied
+      applied,
+      errors
     };
   }
   /**
@@ -2148,5 +2165,5 @@ var MigrationService = class {
 };
 
 exports.MigrationService = MigrationService;
-//# sourceMappingURL=chunk-JUJ7XHGM.cjs.map
-//# sourceMappingURL=chunk-JUJ7XHGM.cjs.map
+//# sourceMappingURL=chunk-N4G765S2.cjs.map
+//# sourceMappingURL=chunk-N4G765S2.cjs.map

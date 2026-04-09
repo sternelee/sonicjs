@@ -1,7 +1,7 @@
-import { getCacheService, CACHE_CONFIGS, SettingsService, getLogger, getAppInstance, buildRouteList, CATEGORY_INFO } from './chunk-TBJY2FF7.js';
-import { requireAuth, requireRole, isPluginActive, optionalAuth, rateLimit, AuthManager, logActivity, generateCsrfToken } from './chunk-DB2GJJTM.js';
+import { getCacheService, CACHE_CONFIGS, SettingsService, getLogger, getAppInstance, buildRouteList, CATEGORY_INFO } from './chunk-3P36UZXJ.js';
+import { requireAuth, requireRole, isPluginActive, optionalAuth, rateLimit, AuthManager, logActivity, generateCsrfToken } from './chunk-XQ2WNG3Q.js';
 import { PluginService, createContentFromSubmission } from './chunk-H3XXBAMO.js';
-import { MigrationService } from './chunk-3VAKUFNQ.js';
+import { MigrationService } from './chunk-MZZNMVS7.js';
 import { init_admin_layout_catalyst_template, renderDesignPage, renderCheckboxPage, renderTestimonialsList, renderCodeExamplesList, renderAlert, renderTable, renderPagination, renderConfirmationDialog, getConfirmationDialogScript, renderAdminLayoutCatalyst, renderAdminLayout, adminLayoutV2, renderForm } from './chunk-JTUCC6WZ.js';
 import { PluginBuilder, TurnstileService } from './chunk-J5WGMRSU.js';
 import { QueryFilterBuilder, getCoreVersion, getBlocksFieldConfig, parseBlocksValue } from './chunk-CO4B5EYF.js';
@@ -2350,7 +2350,7 @@ adminApiRoutes.delete("/collections/:id", async (c) => {
 });
 adminApiRoutes.get("/migrations/status", async (c) => {
   try {
-    const { MigrationService: MigrationService2 } = await import('./migrations-IVFIDOSO.js');
+    const { MigrationService: MigrationService2 } = await import('./migrations-LZGQWXR5.js');
     const db = c.env.DB;
     const migrationService = new MigrationService2(db);
     const status = await migrationService.getMigrationStatus();
@@ -2375,26 +2375,29 @@ adminApiRoutes.post("/migrations/run", async (c) => {
         error: "Unauthorized. Admin access required."
       }, 403);
     }
-    const { MigrationService: MigrationService2 } = await import('./migrations-IVFIDOSO.js');
+    const { MigrationService: MigrationService2 } = await import('./migrations-LZGQWXR5.js');
     const db = c.env.DB;
     const migrationService = new MigrationService2(db);
     const result = await migrationService.runPendingMigrations();
     return c.json({
       success: result.success,
       message: result.message,
-      applied: result.applied
+      applied: result.applied,
+      errors: result.errors
     });
   } catch (error) {
     console.error("Error running migrations:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return c.json({
       success: false,
-      error: "Failed to run migrations"
+      error: `Failed to run migrations: ${errorMessage}`,
+      errors: [errorMessage]
     }, 500);
   }
 });
 adminApiRoutes.get("/migrations/validate", async (c) => {
   try {
-    const { MigrationService: MigrationService2 } = await import('./migrations-IVFIDOSO.js');
+    const { MigrationService: MigrationService2 } = await import('./migrations-LZGQWXR5.js');
     const db = c.env.DB;
     const migrationService = new MigrationService2(db);
     const validation = await migrationService.validateSchema();
@@ -29387,5 +29390,5 @@ var ROUTES_INFO = {
 };
 
 export { ROUTES_INFO, adminCheckboxRoutes, adminCollectionsRoutes, adminDesignRoutes, adminFormsRoutes, adminLogsRoutes, adminMediaRoutes, adminPluginRoutes, adminSettingsRoutes, admin_api_default, admin_code_examples_default, admin_content_default, admin_testimonials_default, api_content_crud_default, api_default, api_media_default, api_system_default, auth_default, createUserProfilesPlugin, defineUserProfile, getConfirmationDialogScript2 as getConfirmationDialogScript, getUserProfileConfig, public_forms_default, renderConfirmationDialog2 as renderConfirmationDialog, router, router2, test_cleanup_default, userProfilesPlugin, userRoutes };
-//# sourceMappingURL=chunk-IYFSNRZN.js.map
-//# sourceMappingURL=chunk-IYFSNRZN.js.map
+//# sourceMappingURL=chunk-GPS3W6JF.js.map
+//# sourceMappingURL=chunk-GPS3W6JF.js.map

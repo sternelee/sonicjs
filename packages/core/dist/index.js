@@ -1,20 +1,20 @@
-import { renderConfirmationDialog, getConfirmationDialogScript, api_default, api_media_default, api_system_default, admin_api_default, router, adminCollectionsRoutes, adminFormsRoutes, adminSettingsRoutes, public_forms_default, router2, admin_content_default, adminMediaRoutes, userProfilesPlugin, adminPluginRoutes, adminLogsRoutes, userRoutes, auth_default, test_cleanup_default } from './chunk-MKI7BU5J.js';
-export { ROUTES_INFO, admin_api_default as adminApiRoutes, adminCheckboxRoutes, admin_code_examples_default as adminCodeExamplesRoutes, adminCollectionsRoutes, admin_content_default as adminContentRoutes, router as adminDashboardRoutes, adminDesignRoutes, adminLogsRoutes, adminMediaRoutes, adminPluginRoutes, adminSettingsRoutes, admin_testimonials_default as adminTestimonialsRoutes, userRoutes as adminUsersRoutes, api_content_crud_default as apiContentCrudRoutes, api_media_default as apiMediaRoutes, api_default as apiRoutes, api_system_default as apiSystemRoutes, auth_default as authRoutes, createUserProfilesPlugin, defineUserProfile, getUserProfileConfig, userProfilesPlugin } from './chunk-MKI7BU5J.js';
+import { renderConfirmationDialog, getConfirmationDialogScript, api_default, api_media_default, api_system_default, admin_api_default, router, adminCollectionsRoutes, adminFormsRoutes, adminSettingsRoutes, public_forms_default, router2, admin_content_default, adminMediaRoutes, userProfilesPlugin, adminPluginRoutes, adminLogsRoutes, userRoutes, auth_default, test_cleanup_default } from './chunk-GPS3W6JF.js';
+export { ROUTES_INFO, admin_api_default as adminApiRoutes, adminCheckboxRoutes, admin_code_examples_default as adminCodeExamplesRoutes, adminCollectionsRoutes, admin_content_default as adminContentRoutes, router as adminDashboardRoutes, adminDesignRoutes, adminLogsRoutes, adminMediaRoutes, adminPluginRoutes, adminSettingsRoutes, admin_testimonials_default as adminTestimonialsRoutes, userRoutes as adminUsersRoutes, api_content_crud_default as apiContentCrudRoutes, api_media_default as apiMediaRoutes, api_default as apiRoutes, api_system_default as apiSystemRoutes, auth_default as authRoutes, createUserProfilesPlugin, defineUserProfile, getUserProfileConfig, userProfilesPlugin } from './chunk-GPS3W6JF.js';
 import { SettingsService, setAppInstance, schema_exports } from './chunk-3P36UZXJ.js';
 export { Logger, apiTokens, collections, content, contentVersions, getLogger, initLogger, insertCollectionSchema, insertContentSchema, insertLogConfigSchema, insertMediaSchema, insertPluginActivityLogSchema, insertPluginAssetSchema, insertPluginHookSchema, insertPluginRouteSchema, insertPluginSchema, insertSystemLogSchema, insertUserSchema, insertWorkflowHistorySchema, logConfig, media, pluginActivityLog, pluginAssets, pluginHooks, pluginRoutes, plugins, selectCollectionSchema, selectContentSchema, selectLogConfigSchema, selectMediaSchema, selectPluginActivityLogSchema, selectPluginAssetSchema, selectPluginHookSchema, selectPluginRouteSchema, selectPluginSchema, selectSystemLogSchema, selectUserSchema, selectWorkflowHistorySchema, systemLogs, users, workflowHistory } from './chunk-3P36UZXJ.js';
-import { requireAuth, AuthManager, metricsMiddleware, bootstrapMiddleware, securityHeadersMiddleware, csrfProtection } from './chunk-RUWQ3LU6.js';
-export { AuthManager, PermissionManager, bootstrapMiddleware, cacheHeaders, compressionMiddleware, detailedLoggingMiddleware, getActivePlugins, isPluginActive, logActivity, loggingMiddleware, optionalAuth, performanceLoggingMiddleware, requireActivePlugin, requireActivePlugins, requireAnyPermission, requireAuth, requirePermission, requireRole, securityHeadersMiddleware as securityHeaders, securityLoggingMiddleware } from './chunk-RUWQ3LU6.js';
+import { requireAuth, AuthManager, metricsMiddleware, bootstrapMiddleware, securityHeadersMiddleware, csrfProtection } from './chunk-XQ2WNG3Q.js';
+export { AuthManager, PermissionManager, bootstrapMiddleware, cacheHeaders, compressionMiddleware, detailedLoggingMiddleware, getActivePlugins, isPluginActive, logActivity, loggingMiddleware, optionalAuth, performanceLoggingMiddleware, requireActivePlugin, requireActivePlugins, requireAnyPermission, requireAuth, requirePermission, requireRole, securityHeadersMiddleware as securityHeaders, securityLoggingMiddleware } from './chunk-XQ2WNG3Q.js';
 import { PluginService } from './chunk-H3XXBAMO.js';
 export { PluginBootstrapService, PluginService as PluginServiceClass, backfillFormSubmissions, cleanupRemovedCollections, createContentFromSubmission, deriveCollectionSchemaFromFormio, deriveSubmissionTitle, fullCollectionSync, getAvailableCollectionNames, getManagedCollections, isCollectionManaged, loadCollectionConfig, loadCollectionConfigs, mapFormStatusToContentStatus, registerCollections, syncAllFormCollections, syncCollection, syncCollections, syncFormCollection, validateCollectionConfig } from './chunk-H3XXBAMO.js';
-export { MigrationService } from './chunk-K6PNASZC.js';
+export { MigrationService } from './chunk-MZZNMVS7.js';
 export { renderFilterBar } from './chunk-CB7ONLGB.js';
 import { init_admin_layout_catalyst_template, renderAdminLayout, renderAdminLayoutCatalyst } from './chunk-JTUCC6WZ.js';
 export { getConfirmationDialogScript, renderAlert, renderConfirmationDialog, renderForm, renderFormField, renderPagination, renderTable } from './chunk-JTUCC6WZ.js';
 export { HookSystemImpl, HookUtils, PluginManager as PluginManagerClass, PluginRegistryImpl, PluginValidator as PluginValidatorClass, ScopedHookSystem as ScopedHookSystemClass } from './chunk-E4CZHXMZ.js';
 import { PluginBuilder } from './chunk-J5WGMRSU.js';
 export { PluginBuilder, PluginHelpers } from './chunk-J5WGMRSU.js';
-import { package_default, getCoreVersion } from './chunk-YWS36ULL.js';
-export { QueryFilterBuilder, SONICJS_VERSION, TemplateRenderer, buildQuery, getCoreVersion, renderTemplate, templateRenderer } from './chunk-YWS36ULL.js';
+import { package_default, getCoreVersion } from './chunk-CO4B5EYF.js';
+export { QueryFilterBuilder, SONICJS_VERSION, TemplateRenderer, buildQuery, getCoreVersion, renderTemplate, templateRenderer } from './chunk-CO4B5EYF.js';
 import './chunk-X7ZAEI5S.js';
 export { metricsTracker } from './chunk-FICTAGD4.js';
 export { escapeHtml, sanitizeInput, sanitizeObject } from './chunk-TQABQWOP.js';
@@ -3901,7 +3901,7 @@ function renderSettingsPage(data) {
     const indexStatusMap = data.indexStatus || {};
     const status = indexStatusMap[collectionId];
     const isNew = collection.is_new === true && !isDismissed && !status;
-    const statusBadge = status && isChecked ? `<span class="ml-2 px-2 py-1 text-xs rounded-full ${status.status === "completed" ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300" : status.status === "indexing" ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300" : status.status === "error" ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300" : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"}">${status.status}</span>` : "";
+    const statusBadge2 = status && isChecked ? `<span class="ml-2 px-2 py-1 text-xs rounded-full ${status.status === "completed" ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300" : status.status === "indexing" ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300" : status.status === "error" ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300" : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"}">${status.status}</span>` : "";
     return `<div class="flex items-start gap-3 p-3 rounded-lg border border-zinc-200 dark:border-zinc-700 ${isNew ? "bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800" : "hover:bg-zinc-50 dark:hover:bg-zinc-800"}">
                       <input
                         type="checkbox"
@@ -3916,7 +3916,7 @@ function renderSettingsPage(data) {
                         <label for="collection_${collectionId}" class="text-sm font-medium text-zinc-950 dark:text-white select-none cursor-pointer flex items-center">
                           ${collection.display_name || collection.name || "Unnamed Collection"}
                           ${isNew ? '<span class="ml-2 px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">NEW</span>' : ""}
-                          ${statusBadge}
+                          ${statusBadge2}
                         </label>
                         <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
                           ${collection.description || collection.name || "No description"} \u2022 ${collection.item_count || 0} items
@@ -6271,6 +6271,755 @@ function createSecurityAuditPlugin() {
 }
 var securityAuditPlugin = createSecurityAuditPlugin();
 
+// src/plugins/core-plugins/stripe-plugin/services/subscription-service.ts
+var SubscriptionService = class {
+  constructor(db) {
+    this.db = db;
+  }
+  /**
+   * Ensure the subscriptions table exists
+   */
+  async ensureTable() {
+    await this.db.prepare(`
+      CREATE TABLE IF NOT EXISTS subscriptions (
+        id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+        user_id TEXT NOT NULL,
+        stripe_customer_id TEXT NOT NULL,
+        stripe_subscription_id TEXT NOT NULL UNIQUE,
+        stripe_price_id TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'incomplete',
+        current_period_start INTEGER NOT NULL DEFAULT 0,
+        current_period_end INTEGER NOT NULL DEFAULT 0,
+        cancel_at_period_end INTEGER NOT NULL DEFAULT 0,
+        created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+        updated_at INTEGER NOT NULL DEFAULT (unixepoch())
+      )
+    `).run();
+    await this.db.prepare(`
+      CREATE INDEX IF NOT EXISTS idx_subscriptions_user_id ON subscriptions(user_id)
+    `).run();
+    await this.db.prepare(`
+      CREATE INDEX IF NOT EXISTS idx_subscriptions_stripe_customer_id ON subscriptions(stripe_customer_id)
+    `).run();
+    await this.db.prepare(`
+      CREATE INDEX IF NOT EXISTS idx_subscriptions_stripe_subscription_id ON subscriptions(stripe_subscription_id)
+    `).run();
+    await this.db.prepare(`
+      CREATE INDEX IF NOT EXISTS idx_subscriptions_status ON subscriptions(status)
+    `).run();
+  }
+  /**
+   * Create a new subscription record
+   */
+  async create(data) {
+    const result = await this.db.prepare(`
+      INSERT INTO subscriptions (user_id, stripe_customer_id, stripe_subscription_id, stripe_price_id, status, current_period_start, current_period_end, cancel_at_period_end)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      RETURNING *
+    `).bind(
+      data.userId,
+      data.stripeCustomerId,
+      data.stripeSubscriptionId,
+      data.stripePriceId,
+      data.status,
+      data.currentPeriodStart,
+      data.currentPeriodEnd,
+      data.cancelAtPeriodEnd ? 1 : 0
+    ).first();
+    return this.mapRow(result);
+  }
+  /**
+   * Update a subscription by its Stripe subscription ID
+   */
+  async updateByStripeId(stripeSubscriptionId, data) {
+    const sets = [];
+    const values = [];
+    if (data.status !== void 0) {
+      sets.push("status = ?");
+      values.push(data.status);
+    }
+    if (data.stripePriceId !== void 0) {
+      sets.push("stripe_price_id = ?");
+      values.push(data.stripePriceId);
+    }
+    if (data.currentPeriodStart !== void 0) {
+      sets.push("current_period_start = ?");
+      values.push(data.currentPeriodStart);
+    }
+    if (data.currentPeriodEnd !== void 0) {
+      sets.push("current_period_end = ?");
+      values.push(data.currentPeriodEnd);
+    }
+    if (data.cancelAtPeriodEnd !== void 0) {
+      sets.push("cancel_at_period_end = ?");
+      values.push(data.cancelAtPeriodEnd ? 1 : 0);
+    }
+    if (sets.length === 0) return this.getByStripeSubscriptionId(stripeSubscriptionId);
+    sets.push("updated_at = unixepoch()");
+    values.push(stripeSubscriptionId);
+    const result = await this.db.prepare(`
+      UPDATE subscriptions SET ${sets.join(", ")} WHERE stripe_subscription_id = ? RETURNING *
+    `).bind(...values).first();
+    return result ? this.mapRow(result) : null;
+  }
+  /**
+   * Get subscription by Stripe subscription ID
+   */
+  async getByStripeSubscriptionId(stripeSubscriptionId) {
+    const result = await this.db.prepare(
+      "SELECT * FROM subscriptions WHERE stripe_subscription_id = ?"
+    ).bind(stripeSubscriptionId).first();
+    return result ? this.mapRow(result) : null;
+  }
+  /**
+   * Get the active subscription for a user
+   */
+  async getByUserId(userId) {
+    const result = await this.db.prepare(
+      "SELECT * FROM subscriptions WHERE user_id = ? ORDER BY CASE WHEN status = 'active' THEN 0 WHEN status = 'trialing' THEN 1 ELSE 2 END, updated_at DESC LIMIT 1"
+    ).bind(userId).first();
+    return result ? this.mapRow(result) : null;
+  }
+  /**
+   * Get subscription by Stripe customer ID
+   */
+  async getByStripeCustomerId(stripeCustomerId) {
+    const result = await this.db.prepare(
+      "SELECT * FROM subscriptions WHERE stripe_customer_id = ? ORDER BY updated_at DESC LIMIT 1"
+    ).bind(stripeCustomerId).first();
+    return result ? this.mapRow(result) : null;
+  }
+  /**
+   * Find the userId linked to a Stripe customer ID
+   */
+  async getUserIdByStripeCustomer(stripeCustomerId) {
+    const result = await this.db.prepare(
+      "SELECT user_id FROM subscriptions WHERE stripe_customer_id = ? LIMIT 1"
+    ).bind(stripeCustomerId).first();
+    return result?.user_id ?? null;
+  }
+  /**
+   * List subscriptions with filters and pagination
+   */
+  async list(filters = {}) {
+    const where = [];
+    const values = [];
+    if (filters.status) {
+      where.push("status = ?");
+      values.push(filters.status);
+    }
+    if (filters.userId) {
+      where.push("user_id = ?");
+      values.push(filters.userId);
+    }
+    if (filters.stripeCustomerId) {
+      where.push("stripe_customer_id = ?");
+      values.push(filters.stripeCustomerId);
+    }
+    const whereClause = where.length > 0 ? `WHERE ${where.join(" AND ")}` : "";
+    const sortBy = filters.sortBy || "created_at";
+    const sortOrder = filters.sortOrder || "desc";
+    const limit = Math.min(filters.limit || 50, 100);
+    const page = filters.page || 1;
+    const offset = (page - 1) * limit;
+    const countResult = await this.db.prepare(
+      `SELECT COUNT(*) as count FROM subscriptions ${whereClause}`
+    ).bind(...values).first();
+    const results = await this.db.prepare(
+      `SELECT s.*, u.email as user_email FROM subscriptions s LEFT JOIN users u ON s.user_id = u.id ${whereClause} ORDER BY ${sortBy} ${sortOrder} LIMIT ? OFFSET ?`
+    ).bind(...values, limit, offset).all();
+    return {
+      subscriptions: (results.results || []).map((r) => this.mapRow(r)),
+      total: countResult?.count || 0
+    };
+  }
+  /**
+   * Get subscription stats
+   */
+  async getStats() {
+    const result = await this.db.prepare(`
+      SELECT
+        COUNT(*) as total,
+        SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active,
+        SUM(CASE WHEN status = 'canceled' THEN 1 ELSE 0 END) as canceled,
+        SUM(CASE WHEN status = 'past_due' THEN 1 ELSE 0 END) as past_due,
+        SUM(CASE WHEN status = 'trialing' THEN 1 ELSE 0 END) as trialing
+      FROM subscriptions
+    `).first();
+    return {
+      total: result?.total || 0,
+      active: result?.active || 0,
+      canceled: result?.canceled || 0,
+      pastDue: result?.past_due || 0,
+      trialing: result?.trialing || 0
+    };
+  }
+  /**
+   * Delete a subscription record by Stripe subscription ID
+   */
+  async deleteByStripeId(stripeSubscriptionId) {
+    const result = await this.db.prepare(
+      "DELETE FROM subscriptions WHERE stripe_subscription_id = ?"
+    ).bind(stripeSubscriptionId).run();
+    return (result.meta?.changes || 0) > 0;
+  }
+  mapRow(row) {
+    return {
+      id: row.id,
+      userId: row.user_id,
+      stripeCustomerId: row.stripe_customer_id,
+      stripeSubscriptionId: row.stripe_subscription_id,
+      stripePriceId: row.stripe_price_id,
+      status: row.status,
+      currentPeriodStart: row.current_period_start,
+      currentPeriodEnd: row.current_period_end,
+      cancelAtPeriodEnd: !!row.cancel_at_period_end,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      // Attach email if joined
+      ...row.user_email ? { userEmail: row.user_email } : {}
+    };
+  }
+};
+
+// src/plugins/core-plugins/stripe-plugin/components/subscriptions-page.ts
+function renderSubscriptionsPage(subscriptions, stats, filters) {
+  return `
+    <div class="space-y-6">
+      <!-- Stats Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+        ${statsCard("Total", stats.total, "text-gray-700")}
+        ${statsCard("Active", stats.active, "text-green-600")}
+        ${statsCard("Trialing", stats.trialing, "text-blue-600")}
+        ${statsCard("Past Due", stats.pastDue, "text-yellow-600")}
+        ${statsCard("Canceled", stats.canceled, "text-red-600")}
+      </div>
+
+      <!-- Filters -->
+      <div class="bg-white rounded-lg shadow p-4">
+        <form method="GET" class="flex items-center gap-4">
+          <label class="text-sm font-medium text-gray-700">Status:</label>
+          <select name="status" class="border rounded px-3 py-1.5 text-sm" onchange="this.form.submit()">
+            <option value="">All</option>
+            ${statusOption("active", filters.status)}
+            ${statusOption("trialing", filters.status)}
+            ${statusOption("past_due", filters.status)}
+            ${statusOption("canceled", filters.status)}
+            ${statusOption("unpaid", filters.status)}
+            ${statusOption("paused", filters.status)}
+          </select>
+        </form>
+      </div>
+
+      <!-- Subscriptions Table -->
+      <div class="bg-white rounded-lg shadow overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price ID</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current Period</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cancel at End</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stripe</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            ${subscriptions.length === 0 ? '<tr><td colspan="6" class="px-6 py-8 text-center text-gray-500">No subscriptions found</td></tr>' : subscriptions.map(renderRow).join("")}
+          </tbody>
+        </table>
+
+        ${renderPagination2(filters.page, filters.totalPages, filters.status)}
+      </div>
+    </div>
+  `;
+}
+function statsCard(label, value, colorClass) {
+  return `
+    <div class="bg-white rounded-lg shadow p-4">
+      <div class="text-sm font-medium text-gray-500">${label}</div>
+      <div class="text-2xl font-bold ${colorClass}">${value}</div>
+    </div>
+  `;
+}
+function statusOption(value, current) {
+  const selected = value === current ? "selected" : "";
+  const label = value.replace("_", " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  return `<option value="${value}" ${selected}>${label}</option>`;
+}
+function statusBadge(status) {
+  const colors = {
+    active: "bg-green-100 text-green-800",
+    trialing: "bg-blue-100 text-blue-800",
+    past_due: "bg-yellow-100 text-yellow-800",
+    canceled: "bg-red-100 text-red-800",
+    unpaid: "bg-orange-100 text-orange-800",
+    paused: "bg-gray-100 text-gray-800",
+    incomplete: "bg-gray-100 text-gray-500",
+    incomplete_expired: "bg-red-100 text-red-500"
+  };
+  const color = colors[status] || "bg-gray-100 text-gray-800";
+  const label = status.replace("_", " ");
+  return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${color}">${label}</span>`;
+}
+function formatDate(timestamp) {
+  if (!timestamp) return "-";
+  return new Date(timestamp * 1e3).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric"
+  });
+}
+function renderRow(sub) {
+  return `
+    <tr>
+      <td class="px-6 py-4 whitespace-nowrap">
+        <div class="text-sm font-medium text-gray-900">${sub.userEmail || sub.userId}</div>
+        <div class="text-xs text-gray-500">${sub.stripeCustomerId}</div>
+      </td>
+      <td class="px-6 py-4 whitespace-nowrap">${statusBadge(sub.status)}</td>
+      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${sub.stripePriceId}</td>
+      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+        ${formatDate(sub.currentPeriodStart)} - ${formatDate(sub.currentPeriodEnd)}
+      </td>
+      <td class="px-6 py-4 whitespace-nowrap text-sm">
+        ${sub.cancelAtPeriodEnd ? '<span class="text-yellow-600 font-medium">Yes</span>' : '<span class="text-gray-400">No</span>'}
+      </td>
+      <td class="px-6 py-4 whitespace-nowrap text-sm">
+        <a href="https://dashboard.stripe.com/subscriptions/${sub.stripeSubscriptionId}"
+           target="_blank" rel="noopener noreferrer"
+           class="text-indigo-600 hover:text-indigo-800">
+          View in Stripe
+        </a>
+      </td>
+    </tr>
+  `;
+}
+function renderPagination2(page, totalPages, status) {
+  if (totalPages <= 1) return "";
+  const params = status ? `&status=${status}` : "";
+  return `
+    <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+      <div class="text-sm text-gray-700">
+        Page ${page} of ${totalPages}
+      </div>
+      <div class="flex gap-2">
+        ${page > 1 ? `<a href="?page=${page - 1}${params}" class="px-3 py-1 border rounded text-sm hover:bg-gray-50">Previous</a>` : ""}
+        ${page < totalPages ? `<a href="?page=${page + 1}${params}" class="px-3 py-1 border rounded text-sm hover:bg-gray-50">Next</a>` : ""}
+      </div>
+    </div>
+  `;
+}
+
+// src/plugins/core-plugins/stripe-plugin/types.ts
+var DEFAULT_SETTINGS3 = {
+  stripeSecretKey: "",
+  stripeWebhookSecret: "",
+  stripePriceId: "",
+  successUrl: "/admin/dashboard",
+  cancelUrl: "/admin/dashboard"
+};
+
+// src/plugins/core-plugins/stripe-plugin/routes/admin.ts
+var adminRoutes3 = new Hono();
+adminRoutes3.use("*", requireAuth());
+adminRoutes3.use("*", async (c, next) => {
+  const user = c.get("user");
+  if (user?.role !== "admin") {
+    return c.text("Access denied", 403);
+  }
+  return next();
+});
+adminRoutes3.get("/", async (c) => {
+  const db = c.env.DB;
+  const subscriptionService = new SubscriptionService(db);
+  await subscriptionService.ensureTable();
+  const page = parseInt(c.req.query("page") || "1");
+  const limit = 50;
+  const statusFilter = c.req.query("status");
+  const [{ subscriptions, total }, stats] = await Promise.all([
+    subscriptionService.list({ status: statusFilter, page, limit }),
+    subscriptionService.getStats()
+  ]);
+  const totalPages = Math.ceil(total / limit);
+  const html = renderSubscriptionsPage(subscriptions, stats, {
+    status: statusFilter,
+    page,
+    totalPages
+  });
+  return c.html(html);
+});
+adminRoutes3.post("/settings", async (c) => {
+  try {
+    const body = await c.req.json();
+    const db = c.env.DB;
+    await db.prepare(`
+      UPDATE plugins
+      SET settings = ?,
+          updated_at = unixepoch()
+      WHERE id = 'stripe'
+    `).bind(JSON.stringify(body)).run();
+    return c.json({ success: true });
+  } catch (error) {
+    console.error("Error saving Stripe settings:", error);
+    return c.json({ success: false, error: "Failed to save settings" }, 500);
+  }
+});
+
+// src/plugins/core-plugins/stripe-plugin/services/stripe-api.ts
+var StripeAPI = class {
+  constructor(secretKey) {
+    this.secretKey = secretKey;
+  }
+  baseUrl = "https://api.stripe.com/v1";
+  /**
+   * Verify a webhook signature
+   * Implements Stripe's v1 signature scheme using Web Crypto API
+   */
+  async verifyWebhookSignature(payload, sigHeader, secret) {
+    const parts = sigHeader.split(",");
+    const timestamp = parts.find((p) => p.startsWith("t="))?.split("=")[1];
+    const signatures = parts.filter((p) => p.startsWith("v1=")).map((p) => p.substring(3));
+    if (!timestamp || signatures.length === 0) return false;
+    const now = Math.floor(Date.now() / 1e3);
+    if (Math.abs(now - parseInt(timestamp)) > 300) return false;
+    const signedPayload = `${timestamp}.${payload}`;
+    const encoder = new TextEncoder();
+    const key = await crypto.subtle.importKey(
+      "raw",
+      encoder.encode(secret),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["sign"]
+    );
+    const signatureBuffer = await crypto.subtle.sign("HMAC", key, encoder.encode(signedPayload));
+    const expectedSignature = Array.from(new Uint8Array(signatureBuffer)).map((b) => b.toString(16).padStart(2, "0")).join("");
+    return signatures.some((sig) => timingSafeEqual(sig, expectedSignature));
+  }
+  /**
+   * Create a Checkout Session
+   */
+  async createCheckoutSession(params) {
+    const body = new URLSearchParams();
+    body.append("mode", "subscription");
+    body.append("line_items[0][price]", params.priceId);
+    body.append("line_items[0][quantity]", "1");
+    body.append("success_url", params.successUrl);
+    body.append("cancel_url", params.cancelUrl);
+    if (params.customerId) {
+      body.append("customer", params.customerId);
+    } else if (params.customerEmail) {
+      body.append("customer_email", params.customerEmail);
+    }
+    if (params.metadata) {
+      for (const [key, value] of Object.entries(params.metadata)) {
+        body.append(`metadata[${key}]`, value);
+      }
+    }
+    const response = await this.request("POST", "/checkout/sessions", body);
+    return { id: response.id, url: response.url };
+  }
+  /**
+   * Retrieve a Stripe subscription
+   */
+  async getSubscription(subscriptionId) {
+    return this.request("GET", `/subscriptions/${subscriptionId}`);
+  }
+  /**
+   * Create a Stripe customer
+   */
+  async createCustomer(params) {
+    const body = new URLSearchParams();
+    body.append("email", params.email);
+    if (params.metadata) {
+      for (const [key, value] of Object.entries(params.metadata)) {
+        body.append(`metadata[${key}]`, value);
+      }
+    }
+    return this.request("POST", "/customers", body);
+  }
+  /**
+   * Search for a customer by email
+   */
+  async findCustomerByEmail(email) {
+    const params = new URLSearchParams();
+    params.append("query", `email:'${email}'`);
+    params.append("limit", "1");
+    const result = await this.request("GET", `/customers/search?${params.toString()}`);
+    return result.data?.[0] || null;
+  }
+  async request(method, path, body) {
+    const url = path.startsWith("http") ? path : `${this.baseUrl}${path}`;
+    const response = await fetch(url, {
+      method,
+      headers: {
+        "Authorization": `Bearer ${this.secretKey}`,
+        ...body ? { "Content-Type": "application/x-www-form-urlencoded" } : {}
+      },
+      ...body ? { body: body.toString() } : {}
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(`Stripe API error: ${data.error?.message || response.statusText}`);
+    }
+    return data;
+  }
+};
+function timingSafeEqual(a, b) {
+  if (a.length !== b.length) return false;
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return result === 0;
+}
+
+// src/plugins/core-plugins/stripe-plugin/routes/api.ts
+var apiRoutes3 = new Hono();
+async function getSettings3(db) {
+  try {
+    const pluginService = new PluginService(db);
+    const plugin2 = await pluginService.getPlugin("stripe");
+    if (plugin2?.settings) {
+      const settings = typeof plugin2.settings === "string" ? JSON.parse(plugin2.settings) : plugin2.settings;
+      return { ...DEFAULT_SETTINGS3, ...settings };
+    }
+  } catch {
+  }
+  return DEFAULT_SETTINGS3;
+}
+function mapStripeStatus(status) {
+  const map = {
+    active: "active",
+    canceled: "canceled",
+    past_due: "past_due",
+    trialing: "trialing",
+    unpaid: "unpaid",
+    paused: "paused",
+    incomplete: "incomplete",
+    incomplete_expired: "incomplete_expired"
+  };
+  return map[status] || "incomplete";
+}
+apiRoutes3.post("/webhook", async (c) => {
+  const db = c.env.DB;
+  const settings = await getSettings3(db);
+  if (!settings.stripeWebhookSecret) {
+    return c.json({ error: "Webhook secret not configured" }, 500);
+  }
+  const rawBody = await c.req.text();
+  const sigHeader = c.req.header("stripe-signature") || "";
+  const stripeApi = new StripeAPI(settings.stripeSecretKey);
+  const isValid = await stripeApi.verifyWebhookSignature(rawBody, sigHeader, settings.stripeWebhookSecret);
+  if (!isValid) {
+    return c.json({ error: "Invalid signature" }, 400);
+  }
+  const event = JSON.parse(rawBody);
+  const subscriptionService = new SubscriptionService(db);
+  await subscriptionService.ensureTable();
+  try {
+    switch (event.type) {
+      case "customer.subscription.created": {
+        const sub = event.data.object;
+        const userId = sub.metadata?.sonicjs_user_id || await subscriptionService.getUserIdByStripeCustomer(sub.customer) || "";
+        await subscriptionService.create({
+          userId,
+          stripeCustomerId: sub.customer,
+          stripeSubscriptionId: sub.id,
+          stripePriceId: sub.items.data[0]?.price.id || "",
+          status: mapStripeStatus(sub.status),
+          currentPeriodStart: sub.current_period_start,
+          currentPeriodEnd: sub.current_period_end,
+          cancelAtPeriodEnd: sub.cancel_at_period_end
+        });
+        console.log(`[Stripe] Subscription created: ${sub.id}`);
+        break;
+      }
+      case "customer.subscription.updated": {
+        const sub = event.data.object;
+        await subscriptionService.updateByStripeId(sub.id, {
+          status: mapStripeStatus(sub.status),
+          stripePriceId: sub.items.data[0]?.price.id || void 0,
+          currentPeriodStart: sub.current_period_start,
+          currentPeriodEnd: sub.current_period_end,
+          cancelAtPeriodEnd: sub.cancel_at_period_end
+        });
+        console.log(`[Stripe] Subscription updated: ${sub.id} -> ${sub.status}`);
+        break;
+      }
+      case "customer.subscription.deleted": {
+        const sub = event.data.object;
+        await subscriptionService.updateByStripeId(sub.id, {
+          status: "canceled"
+        });
+        console.log(`[Stripe] Subscription deleted: ${sub.id}`);
+        break;
+      }
+      case "checkout.session.completed": {
+        const session = event.data.object;
+        const userId = session.metadata?.sonicjs_user_id;
+        if (userId && session.subscription) {
+          const existing = await subscriptionService.getByStripeSubscriptionId(session.subscription);
+          if (existing && !existing.userId) {
+            await subscriptionService.updateByStripeId(session.subscription, {
+              userId
+            });
+          }
+        }
+        console.log(`[Stripe] Checkout completed: ${session.id}`);
+        break;
+      }
+      case "invoice.payment_succeeded": {
+        const invoice = event.data.object;
+        if (invoice.subscription) {
+          await subscriptionService.updateByStripeId(invoice.subscription, {
+            status: "active"
+          });
+        }
+        console.log(`[Stripe] Payment succeeded for invoice: ${invoice.id}`);
+        break;
+      }
+      case "invoice.payment_failed": {
+        const invoice = event.data.object;
+        if (invoice.subscription) {
+          await subscriptionService.updateByStripeId(invoice.subscription, {
+            status: "past_due"
+          });
+        }
+        console.log(`[Stripe] Payment failed for invoice: ${invoice.id}`);
+        break;
+      }
+      default:
+        console.log(`[Stripe] Unhandled event type: ${event.type}`);
+    }
+  } catch (error) {
+    console.error(`[Stripe] Error processing webhook event ${event.type}:`, error);
+    return c.json({ error: "Webhook processing failed" }, 500);
+  }
+  return c.json({ received: true });
+});
+apiRoutes3.post("/create-checkout-session", requireAuth(), async (c) => {
+  const db = c.env.DB;
+  const user = c.get("user");
+  if (!user) return c.json({ error: "Unauthorized" }, 401);
+  const settings = await getSettings3(db);
+  if (!settings.stripeSecretKey) {
+    return c.json({ error: "Stripe not configured" }, 500);
+  }
+  const body = await c.req.json().catch(() => ({}));
+  const priceId = body.priceId || settings.stripePriceId;
+  if (!priceId) {
+    return c.json({ error: "No price ID specified" }, 400);
+  }
+  const stripeApi = new StripeAPI(settings.stripeSecretKey);
+  const subscriptionService = new SubscriptionService(db);
+  await subscriptionService.ensureTable();
+  const existingSub = await subscriptionService.getByUserId(user.userId);
+  let customerId = existingSub?.stripeCustomerId;
+  if (!customerId) {
+    const existing = await stripeApi.findCustomerByEmail(user.email);
+    if (existing) {
+      customerId = existing.id;
+    } else {
+      const customer = await stripeApi.createCustomer({
+        email: user.email,
+        metadata: { sonicjs_user_id: user.userId }
+      });
+      customerId = customer.id;
+    }
+  }
+  const origin = new URL(c.req.url).origin;
+  const session = await stripeApi.createCheckoutSession({
+    priceId,
+    customerId,
+    successUrl: `${origin}${settings.successUrl}?session_id={CHECKOUT_SESSION_ID}`,
+    cancelUrl: `${origin}${settings.cancelUrl}`,
+    metadata: { sonicjs_user_id: user.userId }
+  });
+  return c.json({ sessionId: session.id, url: session.url });
+});
+apiRoutes3.get("/subscription", requireAuth(), async (c) => {
+  const user = c.get("user");
+  if (!user) return c.json({ error: "Unauthorized" }, 401);
+  const db = c.env.DB;
+  const subscriptionService = new SubscriptionService(db);
+  await subscriptionService.ensureTable();
+  const subscription = await subscriptionService.getByUserId(user.userId);
+  if (!subscription) {
+    return c.json({ subscription: null });
+  }
+  return c.json({ subscription });
+});
+apiRoutes3.get("/subscriptions", requireAuth(), async (c) => {
+  const user = c.get("user");
+  if (user?.role !== "admin") return c.json({ error: "Access denied" }, 403);
+  const db = c.env.DB;
+  const subscriptionService = new SubscriptionService(db);
+  await subscriptionService.ensureTable();
+  const filters = {
+    status: c.req.query("status"),
+    page: c.req.query("page") ? parseInt(c.req.query("page")) : 1,
+    limit: c.req.query("limit") ? parseInt(c.req.query("limit")) : 50,
+    sortBy: c.req.query("sortBy") || "created_at",
+    sortOrder: c.req.query("sortOrder") || "desc"
+  };
+  const result = await subscriptionService.list(filters);
+  return c.json(result);
+});
+apiRoutes3.get("/stats", requireAuth(), async (c) => {
+  const user = c.get("user");
+  if (user?.role !== "admin") return c.json({ error: "Access denied" }, 403);
+  const db = c.env.DB;
+  const subscriptionService = new SubscriptionService(db);
+  await subscriptionService.ensureTable();
+  const stats = await subscriptionService.getStats();
+  return c.json(stats);
+});
+
+// src/plugins/core-plugins/stripe-plugin/index.ts
+function createStripePlugin() {
+  const builder = PluginBuilder.create({
+    name: "stripe",
+    version: "1.0.0-beta.1",
+    description: "Stripe subscription management with webhook handling, checkout sessions, and subscription gating"
+  });
+  builder.metadata({
+    author: { name: "SonicJS Team" },
+    license: "MIT"
+  });
+  builder.addRoute("/admin/plugins/stripe", adminRoutes3, {
+    description: "Stripe subscriptions admin dashboard",
+    requiresAuth: true,
+    priority: 50
+  });
+  builder.addRoute("/api/stripe", apiRoutes3, {
+    description: "Stripe API endpoints (webhook, checkout, subscription)",
+    requiresAuth: false,
+    // Webhook route handles its own auth via signature
+    priority: 50
+  });
+  builder.addMenuItem("Stripe", "/admin/plugins/stripe", {
+    icon: `<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>`,
+    order: 75
+  });
+  builder.lifecycle({
+    install: async () => {
+      console.log("[Stripe] Plugin installed");
+    },
+    activate: async () => {
+      console.log("[Stripe] Plugin activated");
+    },
+    deactivate: async () => {
+      console.log("[Stripe] Plugin deactivated");
+    },
+    uninstall: async () => {
+      console.log("[Stripe] Plugin uninstalled");
+    }
+  });
+  return builder.build();
+}
+var stripePlugin = createStripePlugin();
+
 // src/middleware/plugin-menu.ts
 var MENU_PLUGINS = [
   securityAuditPlugin
@@ -8256,6 +9005,11 @@ function createSonicJSApp(config = {}) {
   app2.route("/admin", userRoutes);
   app2.route("/auth", auth_default);
   app2.route("/", test_cleanup_default);
+  if (stripePlugin.routes && stripePlugin.routes.length > 0) {
+    for (const route of stripePlugin.routes) {
+      app2.route(route.path, route.handler);
+    }
+  }
   if (emailPlugin.routes && emailPlugin.routes.length > 0) {
     for (const route of emailPlugin.routes) {
       app2.route(route.path, route.handler);
