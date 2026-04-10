@@ -4,7 +4,7 @@ import { renderPluginsListPage, PluginsListPageData, Plugin } from '../templates
 import { renderPluginSettingsPage, PluginSettingsPageData } from '../templates/pages/admin-plugin-settings.template'
 import { SettingsService } from '../services/settings'
 import { PluginService } from '../services'
-import { PLUGIN_REGISTRY, PLUGINS_WITH_ADMIN_PAGES, findPluginByCodeName } from '../plugins/manifest-registry'
+import { PLUGIN_REGISTRY, findPluginByCodeName } from '../plugins/manifest-registry'
 import type { Bindings, Variables } from '../app'
 
 const adminPluginRoutes = new Hono<{ Bindings: Bindings; Variables: Variables }>()
@@ -134,12 +134,6 @@ adminPluginRoutes.get('/:id', async (c) => {
     // Check authorization first
     if (user?.role !== 'admin') {
       return c.redirect('/admin/plugins')
-    }
-
-    // Skip plugins that have their own custom admin pages (detected from registry adminMenu)
-    if (PLUGINS_WITH_ADMIN_PAGES.includes(pluginId)) {
-      // Let the plugin's own route handle this
-      return c.text('', 404) // Return 404 so Hono continues to next route
     }
 
     const pluginService = new PluginService(db)
