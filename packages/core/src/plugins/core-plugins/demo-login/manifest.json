@@ -8,13 +8,26 @@
   "repository": "https://github.com/lane711/sonicjs-ai/tree/main/src/plugins/core-plugins",
   "license": "MIT",
   "category": "utilities",
-  "tags": ["demo", "testing", "development"],
-  "dependencies": ["core-auth"],
+  "tags": [
+    "demo",
+    "testing",
+    "development"
+  ],
+  "dependencies": [
+    "core-auth"
+  ],
   "settings": {},
   "hooks": {
     "onActivate": "activate",
     "onDeactivate": "deactivate"
   },
   "routes": [],
-  "permissions": {}
+  "permissions": {},
+  "iconEmoji": "🎯",
+  "is_core": false,
+  "defaultSettings": {
+    "enableNotice": true,
+    "demoEmail": "admin@sonicjs.com",
+    "demoPassword": "sonicjs!"
+  }
 }

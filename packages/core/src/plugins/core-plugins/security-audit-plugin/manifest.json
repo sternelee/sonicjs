@@ -5,36 +5,84 @@
   "description": "Security event logging, brute-force detection, and analytics dashboard. Monitors login attempts, registrations, lockouts, and suspicious activity.",
   "author": "SonicJS Team",
   "category": "security",
-  "tags": ["security", "audit", "brute-force", "analytics", "login-monitoring"],
+  "tags": [
+    "security",
+    "audit",
+    "brute-force",
+    "analytics",
+    "login-monitoring"
+  ],
   "dependencies": [],
   "settings": {
     "retention": {
       "type": "object",
       "properties": {
-        "daysToKeep": { "type": "number", "default": 90 },
-        "maxEvents": { "type": "number", "default": 100000 },
-        "autoPurge": { "type": "boolean", "default": true }
+        "daysToKeep": {
+          "type": "number",
+          "default": 90
+        },
+        "maxEvents": {
+          "type": "number",
+          "default": 100000
+        },
+        "autoPurge": {
+          "type": "boolean",
+          "default": true
+        }
       }
     },
     "bruteForce": {
       "type": "object",
       "properties": {
-        "enabled": { "type": "boolean", "default": true },
-        "maxFailedAttemptsPerIP": { "type": "number", "default": 10 },
-        "maxFailedAttemptsPerEmail": { "type": "number", "default": 5 },
-        "windowMinutes": { "type": "number", "default": 15 },
-        "lockoutDurationMinutes": { "type": "number", "default": 30 },
-        "alertThreshold": { "type": "number", "default": 20 }
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "maxFailedAttemptsPerIP": {
+          "type": "number",
+          "default": 10
+        },
+        "maxFailedAttemptsPerEmail": {
+          "type": "number",
+          "default": 5
+        },
+        "windowMinutes": {
+          "type": "number",
+          "default": 15
+        },
+        "lockoutDurationMinutes": {
+          "type": "number",
+          "default": 30
+        },
+        "alertThreshold": {
+          "type": "number",
+          "default": 20
+        }
       }
     },
     "logging": {
       "type": "object",
       "properties": {
-        "logSuccessfulLogins": { "type": "boolean", "default": true },
-        "logLogouts": { "type": "boolean", "default": true },
-        "logRegistrations": { "type": "boolean", "default": true },
-        "logPasswordResets": { "type": "boolean", "default": true },
-        "logPermissionDenied": { "type": "boolean", "default": true }
+        "logSuccessfulLogins": {
+          "type": "boolean",
+          "default": true
+        },
+        "logLogouts": {
+          "type": "boolean",
+          "default": true
+        },
+        "logRegistrations": {
+          "type": "boolean",
+          "default": true
+        },
+        "logPasswordResets": {
+          "type": "boolean",
+          "default": true
+        },
+        "logPermissionDenied": {
+          "type": "boolean",
+          "default": true
+        }
       }
     }
   },
@@ -47,5 +95,29 @@
     "icon": "shield-check",
     "path": "/admin/plugins/security-audit",
     "order": 85
+  },
+  "iconEmoji": "🛡️",
+  "is_core": false,
+  "defaultSettings": {
+    "retention": {
+      "daysToKeep": 90,
+      "maxEvents": 100000,
+      "autoPurge": true
+    },
+    "bruteForce": {
+      "enabled": true,
+      "maxFailedAttemptsPerIP": 10,
+      "maxFailedAttemptsPerEmail": 5,
+      "windowMinutes": 15,
+      "lockoutDurationMinutes": 30,
+      "alertThreshold": 20
+    },
+    "logging": {
+      "logSuccessfulLogins": true,
+      "logLogouts": true,
+      "logRegistrations": true,
+      "logPasswordResets": true,
+      "logPermissionDenied": true
+    }
   }
 }

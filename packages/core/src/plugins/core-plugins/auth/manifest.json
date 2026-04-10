@@ -8,7 +8,14 @@
   "repository": "https://github.com/lane711/sonicjs-ai/tree/main/src/plugins/core-plugins",
   "license": "MIT",
   "category": "security",
-  "tags": ["auth", "authentication", "users", "security", "rbac", "sessions"],
+  "tags": [
+    "auth",
+    "authentication",
+    "users",
+    "security",
+    "rbac",
+    "sessions"
+  ],
   "dependencies": [],
   "settings": {
     "sessionTimeout": {
@@ -39,5 +46,56 @@
     "manage:users": "Manage users and accounts",
     "manage:roles": "Manage user roles",
     "manage:permissions": "Manage permission settings"
+  },
+  "iconEmoji": "🔐",
+  "is_core": true,
+  "defaultSettings": {
+    "requiredFields": {
+      "email": {
+        "required": true,
+        "minLength": 5,
+        "label": "Email",
+        "type": "email"
+      },
+      "password": {
+        "required": true,
+        "minLength": 8,
+        "label": "Password",
+        "type": "password"
+      },
+      "username": {
+        "required": true,
+        "minLength": 3,
+        "label": "Username",
+        "type": "text"
+      },
+      "firstName": {
+        "required": true,
+        "minLength": 1,
+        "label": "First Name",
+        "type": "text"
+      },
+      "lastName": {
+        "required": true,
+        "minLength": 1,
+        "label": "Last Name",
+        "type": "text"
+      }
+    },
+    "validation": {
+      "emailFormat": true,
+      "allowDuplicateUsernames": false,
+      "passwordRequirements": {
+        "requireUppercase": false,
+        "requireLowercase": false,
+        "requireNumbers": false,
+        "requireSpecialChars": false
+      }
+    },
+    "registration": {
+      "enabled": true,
+      "requireEmailVerification": false,
+      "defaultRole": "viewer"
+    }
   }
 }

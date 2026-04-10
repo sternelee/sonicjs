@@ -8,7 +8,12 @@
   "repository": "https://github.com/lane711/sonicjs-ai/tree/main/src/plugins/core-plugins/seed-data-plugin",
   "license": "MIT",
   "category": "development",
-  "tags": ["development", "testing", "seed-data", "demo"],
+  "tags": [
+    "development",
+    "testing",
+    "seed-data",
+    "demo"
+  ],
   "dependencies": [],
   "settings": {},
   "hooks": {
@@ -18,5 +23,12 @@
   "routes": [],
   "permissions": {
     "seed-data:generate": "Generate seed data"
+  },
+  "iconEmoji": "🌱",
+  "is_core": false,
+  "defaultSettings": {
+    "userCount": 20,
+    "contentCount": 200,
+    "defaultPassword": "password123"
   }
 }

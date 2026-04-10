@@ -8,7 +8,13 @@
   "repository": "https://github.com/lane711/sonicjs",
   "license": "MIT",
   "category": "editor",
-  "tags": ["editor", "richtext", "wysiwyg", "tinymce", "content"],
+  "tags": [
+    "editor",
+    "richtext",
+    "wysiwyg",
+    "tinymce",
+    "content"
+  ],
   "dependencies": [],
   "settings": {
     "apiKey": {
@@ -28,14 +34,21 @@
       "label": "Default Toolbar",
       "description": "Default toolbar configuration",
       "default": "full",
-      "options": ["full", "simple", "minimal"]
+      "options": [
+        "full",
+        "simple",
+        "minimal"
+      ]
     },
     "skin": {
       "type": "select",
       "label": "Editor Skin",
       "description": "Visual theme for the editor",
       "default": "oxide-dark",
-      "options": ["oxide", "oxide-dark"]
+      "options": [
+        "oxide",
+        "oxide-dark"
+      ]
     }
   },
   "hooks": {
@@ -43,5 +56,13 @@
     "onDeactivate": "deactivate"
   },
   "routes": [],
-  "permissions": {}
+  "permissions": {},
+  "iconEmoji": "📝",
+  "is_core": false,
+  "defaultSettings": {
+    "apiKey": "no-api-key",
+    "defaultHeight": 300,
+    "defaultToolbar": "full",
+    "skin": "oxide-dark"
+  }
 }

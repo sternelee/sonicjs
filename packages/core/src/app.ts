@@ -254,6 +254,13 @@ export function createSonicJSApp(config: SonicJSConfig = {}): SonicJSApp {
     }
   }
 
+  // Plugin routes - Stripe (must be before /admin/plugins catch-all)
+  if (stripePlugin.routes && stripePlugin.routes.length > 0) {
+    for (const route of stripePlugin.routes) {
+      app.route(route.path, route.handler as any)
+    }
+  }
+
   app.route('/admin/plugins', adminPluginRoutes)
   app.route('/admin/logs', adminLogsRoutes)
   app.route('/admin', adminUsersRoutes)
@@ -261,13 +268,6 @@ export function createSonicJSApp(config: SonicJSConfig = {}): SonicJSApp {
 
   // Test cleanup routes (only for development/test environments)
   app.route('/', testCleanupRoutes)
-
-  // Plugin routes - Stripe (subscriptions, webhook, checkout)
-  if (stripePlugin.routes && stripePlugin.routes.length > 0) {
-    for (const route of stripePlugin.routes) {
-      app.route(route.path, route.handler as any)
-    }
-  }
 
   // Plugin routes - Email
   if (emailPlugin.routes && emailPlugin.routes.length > 0) {

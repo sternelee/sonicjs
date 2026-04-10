@@ -9,7 +9,11 @@
   "homepage": "https://developers.cloudflare.com/ai-search/",
   "repository": "https://github.com/sonicjs/sonicjs",
   "license": "MIT",
-  "permissions": ["settings:write", "admin:access", "content:read"],
+  "permissions": [
+    "settings:write",
+    "admin:access",
+    "content:read"
+  ],
   "dependencies": [],
   "configSchema": {
     "enabled": {
@@ -29,7 +33,10 @@
       "label": "AI Provider",
       "description": "Which AI service to use for semantic search",
       "default": "cloudflare",
-      "enum": ["cloudflare", "keyword-only"]
+      "enum": [
+        "cloudflare",
+        "keyword-only"
+      ]
     },
     "autocomplete_enabled": {
       "type": "boolean",
@@ -60,11 +67,24 @@
       "default": false
     }
   },
-      "adminMenu": {
-        "label": "AI Search",
-        "icon": "magnifying-glass",
-        "href": "/admin/plugins/ai-search",
-        "parentId": "plugins",
-        "order": 50
-      }
+  "adminMenu": {
+    "label": "AI Search",
+    "icon": "magnifying-glass",
+    "href": "/admin/plugins/ai-search",
+    "parentId": "plugins",
+    "order": 50
+  },
+  "codeName": "ai-search-plugin",
+  "iconEmoji": "🔍",
+  "is_core": true,
+  "defaultSettings": {
+    "enabled": true,
+    "ai_mode_enabled": true,
+    "selected_collections": [],
+    "dismissed_collections": [],
+    "autocomplete_enabled": true,
+    "cache_duration": 1,
+    "results_limit": 20,
+    "index_media": false
+  }
 }

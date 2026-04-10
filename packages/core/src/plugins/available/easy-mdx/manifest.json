@@ -8,7 +8,13 @@
   "repository": "https://github.com/lane711/sonicjs",
   "license": "MIT",
   "category": "editor",
-  "tags": ["editor", "richtext", "markdown", "mdx", "content"],
+  "tags": [
+    "editor",
+    "richtext",
+    "markdown",
+    "mdx",
+    "content"
+  ],
   "dependencies": [],
   "settings": {
     "defaultHeight": {
@@ -22,14 +28,21 @@
       "label": "Editor Theme",
       "description": "Visual theme for the editor",
       "default": "dark",
-      "options": ["light", "dark"]
+      "options": [
+        "light",
+        "dark"
+      ]
     },
     "toolbar": {
       "type": "select",
       "label": "Default Toolbar",
       "description": "Default toolbar configuration",
       "default": "full",
-      "options": ["full", "simple", "minimal"]
+      "options": [
+        "full",
+        "simple",
+        "minimal"
+      ]
     },
     "placeholder": {
       "type": "string",
@@ -43,5 +56,13 @@
     "onDeactivate": "deactivate"
   },
   "routes": [],
-  "permissions": {}
+  "permissions": {},
+  "iconEmoji": "📝",
+  "is_core": false,
+  "defaultSettings": {
+    "defaultHeight": 400,
+    "theme": "dark",
+    "toolbar": "full",
+    "placeholder": "Start writing your content..."
+  }
 }

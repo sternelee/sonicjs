@@ -99,6 +99,38 @@ export class StripeAPI {
   }
 
   /**
+   * List subscriptions with pagination (auto-expands across pages)
+   */
+  async listSubscriptions(params?: {
+    status?: string
+    limit?: number
+    startingAfter?: string
+  }): Promise<{ data: any[]; has_more: boolean }> {
+    const qs = new URLSearchParams()
+    qs.append('limit', String(params?.limit || 100))
+    if (params?.status) qs.append('status', params.status)
+    if (params?.startingAfter) qs.append('starting_after', params.startingAfter)
+    return this.request('GET', `/subscriptions?${qs.toString()}`)
+  }
+
+  /**
+   * Fetch ALL subscriptions from Stripe (handles pagination automatically)
+   */
+  async listAllSubscriptions(): Promise<any[]> {
+    const all: any[] = []
+    let startingAfter: string | undefined
+
+    while (true) {
+      const result = await this.listSubscriptions({ limit: 100, startingAfter })
+      all.push(...result.data)
+      if (!result.has_more || result.data.length === 0) break
+      startingAfter = result.data[result.data.length - 1].id
+    }
+
+    return all
+  }
+
+  /**
    * Search for a customer by email
    */
   async findCustomerByEmail(email: string): Promise<{ id: string } | null> {

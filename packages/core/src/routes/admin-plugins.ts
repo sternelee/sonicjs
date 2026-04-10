@@ -4,8 +4,7 @@ import { renderPluginsListPage, PluginsListPageData, Plugin } from '../templates
 import { renderPluginSettingsPage, PluginSettingsPageData } from '../templates/pages/admin-plugin-settings.template'
 import { SettingsService } from '../services/settings'
 import { PluginService } from '../services'
-// TODO: authValidationService not yet migrated - commented out temporarily
-// import { authValidationService } from '../services/auth-validation'
+import { PLUGIN_REGISTRY, findPluginByCodeName } from '../plugins/manifest-registry'
 import type { Bindings, Variables } from '../app'
 
 const adminPluginRoutes = new Hono<{ Bindings: Bindings; Variables: Variables }>()
@@ -13,165 +12,35 @@ const adminPluginRoutes = new Hono<{ Bindings: Bindings; Variables: Variables }>
 // Apply authentication middleware
 adminPluginRoutes.use('*', requireAuth())
 
-// Available plugins registry - plugins that can be installed
-const AVAILABLE_PLUGINS = [
-  {
-    id: 'third-party-faq',
-    name: 'faq-plugin',
-    display_name: 'FAQ System',
-    description: 'Frequently Asked Questions management system with categories, search, and custom styling',
-    version: '2.0.0',
-    author: 'Community Developer',
-    category: 'content',
-    icon: 'â',
-    permissions: ['manage:faqs'],
-    dependencies: [],
-    is_core: false
-  },
-  {
-    id: 'demo-login-prefill',
-    name: 'demo-login-plugin',
-    display_name: 'Demo Login Prefill',
-    description: 'Prefills login form with demo credentials (admin@sonicjs.com/sonicjs!) for easy site demonstration',
-    version: '1.0.0-beta.1',
-    author: 'SonicJS',
-    category: 'demo',
-    icon: 'ð¯',
-    permissions: [],
-    dependencies: [],
-    is_core: false
-  },
-  {
-    id: 'database-tools',
-    name: 'database-tools',
-    display_name: 'Database Tools',
-    description: 'Database management tools including truncate, backup, and validation',
-    version: '1.0.0-beta.1',
-    author: 'SonicJS Team',
-    category: 'system',
-    icon: 'ðï¸',
-    permissions: ['manage:database', 'admin'],
-    dependencies: [],
-    is_core: false
-  },
-  {
-    id: 'seed-data',
-    name: 'seed-data',
-    display_name: 'Seed Data',
-    description: 'Generate realistic example users and content for testing and development',
-    version: '1.0.0-beta.1',
-    author: 'SonicJS Team',
-    category: 'development',
-    icon: 'ð±',
-    permissions: ['admin'],
-    dependencies: [],
-    is_core: false
-  },
-  {
-    id: 'quill-editor',
-    name: 'quill-editor',
-    display_name: 'Quill Rich Text Editor',
-    description: 'Quill WYSIWYG editor integration for rich text editing. Lightweight, modern editor with customizable toolbars and dark mode support.',
-    version: '1.0.0',
-    author: 'SonicJS Team',
-    category: 'editor',
-    icon: 'âï¸',
-    permissions: [],
-    dependencies: [],
-    is_core: true
-  },
-  {
-    id: 'tinymce-plugin',
-    name: 'tinymce-plugin',
-    display_name: 'TinyMCE Rich Text Editor',
-    description: 'Powerful WYSIWYG rich text editor for content creation. Provides a full-featured editor with formatting, media embedding, and customizable toolbars for richtext fields.',
-    version: '1.0.0',
-    author: 'SonicJS Team',
-    category: 'editor',
-    icon: 'ð',
-    permissions: [],
-    dependencies: [],
-    is_core: false
-  },
-  {
-    id: 'easy-mdx',
-    name: 'easy-mdx',
-    display_name: 'EasyMDE Markdown Editor',
-    description: 'Lightweight markdown editor with live preview. Provides a simple and efficient editor with markdown support for richtext fields.',
-    version: '1.0.0',
-    author: 'SonicJS Team',
-    category: 'editor',
-    icon: 'ð',
-    permissions: [],
-    dependencies: [],
-    is_core: false
-  },
-  {
-    id: 'turnstile',
-    name: 'turnstile-plugin',
-    display_name: 'Cloudflare Turnstile',
-    description: 'CAPTCHA-free bot protection for forms using Cloudflare Turnstile. Provides seamless spam prevention with configurable modes, themes, and pre-clearance options.',
-    version: '1.0.0',
-    author: 'SonicJS Team',
-    category: 'security',
-    icon: 'ð¡ï¸',
-    permissions: [],
-    dependencies: [],
-    is_core: true
-  },
-  {
-    id: 'security-audit',
-    name: 'security-audit',
-    display_name: 'Security Audit',
-    description: 'Security event logging, brute-force detection, and analytics dashboard. Monitors login attempts, registrations, lockouts, and suspicious activity.',
-    version: '1.0.0-beta.1',
-    author: 'SonicJS Team',
-    category: 'security',
-    icon: 'ð¡ï¸',
-    permissions: ['security-audit:view', 'security-audit:manage'],
-    dependencies: [],
-    is_core: false
-  },
-  {
-    id: 'ai-search',
-    name: 'ai-search-plugin',
-    display_name: 'AI Search',
-    description: 'Advanced search with Cloudflare AI Search. Full-text search, semantic search, and advanced filtering across all content collections.',
-    version: '1.0.0',
-    author: 'SonicJS Team',
-    category: 'search',
-    icon: 'ð',
-    permissions: [],
-    dependencies: [],
-    is_core: true
-  },
-  {
-    id: 'form-builder',
-    name: 'form-builder',
-    display_name: 'Form Builder',
-    description: 'Drag-and-drop form builder with conditional logic, file uploads, and email notifications. Create contact forms, surveys, and data collection forms.',
-    version: '1.0.0',
-    author: 'SonicJS Team',
-    category: 'content',
-    icon: '\u{1F4DD}',
-    permissions: ['forms:create', 'forms:manage', 'forms:submissions'],
-    dependencies: [],
-    is_core: false
-  }
-]
+// Build available plugins list from the auto-generated registry.
+// To add a new plugin to this list, create a manifest.json in the plugin directory
+// and run: node packages/scripts/generate-plugin-registry.mjs
+const AVAILABLE_PLUGINS = Object.values(PLUGIN_REGISTRY).map(p => ({
+  id: p.id,
+  name: p.codeName,
+  display_name: p.displayName,
+  description: p.description,
+  version: p.version,
+  author: p.author,
+  category: p.category,
+  icon: p.iconEmoji,
+  permissions: p.permissions,
+  dependencies: p.dependencies,
+  is_core: p.is_core
+}))
 
 // Plugin list page
 adminPluginRoutes.get('/', async (c) => {
   try {
     const user = c.get('user')
     const db = c.env.DB
-    
+
     // Temporarily skip permission check for admin users
     // TODO: Fix permission system
     if (user?.role !== 'admin') {
       return c.text('Access denied', 403)
     }
-    
+
     const pluginService = new PluginService(db)
 
     // Get all installed plugins with error handling
@@ -262,14 +131,7 @@ adminPluginRoutes.get('/:id', async (c) => {
     const db = c.env.DB
     const pluginId = c.req.param('id')
 
-    // Skip plugins that have their own custom settings pages (not using component system)
-    const pluginsWithCustomPages = ['ai-search', 'security-audit']
-    if (pluginsWithCustomPages.includes(pluginId)) {
-      // Let the plugin's own route handle this
-      return c.text('', 404) // Return 404 so Hono continues to next route
-    }
-
-    // Check authorization
+    // Check authorization first
     if (user?.role !== 'admin') {
       return c.redirect('/admin/plugins')
     }
@@ -333,7 +195,7 @@ adminPluginRoutes.get('/:id', async (c) => {
       isCore: plugin.is_core,
       settings: enrichedSettings
     }
-    
+
     // Map activity data
     const templateActivity = (activity || []).map(item => ({
       id: item.id,
@@ -342,7 +204,7 @@ adminPluginRoutes.get('/:id', async (c) => {
       timestamp: item.timestamp,
       user: item.user_email
     }))
-    
+
     const pageData: PluginSettingsPageData = {
       plugin: templatePlugin,
       activity: templateActivity,
@@ -352,7 +214,7 @@ adminPluginRoutes.get('/:id', async (c) => {
         role: user?.role || 'user'
       }
     }
-    
+
     return c.html(renderPluginSettingsPage(pageData))
   } catch (error) {
     console.error('Error getting plugin settings page:', error)
@@ -366,15 +228,15 @@ adminPluginRoutes.post('/:id/activate', async (c) => {
     const user = c.get('user')
     const db = c.env.DB
     const pluginId = c.req.param('id')
-    
+
     // Temporarily skip permission check for admin users
     if (user?.role !== 'admin') {
       return c.json({ error: 'Access denied' }, 403)
     }
-    
+
     const pluginService = new PluginService(db)
     await pluginService.activatePlugin(pluginId)
-    
+
     return c.json({ success: true })
   } catch (error) {
     console.error('Error activating plugin:', error)
@@ -389,15 +251,15 @@ adminPluginRoutes.post('/:id/deactivate', async (c) => {
     const user = c.get('user')
     const db = c.env.DB
     const pluginId = c.req.param('id')
-    
+
     // Temporarily skip permission check for admin users
     if (user?.role !== 'admin') {
       return c.json({ error: 'Access denied' }, 403)
     }
-    
+
     const pluginService = new PluginService(db)
     await pluginService.deactivatePlugin(pluginId)
-    
+
     return c.json({ success: true })
   } catch (error) {
     console.error('Error deactivating plugin:', error)
@@ -406,378 +268,47 @@ adminPluginRoutes.post('/:id/deactivate', async (c) => {
   }
 })
 
-// Install plugin
+// Generic install handler - uses the auto-generated plugin registry.
+// No per-plugin switch/case needed. Adding a manifest.json is enough.
 adminPluginRoutes.post('/install', async (c) => {
   try {
     const user = c.get('user')
     const db = c.env.DB
-    
+
     // Temporarily skip permission check for admin users
     if (user?.role !== 'admin') {
       return c.json({ error: 'Access denied' }, 403)
     }
-    
+
     const body = await c.req.json()
-    
     const pluginService = new PluginService(db)
-    
-    // Handle FAQ plugin installation
-    if (body.name === 'faq-plugin') {
-      const faqPlugin = await pluginService.installPlugin({
-        id: 'third-party-faq',
-        name: 'faq-plugin',
-        display_name: 'FAQ System',
-        description: 'Frequently Asked Questions management system with categories, search, and custom styling',
-        version: '2.0.0',
-        author: 'Community Developer',
-        category: 'content',
-        icon: 'â',
-        permissions: ['manage:faqs'],
-        dependencies: [],
-        settings: {
-          enableSearch: true,
-          enableCategories: true,
-          questionsPerPage: 10
-        }
-      })
 
-      return c.json({ success: true, plugin: faqPlugin })
+    // Look up plugin in registry by codeName (what the frontend sends as body.name)
+    // or by id
+    const registryEntry = findPluginByCodeName(body.name)
+      || PLUGIN_REGISTRY[body.name]
+      || PLUGIN_REGISTRY[body.id]
+
+    if (!registryEntry) {
+      return c.json({ error: 'Plugin not found in registry' }, 404)
     }
 
-    // Handle Demo Login plugin installation
-    if (body.name === 'demo-login-plugin') {
-      const demoPlugin = await pluginService.installPlugin({
-        id: 'demo-login-prefill',
-        name: 'demo-login-plugin',
-        display_name: 'Demo Login Prefill',
-        description: 'Prefills login form with demo credentials (admin@sonicjs.com/sonicjs!) for easy site demonstration',
-        version: '1.0.0-beta.1',
-        author: 'SonicJS',
-        category: 'demo',
-        icon: 'ð¯',
-        permissions: [],
-        dependencies: [],
-        settings: {
-          enableNotice: true,
-          demoEmail: 'admin@sonicjs.com',
-          demoPassword: 'sonicjs!'
-        }
-      })
+    const plugin = await pluginService.installPlugin({
+      id: registryEntry.id,
+      name: registryEntry.codeName,
+      display_name: registryEntry.displayName,
+      description: registryEntry.description,
+      version: registryEntry.version,
+      author: registryEntry.author,
+      category: registryEntry.category,
+      icon: registryEntry.iconEmoji,
+      permissions: registryEntry.permissions,
+      dependencies: registryEntry.dependencies,
+      is_core: registryEntry.is_core,
+      settings: registryEntry.defaultSettings,
+    })
 
-      return c.json({ success: true, plugin: demoPlugin })
-    }
-
-    // Handle core Authentication System plugin installation
-    if (body.name === 'core-auth') {
-      const authPlugin = await pluginService.installPlugin({
-        id: 'core-auth',
-        name: 'core-auth',
-        display_name: 'Authentication System',
-        description: 'Core authentication and user management system',
-        version: '1.0.0-beta.1',
-        author: 'SonicJS Team',
-        category: 'security',
-        icon: 'ð',
-        permissions: ['manage:users', 'manage:roles', 'manage:permissions'],
-        dependencies: [],
-        is_core: true,
-        settings: {}
-      })
-
-      return c.json({ success: true, plugin: authPlugin })
-    }
-
-    // Handle core Media Manager plugin installation
-    if (body.name === 'core-media') {
-      const mediaPlugin = await pluginService.installPlugin({
-        id: 'core-media',
-        name: 'core-media',
-        display_name: 'Media Manager',
-        description: 'Core media upload and management system',
-        version: '1.0.0-beta.1',
-        author: 'SonicJS Team',
-        category: 'media',
-        icon: 'ð¸',
-        permissions: ['manage:media', 'upload:files'],
-        dependencies: [],
-        is_core: true,
-        settings: {}
-      })
-
-      return c.json({ success: true, plugin: mediaPlugin })
-    }
-
-    // Handle core Workflow Engine plugin installation
-    if (body.name === 'core-workflow') {
-      const workflowPlugin = await pluginService.installPlugin({
-        id: 'core-workflow',
-        name: 'core-workflow',
-        display_name: 'Workflow Engine',
-        description: 'Content workflow and approval system',
-        version: '1.0.0-beta.1',
-        author: 'SonicJS Team',
-        category: 'content',
-        icon: 'ð',
-        permissions: ['manage:workflows', 'approve:content'],
-        dependencies: [],
-        is_core: true,
-        settings: {}
-      })
-
-      return c.json({ success: true, plugin: workflowPlugin })
-    }
-
-    // Handle Database Tools plugin installation
-    if (body.name === 'database-tools') {
-      const databaseToolsPlugin = await pluginService.installPlugin({
-        id: 'database-tools',
-        name: 'database-tools',
-        display_name: 'Database Tools',
-        description: 'Database management tools including truncate, backup, and validation',
-        version: '1.0.0-beta.1',
-        author: 'SonicJS Team',
-        category: 'system',
-        icon: 'ðï¸',
-        permissions: ['manage:database', 'admin'],
-        dependencies: [],
-        is_core: false,
-        settings: {
-          enableTruncate: true,
-          enableBackup: true,
-          enableValidation: true,
-          requireConfirmation: true
-        }
-      })
-
-      return c.json({ success: true, plugin: databaseToolsPlugin })
-    }
-
-    // Handle Seed Data plugin installation
-    if (body.name === 'seed-data') {
-      const seedDataPlugin = await pluginService.installPlugin({
-        id: 'seed-data',
-        name: 'seed-data',
-        display_name: 'Seed Data',
-        description: 'Generate realistic example users and content for testing and development',
-        version: '1.0.0-beta.1',
-        author: 'SonicJS Team',
-        category: 'development',
-        icon: 'ð±',
-        permissions: ['admin'],
-        dependencies: [],
-        is_core: false,
-        settings: {
-          userCount: 20,
-          contentCount: 200,
-          defaultPassword: 'password123'
-        }
-      })
-
-      return c.json({ success: true, plugin: seedDataPlugin })
-    }
-
-    // Handle Quill Editor plugin installation
-    if (body.name === 'quill-editor') {
-      const quillPlugin = await pluginService.installPlugin({
-        id: 'quill-editor',
-        name: 'quill-editor',
-        display_name: 'Quill Rich Text Editor',
-        description: 'Quill WYSIWYG editor integration for rich text editing. Lightweight, modern editor with customizable toolbars and dark mode support.',
-        version: '1.0.0',
-        author: 'SonicJS Team',
-        category: 'editor',
-        icon: 'âï¸',
-        permissions: [],
-        dependencies: [],
-        is_core: true,
-        settings: {
-          version: '2.0.2',
-          defaultHeight: 300,
-          defaultToolbar: 'full',
-          theme: 'snow'
-        }
-      })
-
-      return c.json({ success: true, plugin: quillPlugin })
-    }
-
-    // Handle TinyMCE plugin installation
-    if (body.name === 'tinymce-plugin') {
-      const tinymcePlugin = await pluginService.installPlugin({
-        id: 'tinymce-plugin',
-        name: 'tinymce-plugin',
-        display_name: 'TinyMCE Rich Text Editor',
-        description: 'Powerful WYSIWYG rich text editor for content creation. Provides a full-featured editor with formatting, media embedding, and customizable toolbars for richtext fields.',
-        version: '1.0.0',
-        author: 'SonicJS Team',
-        category: 'editor',
-        icon: 'ð',
-        permissions: [],
-        dependencies: [],
-        is_core: false,
-        settings: {
-          apiKey: 'no-api-key',
-          defaultHeight: 300,
-          defaultToolbar: 'full',
-          skin: 'oxide-dark'
-        }
-      })
-
-      return c.json({ success: true, plugin: tinymcePlugin })
-    }
-
-    // Handle Easy MDX plugin installation
-    if (body.name === 'easy-mdx') {
-      const easyMdxPlugin = await pluginService.installPlugin({
-        id: 'easy-mdx',
-        name: 'easy-mdx',
-        display_name: 'EasyMDE Markdown Editor',
-        description: 'Lightweight markdown editor with live preview. Provides a simple and efficient editor with markdown support for richtext fields.',
-        version: '1.0.0',
-        author: 'SonicJS Team',
-        category: 'editor',
-        icon: 'ð',
-        permissions: [],
-        dependencies: [],
-        is_core: false,
-        settings: {
-          defaultHeight: 400,
-          theme: 'dark',
-          toolbar: 'full',
-          placeholder: 'Start writing your content...'
-        }
-      })
-
-      return c.json({ success: true, plugin: easyMdxPlugin })
-    }
-
-    // Handle Security Audit plugin installation
-    if (body.name === 'security-audit') {
-      const securityAuditPlugin = await pluginService.installPlugin({
-        id: 'security-audit',
-        name: 'security-audit',
-        display_name: 'Security Audit',
-        description: 'Security event logging, brute-force detection, and analytics dashboard. Monitors login attempts, registrations, lockouts, and suspicious activity.',
-        version: '1.0.0-beta.1',
-        author: 'SonicJS Team',
-        category: 'security',
-        icon: 'ð¡ï¸',
-        permissions: ['security-audit:view', 'security-audit:manage'],
-        dependencies: [],
-        is_core: false,
-        settings: {
-          retention: {
-            daysToKeep: 90,
-            maxEvents: 100000,
-            autoPurge: true
-          },
-          bruteForce: {
-            enabled: true,
-            maxFailedAttemptsPerIP: 10,
-            maxFailedAttemptsPerEmail: 5,
-            windowMinutes: 15,
-            lockoutDurationMinutes: 30,
-            alertThreshold: 20
-          },
-          logging: {
-            logSuccessfulLogins: true,
-            logLogouts: true,
-            logRegistrations: true,
-            logPasswordResets: true,
-            logPermissionDenied: true
-          }
-        }
-      })
-
-      return c.json({ success: true, plugin: securityAuditPlugin })
-    }
-
-    // Handle AI Search plugin installation
-    if (body.name === 'ai-search-plugin' || body.name === 'ai-search') {
-      const defaultSettings = {
-        enabled: true,
-        ai_mode_enabled: true,
-        selected_collections: [],
-        dismissed_collections: [],
-        autocomplete_enabled: true,
-        cache_duration: 1,
-        results_limit: 20,
-        index_media: false,
-      }
-
-      const aiSearchPlugin = await pluginService.installPlugin({
-        id: 'ai-search',
-        name: 'ai-search-plugin',
-        display_name: 'AI Search',
-        description: 'Advanced search with Cloudflare AI Search. Full-text search, semantic search, and advanced filtering across all content collections.',
-        version: '1.0.0',
-        author: 'SonicJS Team',
-        category: 'search',
-        icon: 'ð',
-        permissions: [],
-        dependencies: [],
-        is_core: true,
-        settings: defaultSettings
-      })
-
-      return c.json({ success: true, plugin: aiSearchPlugin })
-    }
-
-    // Handle Turnstile plugin installation
-    if (body.name === 'turnstile-plugin') {
-      const turnstilePlugin = await pluginService.installPlugin({
-        id: 'turnstile',
-        name: 'turnstile-plugin',
-        display_name: 'Cloudflare Turnstile',
-        description: 'CAPTCHA-free bot protection for forms using Cloudflare Turnstile. Provides seamless spam prevention with configurable modes, themes, and pre-clearance options.',
-        version: '1.0.0',
-        author: 'SonicJS Team',
-        category: 'security',
-        icon: 'ð¡ï¸',
-        permissions: [],
-        dependencies: [],
-        is_core: true,
-        settings: {
-          siteKey: '',
-          secretKey: '',
-          theme: 'auto',
-          size: 'normal',
-          mode: 'managed',
-          appearance: 'always',
-          preClearanceEnabled: false,
-          preClearanceLevel: 'managed',
-          enabled: false
-        }
-      })
-
-      return c.json({ success: true, plugin: turnstilePlugin })
-    }
-
-    // Handle Form Builder plugin installation
-    if (body.name === 'form-builder') {
-      const formBuilderPlugin = await pluginService.installPlugin({
-        id: 'form-builder',
-        name: 'form-builder',
-        display_name: 'Form Builder',
-        description: 'Drag-and-drop form builder with conditional logic, file uploads, and email notifications. Create contact forms, surveys, and data collection forms.',
-        version: '1.0.0',
-        author: 'SonicJS Team',
-        category: 'content',
-        icon: '\u{1F4DD}',
-        permissions: ['forms:create', 'forms:manage', 'forms:submissions'],
-        dependencies: [],
-        settings: {
-          enableNotifications: true,
-          enableFileUploads: true,
-          maxSubmissionsPerForm: 0,
-          submissionRetentionDays: 90
-        }
-      })
-
-      return c.json({ success: true, plugin: formBuilderPlugin })
-    }
-
-    return c.json({ error: 'Plugin not found in registry' }, 404)
+    return c.json({ success: true, plugin })
   } catch (error) {
     console.error('Error installing plugin:', error)
     const message = error instanceof Error ? error.message : 'Failed to install plugin'
@@ -791,15 +322,15 @@ adminPluginRoutes.post('/:id/uninstall', async (c) => {
     const user = c.get('user')
     const db = c.env.DB
     const pluginId = c.req.param('id')
-    
+
     // Temporarily skip permission check for admin users
     if (user?.role !== 'admin') {
       return c.json({ error: 'Access denied' }, 403)
     }
-    
+
     const pluginService = new PluginService(db)
     await pluginService.uninstallPlugin(pluginId)
-    
+
     return c.json({ success: true })
   } catch (error) {
     console.error('Error uninstalling plugin:', error)

@@ -56,6 +56,7 @@ export interface SubscriptionStats {
 }
 
 export interface StripePluginSettings {
+  stripePublishableKey: string
   stripeSecretKey: string
   stripeWebhookSecret: string
   stripePriceId?: string
@@ -64,6 +65,7 @@ export interface StripePluginSettings {
 }
 
 export const DEFAULT_SETTINGS: StripePluginSettings = {
+  stripePublishableKey: '',
   stripeSecretKey: '',
   stripeWebhookSecret: '',
   stripePriceId: '',
@@ -120,4 +122,35 @@ export interface StripeInvoice {
   status: string
   amount_paid: number
   currency: string
+}
+
+// ============================================================================
+// Stripe Events Log
+// ============================================================================
+
+export interface StripeEventRecord {
+  id: string
+  stripeEventId: string
+  type: string
+  objectId: string
+  objectType: string
+  data: string // JSON string
+  processedAt: number
+  status: 'processed' | 'failed' | 'ignored'
+  error?: string
+}
+
+export interface StripeEventFilters {
+  type?: string
+  status?: 'processed' | 'failed' | 'ignored'
+  objectId?: string
+  page?: number
+  limit?: number
+}
+
+export interface StripeEventStats {
+  total: number
+  processed: number
+  failed: number
+  ignored: number
 }

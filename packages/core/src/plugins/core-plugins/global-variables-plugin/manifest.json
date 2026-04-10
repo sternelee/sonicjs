@@ -8,7 +8,13 @@
   "repository": "https://github.com/SonicJs-Org/sonicjs",
   "license": "MIT",
   "category": "content",
-  "tags": ["variables", "tokens", "dynamic-content", "rich-text", "globals"],
+  "tags": [
+    "variables",
+    "tokens",
+    "dynamic-content",
+    "rich-text",
+    "globals"
+  ],
   "dependencies": [],
   "settings": {
     "enableResolution": true,
@@ -23,5 +29,12 @@
   "permissions": {
     "global-variables:manage": "Manage global variables",
     "global-variables:view": "View global variables"
+  },
+  "iconEmoji": "🔤",
+  "is_core": false,
+  "defaultSettings": {
+    "enableResolution": true,
+    "cacheEnabled": true,
+    "cacheTTL": 300
   }
 }

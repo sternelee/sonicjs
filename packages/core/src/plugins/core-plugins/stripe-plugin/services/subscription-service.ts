@@ -71,6 +71,35 @@ export class SubscriptionService {
   }
 
   /**
+   * Upsert a subscription by stripe_subscription_id (INSERT or UPDATE on conflict)
+   */
+  async upsert(data: SubscriptionInsert): Promise<Subscription> {
+    const result = await this.db.prepare(`
+      INSERT INTO subscriptions (user_id, stripe_customer_id, stripe_subscription_id, stripe_price_id, status, current_period_start, current_period_end, cancel_at_period_end)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(stripe_subscription_id) DO UPDATE SET
+        status = excluded.status,
+        stripe_price_id = excluded.stripe_price_id,
+        current_period_start = excluded.current_period_start,
+        current_period_end = excluded.current_period_end,
+        cancel_at_period_end = excluded.cancel_at_period_end,
+        updated_at = unixepoch()
+      RETURNING *
+    `).bind(
+      data.userId,
+      data.stripeCustomerId,
+      data.stripeSubscriptionId,
+      data.stripePriceId,
+      data.status,
+      data.currentPeriodStart,
+      data.currentPeriodEnd,
+      data.cancelAtPeriodEnd ? 1 : 0
+    ).first()
+
+    return this.mapRow(result as any)
+  }
+
+  /**
    * Update a subscription by its Stripe subscription ID
    */
   async updateByStripeId(stripeSubscriptionId: string, data: Partial<SubscriptionInsert>): Promise<Subscription | null> {

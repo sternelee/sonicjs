@@ -9,7 +9,6 @@
   },
   "category": "authentication",
   "icon": "shield",
-  "isCore": true,
   "dependencies": [],
   "settings": {
     "providers": {
@@ -19,19 +18,58 @@
         "github": {
           "type": "object",
           "properties": {
-            "clientId": { "type": "string", "title": "GitHub Client ID" },
-            "clientSecret": { "type": "string", "title": "GitHub Client Secret", "format": "password" },
-            "enabled": { "type": "boolean", "title": "Enable GitHub Login", "default": false }
+            "clientId": {
+              "type": "string",
+              "title": "GitHub Client ID"
+            },
+            "clientSecret": {
+              "type": "string",
+              "title": "GitHub Client Secret",
+              "format": "password"
+            },
+            "enabled": {
+              "type": "boolean",
+              "title": "Enable GitHub Login",
+              "default": false
+            }
           }
         },
         "google": {
           "type": "object",
           "properties": {
-            "clientId": { "type": "string", "title": "Google Client ID" },
-            "clientSecret": { "type": "string", "title": "Google Client Secret", "format": "password" },
-            "enabled": { "type": "boolean", "title": "Enable Google Login", "default": false }
+            "clientId": {
+              "type": "string",
+              "title": "Google Client ID"
+            },
+            "clientSecret": {
+              "type": "string",
+              "title": "Google Client Secret",
+              "format": "password"
+            },
+            "enabled": {
+              "type": "boolean",
+              "title": "Enable Google Login",
+              "default": false
+            }
           }
         }
+      }
+    }
+  },
+  "id": "oauth-providers",
+  "iconEmoji": "🔑",
+  "is_core": true,
+  "defaultSettings": {
+    "providers": {
+      "github": {
+        "clientId": "",
+        "clientSecret": "",
+        "enabled": false
+      },
+      "google": {
+        "clientId": "",
+        "clientSecret": "",
+        "enabled": false
       }
     }
   }

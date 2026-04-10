@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import { requireAuth } from '../../../../middleware'
 import { PluginService } from '../../../../services'
 import { SubscriptionService } from '../services/subscription-service'
+import { StripeEventService } from '../services/stripe-event-service'
 import { StripeAPI } from '../services/stripe-api'
 import type { Bindings, Variables } from '../../../../app'
 import type {
@@ -72,7 +73,13 @@ apiRoutes.post('/webhook', async (c) => {
 
   const event: StripeEvent = JSON.parse(rawBody)
   const subscriptionService = new SubscriptionService(db)
-  await subscriptionService.ensureTable()
+  const eventService = new StripeEventService(db)
+  await Promise.all([subscriptionService.ensureTable(), eventService.ensureTable()])
+
+  // Determine object ID and type for the event log
+  const obj = event.data.object as any
+  const objectId = obj?.id || ''
+  const objectType = obj?.object || event.type.split('.')[0] || ''
 
   try {
     switch (event.type) {
@@ -123,7 +130,6 @@ apiRoutes.post('/webhook', async (c) => {
         const session = event.data.object as unknown as StripeCheckoutSession
         const userId = session.metadata?.sonicjs_user_id
 
-        // Link the Stripe customer to the user if we have a userId and subscription
         if (userId && session.subscription) {
           const existing = await subscriptionService.getByStripeSubscriptionId(session.subscription)
           if (existing && !existing.userId) {
@@ -161,8 +167,38 @@ apiRoutes.post('/webhook', async (c) => {
 
       default:
         console.log(`[Stripe] Unhandled event type: ${event.type}`)
+        await eventService.log({
+          stripeEventId: event.id,
+          type: event.type,
+          objectId,
+          objectType,
+          data: event.data.object as any,
+          status: 'ignored'
+        })
+        return c.json({ received: true })
     }
+
+    // Log successfully processed event
+    await eventService.log({
+      stripeEventId: event.id,
+      type: event.type,
+      objectId,
+      objectType,
+      data: event.data.object as any,
+      status: 'processed'
+    })
   } catch (error) {
+    // Log failed event
+    await eventService.log({
+      stripeEventId: event.id,
+      type: event.type,
+      objectId,
+      objectType,
+      data: event.data.object as any,
+      status: 'failed',
+      error: error instanceof Error ? error.message : String(error)
+    }).catch(() => {}) // Don't let logging failure mask the real error
+
     console.error(`[Stripe] Error processing webhook event ${event.type}:`, error)
     return c.json({ error: 'Webhook processing failed' }, 500)
   }
@@ -278,6 +314,94 @@ apiRoutes.get('/stats', requireAuth(), async (c) => {
 
   const stats = await subscriptionService.getStats()
   return c.json(stats)
+})
+
+// ============================================================================
+// Sync Subscriptions from Stripe API
+// ============================================================================
+
+apiRoutes.post('/sync-subscriptions', requireAuth(), async (c) => {
+  const user = c.get('user')
+  if (user?.role !== 'admin') return c.json({ error: 'Access denied' }, 403)
+
+  const db = c.env.DB
+  const settings = await getSettings(db)
+
+  if (!settings.stripeSecretKey) {
+    return c.json({ error: 'Stripe secret key not configured' }, 400)
+  }
+
+  const stripeApi = new StripeAPI(settings.stripeSecretKey)
+  const subscriptionService = new SubscriptionService(db)
+  await subscriptionService.ensureTable()
+
+  try {
+    const allSubs = await stripeApi.listAllSubscriptions()
+    let synced = 0
+    let errors = 0
+
+    for (const sub of allSubs) {
+      try {
+        const userId = sub.metadata?.sonicjs_user_id || await subscriptionService.getUserIdByStripeCustomer(sub.customer) || ''
+        await subscriptionService.upsert({
+          userId,
+          stripeCustomerId: typeof sub.customer === 'string' ? sub.customer : sub.customer.id,
+          stripeSubscriptionId: sub.id,
+          stripePriceId: sub.items?.data?.[0]?.price?.id || '',
+          status: mapStripeStatus(sub.status),
+          currentPeriodStart: sub.current_period_start,
+          currentPeriodEnd: sub.current_period_end,
+          cancelAtPeriodEnd: sub.cancel_at_period_end
+        })
+        synced++
+      } catch (err) {
+        console.error(`[Stripe Sync] Failed to upsert subscription ${sub.id}:`, err)
+        errors++
+      }
+    }
+
+    return c.json({
+      success: true,
+      total: allSubs.length,
+      synced,
+      errors
+    })
+  } catch (error) {
+    console.error('[Stripe Sync] Error:', error)
+    return c.json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Sync failed'
+    }, 500)
+  }
+})
+
+// ============================================================================
+// Stripe Events Log
+// ============================================================================
+
+apiRoutes.get('/events', requireAuth(), async (c) => {
+  const user = c.get('user')
+  if (user?.role !== 'admin') return c.json({ error: 'Access denied' }, 403)
+
+  const db = c.env.DB
+  const eventService = new StripeEventService(db)
+  await eventService.ensureTable()
+
+  const filters = {
+    type: c.req.query('type') || undefined,
+    status: c.req.query('status') as any || undefined,
+    objectId: c.req.query('objectId') || undefined,
+    page: c.req.query('page') ? parseInt(c.req.query('page')!) : 1,
+    limit: c.req.query('limit') ? parseInt(c.req.query('limit')!) : 50
+  }
+
+  const [result, stats, types] = await Promise.all([
+    eventService.list(filters),
+    eventService.getStats(),
+    eventService.getDistinctTypes()
+  ])
+
+  return c.json({ ...result, stats, types })
 })
 
 export { apiRoutes as stripeApiRoutes }

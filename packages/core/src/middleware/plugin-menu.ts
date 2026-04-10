@@ -1,20 +1,48 @@
 import type { Context, Next } from 'hono'
 import type { Bindings, Variables } from '../app'
-import type { Plugin } from '../plugins/types'
+import { PLUGIN_REGISTRY } from '../plugins/manifest-registry'
 
-// All plugins that define menu items. The single source of truth for menu config
-// is each plugin's addMenuItem() call — this array just lists which plugins to check.
-import { securityAuditPlugin } from '../plugins/core-plugins/security-audit-plugin'
+// Build menu plugin data from the auto-generated registry.
+// Any plugin with an adminMenu entry in its manifest.json will
+// automatically appear in the sidebar when active.
+const REGISTRY_MENU_PLUGINS = Object.values(PLUGIN_REGISTRY)
+  .filter(p => p.adminMenu !== null)
+  .map(p => ({
+    codeName: p.codeName,
+    label: p.adminMenu!.label,
+    path: p.adminMenu!.path,
+    icon: p.adminMenu!.icon,
+    order: p.adminMenu!.order,
+  }))
 
-const MENU_PLUGINS: Plugin[] = [
-  securityAuditPlugin,
-]
+// Map icon names from manifest.json to Heroicons SVG (outline, 24x24)
+const ICON_SVG: Record<string, string> = {
+  'magnifying-glass': '<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"/></svg>',
+  'chart-bar': '<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z"/></svg>',
+  'image': '<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/></svg>',
+  'palette': '<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.098 19.902a3.75 3.75 0 0 0 5.304 0l6.401-6.402M6.75 21A3.75 3.75 0 0 1 3 17.25V4.125C3 3.504 3.504 3 4.125 3h5.25c.621 0 1.125.504 1.125 1.125v4.072M6.75 21a3.75 3.75 0 0 0 3.75-3.75V8.197M6.75 21h13.125c.621 0 1.125-.504 1.125-1.125v-5.25c0-.621-.504-1.125-1.125-1.125h-4.072M10.5 8.197l2.88-2.88c.438-.439 1.15-.439 1.59 0l3.712 3.713c.44.44.44 1.152 0 1.59l-2.879 2.88M6.75 17.25h.008v.008H6.75v-.008Z"/></svg>',
+  'envelope': '<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"/></svg>',
+  'hand-raised': '<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.05 4.575a1.575 1.575 0 1 0-3.15 0v3m3.15-3v-1.5a1.575 1.575 0 0 1 3.15 0v1.5m-3.15 0 .075 5.925m3.075-5.925v2.925m0-2.925a1.575 1.575 0 0 1 3.15 0V9.9m-3.15-2.4v5.325M16.5 9.9a1.575 1.575 0 0 1 3.15 0V15a6.15 6.15 0 0 1-6.15 6.15H12A6.15 6.15 0 0 1 5.85 15V9.525"/></svg>',
+  'key': '<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1 1 21.75 8.25Z"/></svg>',
+  'arrow-right': '<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>',
+  'shield-check': '<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>',
+  'credit-card': '<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z"/></svg>',
+}
+
+function resolveIcon(iconName?: string): string {
+  if (!iconName) return ''
+  // If it's already SVG markup, return as-is
+  if (iconName.startsWith('<svg') || iconName.startsWith('<')) return iconName
+  // Look up by name
+  return ICON_SVG[iconName] || ''
+}
 
 const MARKER = '<!-- DYNAMIC_PLUGIN_MENU -->'
 
 function renderMenuItem(item: { label: string; path: string; icon?: string }, currentPath: string): string {
   const isActive = currentPath === item.path || currentPath.startsWith(item.path)
   const fallbackIcon = `<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>`
+  const resolvedIcon = resolveIcon(item.icon) || fallbackIcon
   return `
     <span class="relative">
       ${isActive ? '<span class="absolute inset-y-2 -left-4 w-0.5 rounded-full bg-cyan-500 dark:bg-cyan-400"></span>' : ''}
@@ -28,7 +56,7 @@ function renderMenuItem(item: { label: string; path: string; icon?: string }, cu
         ${isActive ? 'data-current="true"' : ''}
       >
         <span class="shrink-0 ${isActive ? 'fill-zinc-950 dark:fill-white' : 'fill-zinc-500 dark:fill-zinc-400'}">
-          ${item.icon || fallbackIcon}
+          ${resolvedIcon}
         </span>
         <span class="truncate">${item.label}</span>
       </a>
@@ -42,33 +70,38 @@ export function pluginMenuMiddleware() {
       return next()
     }
 
-    // Collect menu items from active plugins
-    let activeMenuItems: Array<{ label: string; path: string; icon?: string }> = []
+    // Collect menu items from active plugins using the registry
+    let activeMenuItems: Array<{ label: string; path: string; icon?: string; order: number }> = []
     try {
       const db = c.env.DB
-      const pluginNames = MENU_PLUGINS.map(p => p.name)
-      if (pluginNames.length > 0) {
-        const placeholders = pluginNames.map(() => '?').join(',')
+      const pluginCodeNames = REGISTRY_MENU_PLUGINS.map(p => p.codeName)
+      if (pluginCodeNames.length > 0) {
+        const placeholders = pluginCodeNames.map(() => '?').join(',')
         const result = await db.prepare(
           `SELECT name FROM plugins WHERE name IN (${placeholders}) AND status = 'active'`
-        ).bind(...pluginNames).all()
+        ).bind(...pluginCodeNames).all()
 
         const activeNames = new Set((result.results || []).map((r: any) => r.name))
 
-        for (const plugin of MENU_PLUGINS) {
-          if (activeNames.has(plugin.name) && plugin.menuItems) {
-            activeMenuItems.push(...plugin.menuItems)
+        for (const plugin of REGISTRY_MENU_PLUGINS) {
+          if (activeNames.has(plugin.codeName)) {
+            activeMenuItems.push({
+              label: plugin.label,
+              path: plugin.path,
+              icon: plugin.icon,
+              order: plugin.order,
+            })
           }
         }
 
         // Sort by order
-        activeMenuItems.sort((a, b) => ((a as any).order || 0) - ((b as any).order || 0))
+        activeMenuItems.sort((a, b) => a.order - b.order)
       }
     } catch {
       // DB not ready or plugin table doesn't exist yet
     }
 
-    c.set('pluginMenuItems', activeMenuItems.map(m => ({ label: m.label, path: m.path, icon: m.icon || '' })))
+    c.set('pluginMenuItems', activeMenuItems.map(m => ({ label: m.label, path: m.path, icon: resolveIcon(m.icon) || '' })))
 
     await next()
 
