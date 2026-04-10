@@ -8,7 +8,13 @@
   "repository": "https://github.com/lane711/sonicjs-ai/tree/main/src/plugins/core-plugins/database-tools-plugin",
   "license": "MIT",
   "category": "development",
-  "tags": ["database", "admin", "tools", "migrations", "backup"],
+  "tags": [
+    "database",
+    "admin",
+    "tools",
+    "migrations",
+    "backup"
+  ],
   "dependencies": [],
   "settings": {},
   "hooks": {
@@ -18,5 +24,13 @@
   "routes": [],
   "permissions": {
     "database:admin": "Administer database"
+  },
+  "iconEmoji": "🗄️",
+  "is_core": false,
+  "defaultSettings": {
+    "enableTruncate": true,
+    "enableBackup": true,
+    "enableValidation": true,
+    "requireConfirmation": true
   }
 }

@@ -8,8 +8,16 @@
   "repository": "https://github.com/lane711/sonicjs/tree/main/src/plugins/core-plugins/otp-login-plugin",
   "license": "MIT",
   "category": "security",
-  "tags": ["otp", "passwordless", "authentication", "email", "2fa"],
-  "dependencies": ["email"],
+  "tags": [
+    "otp",
+    "passwordless",
+    "authentication",
+    "email",
+    "2fa"
+  ],
+  "dependencies": [
+    "email"
+  ],
   "settings": {
     "codeLength": {
       "type": "number",
@@ -70,5 +78,14 @@
     "icon": "key",
     "path": "/admin/plugins/otp-login/settings",
     "order": 85
+  },
+  "iconEmoji": "🔢",
+  "is_core": false,
+  "defaultSettings": {
+    "codeLength": 6,
+    "codeExpiryMinutes": 10,
+    "maxAttempts": 3,
+    "rateLimitPerHour": 5,
+    "allowNewUserRegistration": false
   }
 }

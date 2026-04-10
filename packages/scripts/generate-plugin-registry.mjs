@@ -2,43 +2,30 @@
 /**
  * Plugin Registry Generator
  *
- * This script scans the src/plugins directory for all manifest.json files
- * and generates a TypeScript file (plugin-registry.ts) that exports all
- * plugin manifests as a typed registry.
+ * Scans src/plugins/ for manifest.json files and generates a TypeScript
+ * registry (plugin-registry.ts) that is the single source of truth for
+ * all plugin metadata. This eliminates hardcoded plugin lists throughout
+ * the codebase.
  *
- * This allows us to:
- * 1. Have a single source of truth (manifest.json files)
- * 2. Auto-discover plugins at build time
- * 3. Work with Cloudflare Workers (no runtime filesystem access)
- *
- * Run: node packages/scripts/generate-plugin-registry.mjs (or npm run plugins:generate)
+ * Run: node packages/scripts/generate-plugin-registry.mjs
  */
 
 import { readdir, readFile, writeFile } from 'fs/promises'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
-const PROJECT_ROOT = join(__dirname, '..', '..')
-const PLUGINS_DIR = join(PROJECT_ROOT, 'src/plugins')
-const OUTPUT_FILE = join(PROJECT_ROOT, 'src/plugins/plugin-registry.ts')
+const __dirname = dirname(fileURLToPath(import.meta.url))
+const PROJECT_ROOT = join(__dirname, '..', 'core')
+const PLUGINS_DIR = join(PROJECT_ROOT, 'src', 'plugins')
+const OUTPUT_FILE = join(PROJECT_ROOT, 'src', 'plugins', 'manifest-registry.ts')
 
-/**
- * Recursively find all manifest.json files
- */
 async function findManifests(dir, manifests = []) {
   try {
     const entries = await readdir(dir, { withFileTypes: true })
-
     for (const entry of entries) {
       const fullPath = join(dir, entry.name)
-
-      if (entry.isDirectory()) {
-        // Skip node_modules and hidden directories
-        if (!entry.name.startsWith('.') && entry.name !== 'node_modules') {
-          await findManifests(fullPath, manifests)
-        }
+      if (entry.isDirectory() && !entry.name.startsWith('.') && entry.name !== 'node_modules') {
+        await findManifests(fullPath, manifests)
       } else if (entry.name === 'manifest.json') {
         manifests.push(fullPath)
       }
@@ -46,177 +33,195 @@ async function findManifests(dir, manifests = []) {
   } catch (error) {
     console.error(`Error reading directory ${dir}:`, error.message)
   }
-
   return manifests
 }
 
-/**
- * Load and validate a manifest file
- */
 async function loadManifest(manifestPath) {
   try {
     const content = await readFile(manifestPath, 'utf-8')
     const manifest = JSON.parse(content)
-
-    // Validate required fields
-    if (!manifest.id) {
-      console.warn(`⚠️  Manifest at ${manifestPath} is missing 'id' field`)
+    const id = manifest.id || manifest.name
+    if (!id || typeof id !== 'string') {
+      console.warn(`  SKIP ${manifestPath} (no id)`)
       return null
     }
-
-    return {
-      path: manifestPath,
-      manifest
-    }
+    return { path: manifestPath, manifest, id }
   } catch (error) {
-    console.error(`❌ Error loading manifest ${manifestPath}:`, error.message)
+    console.error(`  ERROR ${manifestPath}:`, error.message)
     return null
   }
 }
 
 /**
- * Generate TypeScript plugin registry file
+ * Normalize a manifest into the canonical registry format
  */
-function generateRegistryFile(manifests) {
+function normalizeManifest(manifest) {
+  const id = manifest.id || manifest.name
+  const codeName = manifest.codeName || id
+  const displayName = manifest.displayName || manifest.name || id
+  const iconEmoji = manifest.iconEmoji || ''
+  const is_core = manifest.is_core ?? manifest.isCore ?? manifest.core ?? false
+  const defaultSettings = manifest.defaultSettings || {}
+
+  // Normalize author (some manifests use object { name, email })
+  let author = 'Unknown'
+  if (typeof manifest.author === 'string') {
+    author = manifest.author
+  } else if (manifest.author && typeof manifest.author === 'object' && manifest.author.name) {
+    author = manifest.author.name
+  }
+
+  // Normalize permissions to array of strings
+  let permissions = []
+  if (Array.isArray(manifest.permissions)) {
+    permissions = manifest.permissions
+  } else if (manifest.permissions && typeof manifest.permissions === 'object') {
+    permissions = Object.keys(manifest.permissions)
+  }
+
+  // Normalize adminMenu (some manifests use href instead of path)
+  let adminMenu = null
+  if (manifest.adminMenu) {
+    const raw = manifest.adminMenu
+    adminMenu = {
+      label: raw.label || displayName,
+      icon: raw.icon || '',
+      path: raw.path || raw.href || '',
+      order: raw.order || 0,
+    }
+  }
+
+  return {
+    id,
+    codeName,
+    displayName,
+    description: manifest.description || '',
+    version: manifest.version || '1.0.0',
+    author,
+    category: manifest.category || 'general',
+    iconEmoji,
+    is_core,
+    permissions,
+    dependencies: manifest.dependencies || [],
+    defaultSettings,
+    adminMenu,
+  }
+}
+
+function generateRegistryFile(entries) {
   const timestamp = new Date().toISOString()
 
-  // Generate the registry object
-  const registryEntries = manifests
-    .map(({ manifest }) => {
-      const id = manifest.id
-      const manifestJson = JSON.stringify(manifest, null, 2)
+  const registryEntries = entries
+    .map(({ normalized }) => {
+      const json = JSON.stringify(normalized, null, 2)
         .split('\n')
-        .map((line, i) => i === 0 ? line : `  ${line}`)
+        .map((line, i) => (i === 0 ? line : `  ${line}`))
         .join('\n')
-
-      return `  '${id}': ${manifestJson}`
+      return `  '${normalized.id}': ${json}`
     })
     .join(',\n\n')
 
-  // Generate TypeScript file
   return `/**
- * Plugin Registry
+ * Plugin Registry - AUTO-GENERATED
  *
- * This file is AUTO-GENERATED by packages/scripts/generate-plugin-registry.mjs
- * DO NOT EDIT MANUALLY - your changes will be overwritten!
- *
- * Generated: ${timestamp}
+ * Generated by: packages/scripts/generate-plugin-registry.mjs
+ * Generated at: ${timestamp}
  * Source: All manifest.json files in src/plugins/
+ *
+ * DO NOT EDIT MANUALLY - run the generator script instead.
+ * To add a new plugin, create a manifest.json in the plugin directory.
  */
 
-export interface PluginManifest {
+export interface PluginRegistryEntry {
   id: string
-  name: string
-  version: string
+  codeName: string
+  displayName: string
   description: string
+  version: string
   author: string
-  homepage?: string
-  repository?: string
-  license?: string
   category: string
-  tags?: string[]
-  dependencies?: string[]
-  settings?: Record<string, any>
-  hooks?: Record<string, string>
-  routes?: Array<{
-    path: string
-    method: string
-    handler: string
-    description?: string
-  }>
-  permissions?: Record<string, string>
-  adminMenu?: {
+  iconEmoji: string
+  is_core: boolean
+  permissions: string[]
+  dependencies: string[]
+  defaultSettings: Record<string, any>
+  adminMenu: {
     label: string
     icon: string
     path: string
     order: number
-  }
+  } | null
 }
 
 /**
- * Plugin Registry
- * Maps plugin ID to its manifest
+ * All discovered plugins, keyed by plugin ID.
  */
-export const PLUGIN_REGISTRY: Record<string, PluginManifest> = {
+export const PLUGIN_REGISTRY: Record<string, PluginRegistryEntry> = {
 ${registryEntries}
 } as const
 
 /**
- * Get all plugin IDs
+ * All plugin IDs.
  */
-export const PLUGIN_IDS = Object.keys(PLUGIN_REGISTRY) as ReadonlyArray<string>
+export const ALL_PLUGIN_IDS = Object.keys(PLUGIN_REGISTRY)
 
 /**
- * Get all core plugin IDs (plugins with is_core flag or in core directories)
+ * Plugins that have their own admin page (have an adminMenu entry).
  */
-export const CORE_PLUGIN_IDS = PLUGIN_IDS.filter(id => {
-  const manifest = PLUGIN_REGISTRY[id]
-  return id.startsWith('core-') || id === 'design' || id === 'database-tools' || id === 'hello-world'
-}) as ReadonlyArray<string>
+export const PLUGINS_WITH_ADMIN_PAGES = ALL_PLUGIN_IDS.filter(
+  id => PLUGIN_REGISTRY[id]?.adminMenu !== null
+)
 
 /**
- * Get plugin manifest by ID
+ * Look up a plugin by its codeName (the \`name\` field stored in the DB).
+ * Falls back to id lookup if no codeName match.
  */
-export function getPluginManifest(id: string): PluginManifest | undefined {
+export function findPluginByCodeName(codeName: string): PluginRegistryEntry | undefined {
+  return Object.values(PLUGIN_REGISTRY).find(p => p.codeName === codeName)
+    || PLUGIN_REGISTRY[codeName]
+}
+
+/**
+ * Get a plugin by ID.
+ */
+export function getPlugin(id: string): PluginRegistryEntry | undefined {
   return PLUGIN_REGISTRY[id]
-}
-
-/**
- * Check if a plugin exists
- */
-export function hasPlugin(id: string): boolean {
-  return id in PLUGIN_REGISTRY
-}
-
-/**
- * Get all plugins by category
- */
-export function getPluginsByCategory(category: string): PluginManifest[] {
-  return PLUGIN_IDS
-    .map(id => PLUGIN_REGISTRY[id])
-    .filter((manifest): manifest is PluginManifest => manifest !== undefined && manifest.category === category)
 }
 `
 }
 
-/**
- * Main execution
- */
 async function main() {
-  console.log('🔍 Discovering plugins...\n')
+  console.log('Discovering plugins...\n')
 
-  // Find all manifest.json files
   const manifestPaths = await findManifests(PLUGINS_DIR)
-  console.log(`Found ${manifestPaths.length} manifest.json files:\n`)
+  console.log(`Found ${manifestPaths.length} manifest.json files\n`)
 
-  // Load all manifests
-  const loadedManifests = []
+  const entries = []
   for (const path of manifestPaths) {
     const result = await loadManifest(path)
     if (result) {
-      loadedManifests.push(result)
-      console.log(`  ✓ ${result.manifest.id} (${result.manifest.name})`)
+      const normalized = normalizeManifest(result.manifest)
+      entries.push({ ...result, normalized })
+      console.log(`  ${normalized.iconEmoji || '  '} ${normalized.id} (${normalized.displayName})`)
     }
   }
 
-  console.log(`\n✅ Loaded ${loadedManifests.length} valid manifests\n`)
+  // Sort by id for stable output
+  entries.sort((a, b) => a.normalized.id.localeCompare(b.normalized.id))
 
-  // Generate registry file
-  const registryContent = generateRegistryFile(loadedManifests)
-  await writeFile(OUTPUT_FILE, registryContent, 'utf-8')
+  console.log(`\nLoaded ${entries.length} plugins\n`)
 
-  console.log(`📝 Generated plugin registry: ${OUTPUT_FILE}`)
-  console.log(`\n✨ Plugin registry successfully generated!\n`)
+  const content = generateRegistryFile(entries)
+  await writeFile(OUTPUT_FILE, content, 'utf-8')
 
-  // Print summary
-  console.log('Summary:')
-  console.log(`  - Total plugins: ${loadedManifests.length}`)
-  console.log(`  - Registry file: src/plugins/plugin-registry.ts`)
-  console.log(`  - Core plugins: ${loadedManifests.filter(m => m.manifest.id.startsWith('core-')).length}`)
+  console.log(`Generated: src/plugins/plugin-registry.ts`)
+  console.log(`  Total: ${entries.length}`)
+  console.log(`  Core: ${entries.filter(e => e.normalized.is_core).length}`)
+  console.log(`  With admin pages: ${entries.filter(e => e.normalized.adminMenu).length}`)
   console.log('')
 }
 
 main().catch(error => {
-  console.error('❌ Fatal error:', error)
+  console.error('Fatal error:', error)
   process.exit(1)
 })

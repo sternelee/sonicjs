@@ -8,7 +8,13 @@
   "repository": "https://github.com/lane711/sonicjs-ai/tree/main/src/plugins/core-plugins/workflow-plugin",
   "license": "MIT",
   "category": "content",
-  "tags": ["workflow", "approval", "review", "publishing", "collaboration"],
+  "tags": [
+    "workflow",
+    "approval",
+    "review",
+    "publishing",
+    "collaboration"
+  ],
   "dependencies": [],
   "settings": {
     "requireApproval": {
@@ -32,5 +38,13 @@
   "permissions": {
     "workflow:manage": "Manage workflow settings",
     "workflow:approve": "Approve content"
+  },
+  "iconEmoji": "🔄",
+  "is_core": false,
+  "defaultSettings": {
+    "enableApprovalChains": true,
+    "enableScheduling": true,
+    "enableAutomation": true,
+    "enableNotifications": true
   }
 }

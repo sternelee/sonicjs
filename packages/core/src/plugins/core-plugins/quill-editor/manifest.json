@@ -8,7 +8,13 @@
   "repository": "https://github.com/lane711/sonicjs",
   "license": "MIT",
   "category": "editor",
-  "tags": ["editor", "richtext", "wysiwyg", "quill", "content"],
+  "tags": [
+    "editor",
+    "richtext",
+    "wysiwyg",
+    "quill",
+    "content"
+  ],
   "dependencies": [],
   "settings": {
     "version": {
@@ -28,14 +34,21 @@
       "label": "Default Toolbar",
       "description": "Default toolbar configuration",
       "default": "full",
-      "options": ["full", "simple", "minimal"]
+      "options": [
+        "full",
+        "simple",
+        "minimal"
+      ]
     },
     "theme": {
       "type": "select",
       "label": "Editor Theme",
       "description": "Visual theme for the editor",
       "default": "snow",
-      "options": ["snow", "bubble"]
+      "options": [
+        "snow",
+        "bubble"
+      ]
     }
   },
   "hooks": {
@@ -43,5 +56,13 @@
     "onDeactivate": "deactivate"
   },
   "routes": [],
-  "permissions": {}
+  "permissions": {},
+  "iconEmoji": "✍️",
+  "is_core": true,
+  "defaultSettings": {
+    "version": "2.0.2",
+    "defaultHeight": 300,
+    "defaultToolbar": "full",
+    "theme": "snow"
+  }
 }

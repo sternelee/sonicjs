@@ -1,5 +1,7 @@
 import type { D1Database } from "@cloudflare/workers-types";
 import { PluginService } from "./plugin-service";
+import { PLUGIN_REGISTRY } from "../plugins/manifest-registry";
+import type { PluginRegistryEntry } from "../plugins/manifest-registry";
 
 export interface CorePlugin {
   id: string;
@@ -15,6 +17,46 @@ export interface CorePlugin {
   settings?: any;
 }
 
+/**
+ * Build the CORE_PLUGINS list from the auto-generated registry.
+ * To add a new bootstrapped plugin, create a manifest.json and
+ * run: node packages/scripts/generate-plugin-registry.mjs
+ *
+ * Only plugins that are in the BOOTSTRAP_PLUGIN_IDS list will be
+ * auto-installed on first boot. Edit this list to control which
+ * plugins are bootstrapped.
+ */
+const BOOTSTRAP_PLUGIN_IDS = [
+  "core-auth",
+  "core-media",
+  "database-tools",
+  "seed-data",
+  "core-cache",
+  "workflow-plugin",
+  "easy-mdx",
+  "ai-search",
+  "oauth-providers",
+  "global-variables",
+  "user-profiles",
+  "stripe",
+];
+
+function registryToCorePlugin(entry: PluginRegistryEntry): CorePlugin {
+  return {
+    id: entry.id,
+    name: entry.codeName,
+    display_name: entry.displayName,
+    description: entry.description,
+    version: entry.version,
+    author: entry.author,
+    category: entry.category,
+    icon: entry.iconEmoji,
+    permissions: entry.permissions,
+    dependencies: entry.dependencies,
+    settings: entry.defaultSettings,
+  };
+}
+
 export class PluginBootstrapService {
   private pluginService: PluginService;
 
@@ -23,222 +65,12 @@ export class PluginBootstrapService {
   }
 
   /**
-   * Core plugins that should always be available in the system
+   * Core plugins derived from the auto-generated plugin registry.
+   * Only plugins listed in BOOTSTRAP_PLUGIN_IDS are included.
    */
-  private readonly CORE_PLUGINS: CorePlugin[] = [
-    {
-      id: "core-auth",
-      name: "core-auth",
-      display_name: "Authentication System",
-      description: "Core authentication and user management system",
-      version: "1.0.0",
-      author: "SonicJS Team",
-      category: "security",
-      icon: "🔐",
-      permissions: ["manage:users", "manage:roles", "manage:permissions"],
-      dependencies: [],
-      settings: {
-        requiredFields: {
-          email: { required: true, minLength: 5, label: "Email", type: "email" },
-          password: { required: true, minLength: 8, label: "Password", type: "password" },
-          username: { required: true, minLength: 3, label: "Username", type: "text" },
-          firstName: { required: true, minLength: 1, label: "First Name", type: "text" },
-          lastName: { required: true, minLength: 1, label: "Last Name", type: "text" },
-        },
-        validation: {
-          emailFormat: true,
-          allowDuplicateUsernames: false,
-          passwordRequirements: {
-            requireUppercase: false,
-            requireLowercase: false,
-            requireNumbers: false,
-            requireSpecialChars: false,
-          },
-        },
-        registration: {
-          enabled: true,
-          requireEmailVerification: false,
-          defaultRole: "viewer",
-        },
-      },
-    },
-    {
-      id: "core-media",
-      name: "core-media",
-      display_name: "Media Manager",
-      description: "Core media upload and management system",
-      version: "1.0.0",
-      author: "SonicJS Team",
-      category: "media",
-      icon: "📸",
-      permissions: ["manage:media", "upload:files"],
-      dependencies: [],
-      settings: {},
-    },
-    {
-      id: "database-tools",
-      name: "database-tools",
-      display_name: "Database Tools",
-      description:
-        "Database management tools including truncate, backup, and validation",
-      version: "1.0.0",
-      author: "SonicJS Team",
-      category: "system",
-      icon: "🗄️",
-      permissions: ["manage:database", "admin"],
-      dependencies: [],
-      settings: {
-        enableTruncate: true,
-        enableBackup: true,
-        enableValidation: true,
-        requireConfirmation: true,
-      },
-    },
-    {
-      id: "seed-data",
-      name: "seed-data",
-      display_name: "Seed Data",
-      description:
-        "Generate realistic example users and content for testing and development",
-      version: "1.0.0",
-      author: "SonicJS Team",
-      category: "development",
-      icon: "🌱",
-      permissions: ["admin"],
-      dependencies: [],
-      settings: {
-        userCount: 20,
-        contentCount: 200,
-        defaultPassword: "password123",
-      },
-    },
-    {
-      id: "core-cache",
-      name: "core-cache",
-      display_name: "Cache System",
-      description:
-        "Three-tiered caching system with memory, KV, and database layers",
-      version: "1.0.0",
-      author: "SonicJS Team",
-      category: "performance",
-      icon: "⚡",
-      permissions: ["manage:cache", "view:stats"],
-      dependencies: [],
-      settings: {
-        enableMemoryCache: true,
-        enableKVCache: true,
-        enableDatabaseCache: true,
-        defaultTTL: 3600,
-      },
-    },
-    {
-      id: "workflow-plugin",
-      name: "workflow-plugin",
-      display_name: "Workflow Management",
-      description:
-        "Content workflow management with approval chains, scheduling, and automation",
-      version: "1.0.0-beta.1",
-      author: "SonicJS Team",
-      category: "content",
-      icon: "🔄",
-      permissions: ["manage:workflows", "view:workflows", "transition:content"],
-      dependencies: ["content-plugin"],
-      settings: {
-        enableApprovalChains: true,
-        enableScheduling: true,
-        enableAutomation: true,
-        enableNotifications: true,
-      },
-    },
-    {
-      id: "easy-mdx",
-      name: "easy-mdx",
-      display_name: "EasyMDE Editor",
-      description: "Lightweight markdown editor with live preview for richtext fields",
-      version: "1.0.0",
-      author: "SonicJS Team",
-      category: "editor",
-      icon: "✍️",
-      permissions: [],
-      dependencies: [],
-      settings: {
-        defaultHeight: 400,
-        toolbar: "full",
-        placeholder: "Start writing your content...",
-      },
-    },
-    {
-      id: "ai-search",
-      name: "ai-search-plugin",
-      display_name: "AI Search",
-      description: "Advanced search with Cloudflare AI Search. Full-text search, semantic search, and advanced filtering across all content collections.",
-      version: "1.0.0",
-      author: "SonicJS Team",
-      category: "search",
-      icon: "🔍",
-      permissions: ["settings:write", "admin:access", "content:read"],
-      dependencies: [],
-      settings: {
-        enabled: false,
-        ai_mode_enabled: true,
-        selected_collections: [],
-        dismissed_collections: [],
-        autocomplete_enabled: true,
-        cache_duration: 1,
-        results_limit: 20,
-        index_media: false,
-      },
-    },
-    {
-      id: "oauth-providers",
-      name: "oauth-providers",
-      display_name: "OAuth Providers",
-      description: "OAuth2/OIDC social login with GitHub, Google, and more",
-      version: "1.0.0-beta.1",
-      author: "SonicJS Team",
-      category: "authentication",
-      icon: "🔑",
-      permissions: ["oauth:manage"],
-      dependencies: [],
-      settings: {
-        providers: {
-          github: { clientId: "", clientSecret: "", enabled: false },
-          google: { clientId: "", clientSecret: "", enabled: false },
-        },
-      },
-    },
-    {
-      id: "global-variables",
-      name: "global-variables",
-      display_name: "Global Variables",
-      description:
-        "Dynamic content variables with inline token support. Use {variable_key} syntax in rich text fields for server-side resolution.",
-      version: "1.0.0-beta.1",
-      author: "SonicJS Team",
-      category: "content",
-      icon: "🔤",
-      permissions: ["global-variables:manage", "global-variables:view"],
-      dependencies: [],
-      settings: {
-        enableResolution: true,
-        cacheEnabled: true,
-        cacheTTL: 300,
-      },
-    },
-    {
-      id: "user-profiles",
-      name: "user-profiles",
-      display_name: "User Profiles",
-      description: "Configurable custom profile fields for users",
-      version: "1.0.0-beta.1",
-      author: "SonicJS Team",
-      category: "users",
-      icon: "👤",
-      permissions: ["user-profiles:manage"],
-      dependencies: [],
-      settings: {},
-    },
-  ];
+  private readonly CORE_PLUGINS: CorePlugin[] = BOOTSTRAP_PLUGIN_IDS
+    .filter((id) => PLUGIN_REGISTRY[id] !== undefined)
+    .map((id) => registryToCorePlugin(PLUGIN_REGISTRY[id]!));
 
   /**
    * Bootstrap all core plugins - install them if they don't exist
@@ -291,8 +123,6 @@ export class PluginBootstrapService {
         }
 
         // Only auto-activate on first install, respect user's activation state on subsequent boots
-        // This preserves the activation state across server restarts
-        // Core plugins (with core- prefix) are activated on first install in the else block below
       } else {
         // Install the plugin
         console.log(
@@ -303,13 +133,11 @@ export class PluginBootstrapService {
           is_core: plugin.name.startsWith("core-"),
         });
 
-        // Activate core plugins immediately after installation
-        if (plugin.name.startsWith("core-")) {
-          console.log(
-            `[PluginBootstrap] Activating newly installed core plugin: ${plugin.display_name}`
-          );
-          await this.pluginService.activatePlugin(plugin.id);
-        }
+        // Activate plugins immediately after installation
+        console.log(
+          `[PluginBootstrap] Activating newly installed plugin: ${plugin.display_name}`
+        );
+        await this.pluginService.activatePlugin(plugin.id);
       }
     } catch (error) {
       console.error(
@@ -327,8 +155,8 @@ export class PluginBootstrapService {
     const now = Math.floor(Date.now() / 1000);
 
     const stmt = this.db.prepare(`
-      UPDATE plugins 
-      SET 
+      UPDATE plugins
+      SET
         version = ?,
         description = ?,
         permissions = ?,

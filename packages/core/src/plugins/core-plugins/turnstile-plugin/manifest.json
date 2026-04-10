@@ -9,7 +9,10 @@
   "homepage": "https://developers.cloudflare.com/turnstile/",
   "repository": "https://github.com/sonicjs/sonicjs",
   "license": "MIT",
-  "permissions": ["settings:write", "admin:access"],
+  "permissions": [
+    "settings:write",
+    "admin:access"
+  ],
   "dependencies": [],
   "configSchema": {
     "siteKey": {
@@ -31,9 +34,18 @@
       "description": "Visual theme for the Turnstile widget",
       "default": "auto",
       "options": [
-        { "value": "light", "label": "Light" },
-        { "value": "dark", "label": "Dark" },
-        { "value": "auto", "label": "Auto" }
+        {
+          "value": "light",
+          "label": "Light"
+        },
+        {
+          "value": "dark",
+          "label": "Dark"
+        },
+        {
+          "value": "auto",
+          "label": "Auto"
+        }
       ]
     },
     "size": {
@@ -42,8 +54,14 @@
       "description": "Size of the Turnstile widget",
       "default": "normal",
       "options": [
-        { "value": "normal", "label": "Normal" },
-        { "value": "compact", "label": "Compact" }
+        {
+          "value": "normal",
+          "label": "Normal"
+        },
+        {
+          "value": "compact",
+          "label": "Compact"
+        }
       ]
     },
     "mode": {
@@ -52,9 +70,18 @@
       "description": "Managed: Adaptive challenge. Non-Interactive: Always visible, minimal friction. Invisible: No visible widget",
       "default": "managed",
       "options": [
-        { "value": "managed", "label": "Managed (Recommended)" },
-        { "value": "non-interactive", "label": "Non-Interactive" },
-        { "value": "invisible", "label": "Invisible" }
+        {
+          "value": "managed",
+          "label": "Managed (Recommended)"
+        },
+        {
+          "value": "non-interactive",
+          "label": "Non-Interactive"
+        },
+        {
+          "value": "invisible",
+          "label": "Invisible"
+        }
       ]
     },
     "appearance": {
@@ -63,9 +90,18 @@
       "description": "When the Turnstile challenge is executed. Always: Verifies immediately. Execute: Challenge on form submit. Interaction Only: Only after user interaction",
       "default": "always",
       "options": [
-        { "value": "always", "label": "Always" },
-        { "value": "execute", "label": "Execute" },
-        { "value": "interaction-only", "label": "Interaction Only" }
+        {
+          "value": "always",
+          "label": "Always"
+        },
+        {
+          "value": "execute",
+          "label": "Execute"
+        },
+        {
+          "value": "interaction-only",
+          "label": "Interaction Only"
+        }
       ]
     },
     "preClearance": {
@@ -80,9 +116,18 @@
       "description": "Controls which Cloudflare Firewall Rules the clearance cookie bypasses. Only applies if Pre-clearance is enabled",
       "default": "managed",
       "options": [
-        { "value": "interactive", "label": "Interactive - Bypasses Interactive, Managed & JS Challenge Rules" },
-        { "value": "managed", "label": "Managed - Bypasses Managed & JS Challenge Rules" },
-        { "value": "non-interactive", "label": "Non-interactive - Bypasses JS Challenge Rules only" }
+        {
+          "value": "interactive",
+          "label": "Interactive - Bypasses Interactive, Managed & JS Challenge Rules"
+        },
+        {
+          "value": "managed",
+          "label": "Managed - Bypasses Managed & JS Challenge Rules"
+        },
+        {
+          "value": "non-interactive",
+          "label": "Non-interactive - Bypasses JS Challenge Rules only"
+        }
       ]
     },
     "enabled": {
@@ -98,5 +143,19 @@
     "href": "/admin/plugins/turnstile/settings",
     "parentId": "plugins",
     "order": 100
+  },
+  "codeName": "turnstile-plugin",
+  "iconEmoji": "🛡️",
+  "is_core": true,
+  "defaultSettings": {
+    "siteKey": "",
+    "secretKey": "",
+    "theme": "auto",
+    "size": "normal",
+    "mode": "managed",
+    "appearance": "always",
+    "preClearanceEnabled": false,
+    "preClearanceLevel": "managed",
+    "enabled": false
   }
 }

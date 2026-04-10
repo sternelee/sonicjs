@@ -8,7 +8,12 @@
   "repository": "https://github.com/lane711/sonicjs-ai/tree/main/src/plugins/core-plugins",
   "license": "MIT",
   "category": "content",
-  "tags": ["testimonials", "reviews", "feedback", "ratings"],
+  "tags": [
+    "testimonials",
+    "reviews",
+    "feedback",
+    "ratings"
+  ],
   "dependencies": [],
   "settings": {},
   "hooks": {
@@ -18,5 +23,8 @@
   "routes": [],
   "permissions": {
     "testimonials:manage": "Manage testimonials"
-  }
+  },
+  "iconEmoji": "💬",
+  "is_core": false,
+  "defaultSettings": {}
 }

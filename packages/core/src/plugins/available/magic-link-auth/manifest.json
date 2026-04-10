@@ -9,8 +9,15 @@
   },
   "category": "security",
   "icon": "🔗",
-  "tags": ["authentication", "passwordless", "security", "email"],
-  "dependencies": ["email"],
+  "tags": [
+    "authentication",
+    "passwordless",
+    "security",
+    "email"
+  ],
+  "dependencies": [
+    "email"
+  ],
   "status": "inactive",
   "enabled": false,
   "license": "MIT",
@@ -38,5 +45,12 @@
       "default": false,
       "description": "Allow new users to register via magic link (requires valid email)"
     }
+  },
+  "iconEmoji": "🔗",
+  "is_core": false,
+  "defaultSettings": {
+    "linkExpiryMinutes": 15,
+    "rateLimitPerHour": 5,
+    "allowNewUsers": true
   }
 }

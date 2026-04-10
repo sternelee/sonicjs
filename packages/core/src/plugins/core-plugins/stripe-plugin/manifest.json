@@ -6,7 +6,6 @@
   "author": "SonicJS Team",
   "category": "payments",
   "icon": "credit-card",
-  "core": true,
   "dependencies": [],
   "settings": {
     "schema": {
@@ -52,5 +51,20 @@
     "stripe:subscription.deleted": "Fired when a subscription is cancelled/deleted",
     "stripe:payment.succeeded": "Fired when a payment succeeds",
     "stripe:payment.failed": "Fired when a payment fails"
+  },
+  "iconEmoji": "💳",
+  "is_core": true,
+  "defaultSettings": {
+    "stripeSecretKey": "",
+    "stripeWebhookSecret": "",
+    "stripePriceId": "",
+    "successUrl": "/admin/dashboard",
+    "cancelUrl": "/admin/dashboard"
+  },
+  "adminMenu": {
+    "label": "Stripe",
+    "icon": "credit-card",
+    "path": "/admin/plugins/stripe",
+    "order": 90
   }
 }

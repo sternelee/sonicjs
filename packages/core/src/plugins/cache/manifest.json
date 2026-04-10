@@ -8,7 +8,13 @@
   "repository": "https://github.com/lane711/sonicjs-ai/tree/main/src/plugins/cache",
   "license": "MIT",
   "category": "system",
-  "tags": ["cache", "performance", "optimization", "kv", "memory"],
+  "tags": [
+    "cache",
+    "performance",
+    "optimization",
+    "kv",
+    "memory"
+  ],
   "dependencies": [],
   "settings": {
     "memoryEnabled": {
@@ -65,5 +71,13 @@
     "cache.view": "View cache statistics",
     "cache.clear": "Clear cache entries",
     "cache.invalidate": "Invalidate cache patterns"
+  },
+  "iconEmoji": "⚡",
+  "is_core": true,
+  "defaultSettings": {
+    "enableMemoryCache": true,
+    "enableKVCache": true,
+    "enableDatabaseCache": true,
+    "defaultTTL": 3600
   }
 }

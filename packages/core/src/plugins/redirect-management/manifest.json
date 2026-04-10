@@ -7,7 +7,12 @@
   "homepage": "https://sonicjs.com/plugins/redirect-management",
   "license": "MIT",
   "category": "utilities",
-  "tags": ["redirects", "seo", "urls", "utilities"],
+  "tags": [
+    "redirects",
+    "seo",
+    "urls",
+    "utilities"
+  ],
   "dependencies": [],
   "settings": {
     "enabled": {
@@ -33,5 +38,11 @@
     "icon": "arrow-right",
     "path": "/admin/redirects",
     "order": 85
+  },
+  "iconEmoji": "↪️",
+  "is_core": false,
+  "defaultSettings": {
+    "enabled": true,
+    "autoOffloadEnabled": false
   }
 }

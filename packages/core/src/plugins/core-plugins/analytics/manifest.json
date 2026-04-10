@@ -8,7 +8,13 @@
   "repository": "https://github.com/lane711/sonicjs-ai/tree/main/src/plugins/core-plugins",
   "license": "MIT",
   "category": "seo",
-  "tags": ["analytics", "metrics", "tracking", "insights", "dashboard"],
+  "tags": [
+    "analytics",
+    "metrics",
+    "tracking",
+    "insights",
+    "dashboard"
+  ],
   "dependencies": [],
   "settings": {
     "trackPageViews": {
@@ -44,5 +50,8 @@
     "icon": "chart-bar",
     "path": "/admin/analytics",
     "order": 50
-  }
+  },
+  "iconEmoji": "📊",
+  "is_core": true,
+  "defaultSettings": {}
 }
