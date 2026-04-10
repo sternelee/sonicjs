@@ -102,7 +102,7 @@ mkdir -p src/plugins/my-plugin
 
 ### Step 2: Create the Manifest
 
-Create `manifest.json` with your plugin metadata:
+Create `manifest.json` with your plugin metadata. The manifest is the **single source of truth** for plugin discovery — SonicJS automatically scans all `manifest.json` files and registers plugins in the admin UI, sidebar menu, and bootstrap system.
 
 ```json
 {
@@ -113,6 +113,10 @@ Create `manifest.json` with your plugin metadata:
   "author": "Your Name",
   "license": "MIT",
   "category": "utilities",
+  "codeName": "my-plugin",
+  "iconEmoji": "🧩",
+  "is_core": false,
+  "defaultSettings": {},
   "permissions": {
     "my-plugin:view": "View My Plugin page"
   },
@@ -123,6 +127,24 @@ Create `manifest.json` with your plugin metadata:
     "order": 100
   }
 }
+```
+
+**Key manifest fields:**
+
+| Field | Required | Description |
+|---|---|---|
+| `id` | Yes | Unique plugin identifier |
+| `name` | Yes | Display name |
+| `version` | Yes | Semver version |
+| `description` | Yes | Short description |
+| `category` | Yes | Plugin category (utilities, security, communication, etc.) |
+| `codeName` | No | Code-friendly name (defaults to `id`) |
+| `iconEmoji` | No | Emoji icon for admin UI |
+| `is_core` | No | Whether this is a core plugin (default: false) |
+| `defaultSettings` | No | Default settings object applied on install |
+| `adminMenu` | No | Sidebar menu entry with `label`, `icon`, `path`, and `order` |
+
+The `adminMenu.icon` field accepts either an emoji, an SVG string, or a named Heroicon (e.g., `credit-card`, `chart-bar`, `image`, `magnifying-glass`). Named icons are automatically resolved to SVGs in the admin sidebar.
 ```
 
 ### Step 3: Create the Plugin Code

@@ -1,0 +1,237 @@
+export const sections = [
+  { title: 'Overview', id: 'overview' },
+  { title: 'Installation', id: 'installation' },
+  { title: 'Configuration', id: 'configuration' },
+  { title: 'Admin Dashboard', id: 'admin-dashboard' },
+  { title: 'Subscription Sync', id: 'subscription-sync' },
+  { title: 'Webhook Events', id: 'webhook-events' },
+  { title: 'API Reference', id: 'api-reference' },
+  { title: 'Checkout Integration', id: 'checkout-integration' },
+]
+
+# Stripe Subscriptions Plugin
+
+Accept payments and manage subscriptions with Stripe. Includes webhook processing, subscription sync, event logging, and an admin dashboard with tabbed UI. {{ className: 'lead' }}
+
+---
+
+## Overview
+
+The Stripe plugin provides a complete subscription management system for SonicJS, built for Cloudflare Workers (no Stripe SDK required — uses fetch API directly).
+
+<FeatureGrid
+  features={[
+    {
+      icon: '💳',
+      title: 'Subscription Management',
+      description: 'Track active, canceled, past-due, and trialing subscriptions in D1',
+    },
+    {
+      icon: '🔄',
+      title: 'Sync from Stripe',
+      description: 'Pull all existing subscriptions from the Stripe API with one click',
+    },
+    {
+      icon: '📋',
+      title: 'Webhook Event Log',
+      description: 'Every webhook event is logged with status (processed, failed, ignored)',
+    },
+    {
+      icon: '🔐',
+      title: 'Secure Webhooks',
+      description: 'HMAC signature verification using Web Crypto API with timing-safe comparison',
+    },
+  ]}
+  columns={2}
+/>
+
+---
+
+## Installation
+
+The Stripe plugin is a core plugin and can be installed from the admin plugins page at `/admin/plugins`.
+
+1. Navigate to **Admin > Plugins**
+2. Find "Stripe Subscriptions" and click **Install**
+3. Go to **Admin > Plugins > Stripe > Settings** to configure your API keys
+
+---
+
+## Configuration
+
+Navigate to `/admin/plugins/stripe/settings` to configure the plugin. You'll need two keys from your [Stripe Dashboard](https://dashboard.stripe.com/apikeys):
+
+| Setting | Description | Example |
+|---|---|---|
+| **Publishable Key** | Your Stripe publishable key | `pk_test_...` or `pk_live_...` |
+| **Secret Key** | Your Stripe secret API key | `sk_test_...` or `sk_live_...` |
+| **Webhook Signing Secret** | Stripe webhook endpoint secret | `whsec_...` |
+| **Default Price ID** | Default Stripe Price ID for checkout (optional) | `price_...` |
+| **Success URL** | Redirect after successful checkout | `/admin/dashboard` |
+| **Cancel URL** | Redirect if checkout is cancelled | `/admin/dashboard` |
+
+### Setting Up Webhooks
+
+1. Go to **Stripe Dashboard > Developers > Webhooks**
+2. Click **Add endpoint**
+3. Set the URL to `https://your-domain.com/api/stripe/webhook`
+4. Select these events:
+   - `customer.subscription.created`
+   - `customer.subscription.updated`
+   - `customer.subscription.deleted`
+   - `checkout.session.completed`
+   - `invoice.payment_succeeded`
+   - `invoice.payment_failed`
+5. Copy the **Signing secret** and paste it into the plugin settings
+
+### Local Development
+
+Use the [Stripe CLI](https://stripe.com/docs/stripe-cli) to forward webhooks locally:
+
+```bash
+stripe listen --forward-to localhost:8787/api/stripe/webhook
+```
+
+The CLI prints a `whsec_...` signing secret to use during development.
+
+---
+
+## Admin Dashboard
+
+The Stripe admin UI at `/admin/plugins/stripe` has three tabbed pages:
+
+### Subscriptions Tab
+
+Displays all subscriptions stored in D1 with:
+- Status badges (active, canceled, past_due, trialing)
+- Customer email (joined from users table)
+- Stripe subscription and customer IDs
+- Period dates and cancel-at-period-end status
+- Pagination and status filtering
+- Stats cards showing totals by status
+
+### Events Tab
+
+Displays the webhook event log at `/admin/plugins/stripe/events` with:
+- Stats cards (total, processed, failed, ignored)
+- Filter by event type and status
+- Event details: timestamp, type, object ID, Stripe event ID
+- Error details shown on hover for failed events
+- Pagination
+
+### Settings Tab
+
+Configure API keys, webhook secret, and checkout URLs.
+
+---
+
+## Subscription Sync
+
+Click the **Sync from Stripe** button on the Subscriptions tab to pull all existing subscriptions from the Stripe API into D1.
+
+The sync:
+- Fetches all subscriptions from `GET /v1/subscriptions` (auto-paginates)
+- Upserts each subscription into the `subscriptions` table by `stripe_subscription_id`
+- Links subscriptions to SonicJS users via `sonicjs_user_id` metadata or customer ID lookup
+- Reports total synced and any errors
+
+This is useful when connecting Stripe to an existing account with pre-existing subscriptions.
+
+---
+
+## Webhook Events
+
+The plugin automatically logs every webhook event to the `stripe_events` table:
+
+| Column | Description |
+|---|---|
+| `stripe_event_id` | Unique Stripe event ID |
+| `type` | Event type (e.g., `customer.subscription.created`) |
+| `object_id` | ID of the related Stripe object |
+| `object_type` | Type of the related object |
+| `data` | Full event payload (JSON) |
+| `status` | `processed`, `failed`, or `ignored` |
+| `error` | Error message if processing failed |
+| `processed_at` | Timestamp of when the event was received |
+
+Events are logged with three statuses:
+- **processed** — Successfully handled (subscription created/updated/deleted, payment succeeded/failed)
+- **failed** — Handler threw an error (logged for debugging)
+- **ignored** — Unhandled event type (logged for visibility)
+
+---
+
+## API Reference
+
+All API routes are prefixed with `/api/stripe`.
+
+### Public Endpoints
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| `POST` | `/api/stripe/webhook` | Stripe signature | Receive and process webhook events |
+
+### Authenticated Endpoints
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| `POST` | `/api/stripe/create-checkout-session` | User | Create a Stripe Checkout session |
+| `GET` | `/api/stripe/subscription` | User | Get current user's subscription |
+
+### Admin Endpoints
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| `GET` | `/api/stripe/subscriptions` | Admin | List all subscriptions with filters |
+| `GET` | `/api/stripe/stats` | Admin | Get subscription statistics |
+| `POST` | `/api/stripe/sync-subscriptions` | Admin | Sync all subscriptions from Stripe |
+| `GET` | `/api/stripe/events` | Admin | List webhook events with filters |
+
+### Query Parameters
+
+**GET /api/stripe/subscriptions:**
+
+| Param | Type | Description |
+|---|---|---|
+| `status` | string | Filter by status (active, canceled, etc.) |
+| `page` | number | Page number (default: 1) |
+| `limit` | number | Items per page (default: 50, max: 100) |
+| `sortBy` | string | Sort field (created_at, updated_at, status) |
+| `sortOrder` | string | Sort direction (asc, desc) |
+
+**GET /api/stripe/events:**
+
+| Param | Type | Description |
+|---|---|---|
+| `type` | string | Filter by event type |
+| `status` | string | Filter by status (processed, failed, ignored) |
+| `objectId` | string | Filter by Stripe object ID |
+| `page` | number | Page number (default: 1) |
+| `limit` | number | Items per page (default: 50, max: 100) |
+
+---
+
+## Checkout Integration
+
+To create a checkout session from your frontend:
+
+```typescript
+const response = await fetch('/api/stripe/create-checkout-session', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${userToken}`
+  },
+  body: JSON.stringify({
+    priceId: 'price_...' // Optional - uses default from settings
+  })
+})
+
+const { url } = await response.json()
+window.location.href = url // Redirect to Stripe Checkout
+```
+
+The plugin automatically:
+- Finds or creates a Stripe customer for the logged-in user
+- Attaches `sonicjs_user_id` metadata for webhook linking
+- Redirects to Stripe Checkout with the configured success/cancel URLs

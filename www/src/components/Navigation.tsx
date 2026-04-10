@@ -267,6 +267,7 @@ export const navigation: Array<NavGroup> = [
       { title: 'AI Search', href: '/plugins/ai-search' },
       { title: 'Analytics', href: '/plugins/analytics' },
       { title: 'Workflow', href: '/plugins/workflow' },
+      { title: 'Stripe Subscriptions', href: '/plugins/stripe' },
       { title: 'Turnstile (Bot Protection)', href: '/plugins/turnstile' },
       { title: 'Email Templates', href: '/plugins/email-templates' },
     ],
