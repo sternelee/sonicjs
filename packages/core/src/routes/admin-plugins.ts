@@ -131,15 +131,15 @@ adminPluginRoutes.get('/:id', async (c) => {
     const db = c.env.DB
     const pluginId = c.req.param('id')
 
+    // Check authorization first
+    if (user?.role !== 'admin') {
+      return c.redirect('/admin/plugins')
+    }
+
     // Skip plugins that have their own custom admin pages (detected from registry adminMenu)
     if (PLUGINS_WITH_ADMIN_PAGES.includes(pluginId)) {
       // Let the plugin's own route handle this
       return c.text('', 404) // Return 404 so Hono continues to next route
-    }
-
-    // Check authorization
-    if (user?.role !== 'admin') {
-      return c.redirect('/admin/plugins')
     }
 
     const pluginService = new PluginService(db)

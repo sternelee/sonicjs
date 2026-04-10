@@ -73,6 +73,50 @@ vi.mock('../../middleware', () => ({
   }
 }))
 
+// Mock the manifest registry so test plugin names are recognized
+vi.mock('../../plugins/manifest-registry', () => {
+  const makeEntry = (id: string, codeName?: string, adminMenu?: any) => ({
+    id,
+    codeName: codeName || id,
+    displayName: id,
+    description: `Test plugin ${id}`,
+    version: '1.0.0',
+    author: 'Test',
+    category: 'general',
+    iconEmoji: '',
+    is_core: false,
+    permissions: [],
+    dependencies: [],
+    defaultSettings: {},
+    adminMenu: adminMenu || null,
+  })
+
+  const PLUGIN_REGISTRY: Record<string, any> = {
+    'email': makeEntry('email', 'email'),
+    'auth': makeEntry('auth', 'auth'),
+    'faq-plugin': makeEntry('faq-plugin', 'faq-plugin'),
+    'demo-login-plugin': makeEntry('demo-login-plugin', 'demo-login-plugin'),
+    'core-auth': makeEntry('core-auth', 'core-auth'),
+    'core-media': makeEntry('core-media', 'core-media'),
+    'core-workflow': makeEntry('core-workflow', 'core-workflow'),
+    'database-tools': makeEntry('database-tools', 'database-tools'),
+    'seed-data': makeEntry('seed-data', 'seed-data'),
+    'quill-editor': makeEntry('quill-editor', 'quill-editor'),
+    'tinymce-plugin': makeEntry('tinymce-plugin', 'tinymce-plugin'),
+    'easy-mdx': makeEntry('easy-mdx', 'easy-mdx'),
+    'turnstile-plugin': makeEntry('turnstile-plugin', 'turnstile-plugin'),
+  }
+
+  return {
+    PLUGIN_REGISTRY,
+    ALL_PLUGIN_IDS: Object.keys(PLUGIN_REGISTRY),
+    PLUGINS_WITH_ADMIN_PAGES: [],
+    findPluginByCodeName: (codeName: string) =>
+      Object.values(PLUGIN_REGISTRY).find((p: any) => p.codeName === codeName) || PLUGIN_REGISTRY[codeName],
+    getPlugin: (id: string) => PLUGIN_REGISTRY[id],
+  }
+})
+
 // Mock the PluginService as a class
 vi.mock('../../services', () => ({
   PluginService: class MockPluginService {
