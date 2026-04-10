@@ -1,15 +1,16 @@
 'use strict';
 
-var chunkDRWSHIFG_cjs = require('./chunk-DRWSHIFG.cjs');
+var chunkPAQC3HAA_cjs = require('./chunk-PAQC3HAA.cjs');
 var chunkNZWFCUDA_cjs = require('./chunk-NZWFCUDA.cjs');
-var chunkYYMPHM3I_cjs = require('./chunk-YYMPHM3I.cjs');
-var chunkI6FFGQIT_cjs = require('./chunk-I6FFGQIT.cjs');
-var chunkKZ2MFGET_cjs = require('./chunk-KZ2MFGET.cjs');
-var chunk3QCEYJLK_cjs = require('./chunk-3QCEYJLK.cjs');
-var chunkQP3OHHON_cjs = require('./chunk-QP3OHHON.cjs');
-var chunk56GUBLJE_cjs = require('./chunk-56GUBLJE.cjs');
-var chunk6FHNRRJ3_cjs = require('./chunk-6FHNRRJ3.cjs');
-var chunkYULUPQZV_cjs = require('./chunk-YULUPQZV.cjs');
+var chunkUT7K7CJZ_cjs = require('./chunk-UT7K7CJZ.cjs');
+var chunkNA3BD6LU_cjs = require('./chunk-NA3BD6LU.cjs');
+var chunkR6AJ5T3M_cjs = require('./chunk-R6AJ5T3M.cjs');
+var chunk4ZSNJDLS_cjs = require('./chunk-4ZSNJDLS.cjs');
+var chunkOHYBNCVL_cjs = require('./chunk-OHYBNCVL.cjs');
+var chunkUYJ6TJHX_cjs = require('./chunk-UYJ6TJHX.cjs');
+var chunkABB34XUS_cjs = require('./chunk-ABB34XUS.cjs');
+var chunk635JAMSE_cjs = require('./chunk-635JAMSE.cjs');
+var chunkVUISYUHY_cjs = require('./chunk-VUISYUHY.cjs');
 require('./chunk-P3XDZL6Q.cjs');
 var chunkRCQ2HIQD_cjs = require('./chunk-RCQ2HIQD.cjs');
 var chunkMNWKYY5E_cjs = require('./chunk-MNWKYY5E.cjs');
@@ -235,7 +236,7 @@ var DatabaseToolsService = class {
 };
 
 // src/templates/pages/admin-database-table.template.ts
-chunkQP3OHHON_cjs.init_admin_layout_catalyst_template();
+chunkUYJ6TJHX_cjs.init_admin_layout_catalyst_template();
 function renderDatabaseTablePage(data) {
   const totalPages = Math.ceil(data.totalRows / data.pageSize);
   const startRow = (data.currentPage - 1) * data.pageSize + 1;
@@ -484,7 +485,7 @@ function renderDatabaseTablePage(data) {
     user: data.user,
     content: pageContent
   };
-  return chunkQP3OHHON_cjs.renderAdminLayoutCatalyst(layoutData);
+  return chunkUYJ6TJHX_cjs.renderAdminLayoutCatalyst(layoutData);
 }
 function generatePageNumbers(currentPage, totalPages) {
   const pages = [];
@@ -559,7 +560,7 @@ function formatCellValue(value) {
 // src/plugins/core-plugins/database-tools-plugin/admin-routes.ts
 function createDatabaseToolsAdminRoutes() {
   const router3 = new hono.Hono();
-  router3.use("*", chunkYYMPHM3I_cjs.requireAuth());
+  router3.use("*", chunkUT7K7CJZ_cjs.requireAuth());
   router3.get("/api/stats", async (c) => {
     try {
       const user = c.get("user");
@@ -1307,7 +1308,7 @@ function createSeedDataAdminRoutes() {
   return routes;
 }
 function createEmailPlugin() {
-  const builder = chunk6FHNRRJ3_cjs.PluginBuilder.create({
+  const builder = chunk635JAMSE_cjs.PluginBuilder.create({
     name: "email",
     version: "1.0.0-beta.1",
     description: "Send transactional emails using Resend"
@@ -1736,7 +1737,7 @@ var DEFAULT_SETTINGS = {
   allowNewUserRegistration: false
 };
 function createOTPLoginPlugin() {
-  const builder = chunk6FHNRRJ3_cjs.PluginBuilder.create({
+  const builder = chunk635JAMSE_cjs.PluginBuilder.create({
     name: "otp-login",
     version: "1.0.0-beta.1",
     description: "Passwordless authentication via email one-time codes"
@@ -1938,7 +1939,7 @@ function createOTPLoginPlugin() {
           error: "Account is deactivated"
         }, 403);
       }
-      const token = await chunkYYMPHM3I_cjs.AuthManager.generateToken(user.id, user.email, user.role, c.env.JWT_SECRET);
+      const token = await chunkUT7K7CJZ_cjs.AuthManager.generateToken(user.id, user.email, user.role, c.env.JWT_SECRET);
       cookie.setCookie(c, "auth_token", token, {
         httpOnly: true,
         secure: true,
@@ -2272,7 +2273,7 @@ var OAuthService = class {
 var STATE_COOKIE_NAME = "oauth_state";
 var STATE_COOKIE_MAX_AGE = 600;
 function createOAuthProvidersPlugin() {
-  const builder = chunk6FHNRRJ3_cjs.PluginBuilder.create({
+  const builder = chunk635JAMSE_cjs.PluginBuilder.create({
     name: "oauth-providers",
     version: "1.0.0-beta.1",
     description: "OAuth2/OIDC social login with GitHub, Google, and more"
@@ -2408,13 +2409,13 @@ function createOAuthProvidersPlugin() {
         if (!user || !user.is_active) {
           return c.redirect("/auth/login?error=Account is deactivated");
         }
-        const jwt2 = await chunkYYMPHM3I_cjs.AuthManager.generateToken(
+        const jwt2 = await chunkUT7K7CJZ_cjs.AuthManager.generateToken(
           user.id,
           user.email,
           user.role,
           c.env.JWT_SECRET
         );
-        chunkYYMPHM3I_cjs.AuthManager.setAuthCookie(c, jwt2, { sameSite: "Lax" });
+        chunkUT7K7CJZ_cjs.AuthManager.setAuthCookie(c, jwt2, { sameSite: "Lax" });
         return c.redirect("/admin");
       }
       const existingUser = await oauthService.findUserByEmail(profile.email);
@@ -2431,13 +2432,13 @@ function createOAuthProvidersPlugin() {
           tokenExpiresAt: tokenExpiresAt ?? void 0,
           profileData: JSON.stringify(profile)
         });
-        const jwt2 = await chunkYYMPHM3I_cjs.AuthManager.generateToken(
+        const jwt2 = await chunkUT7K7CJZ_cjs.AuthManager.generateToken(
           existingUser.id,
           existingUser.email,
           existingUser.role,
           c.env.JWT_SECRET
         );
-        chunkYYMPHM3I_cjs.AuthManager.setAuthCookie(c, jwt2, { sameSite: "Lax" });
+        chunkUT7K7CJZ_cjs.AuthManager.setAuthCookie(c, jwt2, { sameSite: "Lax" });
         return c.redirect("/admin");
       }
       const newUserId = await oauthService.createUserFromOAuth(profile);
@@ -2450,13 +2451,13 @@ function createOAuthProvidersPlugin() {
         tokenExpiresAt: tokenExpiresAt ?? void 0,
         profileData: JSON.stringify(profile)
       });
-      const jwt = await chunkYYMPHM3I_cjs.AuthManager.generateToken(
+      const jwt = await chunkUT7K7CJZ_cjs.AuthManager.generateToken(
         newUserId,
         profile.email.toLowerCase(),
         "viewer",
         c.env.JWT_SECRET
       );
-      chunkYYMPHM3I_cjs.AuthManager.setAuthCookie(c, jwt, { sameSite: "Lax" });
+      chunkUT7K7CJZ_cjs.AuthManager.setAuthCookie(c, jwt, { sameSite: "Lax" });
       return c.redirect("/admin");
     } catch (error) {
       console.error("OAuth callback error:", error);
@@ -4138,7 +4139,7 @@ function renderSettingsPage(data) {
       }, 30000);
     </script>
   `;
-  return chunkQP3OHHON_cjs.renderAdminLayout({
+  return chunkOHYBNCVL_cjs.renderAdminLayout({
     title: "AI Search Settings",
     pageTitle: "AI Search Settings",
     currentPath: "/admin/plugins/ai-search/settings",
@@ -4149,7 +4150,7 @@ function renderSettingsPage(data) {
 
 // src/plugins/core-plugins/ai-search-plugin/routes/admin.ts
 var adminRoutes = new hono.Hono();
-adminRoutes.use("*", chunkYYMPHM3I_cjs.requireAuth());
+adminRoutes.use("*", chunkUT7K7CJZ_cjs.requireAuth());
 adminRoutes.get("/", async (c) => {
   try {
     const user = c.get("user");
@@ -4395,7 +4396,7 @@ var manifest_default = {
   author: "SonicJS"};
 
 // src/plugins/core-plugins/ai-search-plugin/index.ts
-var aiSearchPlugin = new chunk6FHNRRJ3_cjs.PluginBuilder({
+var aiSearchPlugin = new chunk635JAMSE_cjs.PluginBuilder({
   name: manifest_default.name,
   version: manifest_default.version,
   description: manifest_default.description,
@@ -4550,13 +4551,13 @@ function createMagicLinkAuthPlugin() {
         SET used = 1, used_at = ?
         WHERE id = ?
       `).bind(Date.now(), magicLink.id).run();
-      const jwtToken = await chunkYYMPHM3I_cjs.AuthManager.generateToken(
+      const jwtToken = await chunkUT7K7CJZ_cjs.AuthManager.generateToken(
         user.id,
         user.email,
         user.role,
         c.env.JWT_SECRET
       );
-      chunkYYMPHM3I_cjs.AuthManager.setAuthCookie(c, jwtToken);
+      chunkUT7K7CJZ_cjs.AuthManager.setAuthCookie(c, jwtToken);
       await db.prepare(`
         UPDATE users SET last_login_at = ? WHERE id = ?
       `).bind(Date.now(), user.id).run();
@@ -4994,7 +4995,7 @@ var SecurityAuditService = class {
 };
 
 // src/plugins/core-plugins/security-audit-plugin/components/dashboard-page.ts
-chunkQP3OHHON_cjs.init_admin_layout_catalyst_template();
+chunkUYJ6TJHX_cjs.init_admin_layout_catalyst_template();
 function formatTimestamp(ts) {
   const date = new Date(ts);
   const now = Date.now();
@@ -5193,11 +5194,11 @@ function renderSecurityDashboard(data) {
     version,
     dynamicMenuItems
   };
-  return chunkQP3OHHON_cjs.renderAdminLayoutCatalyst(layoutData);
+  return chunkUYJ6TJHX_cjs.renderAdminLayoutCatalyst(layoutData);
 }
 
 // src/plugins/core-plugins/security-audit-plugin/components/event-log-page.ts
-chunkQP3OHHON_cjs.init_admin_layout_catalyst_template();
+chunkUYJ6TJHX_cjs.init_admin_layout_catalyst_template();
 function formatTimestamp2(ts) {
   const date = new Date(ts);
   return date.toLocaleDateString("en-US", {
@@ -5404,11 +5405,11 @@ function renderEventLogPage(data) {
     version,
     dynamicMenuItems
   };
-  return chunkQP3OHHON_cjs.renderAdminLayoutCatalyst(layoutData);
+  return chunkUYJ6TJHX_cjs.renderAdminLayoutCatalyst(layoutData);
 }
 
 // src/plugins/core-plugins/security-audit-plugin/components/settings-page.ts
-chunkQP3OHHON_cjs.init_admin_layout_catalyst_template();
+chunkUYJ6TJHX_cjs.init_admin_layout_catalyst_template();
 function renderSecuritySettingsPage(data) {
   const { settings, user, version, message, dynamicMenuItems } = data;
   const content2 = `
@@ -5561,12 +5562,12 @@ function renderSecuritySettingsPage(data) {
     version,
     dynamicMenuItems
   };
-  return chunkQP3OHHON_cjs.renderAdminLayoutCatalyst(layoutData);
+  return chunkUYJ6TJHX_cjs.renderAdminLayoutCatalyst(layoutData);
 }
 
 // src/plugins/core-plugins/security-audit-plugin/routes/admin.ts
 var adminRoutes2 = new hono.Hono();
-adminRoutes2.use("*", chunkYYMPHM3I_cjs.requireAuth());
+adminRoutes2.use("*", chunkUT7K7CJZ_cjs.requireAuth());
 adminRoutes2.use("*", async (c, next) => {
   const user = c.get("user");
   if (user?.role !== "admin") {
@@ -5576,7 +5577,7 @@ adminRoutes2.use("*", async (c, next) => {
 });
 async function getSettings(db) {
   try {
-    const pluginService = new chunkI6FFGQIT_cjs.PluginService(db);
+    const pluginService = new chunkNA3BD6LU_cjs.PluginService(db);
     const plugin2 = await pluginService.getPlugin("security-audit");
     if (plugin2?.settings) {
       const settings = typeof plugin2.settings === "string" ? JSON.parse(plugin2.settings) : plugin2.settings;
@@ -5681,7 +5682,7 @@ adminRoutes2.post("/settings", async (c) => {
       autoPurge: body["retention.autoPurge"] === "true"
     }
   };
-  const pluginService = new chunkI6FFGQIT_cjs.PluginService(db);
+  const pluginService = new chunkNA3BD6LU_cjs.PluginService(db);
   await pluginService.updatePluginSettings("security-audit", settings);
   if (c.req.header("HX-Request")) {
     return c.json({ success: true });
@@ -5836,7 +5837,7 @@ var BruteForceDetector = class {
 
 // src/plugins/core-plugins/security-audit-plugin/routes/api.ts
 var apiRoutes2 = new hono.Hono();
-apiRoutes2.use("*", chunkYYMPHM3I_cjs.requireAuth());
+apiRoutes2.use("*", chunkUT7K7CJZ_cjs.requireAuth());
 apiRoutes2.use("*", async (c, next) => {
   const user = c.get("user");
   if (user?.role !== "admin") {
@@ -5846,7 +5847,7 @@ apiRoutes2.use("*", async (c, next) => {
 });
 async function getSettings2(db) {
   try {
-    const pluginService = new chunkI6FFGQIT_cjs.PluginService(db);
+    const pluginService = new chunkNA3BD6LU_cjs.PluginService(db);
     const plugin2 = await pluginService.getPlugin("security-audit");
     if (plugin2?.settings) {
       const settings = typeof plugin2.settings === "string" ? JSON.parse(plugin2.settings) : plugin2.settings;
@@ -5994,7 +5995,7 @@ function generateFingerprint(ip, userAgent) {
 }
 async function getPluginSettings(db) {
   try {
-    const pluginService = new chunkI6FFGQIT_cjs.PluginService(db);
+    const pluginService = new chunkNA3BD6LU_cjs.PluginService(db);
     const plugin2 = await pluginService.getPlugin("security-audit");
     if (plugin2?.settings) {
       const settings = typeof plugin2.settings === "string" ? JSON.parse(plugin2.settings) : plugin2.settings;
@@ -6225,7 +6226,7 @@ async function logAuthEvent(c, db, settings, ip, userAgent, countryCode, fingerp
 
 // src/plugins/core-plugins/security-audit-plugin/index.ts
 function createSecurityAuditPlugin() {
-  const builder = chunk6FHNRRJ3_cjs.PluginBuilder.create({
+  const builder = chunk635JAMSE_cjs.PluginBuilder.create({
     name: "security-audit",
     version: "1.0.0-beta.1",
     description: "Security event logging, brute-force detection, and analytics dashboard"
@@ -6310,6 +6311,33 @@ var SubscriptionService = class {
     const result = await this.db.prepare(`
       INSERT INTO subscriptions (user_id, stripe_customer_id, stripe_subscription_id, stripe_price_id, status, current_period_start, current_period_end, cancel_at_period_end)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      RETURNING *
+    `).bind(
+      data.userId,
+      data.stripeCustomerId,
+      data.stripeSubscriptionId,
+      data.stripePriceId,
+      data.status,
+      data.currentPeriodStart,
+      data.currentPeriodEnd,
+      data.cancelAtPeriodEnd ? 1 : 0
+    ).first();
+    return this.mapRow(result);
+  }
+  /**
+   * Upsert a subscription by stripe_subscription_id (INSERT or UPDATE on conflict)
+   */
+  async upsert(data) {
+    const result = await this.db.prepare(`
+      INSERT INTO subscriptions (user_id, stripe_customer_id, stripe_subscription_id, stripe_price_id, status, current_period_start, current_period_end, cancel_at_period_end)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(stripe_subscription_id) DO UPDATE SET
+        status = excluded.status,
+        stripe_price_id = excluded.stripe_price_id,
+        current_period_start = excluded.current_period_start,
+        current_period_end = excluded.current_period_end,
+        cancel_at_period_end = excluded.cancel_at_period_end,
+        updated_at = unixepoch()
       RETURNING *
     `).bind(
       data.userId,
@@ -6477,24 +6505,183 @@ var SubscriptionService = class {
   }
 };
 
+// src/plugins/core-plugins/stripe-plugin/services/stripe-event-service.ts
+var StripeEventService = class {
+  constructor(db) {
+    this.db = db;
+  }
+  async ensureTable() {
+    await this.db.prepare(`
+      CREATE TABLE IF NOT EXISTS stripe_events (
+        id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+        stripe_event_id TEXT NOT NULL UNIQUE,
+        type TEXT NOT NULL,
+        object_id TEXT NOT NULL DEFAULT '',
+        object_type TEXT NOT NULL DEFAULT '',
+        data TEXT NOT NULL DEFAULT '{}',
+        processed_at INTEGER NOT NULL DEFAULT (unixepoch()),
+        status TEXT NOT NULL DEFAULT 'processed',
+        error TEXT
+      )
+    `).run();
+    await this.db.prepare(`
+      CREATE INDEX IF NOT EXISTS idx_stripe_events_type ON stripe_events(type)
+    `).run();
+    await this.db.prepare(`
+      CREATE INDEX IF NOT EXISTS idx_stripe_events_status ON stripe_events(status)
+    `).run();
+    await this.db.prepare(`
+      CREATE INDEX IF NOT EXISTS idx_stripe_events_processed_at ON stripe_events(processed_at DESC)
+    `).run();
+  }
+  async log(event) {
+    await this.db.prepare(`
+      INSERT INTO stripe_events (stripe_event_id, type, object_id, object_type, data, status, error)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(stripe_event_id) DO UPDATE SET
+        status = excluded.status,
+        error = excluded.error,
+        processed_at = unixepoch()
+    `).bind(
+      event.stripeEventId,
+      event.type,
+      event.objectId,
+      event.objectType,
+      JSON.stringify(event.data),
+      event.status,
+      event.error || null
+    ).run();
+  }
+  async list(filters = {}) {
+    const where = [];
+    const values = [];
+    if (filters.type) {
+      where.push("type = ?");
+      values.push(filters.type);
+    }
+    if (filters.status) {
+      where.push("status = ?");
+      values.push(filters.status);
+    }
+    if (filters.objectId) {
+      where.push("object_id = ?");
+      values.push(filters.objectId);
+    }
+    const whereClause = where.length > 0 ? `WHERE ${where.join(" AND ")}` : "";
+    const limit = Math.min(filters.limit || 50, 100);
+    const page = filters.page || 1;
+    const offset = (page - 1) * limit;
+    const countResult = await this.db.prepare(
+      `SELECT COUNT(*) as count FROM stripe_events ${whereClause}`
+    ).bind(...values).first();
+    const results = await this.db.prepare(
+      `SELECT * FROM stripe_events ${whereClause} ORDER BY processed_at DESC LIMIT ? OFFSET ?`
+    ).bind(...values, limit, offset).all();
+    return {
+      events: (results.results || []).map((r) => this.mapRow(r)),
+      total: countResult?.count || 0
+    };
+  }
+  async getStats() {
+    const result = await this.db.prepare(`
+      SELECT
+        COUNT(*) as total,
+        SUM(CASE WHEN status = 'processed' THEN 1 ELSE 0 END) as processed,
+        SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) as failed,
+        SUM(CASE WHEN status = 'ignored' THEN 1 ELSE 0 END) as ignored
+      FROM stripe_events
+    `).first();
+    return {
+      total: result?.total || 0,
+      processed: result?.processed || 0,
+      failed: result?.failed || 0,
+      ignored: result?.ignored || 0
+    };
+  }
+  async getDistinctTypes() {
+    const results = await this.db.prepare(
+      "SELECT DISTINCT type FROM stripe_events ORDER BY type"
+    ).all();
+    return (results.results || []).map((r) => r.type);
+  }
+  mapRow(row) {
+    return {
+      id: row.id,
+      stripeEventId: row.stripe_event_id,
+      type: row.type,
+      objectId: row.object_id,
+      objectType: row.object_type,
+      data: row.data,
+      processedAt: row.processed_at,
+      status: row.status,
+      error: row.error || void 0
+    };
+  }
+};
+
 // src/plugins/core-plugins/stripe-plugin/components/subscriptions-page.ts
-function renderSubscriptionsPage(subscriptions, stats, filters) {
+chunkUYJ6TJHX_cjs.init_admin_layout_catalyst_template();
+
+// src/plugins/core-plugins/stripe-plugin/components/tab-bar.ts
+var TABS = [
+  { label: "Subscriptions", path: "/admin/plugins/stripe" },
+  { label: "Events", path: "/admin/plugins/stripe/events" },
+  { label: "Settings", path: "/admin/plugins/stripe/settings" }
+];
+function renderStripeTabBar(currentPath) {
+  const tabs = TABS.map((tab) => {
+    const isActive = currentPath === tab.path || tab.path === "/admin/plugins/stripe" && currentPath === "/admin/plugins/stripe/";
+    return `
+      <a href="${tab.path}"
+        class="${isActive ? "border-cyan-500 text-zinc-950 dark:text-white" : "border-transparent text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 hover:border-zinc-300 dark:hover:border-zinc-600"} whitespace-nowrap border-b-2 px-4 py-3 text-sm font-medium transition-colors">
+        ${tab.label}
+      </a>`;
+  }).join("");
   return `
-    <div class="space-y-6">
+    <div class="border-b border-zinc-950/5 dark:border-white/10 mb-6">
+      <nav class="-mb-px flex gap-x-2" aria-label="Stripe tabs">
+        ${tabs}
+      </nav>
+    </div>
+  `;
+}
+
+// src/plugins/core-plugins/stripe-plugin/components/subscriptions-page.ts
+function renderSubscriptionsPage(data) {
+  const { subscriptions, stats, filters, user, version, dynamicMenuItems } = data;
+  const content2 = `
+    <div>
+      <div class="sm:flex sm:items-center sm:justify-between mb-6">
+        <div class="sm:flex-auto">
+          <h1 class="text-2xl/8 font-semibold text-zinc-950 dark:text-white sm:text-xl/8">Stripe</h1>
+          <p class="mt-2 text-sm/6 text-zinc-500 dark:text-zinc-400">
+            Manage subscriptions, view billing status, and monitor payment events.
+          </p>
+        </div>
+        <div class="mt-4 sm:mt-0 sm:ml-16">
+          <button id="sync-btn" onclick="syncSubscriptions()"
+            class="inline-flex items-center justify-center rounded-lg bg-zinc-950 dark:bg-white px-3.5 py-2.5 text-sm font-semibold text-white dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-colors shadow-sm">
+            Sync from Stripe
+          </button>
+        </div>
+      </div>
+
+      ${renderStripeTabBar("/admin/plugins/stripe")}
+
       <!-- Stats Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-        ${statsCard("Total", stats.total, "text-gray-700")}
-        ${statsCard("Active", stats.active, "text-green-600")}
-        ${statsCard("Trialing", stats.trialing, "text-blue-600")}
-        ${statsCard("Past Due", stats.pastDue, "text-yellow-600")}
-        ${statsCard("Canceled", stats.canceled, "text-red-600")}
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5 mb-6">
+        ${statsCard("Total", stats.total, "text-zinc-950 dark:text-white")}
+        ${statsCard("Active", stats.active, "text-emerald-600 dark:text-emerald-400")}
+        ${statsCard("Trialing", stats.trialing, "text-blue-600 dark:text-blue-400")}
+        ${statsCard("Past Due", stats.pastDue, "text-amber-600 dark:text-amber-400")}
+        ${statsCard("Canceled", stats.canceled, "text-red-600 dark:text-red-400")}
       </div>
 
       <!-- Filters -->
-      <div class="bg-white rounded-lg shadow p-4">
+      <div class="rounded-xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl p-4 ring-1 ring-zinc-950/5 dark:ring-white/10 shadow-sm mb-6">
         <form method="GET" class="flex items-center gap-4">
-          <label class="text-sm font-medium text-gray-700">Status:</label>
-          <select name="status" class="border rounded px-3 py-1.5 text-sm" onchange="this.form.submit()">
+          <label class="text-sm font-medium text-zinc-500 dark:text-zinc-400">Status:</label>
+          <select name="status" class="rounded-lg border-0 bg-white dark:bg-zinc-800 px-3 py-1.5 text-sm text-zinc-950 dark:text-white ring-1 ring-inset ring-zinc-950/10 dark:ring-white/10" onchange="this.form.submit()">
             <option value="">All</option>
             ${statusOption("active", filters.status)}
             ${statusOption("trialing", filters.status)}
@@ -6507,33 +6694,72 @@ function renderSubscriptionsPage(subscriptions, stats, filters) {
       </div>
 
       <!-- Subscriptions Table -->
-      <div class="bg-white rounded-lg shadow overflow-hidden">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
+      <div class="rounded-xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl ring-1 ring-zinc-950/5 dark:ring-white/10 shadow-sm overflow-hidden">
+        <table class="min-w-full divide-y divide-zinc-950/5 dark:divide-white/5">
+          <thead>
             <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price ID</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current Period</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cancel at End</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stripe</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">User</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Status</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Price ID</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Current Period</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Cancel at End</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Stripe</th>
             </tr>
           </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
-            ${subscriptions.length === 0 ? '<tr><td colspan="6" class="px-6 py-8 text-center text-gray-500">No subscriptions found</td></tr>' : subscriptions.map(renderRow).join("")}
+          <tbody class="divide-y divide-zinc-950/5 dark:divide-white/5">
+            ${subscriptions.length === 0 ? '<tr><td colspan="6" class="px-6 py-8 text-center text-zinc-500 dark:text-zinc-400">No subscriptions found</td></tr>' : subscriptions.map(renderRow).join("")}
           </tbody>
         </table>
 
         ${renderPagination2(filters.page, filters.totalPages, filters.status)}
       </div>
+
+      <div id="sync-message" class="hidden mt-4 rounded-lg p-4 text-sm"></div>
     </div>
+
+    <script>
+      async function syncSubscriptions() {
+        const btn = document.getElementById('sync-btn')
+        const msg = document.getElementById('sync-message')
+        btn.disabled = true
+        btn.textContent = 'Syncing...'
+        msg.className = 'hidden mt-4 rounded-lg p-4 text-sm'
+        try {
+          const res = await fetch('/api/stripe/sync-subscriptions', { method: 'POST' })
+          const result = await res.json()
+          if (result.success) {
+            msg.className = 'mt-4 rounded-lg p-4 text-sm bg-emerald-400/10 text-emerald-500 dark:text-emerald-400 ring-1 ring-inset ring-emerald-400/20'
+            msg.textContent = 'Synced ' + result.synced + ' of ' + result.total + ' subscriptions from Stripe.' + (result.errors > 0 ? ' (' + result.errors + ' errors)' : '')
+            setTimeout(() => location.reload(), 1500)
+          } else {
+            msg.className = 'mt-4 rounded-lg p-4 text-sm bg-red-400/10 text-red-500 dark:text-red-400 ring-1 ring-inset ring-red-400/20'
+            msg.textContent = result.error || 'Sync failed.'
+          }
+        } catch {
+          msg.className = 'mt-4 rounded-lg p-4 text-sm bg-red-400/10 text-red-500 dark:text-red-400 ring-1 ring-inset ring-red-400/20'
+          msg.textContent = 'Network error. Please try again.'
+        }
+        btn.disabled = false
+        btn.textContent = 'Sync from Stripe'
+      }
+    </script>
   `;
+  const layoutData = {
+    title: "Stripe Subscriptions",
+    pageTitle: "Stripe Subscriptions",
+    currentPath: "/admin/plugins/stripe",
+    user,
+    content: content2,
+    version,
+    dynamicMenuItems
+  };
+  return chunkUYJ6TJHX_cjs.renderAdminLayoutCatalyst(layoutData);
 }
 function statsCard(label, value, colorClass) {
   return `
-    <div class="bg-white rounded-lg shadow p-4">
-      <div class="text-sm font-medium text-gray-500">${label}</div>
-      <div class="text-2xl font-bold ${colorClass}">${value}</div>
+    <div class="rounded-xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl p-5 ring-1 ring-zinc-950/5 dark:ring-white/10 shadow-sm">
+      <p class="text-sm font-medium text-zinc-500 dark:text-zinc-400">${label}</p>
+      <p class="mt-2 text-3xl font-bold ${colorClass}">${value}</p>
     </div>
   `;
 }
@@ -6544,18 +6770,18 @@ function statusOption(value, current) {
 }
 function statusBadge(status) {
   const colors = {
-    active: "bg-green-100 text-green-800",
-    trialing: "bg-blue-100 text-blue-800",
-    past_due: "bg-yellow-100 text-yellow-800",
-    canceled: "bg-red-100 text-red-800",
-    unpaid: "bg-orange-100 text-orange-800",
-    paused: "bg-gray-100 text-gray-800",
-    incomplete: "bg-gray-100 text-gray-500",
-    incomplete_expired: "bg-red-100 text-red-500"
+    active: "bg-emerald-400/10 text-emerald-500 dark:text-emerald-400 ring-emerald-400/20",
+    trialing: "bg-blue-400/10 text-blue-500 dark:text-blue-400 ring-blue-400/20",
+    past_due: "bg-amber-400/10 text-amber-500 dark:text-amber-400 ring-amber-400/20",
+    canceled: "bg-red-400/10 text-red-500 dark:text-red-400 ring-red-400/20",
+    unpaid: "bg-orange-400/10 text-orange-500 dark:text-orange-400 ring-orange-400/20",
+    paused: "bg-zinc-400/10 text-zinc-500 dark:text-zinc-400 ring-zinc-400/20",
+    incomplete: "bg-zinc-400/10 text-zinc-500 dark:text-zinc-400 ring-zinc-400/20",
+    incomplete_expired: "bg-red-400/10 text-red-500 dark:text-red-400 ring-red-400/20"
   };
-  const color = colors[status] || "bg-gray-100 text-gray-800";
+  const color = colors[status] || "bg-zinc-400/10 text-zinc-500 ring-zinc-400/20";
   const label = status.replace("_", " ");
-  return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${color}">${label}</span>`;
+  return `<span class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ring-1 ring-inset ${color}">${label}</span>`;
 }
 function formatDate(timestamp) {
   if (!timestamp) return "-";
@@ -6567,23 +6793,23 @@ function formatDate(timestamp) {
 }
 function renderRow(sub) {
   return `
-    <tr>
+    <tr class="hover:bg-zinc-950/[0.025] dark:hover:bg-white/[0.025]">
       <td class="px-6 py-4 whitespace-nowrap">
-        <div class="text-sm font-medium text-gray-900">${sub.userEmail || sub.userId}</div>
-        <div class="text-xs text-gray-500">${sub.stripeCustomerId}</div>
+        <div class="text-sm font-medium text-zinc-950 dark:text-white">${sub.userEmail || sub.userId}</div>
+        <div class="text-xs text-zinc-500 dark:text-zinc-400">${sub.stripeCustomerId}</div>
       </td>
       <td class="px-6 py-4 whitespace-nowrap">${statusBadge(sub.status)}</td>
-      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${sub.stripePriceId}</td>
-      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+      <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-500 dark:text-zinc-400">${sub.stripePriceId}</td>
+      <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-500 dark:text-zinc-400">
         ${formatDate(sub.currentPeriodStart)} - ${formatDate(sub.currentPeriodEnd)}
       </td>
       <td class="px-6 py-4 whitespace-nowrap text-sm">
-        ${sub.cancelAtPeriodEnd ? '<span class="text-yellow-600 font-medium">Yes</span>' : '<span class="text-gray-400">No</span>'}
+        ${sub.cancelAtPeriodEnd ? '<span class="text-amber-500 dark:text-amber-400 font-medium">Yes</span>' : '<span class="text-zinc-400 dark:text-zinc-500">No</span>'}
       </td>
       <td class="px-6 py-4 whitespace-nowrap text-sm">
         <a href="https://dashboard.stripe.com/subscriptions/${sub.stripeSubscriptionId}"
            target="_blank" rel="noopener noreferrer"
-           class="text-indigo-600 hover:text-indigo-800">
+           class="text-cyan-600 dark:text-cyan-400 hover:text-cyan-500 dark:hover:text-cyan-300">
           View in Stripe
         </a>
       </td>
@@ -6594,13 +6820,161 @@ function renderPagination2(page, totalPages, status) {
   if (totalPages <= 1) return "";
   const params = status ? `&status=${status}` : "";
   return `
-    <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-      <div class="text-sm text-gray-700">
+    <div class="px-6 py-3 flex items-center justify-between border-t border-zinc-950/5 dark:border-white/5">
+      <div class="text-sm text-zinc-500 dark:text-zinc-400">
         Page ${page} of ${totalPages}
       </div>
       <div class="flex gap-2">
-        ${page > 1 ? `<a href="?page=${page - 1}${params}" class="px-3 py-1 border rounded text-sm hover:bg-gray-50">Previous</a>` : ""}
-        ${page < totalPages ? `<a href="?page=${page + 1}${params}" class="px-3 py-1 border rounded text-sm hover:bg-gray-50">Next</a>` : ""}
+        ${page > 1 ? `<a href="?page=${page - 1}${params}" class="px-3 py-1 rounded-lg text-sm text-zinc-950 dark:text-white ring-1 ring-inset ring-zinc-950/10 dark:ring-white/10 hover:bg-zinc-50 dark:hover:bg-zinc-800">Previous</a>` : ""}
+        ${page < totalPages ? `<a href="?page=${page + 1}${params}" class="px-3 py-1 rounded-lg text-sm text-zinc-950 dark:text-white ring-1 ring-inset ring-zinc-950/10 dark:ring-white/10 hover:bg-zinc-50 dark:hover:bg-zinc-800">Next</a>` : ""}
+      </div>
+    </div>
+  `;
+}
+
+// src/plugins/core-plugins/stripe-plugin/components/events-page.ts
+chunkUYJ6TJHX_cjs.init_admin_layout_catalyst_template();
+function renderEventsPage(data) {
+  const { events, stats, types, filters, user, version, dynamicMenuItems } = data;
+  const content2 = `
+    <div>
+      <div class="sm:flex sm:items-center sm:justify-between mb-6">
+        <div class="sm:flex-auto">
+          <h1 class="text-2xl/8 font-semibold text-zinc-950 dark:text-white sm:text-xl/8">Stripe</h1>
+          <p class="mt-2 text-sm/6 text-zinc-500 dark:text-zinc-400">
+            Webhook event log showing all processed, failed, and ignored Stripe events.
+          </p>
+        </div>
+      </div>
+
+      ${renderStripeTabBar("/admin/plugins/stripe/events")}
+
+      <!-- Stats Cards -->
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
+        ${eventStatsCard("Total Events", stats.total, "text-zinc-950 dark:text-white")}
+        ${eventStatsCard("Processed", stats.processed, "text-emerald-600 dark:text-emerald-400")}
+        ${eventStatsCard("Failed", stats.failed, "text-red-600 dark:text-red-400")}
+        ${eventStatsCard("Ignored", stats.ignored, "text-zinc-500 dark:text-zinc-400")}
+      </div>
+
+      <!-- Filters -->
+      <div class="rounded-xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl p-4 ring-1 ring-zinc-950/5 dark:ring-white/10 shadow-sm mb-6">
+        <form method="GET" class="flex items-center gap-4 flex-wrap">
+          <label class="text-sm font-medium text-zinc-500 dark:text-zinc-400">Type:</label>
+          <select name="type" class="rounded-lg border-0 bg-white dark:bg-zinc-800 px-3 py-1.5 text-sm text-zinc-950 dark:text-white ring-1 ring-inset ring-zinc-950/10 dark:ring-white/10" onchange="this.form.submit()">
+            <option value="">All</option>
+            ${types.map((t) => `<option value="${t}" ${t === filters.type ? "selected" : ""}>${t}</option>`).join("")}
+          </select>
+
+          <label class="text-sm font-medium text-zinc-500 dark:text-zinc-400">Status:</label>
+          <select name="status" class="rounded-lg border-0 bg-white dark:bg-zinc-800 px-3 py-1.5 text-sm text-zinc-950 dark:text-white ring-1 ring-inset ring-zinc-950/10 dark:ring-white/10" onchange="this.form.submit()">
+            <option value="">All</option>
+            ${eventStatusOption("processed", filters.status)}
+            ${eventStatusOption("failed", filters.status)}
+            ${eventStatusOption("ignored", filters.status)}
+          </select>
+        </form>
+      </div>
+
+      <!-- Events Table -->
+      <div class="rounded-xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl ring-1 ring-zinc-950/5 dark:ring-white/10 shadow-sm overflow-hidden">
+        <table class="min-w-full divide-y divide-zinc-950/5 dark:divide-white/5">
+          <thead>
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Time</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Type</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Object</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Status</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Event ID</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-zinc-950/5 dark:divide-white/5">
+            ${events.length === 0 ? '<tr><td colspan="5" class="px-6 py-8 text-center text-zinc-500 dark:text-zinc-400">No events recorded yet</td></tr>' : events.map(renderEventRow).join("")}
+          </tbody>
+        </table>
+
+        ${renderEventPagination(filters.page, filters.totalPages, filters.type, filters.status)}
+      </div>
+    </div>
+  `;
+  const layoutData = {
+    title: "Stripe Events",
+    pageTitle: "Stripe Events",
+    currentPath: "/admin/plugins/stripe",
+    user,
+    content: content2,
+    version,
+    dynamicMenuItems
+  };
+  return chunkUYJ6TJHX_cjs.renderAdminLayoutCatalyst(layoutData);
+}
+function eventStatsCard(label, value, colorClass) {
+  return `
+    <div class="rounded-xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl p-5 ring-1 ring-zinc-950/5 dark:ring-white/10 shadow-sm">
+      <p class="text-sm font-medium text-zinc-500 dark:text-zinc-400">${label}</p>
+      <p class="mt-2 text-3xl font-bold ${colorClass}">${value}</p>
+    </div>
+  `;
+}
+function eventStatusOption(value, current) {
+  const selected = value === current ? "selected" : "";
+  const label = value.charAt(0).toUpperCase() + value.slice(1);
+  return `<option value="${value}" ${selected}>${label}</option>`;
+}
+function eventStatusBadge(status) {
+  const colors = {
+    processed: "bg-emerald-400/10 text-emerald-500 dark:text-emerald-400 ring-emerald-400/20",
+    failed: "bg-red-400/10 text-red-500 dark:text-red-400 ring-red-400/20",
+    ignored: "bg-zinc-400/10 text-zinc-500 dark:text-zinc-400 ring-zinc-400/20"
+  };
+  const color = colors[status] || "bg-zinc-400/10 text-zinc-500 ring-zinc-400/20";
+  return `<span class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ring-1 ring-inset ${color}">${status}</span>`;
+}
+function formatTimestamp3(timestamp) {
+  if (!timestamp) return "-";
+  const d = new Date(timestamp * 1e3);
+  return d.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit"
+  });
+}
+function renderEventRow(event) {
+  const errorTooltip = event.error ? ` title="${event.error.replace(/"/g, "&quot;")}"` : "";
+  return `
+    <tr class="hover:bg-zinc-950/[0.025] dark:hover:bg-white/[0.025]"${errorTooltip}>
+      <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-500 dark:text-zinc-400">
+        ${formatTimestamp3(event.processedAt)}
+      </td>
+      <td class="px-6 py-4 whitespace-nowrap">
+        <span class="text-sm font-mono text-zinc-950 dark:text-white">${event.type}</span>
+      </td>
+      <td class="px-6 py-4 whitespace-nowrap">
+        <div class="text-sm font-mono text-zinc-500 dark:text-zinc-400">${event.objectId || "-"}</div>
+        <div class="text-xs text-zinc-400 dark:text-zinc-500">${event.objectType}</div>
+      </td>
+      <td class="px-6 py-4 whitespace-nowrap">${eventStatusBadge(event.status)}</td>
+      <td class="px-6 py-4 whitespace-nowrap text-xs font-mono text-zinc-400 dark:text-zinc-500">${event.stripeEventId}</td>
+    </tr>
+  `;
+}
+function renderEventPagination(page, totalPages, type, status) {
+  if (totalPages <= 1) return "";
+  const params = [];
+  if (type) params.push(`type=${type}`);
+  if (status) params.push(`status=${status}`);
+  const extra = params.length > 0 ? `&${params.join("&")}` : "";
+  return `
+    <div class="px-6 py-3 flex items-center justify-between border-t border-zinc-950/5 dark:border-white/5">
+      <div class="text-sm text-zinc-500 dark:text-zinc-400">
+        Page ${page} of ${totalPages}
+      </div>
+      <div class="flex gap-2">
+        ${page > 1 ? `<a href="?page=${page - 1}${extra}" class="px-3 py-1 rounded-lg text-sm text-zinc-950 dark:text-white ring-1 ring-inset ring-zinc-950/10 dark:ring-white/10 hover:bg-zinc-50 dark:hover:bg-zinc-800">Previous</a>` : ""}
+        ${page < totalPages ? `<a href="?page=${page + 1}${extra}" class="px-3 py-1 rounded-lg text-sm text-zinc-950 dark:text-white ring-1 ring-inset ring-zinc-950/10 dark:ring-white/10 hover:bg-zinc-50 dark:hover:bg-zinc-800">Next</a>` : ""}
       </div>
     </div>
   `;
@@ -6608,6 +6982,7 @@ function renderPagination2(page, totalPages, status) {
 
 // src/plugins/core-plugins/stripe-plugin/types.ts
 var DEFAULT_SETTINGS3 = {
+  stripePublishableKey: "",
   stripeSecretKey: "",
   stripeWebhookSecret: "",
   stripePriceId: "",
@@ -6617,7 +6992,7 @@ var DEFAULT_SETTINGS3 = {
 
 // src/plugins/core-plugins/stripe-plugin/routes/admin.ts
 var adminRoutes3 = new hono.Hono();
-adminRoutes3.use("*", chunkYYMPHM3I_cjs.requireAuth());
+adminRoutes3.use("*", chunkUT7K7CJZ_cjs.requireAuth());
 adminRoutes3.use("*", async (c, next) => {
   const user = c.get("user");
   if (user?.role !== "admin") {
@@ -6625,8 +7000,21 @@ adminRoutes3.use("*", async (c, next) => {
   }
   return next();
 });
+async function getSettings3(db) {
+  try {
+    const pluginService = new chunkNA3BD6LU_cjs.PluginService(db);
+    const plugin2 = await pluginService.getPlugin("stripe");
+    if (plugin2?.settings) {
+      const settings = typeof plugin2.settings === "string" ? JSON.parse(plugin2.settings) : plugin2.settings;
+      return { ...DEFAULT_SETTINGS3, ...settings };
+    }
+  } catch {
+  }
+  return DEFAULT_SETTINGS3;
+}
 adminRoutes3.get("/", async (c) => {
   const db = c.env.DB;
+  const user = c.get("user");
   const subscriptionService = new SubscriptionService(db);
   await subscriptionService.ensureTable();
   const page = parseInt(c.req.query("page") || "1");
@@ -6637,12 +7025,151 @@ adminRoutes3.get("/", async (c) => {
     subscriptionService.getStats()
   ]);
   const totalPages = Math.ceil(total / limit);
-  const html = renderSubscriptionsPage(subscriptions, stats, {
-    status: statusFilter,
-    page,
-    totalPages
+  const html = renderSubscriptionsPage({
+    subscriptions,
+    stats,
+    filters: { status: statusFilter, page, totalPages },
+    user: user ? { name: user.email, email: user.email, role: user.role } : void 0,
+    version: c.get("appVersion"),
+    dynamicMenuItems: c.get("pluginMenuItems")
   });
   return c.html(html);
+});
+adminRoutes3.get("/events", async (c) => {
+  const db = c.env.DB;
+  const user = c.get("user");
+  const eventService = new StripeEventService(db);
+  await eventService.ensureTable();
+  const page = parseInt(c.req.query("page") || "1");
+  const limit = 50;
+  const typeFilter = c.req.query("type") || void 0;
+  const statusFilter = c.req.query("status");
+  const [{ events, total }, stats, types] = await Promise.all([
+    eventService.list({ type: typeFilter, status: statusFilter, page, limit }),
+    eventService.getStats(),
+    eventService.getDistinctTypes()
+  ]);
+  const totalPages = Math.ceil(total / limit);
+  const html = renderEventsPage({
+    events,
+    stats,
+    types,
+    filters: { type: typeFilter, status: statusFilter, page, totalPages },
+    user: user ? { name: user.email, email: user.email, role: user.role } : void 0,
+    version: c.get("appVersion"),
+    dynamicMenuItems: c.get("pluginMenuItems")
+  });
+  return c.html(html);
+});
+adminRoutes3.get("/settings", async (c) => {
+  const db = c.env.DB;
+  const user = c.get("user");
+  const settings = await getSettings3(db);
+  const { renderAdminLayoutCatalyst: renderAdminLayoutCatalyst2 } = await import('./admin-layout-catalyst.template-HFD37TY5.cjs');
+  const content2 = `
+    <div>
+      <div class="mb-6">
+        <h1 class="text-2xl/8 font-semibold text-zinc-950 dark:text-white sm:text-xl/8">Stripe</h1>
+        <p class="mt-2 text-sm/6 text-zinc-500 dark:text-zinc-400">
+          Configure your Stripe API keys and checkout options.
+        </p>
+      </div>
+
+      ${renderStripeTabBar("/admin/plugins/stripe/settings")}
+
+      <div id="settings-message" class="hidden mb-4 rounded-lg p-4 text-sm"></div>
+
+      <form id="stripe-settings-form" class="rounded-xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl ring-1 ring-zinc-950/5 dark:ring-white/10 shadow-sm divide-y divide-zinc-950/5 dark:divide-white/5">
+        <div class="p-6 space-y-5">
+          <div>
+            <label class="block text-sm font-medium text-zinc-950 dark:text-white mb-1.5">Publishable Key</label>
+            <input type="text" name="stripePublishableKey" value="${settings.stripePublishableKey}"
+              placeholder="pk_..."
+              class="w-full rounded-lg border-0 bg-white dark:bg-zinc-800 px-3.5 py-2 text-sm text-zinc-950 dark:text-white ring-1 ring-inset ring-zinc-950/10 dark:ring-white/10 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:ring-2 focus:ring-cyan-500" />
+            <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Your Stripe publishable key (starts with pk_)</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-zinc-950 dark:text-white mb-1.5">Secret Key</label>
+            <input type="password" name="stripeSecretKey" value="${settings.stripeSecretKey}"
+              placeholder="sk_..."
+              class="w-full rounded-lg border-0 bg-white dark:bg-zinc-800 px-3.5 py-2 text-sm text-zinc-950 dark:text-white ring-1 ring-inset ring-zinc-950/10 dark:ring-white/10 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:ring-2 focus:ring-cyan-500" />
+            <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Your Stripe secret API key (starts with sk_)</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-zinc-950 dark:text-white mb-1.5">Webhook Signing Secret</label>
+            <input type="password" name="stripeWebhookSecret" value="${settings.stripeWebhookSecret}"
+              placeholder="whsec_..."
+              class="w-full rounded-lg border-0 bg-white dark:bg-zinc-800 px-3.5 py-2 text-sm text-zinc-950 dark:text-white ring-1 ring-inset ring-zinc-950/10 dark:ring-white/10 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:ring-2 focus:ring-cyan-500" />
+            <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Stripe webhook endpoint signing secret (starts with whsec_)</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-zinc-950 dark:text-white mb-1.5">Default Price ID</label>
+            <input type="text" name="stripePriceId" value="${settings.stripePriceId || ""}"
+              placeholder="price_..."
+              class="w-full rounded-lg border-0 bg-white dark:bg-zinc-800 px-3.5 py-2 text-sm text-zinc-950 dark:text-white ring-1 ring-inset ring-zinc-950/10 dark:ring-white/10 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:ring-2 focus:ring-cyan-500" />
+            <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Default Stripe Price ID for checkout sessions (optional)</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-zinc-950 dark:text-white mb-1.5">Checkout Success URL</label>
+            <input type="text" name="successUrl" value="${settings.successUrl}"
+              class="w-full rounded-lg border-0 bg-white dark:bg-zinc-800 px-3.5 py-2 text-sm text-zinc-950 dark:text-white ring-1 ring-inset ring-zinc-950/10 dark:ring-white/10 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:ring-2 focus:ring-cyan-500" />
+            <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Redirect URL after successful checkout</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-zinc-950 dark:text-white mb-1.5">Checkout Cancel URL</label>
+            <input type="text" name="cancelUrl" value="${settings.cancelUrl}"
+              class="w-full rounded-lg border-0 bg-white dark:bg-zinc-800 px-3.5 py-2 text-sm text-zinc-950 dark:text-white ring-1 ring-inset ring-zinc-950/10 dark:ring-white/10 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:ring-2 focus:ring-cyan-500" />
+            <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Redirect URL if checkout is cancelled</p>
+          </div>
+        </div>
+
+        <div class="px-6 py-4 flex justify-end">
+          <button type="submit"
+            class="inline-flex items-center justify-center rounded-lg bg-zinc-950 dark:bg-white px-3.5 py-2.5 text-sm font-semibold text-white dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-colors shadow-sm">
+            Save Settings
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <script>
+      document.getElementById('stripe-settings-form').addEventListener('submit', async (e) => {
+        e.preventDefault()
+        const form = e.target
+        const data = Object.fromEntries(new FormData(form))
+        const msg = document.getElementById('settings-message')
+        try {
+          const res = await fetch('/admin/plugins/stripe/settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          })
+          const result = await res.json()
+          msg.className = result.success
+            ? 'mb-4 rounded-lg p-4 text-sm bg-emerald-400/10 text-emerald-500 dark:text-emerald-400 ring-1 ring-inset ring-emerald-400/20'
+            : 'mb-4 rounded-lg p-4 text-sm bg-red-400/10 text-red-500 dark:text-red-400 ring-1 ring-inset ring-red-400/20'
+          msg.textContent = result.success ? 'Settings saved successfully.' : (result.error || 'Failed to save settings.')
+        } catch {
+          msg.className = 'mb-4 rounded-lg p-4 text-sm bg-red-400/10 text-red-500 dark:text-red-400 ring-1 ring-inset ring-red-400/20'
+          msg.textContent = 'Network error. Please try again.'
+        }
+      })
+    </script>
+  `;
+  return c.html(renderAdminLayoutCatalyst2({
+    title: "Stripe Settings",
+    pageTitle: "Stripe Settings",
+    currentPath: "/admin/plugins/stripe",
+    user: user ? { name: user.email, email: user.email, role: user.role } : void 0,
+    content: content2,
+    version: c.get("appVersion"),
+    dynamicMenuItems: c.get("pluginMenuItems")
+  }));
 });
 adminRoutes3.post("/settings", async (c) => {
   try {
@@ -6734,6 +7261,30 @@ var StripeAPI = class {
     return this.request("POST", "/customers", body);
   }
   /**
+   * List subscriptions with pagination (auto-expands across pages)
+   */
+  async listSubscriptions(params) {
+    const qs = new URLSearchParams();
+    qs.append("limit", String(params?.limit || 100));
+    if (params?.status) qs.append("status", params.status);
+    if (params?.startingAfter) qs.append("starting_after", params.startingAfter);
+    return this.request("GET", `/subscriptions?${qs.toString()}`);
+  }
+  /**
+   * Fetch ALL subscriptions from Stripe (handles pagination automatically)
+   */
+  async listAllSubscriptions() {
+    const all = [];
+    let startingAfter;
+    while (true) {
+      const result = await this.listSubscriptions({ limit: 100, startingAfter });
+      all.push(...result.data);
+      if (!result.has_more || result.data.length === 0) break;
+      startingAfter = result.data[result.data.length - 1].id;
+    }
+    return all;
+  }
+  /**
    * Search for a customer by email
    */
   async findCustomerByEmail(email) {
@@ -6771,9 +7322,9 @@ function timingSafeEqual(a, b) {
 
 // src/plugins/core-plugins/stripe-plugin/routes/api.ts
 var apiRoutes3 = new hono.Hono();
-async function getSettings3(db) {
+async function getSettings4(db) {
   try {
-    const pluginService = new chunkI6FFGQIT_cjs.PluginService(db);
+    const pluginService = new chunkNA3BD6LU_cjs.PluginService(db);
     const plugin2 = await pluginService.getPlugin("stripe");
     if (plugin2?.settings) {
       const settings = typeof plugin2.settings === "string" ? JSON.parse(plugin2.settings) : plugin2.settings;
@@ -6798,7 +7349,7 @@ function mapStripeStatus(status) {
 }
 apiRoutes3.post("/webhook", async (c) => {
   const db = c.env.DB;
-  const settings = await getSettings3(db);
+  const settings = await getSettings4(db);
   if (!settings.stripeWebhookSecret) {
     return c.json({ error: "Webhook secret not configured" }, 500);
   }
@@ -6811,7 +7362,11 @@ apiRoutes3.post("/webhook", async (c) => {
   }
   const event = JSON.parse(rawBody);
   const subscriptionService = new SubscriptionService(db);
-  await subscriptionService.ensureTable();
+  const eventService = new StripeEventService(db);
+  await Promise.all([subscriptionService.ensureTable(), eventService.ensureTable()]);
+  const obj = event.data.object;
+  const objectId = obj?.id || "";
+  const objectType = obj?.object || event.type.split(".")[0] || "";
   try {
     switch (event.type) {
       case "customer.subscription.created": {
@@ -6886,18 +7441,45 @@ apiRoutes3.post("/webhook", async (c) => {
       }
       default:
         console.log(`[Stripe] Unhandled event type: ${event.type}`);
+        await eventService.log({
+          stripeEventId: event.id,
+          type: event.type,
+          objectId,
+          objectType,
+          data: event.data.object,
+          status: "ignored"
+        });
+        return c.json({ received: true });
     }
+    await eventService.log({
+      stripeEventId: event.id,
+      type: event.type,
+      objectId,
+      objectType,
+      data: event.data.object,
+      status: "processed"
+    });
   } catch (error) {
+    await eventService.log({
+      stripeEventId: event.id,
+      type: event.type,
+      objectId,
+      objectType,
+      data: event.data.object,
+      status: "failed",
+      error: error instanceof Error ? error.message : String(error)
+    }).catch(() => {
+    });
     console.error(`[Stripe] Error processing webhook event ${event.type}:`, error);
     return c.json({ error: "Webhook processing failed" }, 500);
   }
   return c.json({ received: true });
 });
-apiRoutes3.post("/create-checkout-session", chunkYYMPHM3I_cjs.requireAuth(), async (c) => {
+apiRoutes3.post("/create-checkout-session", chunkUT7K7CJZ_cjs.requireAuth(), async (c) => {
   const db = c.env.DB;
   const user = c.get("user");
   if (!user) return c.json({ error: "Unauthorized" }, 401);
-  const settings = await getSettings3(db);
+  const settings = await getSettings4(db);
   if (!settings.stripeSecretKey) {
     return c.json({ error: "Stripe not configured" }, 500);
   }
@@ -6933,7 +7515,7 @@ apiRoutes3.post("/create-checkout-session", chunkYYMPHM3I_cjs.requireAuth(), asy
   });
   return c.json({ sessionId: session.id, url: session.url });
 });
-apiRoutes3.get("/subscription", chunkYYMPHM3I_cjs.requireAuth(), async (c) => {
+apiRoutes3.get("/subscription", chunkUT7K7CJZ_cjs.requireAuth(), async (c) => {
   const user = c.get("user");
   if (!user) return c.json({ error: "Unauthorized" }, 401);
   const db = c.env.DB;
@@ -6945,7 +7527,7 @@ apiRoutes3.get("/subscription", chunkYYMPHM3I_cjs.requireAuth(), async (c) => {
   }
   return c.json({ subscription });
 });
-apiRoutes3.get("/subscriptions", chunkYYMPHM3I_cjs.requireAuth(), async (c) => {
+apiRoutes3.get("/subscriptions", chunkUT7K7CJZ_cjs.requireAuth(), async (c) => {
   const user = c.get("user");
   if (user?.role !== "admin") return c.json({ error: "Access denied" }, 403);
   const db = c.env.DB;
@@ -6961,7 +7543,7 @@ apiRoutes3.get("/subscriptions", chunkYYMPHM3I_cjs.requireAuth(), async (c) => {
   const result = await subscriptionService.list(filters);
   return c.json(result);
 });
-apiRoutes3.get("/stats", chunkYYMPHM3I_cjs.requireAuth(), async (c) => {
+apiRoutes3.get("/stats", chunkUT7K7CJZ_cjs.requireAuth(), async (c) => {
   const user = c.get("user");
   if (user?.role !== "admin") return c.json({ error: "Access denied" }, 403);
   const db = c.env.DB;
@@ -6970,10 +7552,78 @@ apiRoutes3.get("/stats", chunkYYMPHM3I_cjs.requireAuth(), async (c) => {
   const stats = await subscriptionService.getStats();
   return c.json(stats);
 });
+apiRoutes3.post("/sync-subscriptions", chunkUT7K7CJZ_cjs.requireAuth(), async (c) => {
+  const user = c.get("user");
+  if (user?.role !== "admin") return c.json({ error: "Access denied" }, 403);
+  const db = c.env.DB;
+  const settings = await getSettings4(db);
+  if (!settings.stripeSecretKey) {
+    return c.json({ error: "Stripe secret key not configured" }, 400);
+  }
+  const stripeApi = new StripeAPI(settings.stripeSecretKey);
+  const subscriptionService = new SubscriptionService(db);
+  await subscriptionService.ensureTable();
+  try {
+    const allSubs = await stripeApi.listAllSubscriptions();
+    let synced = 0;
+    let errors = 0;
+    for (const sub of allSubs) {
+      try {
+        const userId = sub.metadata?.sonicjs_user_id || await subscriptionService.getUserIdByStripeCustomer(sub.customer) || "";
+        await subscriptionService.upsert({
+          userId,
+          stripeCustomerId: typeof sub.customer === "string" ? sub.customer : sub.customer.id,
+          stripeSubscriptionId: sub.id,
+          stripePriceId: sub.items?.data?.[0]?.price?.id || "",
+          status: mapStripeStatus(sub.status),
+          currentPeriodStart: sub.current_period_start,
+          currentPeriodEnd: sub.current_period_end,
+          cancelAtPeriodEnd: sub.cancel_at_period_end
+        });
+        synced++;
+      } catch (err) {
+        console.error(`[Stripe Sync] Failed to upsert subscription ${sub.id}:`, err);
+        errors++;
+      }
+    }
+    return c.json({
+      success: true,
+      total: allSubs.length,
+      synced,
+      errors
+    });
+  } catch (error) {
+    console.error("[Stripe Sync] Error:", error);
+    return c.json({
+      success: false,
+      error: error instanceof Error ? error.message : "Sync failed"
+    }, 500);
+  }
+});
+apiRoutes3.get("/events", chunkUT7K7CJZ_cjs.requireAuth(), async (c) => {
+  const user = c.get("user");
+  if (user?.role !== "admin") return c.json({ error: "Access denied" }, 403);
+  const db = c.env.DB;
+  const eventService = new StripeEventService(db);
+  await eventService.ensureTable();
+  const filters = {
+    type: c.req.query("type") || void 0,
+    status: c.req.query("status") || void 0,
+    objectId: c.req.query("objectId") || void 0,
+    page: c.req.query("page") ? parseInt(c.req.query("page")) : 1,
+    limit: c.req.query("limit") ? parseInt(c.req.query("limit")) : 50
+  };
+  const [result, stats, types] = await Promise.all([
+    eventService.list(filters),
+    eventService.getStats(),
+    eventService.getDistinctTypes()
+  ]);
+  return c.json({ ...result, stats, types });
+});
 
 // src/plugins/core-plugins/stripe-plugin/index.ts
 function createStripePlugin() {
-  const builder = chunk6FHNRRJ3_cjs.PluginBuilder.create({
+  const builder = chunk635JAMSE_cjs.PluginBuilder.create({
     name: "stripe",
     version: "1.0.0-beta.1",
     description: "Stripe subscription management with webhook handling, checkout sessions, and subscription gating"
@@ -7016,13 +7666,35 @@ function createStripePlugin() {
 var stripePlugin = createStripePlugin();
 
 // src/middleware/plugin-menu.ts
-var MENU_PLUGINS = [
-  securityAuditPlugin
-];
+var REGISTRY_MENU_PLUGINS = Object.values(chunkNA3BD6LU_cjs.PLUGIN_REGISTRY).filter((p) => p.adminMenu !== null).map((p) => ({
+  codeName: p.codeName,
+  label: p.adminMenu.label,
+  path: p.adminMenu.path,
+  icon: p.adminMenu.icon,
+  order: p.adminMenu.order
+}));
+var ICON_SVG = {
+  "magnifying-glass": '<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"/></svg>',
+  "chart-bar": '<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z"/></svg>',
+  "image": '<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/></svg>',
+  "palette": '<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.098 19.902a3.75 3.75 0 0 0 5.304 0l6.401-6.402M6.75 21A3.75 3.75 0 0 1 3 17.25V4.125C3 3.504 3.504 3 4.125 3h5.25c.621 0 1.125.504 1.125 1.125v4.072M6.75 21a3.75 3.75 0 0 0 3.75-3.75V8.197M6.75 21h13.125c.621 0 1.125-.504 1.125-1.125v-5.25c0-.621-.504-1.125-1.125-1.125h-4.072M10.5 8.197l2.88-2.88c.438-.439 1.15-.439 1.59 0l3.712 3.713c.44.44.44 1.152 0 1.59l-2.879 2.88M6.75 17.25h.008v.008H6.75v-.008Z"/></svg>',
+  "envelope": '<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"/></svg>',
+  "hand-raised": '<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.05 4.575a1.575 1.575 0 1 0-3.15 0v3m3.15-3v-1.5a1.575 1.575 0 0 1 3.15 0v1.5m-3.15 0 .075 5.925m3.075-5.925v2.925m0-2.925a1.575 1.575 0 0 1 3.15 0V9.9m-3.15-2.4v5.325M16.5 9.9a1.575 1.575 0 0 1 3.15 0V15a6.15 6.15 0 0 1-6.15 6.15H12A6.15 6.15 0 0 1 5.85 15V9.525"/></svg>',
+  "key": '<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1 1 21.75 8.25Z"/></svg>',
+  "arrow-right": '<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>',
+  "shield-check": '<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>',
+  "credit-card": '<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z"/></svg>'
+};
+function resolveIcon(iconName) {
+  if (!iconName) return "";
+  if (iconName.startsWith("<svg") || iconName.startsWith("<")) return iconName;
+  return ICON_SVG[iconName] || "";
+}
 var MARKER = "<!-- DYNAMIC_PLUGIN_MENU -->";
 function renderMenuItem(item, currentPath) {
   const isActive = currentPath === item.path || currentPath.startsWith(item.path);
   const fallbackIcon = `<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>`;
+  const resolvedIcon = resolveIcon(item.icon) || fallbackIcon;
   return `
     <span class="relative">
       ${isActive ? '<span class="absolute inset-y-2 -left-4 w-0.5 rounded-full bg-cyan-500 dark:bg-cyan-400"></span>' : ""}
@@ -7032,7 +7704,7 @@ function renderMenuItem(item, currentPath) {
         ${isActive ? 'data-current="true"' : ""}
       >
         <span class="shrink-0 ${isActive ? "fill-zinc-950 dark:fill-white" : "fill-zinc-500 dark:fill-zinc-400"}">
-          ${item.icon || fallbackIcon}
+          ${resolvedIcon}
         </span>
         <span class="truncate">${item.label}</span>
       </a>
@@ -7047,23 +7719,28 @@ function pluginMenuMiddleware() {
     let activeMenuItems = [];
     try {
       const db = c.env.DB;
-      const pluginNames = MENU_PLUGINS.map((p) => p.name);
-      if (pluginNames.length > 0) {
-        const placeholders = pluginNames.map(() => "?").join(",");
+      const pluginCodeNames = REGISTRY_MENU_PLUGINS.map((p) => p.codeName);
+      if (pluginCodeNames.length > 0) {
+        const placeholders = pluginCodeNames.map(() => "?").join(",");
         const result = await db.prepare(
           `SELECT name FROM plugins WHERE name IN (${placeholders}) AND status = 'active'`
-        ).bind(...pluginNames).all();
+        ).bind(...pluginCodeNames).all();
         const activeNames = new Set((result.results || []).map((r) => r.name));
-        for (const plugin2 of MENU_PLUGINS) {
-          if (activeNames.has(plugin2.name) && plugin2.menuItems) {
-            activeMenuItems.push(...plugin2.menuItems);
+        for (const plugin2 of REGISTRY_MENU_PLUGINS) {
+          if (activeNames.has(plugin2.codeName)) {
+            activeMenuItems.push({
+              label: plugin2.label,
+              path: plugin2.path,
+              icon: plugin2.icon,
+              order: plugin2.order
+            });
           }
         }
-        activeMenuItems.sort((a, b) => (a.order || 0) - (b.order || 0));
+        activeMenuItems.sort((a, b) => a.order - b.order);
       }
     } catch {
     }
-    c.set("pluginMenuItems", activeMenuItems.map((m) => ({ label: m.label, path: m.path, icon: m.icon || "" })));
+    c.set("pluginMenuItems", activeMenuItems.map((m) => ({ label: m.label, path: m.path, icon: resolveIcon(m.icon) || "" })));
     await next();
     if (activeMenuItems.length > 0 && c.res.headers.get("content-type")?.includes("text/html")) {
       const status = c.res.status;
@@ -8042,7 +8719,7 @@ async function warmNamespace(namespace, entries) {
 }
 
 // src/templates/pages/admin-cache.template.ts
-chunkQP3OHHON_cjs.init_admin_layout_catalyst_template();
+chunkUYJ6TJHX_cjs.init_admin_layout_catalyst_template();
 function renderCacheDashboard(data) {
   const pageContent = `
     <div class="space-y-6">
@@ -8221,7 +8898,7 @@ function renderCacheDashboard(data) {
     </script>
 
     <!-- Confirmation Dialogs -->
-    ${chunkDRWSHIFG_cjs.renderConfirmationDialog({
+    ${chunkPAQC3HAA_cjs.renderConfirmationDialog({
     id: "clear-all-cache-confirm",
     title: "Clear All Cache",
     message: "Are you sure you want to clear all cache entries? This cannot be undone.",
@@ -8232,7 +8909,7 @@ function renderCacheDashboard(data) {
     onConfirm: "performClearAllCaches()"
   })}
 
-    ${chunkDRWSHIFG_cjs.renderConfirmationDialog({
+    ${chunkPAQC3HAA_cjs.renderConfirmationDialog({
     id: "clear-namespace-cache-confirm",
     title: "Clear Namespace Cache",
     message: "Clear cache for this namespace?",
@@ -8243,7 +8920,7 @@ function renderCacheDashboard(data) {
     onConfirm: "performClearNamespaceCache()"
   })}
 
-    ${chunkDRWSHIFG_cjs.getConfirmationDialogScript()}
+    ${chunkPAQC3HAA_cjs.getConfirmationDialogScript()}
   `;
   const layoutData = {
     title: "Cache System",
@@ -8253,7 +8930,7 @@ function renderCacheDashboard(data) {
     version: data.version,
     content: pageContent
   };
-  return chunkQP3OHHON_cjs.renderAdminLayoutCatalyst(layoutData);
+  return chunkUYJ6TJHX_cjs.renderAdminLayoutCatalyst(layoutData);
 }
 function renderStatCard(label, value, color, icon, colorOverride) {
   const finalColor = colorOverride || color;
@@ -8929,14 +9606,14 @@ var faviconSvg = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 // src/app.ts
 function createSonicJSApp(config = {}) {
   const app2 = new hono.Hono();
-  const appVersion = config.version || chunkYULUPQZV_cjs.getCoreVersion();
+  const appVersion = config.version || chunkVUISYUHY_cjs.getCoreVersion();
   const appName = config.name || "SonicJS AI";
   app2.use("*", async (c, next) => {
     c.set("appVersion", appVersion);
     await next();
   });
-  app2.use("*", chunkYYMPHM3I_cjs.metricsMiddleware());
-  app2.use("*", chunkYYMPHM3I_cjs.bootstrapMiddleware(config));
+  app2.use("*", chunkUT7K7CJZ_cjs.metricsMiddleware());
+  app2.use("*", chunkUT7K7CJZ_cjs.bootstrapMiddleware(config));
   if (config.middleware?.beforeAuth) {
     for (const middleware of config.middleware.beforeAuth) {
       app2.use("*", middleware);
@@ -8945,29 +9622,29 @@ function createSonicJSApp(config = {}) {
   app2.use("*", async (_c, next) => {
     await next();
   });
-  app2.use("*", chunkYYMPHM3I_cjs.securityHeadersMiddleware());
-  app2.use("*", chunkYYMPHM3I_cjs.csrfProtection());
+  app2.use("*", chunkUT7K7CJZ_cjs.securityHeadersMiddleware());
+  app2.use("*", chunkUT7K7CJZ_cjs.csrfProtection());
   if (config.middleware?.afterAuth) {
     for (const middleware of config.middleware.afterAuth) {
       app2.use("*", middleware);
     }
   }
   app2.use("/admin/*", pluginMenuMiddleware());
-  app2.route("/api", chunkDRWSHIFG_cjs.api_default);
-  app2.route("/api/media", chunkDRWSHIFG_cjs.api_media_default);
-  app2.route("/api/system", chunkDRWSHIFG_cjs.api_system_default);
-  app2.route("/admin/api", chunkDRWSHIFG_cjs.admin_api_default);
-  app2.route("/admin/dashboard", chunkDRWSHIFG_cjs.router);
-  app2.route("/admin/collections", chunkDRWSHIFG_cjs.adminCollectionsRoutes);
-  app2.route("/admin/forms", chunkDRWSHIFG_cjs.adminFormsRoutes);
-  app2.route("/admin/settings", chunkDRWSHIFG_cjs.adminSettingsRoutes);
-  app2.route("/forms", chunkDRWSHIFG_cjs.public_forms_default);
-  app2.route("/api/forms", chunkDRWSHIFG_cjs.public_forms_default);
-  app2.route("/admin/api-reference", chunkDRWSHIFG_cjs.router2);
+  app2.route("/api", chunkPAQC3HAA_cjs.api_default);
+  app2.route("/api/media", chunkPAQC3HAA_cjs.api_media_default);
+  app2.route("/api/system", chunkPAQC3HAA_cjs.api_system_default);
+  app2.route("/admin/api", chunkPAQC3HAA_cjs.admin_api_default);
+  app2.route("/admin/dashboard", chunkPAQC3HAA_cjs.router);
+  app2.route("/admin/collections", chunkPAQC3HAA_cjs.adminCollectionsRoutes);
+  app2.route("/admin/forms", chunkPAQC3HAA_cjs.adminFormsRoutes);
+  app2.route("/admin/settings", chunkPAQC3HAA_cjs.adminSettingsRoutes);
+  app2.route("/forms", chunkPAQC3HAA_cjs.public_forms_default);
+  app2.route("/api/forms", chunkPAQC3HAA_cjs.public_forms_default);
+  app2.route("/admin/api-reference", chunkPAQC3HAA_cjs.router2);
   app2.route("/admin/database-tools", createDatabaseToolsAdminRoutes());
   app2.route("/admin/seed-data", createSeedDataAdminRoutes());
-  app2.route("/admin/content", chunkDRWSHIFG_cjs.admin_content_default);
-  app2.route("/admin/media", chunkDRWSHIFG_cjs.adminMediaRoutes);
+  app2.route("/admin/content", chunkPAQC3HAA_cjs.admin_content_default);
+  app2.route("/admin/media", chunkPAQC3HAA_cjs.adminMediaRoutes);
   app2.use("/auth/*", securityAuditMiddleware());
   if (securityAuditPlugin.routes && securityAuditPlugin.routes.length > 0) {
     for (const route of securityAuditPlugin.routes) {
@@ -8985,8 +9662,8 @@ function createSonicJSApp(config = {}) {
       app2.route(route.path, route.handler);
     }
   }
-  if (chunkDRWSHIFG_cjs.userProfilesPlugin.routes && chunkDRWSHIFG_cjs.userProfilesPlugin.routes.length > 0) {
-    for (const route of chunkDRWSHIFG_cjs.userProfilesPlugin.routes) {
+  if (chunkPAQC3HAA_cjs.userProfilesPlugin.routes && chunkPAQC3HAA_cjs.userProfilesPlugin.routes.length > 0) {
+    for (const route of chunkPAQC3HAA_cjs.userProfilesPlugin.routes) {
       app2.route(route.path, route.handler);
     }
   }
@@ -8995,16 +9672,16 @@ function createSonicJSApp(config = {}) {
       app2.route(route.path, route.handler);
     }
   }
-  app2.route("/admin/plugins", chunkDRWSHIFG_cjs.adminPluginRoutes);
-  app2.route("/admin/logs", chunkDRWSHIFG_cjs.adminLogsRoutes);
-  app2.route("/admin", chunkDRWSHIFG_cjs.userRoutes);
-  app2.route("/auth", chunkDRWSHIFG_cjs.auth_default);
-  app2.route("/", chunkDRWSHIFG_cjs.test_cleanup_default);
   if (stripePlugin.routes && stripePlugin.routes.length > 0) {
     for (const route of stripePlugin.routes) {
       app2.route(route.path, route.handler);
     }
   }
+  app2.route("/admin/plugins", chunkPAQC3HAA_cjs.adminPluginRoutes);
+  app2.route("/admin/logs", chunkPAQC3HAA_cjs.adminLogsRoutes);
+  app2.route("/admin", chunkPAQC3HAA_cjs.userRoutes);
+  app2.route("/auth", chunkPAQC3HAA_cjs.auth_default);
+  app2.route("/", chunkPAQC3HAA_cjs.test_cleanup_default);
   if (emailPlugin.routes && emailPlugin.routes.length > 0) {
     for (const route of emailPlugin.routes) {
       app2.route(route.path, route.handler);
@@ -9088,99 +9765,99 @@ function createDb(d1$1) {
 }
 
 // src/index.ts
-var VERSION = chunkYULUPQZV_cjs.package_default.version;
+var VERSION = chunkVUISYUHY_cjs.package_default.version;
 
 Object.defineProperty(exports, "ROUTES_INFO", {
   enumerable: true,
-  get: function () { return chunkDRWSHIFG_cjs.ROUTES_INFO; }
+  get: function () { return chunkPAQC3HAA_cjs.ROUTES_INFO; }
 });
 Object.defineProperty(exports, "adminApiRoutes", {
   enumerable: true,
-  get: function () { return chunkDRWSHIFG_cjs.admin_api_default; }
+  get: function () { return chunkPAQC3HAA_cjs.admin_api_default; }
 });
 Object.defineProperty(exports, "adminCheckboxRoutes", {
   enumerable: true,
-  get: function () { return chunkDRWSHIFG_cjs.adminCheckboxRoutes; }
+  get: function () { return chunkPAQC3HAA_cjs.adminCheckboxRoutes; }
 });
 Object.defineProperty(exports, "adminCodeExamplesRoutes", {
   enumerable: true,
-  get: function () { return chunkDRWSHIFG_cjs.admin_code_examples_default; }
+  get: function () { return chunkPAQC3HAA_cjs.admin_code_examples_default; }
 });
 Object.defineProperty(exports, "adminCollectionsRoutes", {
   enumerable: true,
-  get: function () { return chunkDRWSHIFG_cjs.adminCollectionsRoutes; }
+  get: function () { return chunkPAQC3HAA_cjs.adminCollectionsRoutes; }
 });
 Object.defineProperty(exports, "adminContentRoutes", {
   enumerable: true,
-  get: function () { return chunkDRWSHIFG_cjs.admin_content_default; }
+  get: function () { return chunkPAQC3HAA_cjs.admin_content_default; }
 });
 Object.defineProperty(exports, "adminDashboardRoutes", {
   enumerable: true,
-  get: function () { return chunkDRWSHIFG_cjs.router; }
+  get: function () { return chunkPAQC3HAA_cjs.router; }
 });
 Object.defineProperty(exports, "adminDesignRoutes", {
   enumerable: true,
-  get: function () { return chunkDRWSHIFG_cjs.adminDesignRoutes; }
+  get: function () { return chunkPAQC3HAA_cjs.adminDesignRoutes; }
 });
 Object.defineProperty(exports, "adminLogsRoutes", {
   enumerable: true,
-  get: function () { return chunkDRWSHIFG_cjs.adminLogsRoutes; }
+  get: function () { return chunkPAQC3HAA_cjs.adminLogsRoutes; }
 });
 Object.defineProperty(exports, "adminMediaRoutes", {
   enumerable: true,
-  get: function () { return chunkDRWSHIFG_cjs.adminMediaRoutes; }
+  get: function () { return chunkPAQC3HAA_cjs.adminMediaRoutes; }
 });
 Object.defineProperty(exports, "adminPluginRoutes", {
   enumerable: true,
-  get: function () { return chunkDRWSHIFG_cjs.adminPluginRoutes; }
+  get: function () { return chunkPAQC3HAA_cjs.adminPluginRoutes; }
 });
 Object.defineProperty(exports, "adminSettingsRoutes", {
   enumerable: true,
-  get: function () { return chunkDRWSHIFG_cjs.adminSettingsRoutes; }
+  get: function () { return chunkPAQC3HAA_cjs.adminSettingsRoutes; }
 });
 Object.defineProperty(exports, "adminTestimonialsRoutes", {
   enumerable: true,
-  get: function () { return chunkDRWSHIFG_cjs.admin_testimonials_default; }
+  get: function () { return chunkPAQC3HAA_cjs.admin_testimonials_default; }
 });
 Object.defineProperty(exports, "adminUsersRoutes", {
   enumerable: true,
-  get: function () { return chunkDRWSHIFG_cjs.userRoutes; }
+  get: function () { return chunkPAQC3HAA_cjs.userRoutes; }
 });
 Object.defineProperty(exports, "apiContentCrudRoutes", {
   enumerable: true,
-  get: function () { return chunkDRWSHIFG_cjs.api_content_crud_default; }
+  get: function () { return chunkPAQC3HAA_cjs.api_content_crud_default; }
 });
 Object.defineProperty(exports, "apiMediaRoutes", {
   enumerable: true,
-  get: function () { return chunkDRWSHIFG_cjs.api_media_default; }
+  get: function () { return chunkPAQC3HAA_cjs.api_media_default; }
 });
 Object.defineProperty(exports, "apiRoutes", {
   enumerable: true,
-  get: function () { return chunkDRWSHIFG_cjs.api_default; }
+  get: function () { return chunkPAQC3HAA_cjs.api_default; }
 });
 Object.defineProperty(exports, "apiSystemRoutes", {
   enumerable: true,
-  get: function () { return chunkDRWSHIFG_cjs.api_system_default; }
+  get: function () { return chunkPAQC3HAA_cjs.api_system_default; }
 });
 Object.defineProperty(exports, "authRoutes", {
   enumerable: true,
-  get: function () { return chunkDRWSHIFG_cjs.auth_default; }
+  get: function () { return chunkPAQC3HAA_cjs.auth_default; }
 });
 Object.defineProperty(exports, "createUserProfilesPlugin", {
   enumerable: true,
-  get: function () { return chunkDRWSHIFG_cjs.createUserProfilesPlugin; }
+  get: function () { return chunkPAQC3HAA_cjs.createUserProfilesPlugin; }
 });
 Object.defineProperty(exports, "defineUserProfile", {
   enumerable: true,
-  get: function () { return chunkDRWSHIFG_cjs.defineUserProfile; }
+  get: function () { return chunkPAQC3HAA_cjs.defineUserProfile; }
 });
 Object.defineProperty(exports, "getUserProfileConfig", {
   enumerable: true,
-  get: function () { return chunkDRWSHIFG_cjs.getUserProfileConfig; }
+  get: function () { return chunkPAQC3HAA_cjs.getUserProfileConfig; }
 });
 Object.defineProperty(exports, "userProfilesPlugin", {
   enumerable: true,
-  get: function () { return chunkDRWSHIFG_cjs.userProfilesPlugin; }
+  get: function () { return chunkPAQC3HAA_cjs.userProfilesPlugin; }
 });
 Object.defineProperty(exports, "Logger", {
   enumerable: true,
@@ -9348,259 +10025,259 @@ Object.defineProperty(exports, "workflowHistory", {
 });
 Object.defineProperty(exports, "AuthManager", {
   enumerable: true,
-  get: function () { return chunkYYMPHM3I_cjs.AuthManager; }
+  get: function () { return chunkUT7K7CJZ_cjs.AuthManager; }
 });
 Object.defineProperty(exports, "PermissionManager", {
   enumerable: true,
-  get: function () { return chunkYYMPHM3I_cjs.PermissionManager; }
+  get: function () { return chunkUT7K7CJZ_cjs.PermissionManager; }
 });
 Object.defineProperty(exports, "bootstrapMiddleware", {
   enumerable: true,
-  get: function () { return chunkYYMPHM3I_cjs.bootstrapMiddleware; }
+  get: function () { return chunkUT7K7CJZ_cjs.bootstrapMiddleware; }
 });
 Object.defineProperty(exports, "cacheHeaders", {
   enumerable: true,
-  get: function () { return chunkYYMPHM3I_cjs.cacheHeaders; }
+  get: function () { return chunkUT7K7CJZ_cjs.cacheHeaders; }
 });
 Object.defineProperty(exports, "compressionMiddleware", {
   enumerable: true,
-  get: function () { return chunkYYMPHM3I_cjs.compressionMiddleware; }
+  get: function () { return chunkUT7K7CJZ_cjs.compressionMiddleware; }
 });
 Object.defineProperty(exports, "detailedLoggingMiddleware", {
   enumerable: true,
-  get: function () { return chunkYYMPHM3I_cjs.detailedLoggingMiddleware; }
+  get: function () { return chunkUT7K7CJZ_cjs.detailedLoggingMiddleware; }
 });
 Object.defineProperty(exports, "getActivePlugins", {
   enumerable: true,
-  get: function () { return chunkYYMPHM3I_cjs.getActivePlugins; }
+  get: function () { return chunkUT7K7CJZ_cjs.getActivePlugins; }
 });
 Object.defineProperty(exports, "isPluginActive", {
   enumerable: true,
-  get: function () { return chunkYYMPHM3I_cjs.isPluginActive; }
+  get: function () { return chunkUT7K7CJZ_cjs.isPluginActive; }
 });
 Object.defineProperty(exports, "logActivity", {
   enumerable: true,
-  get: function () { return chunkYYMPHM3I_cjs.logActivity; }
+  get: function () { return chunkUT7K7CJZ_cjs.logActivity; }
 });
 Object.defineProperty(exports, "loggingMiddleware", {
   enumerable: true,
-  get: function () { return chunkYYMPHM3I_cjs.loggingMiddleware; }
+  get: function () { return chunkUT7K7CJZ_cjs.loggingMiddleware; }
 });
 Object.defineProperty(exports, "optionalAuth", {
   enumerable: true,
-  get: function () { return chunkYYMPHM3I_cjs.optionalAuth; }
+  get: function () { return chunkUT7K7CJZ_cjs.optionalAuth; }
 });
 Object.defineProperty(exports, "performanceLoggingMiddleware", {
   enumerable: true,
-  get: function () { return chunkYYMPHM3I_cjs.performanceLoggingMiddleware; }
+  get: function () { return chunkUT7K7CJZ_cjs.performanceLoggingMiddleware; }
 });
 Object.defineProperty(exports, "requireActivePlugin", {
   enumerable: true,
-  get: function () { return chunkYYMPHM3I_cjs.requireActivePlugin; }
+  get: function () { return chunkUT7K7CJZ_cjs.requireActivePlugin; }
 });
 Object.defineProperty(exports, "requireActivePlugins", {
   enumerable: true,
-  get: function () { return chunkYYMPHM3I_cjs.requireActivePlugins; }
+  get: function () { return chunkUT7K7CJZ_cjs.requireActivePlugins; }
 });
 Object.defineProperty(exports, "requireAnyPermission", {
   enumerable: true,
-  get: function () { return chunkYYMPHM3I_cjs.requireAnyPermission; }
+  get: function () { return chunkUT7K7CJZ_cjs.requireAnyPermission; }
 });
 Object.defineProperty(exports, "requireAuth", {
   enumerable: true,
-  get: function () { return chunkYYMPHM3I_cjs.requireAuth; }
+  get: function () { return chunkUT7K7CJZ_cjs.requireAuth; }
 });
 Object.defineProperty(exports, "requirePermission", {
   enumerable: true,
-  get: function () { return chunkYYMPHM3I_cjs.requirePermission; }
+  get: function () { return chunkUT7K7CJZ_cjs.requirePermission; }
 });
 Object.defineProperty(exports, "requireRole", {
   enumerable: true,
-  get: function () { return chunkYYMPHM3I_cjs.requireRole; }
+  get: function () { return chunkUT7K7CJZ_cjs.requireRole; }
 });
 Object.defineProperty(exports, "securityHeaders", {
   enumerable: true,
-  get: function () { return chunkYYMPHM3I_cjs.securityHeadersMiddleware; }
+  get: function () { return chunkUT7K7CJZ_cjs.securityHeadersMiddleware; }
 });
 Object.defineProperty(exports, "securityLoggingMiddleware", {
   enumerable: true,
-  get: function () { return chunkYYMPHM3I_cjs.securityLoggingMiddleware; }
+  get: function () { return chunkUT7K7CJZ_cjs.securityLoggingMiddleware; }
 });
 Object.defineProperty(exports, "PluginBootstrapService", {
   enumerable: true,
-  get: function () { return chunkI6FFGQIT_cjs.PluginBootstrapService; }
+  get: function () { return chunkNA3BD6LU_cjs.PluginBootstrapService; }
 });
 Object.defineProperty(exports, "PluginServiceClass", {
   enumerable: true,
-  get: function () { return chunkI6FFGQIT_cjs.PluginService; }
+  get: function () { return chunkNA3BD6LU_cjs.PluginService; }
 });
 Object.defineProperty(exports, "backfillFormSubmissions", {
   enumerable: true,
-  get: function () { return chunkI6FFGQIT_cjs.backfillFormSubmissions; }
+  get: function () { return chunkNA3BD6LU_cjs.backfillFormSubmissions; }
 });
 Object.defineProperty(exports, "cleanupRemovedCollections", {
   enumerable: true,
-  get: function () { return chunkI6FFGQIT_cjs.cleanupRemovedCollections; }
+  get: function () { return chunkNA3BD6LU_cjs.cleanupRemovedCollections; }
 });
 Object.defineProperty(exports, "createContentFromSubmission", {
   enumerable: true,
-  get: function () { return chunkI6FFGQIT_cjs.createContentFromSubmission; }
+  get: function () { return chunkNA3BD6LU_cjs.createContentFromSubmission; }
 });
 Object.defineProperty(exports, "deriveCollectionSchemaFromFormio", {
   enumerable: true,
-  get: function () { return chunkI6FFGQIT_cjs.deriveCollectionSchemaFromFormio; }
+  get: function () { return chunkNA3BD6LU_cjs.deriveCollectionSchemaFromFormio; }
 });
 Object.defineProperty(exports, "deriveSubmissionTitle", {
   enumerable: true,
-  get: function () { return chunkI6FFGQIT_cjs.deriveSubmissionTitle; }
+  get: function () { return chunkNA3BD6LU_cjs.deriveSubmissionTitle; }
 });
 Object.defineProperty(exports, "fullCollectionSync", {
   enumerable: true,
-  get: function () { return chunkI6FFGQIT_cjs.fullCollectionSync; }
+  get: function () { return chunkNA3BD6LU_cjs.fullCollectionSync; }
 });
 Object.defineProperty(exports, "getAvailableCollectionNames", {
   enumerable: true,
-  get: function () { return chunkI6FFGQIT_cjs.getAvailableCollectionNames; }
+  get: function () { return chunkNA3BD6LU_cjs.getAvailableCollectionNames; }
 });
 Object.defineProperty(exports, "getManagedCollections", {
   enumerable: true,
-  get: function () { return chunkI6FFGQIT_cjs.getManagedCollections; }
+  get: function () { return chunkNA3BD6LU_cjs.getManagedCollections; }
 });
 Object.defineProperty(exports, "isCollectionManaged", {
   enumerable: true,
-  get: function () { return chunkI6FFGQIT_cjs.isCollectionManaged; }
+  get: function () { return chunkNA3BD6LU_cjs.isCollectionManaged; }
 });
 Object.defineProperty(exports, "loadCollectionConfig", {
   enumerable: true,
-  get: function () { return chunkI6FFGQIT_cjs.loadCollectionConfig; }
+  get: function () { return chunkNA3BD6LU_cjs.loadCollectionConfig; }
 });
 Object.defineProperty(exports, "loadCollectionConfigs", {
   enumerable: true,
-  get: function () { return chunkI6FFGQIT_cjs.loadCollectionConfigs; }
+  get: function () { return chunkNA3BD6LU_cjs.loadCollectionConfigs; }
 });
 Object.defineProperty(exports, "mapFormStatusToContentStatus", {
   enumerable: true,
-  get: function () { return chunkI6FFGQIT_cjs.mapFormStatusToContentStatus; }
+  get: function () { return chunkNA3BD6LU_cjs.mapFormStatusToContentStatus; }
 });
 Object.defineProperty(exports, "registerCollections", {
   enumerable: true,
-  get: function () { return chunkI6FFGQIT_cjs.registerCollections; }
+  get: function () { return chunkNA3BD6LU_cjs.registerCollections; }
 });
 Object.defineProperty(exports, "syncAllFormCollections", {
   enumerable: true,
-  get: function () { return chunkI6FFGQIT_cjs.syncAllFormCollections; }
+  get: function () { return chunkNA3BD6LU_cjs.syncAllFormCollections; }
 });
 Object.defineProperty(exports, "syncCollection", {
   enumerable: true,
-  get: function () { return chunkI6FFGQIT_cjs.syncCollection; }
+  get: function () { return chunkNA3BD6LU_cjs.syncCollection; }
 });
 Object.defineProperty(exports, "syncCollections", {
   enumerable: true,
-  get: function () { return chunkI6FFGQIT_cjs.syncCollections; }
+  get: function () { return chunkNA3BD6LU_cjs.syncCollections; }
 });
 Object.defineProperty(exports, "syncFormCollection", {
   enumerable: true,
-  get: function () { return chunkI6FFGQIT_cjs.syncFormCollection; }
+  get: function () { return chunkNA3BD6LU_cjs.syncFormCollection; }
 });
 Object.defineProperty(exports, "validateCollectionConfig", {
   enumerable: true,
-  get: function () { return chunkI6FFGQIT_cjs.validateCollectionConfig; }
+  get: function () { return chunkNA3BD6LU_cjs.validateCollectionConfig; }
 });
 Object.defineProperty(exports, "MigrationService", {
   enumerable: true,
-  get: function () { return chunkKZ2MFGET_cjs.MigrationService; }
+  get: function () { return chunkR6AJ5T3M_cjs.MigrationService; }
 });
 Object.defineProperty(exports, "renderFilterBar", {
   enumerable: true,
-  get: function () { return chunk3QCEYJLK_cjs.renderFilterBar; }
+  get: function () { return chunk4ZSNJDLS_cjs.renderFilterBar; }
 });
 Object.defineProperty(exports, "getConfirmationDialogScript", {
   enumerable: true,
-  get: function () { return chunkQP3OHHON_cjs.getConfirmationDialogScript; }
+  get: function () { return chunkOHYBNCVL_cjs.getConfirmationDialogScript; }
 });
 Object.defineProperty(exports, "renderAlert", {
   enumerable: true,
-  get: function () { return chunkQP3OHHON_cjs.renderAlert; }
+  get: function () { return chunkOHYBNCVL_cjs.renderAlert; }
 });
 Object.defineProperty(exports, "renderConfirmationDialog", {
   enumerable: true,
-  get: function () { return chunkQP3OHHON_cjs.renderConfirmationDialog; }
+  get: function () { return chunkOHYBNCVL_cjs.renderConfirmationDialog; }
 });
 Object.defineProperty(exports, "renderForm", {
   enumerable: true,
-  get: function () { return chunkQP3OHHON_cjs.renderForm; }
+  get: function () { return chunkOHYBNCVL_cjs.renderForm; }
 });
 Object.defineProperty(exports, "renderFormField", {
   enumerable: true,
-  get: function () { return chunkQP3OHHON_cjs.renderFormField; }
+  get: function () { return chunkOHYBNCVL_cjs.renderFormField; }
 });
 Object.defineProperty(exports, "renderPagination", {
   enumerable: true,
-  get: function () { return chunkQP3OHHON_cjs.renderPagination; }
+  get: function () { return chunkOHYBNCVL_cjs.renderPagination; }
 });
 Object.defineProperty(exports, "renderTable", {
   enumerable: true,
-  get: function () { return chunkQP3OHHON_cjs.renderTable; }
+  get: function () { return chunkOHYBNCVL_cjs.renderTable; }
 });
 Object.defineProperty(exports, "HookSystemImpl", {
   enumerable: true,
-  get: function () { return chunk56GUBLJE_cjs.HookSystemImpl; }
+  get: function () { return chunkABB34XUS_cjs.HookSystemImpl; }
 });
 Object.defineProperty(exports, "HookUtils", {
   enumerable: true,
-  get: function () { return chunk56GUBLJE_cjs.HookUtils; }
+  get: function () { return chunkABB34XUS_cjs.HookUtils; }
 });
 Object.defineProperty(exports, "PluginManagerClass", {
   enumerable: true,
-  get: function () { return chunk56GUBLJE_cjs.PluginManager; }
+  get: function () { return chunkABB34XUS_cjs.PluginManager; }
 });
 Object.defineProperty(exports, "PluginRegistryImpl", {
   enumerable: true,
-  get: function () { return chunk56GUBLJE_cjs.PluginRegistryImpl; }
+  get: function () { return chunkABB34XUS_cjs.PluginRegistryImpl; }
 });
 Object.defineProperty(exports, "PluginValidatorClass", {
   enumerable: true,
-  get: function () { return chunk56GUBLJE_cjs.PluginValidator; }
+  get: function () { return chunkABB34XUS_cjs.PluginValidator; }
 });
 Object.defineProperty(exports, "ScopedHookSystemClass", {
   enumerable: true,
-  get: function () { return chunk56GUBLJE_cjs.ScopedHookSystem; }
+  get: function () { return chunkABB34XUS_cjs.ScopedHookSystem; }
 });
 Object.defineProperty(exports, "PluginBuilder", {
   enumerable: true,
-  get: function () { return chunk6FHNRRJ3_cjs.PluginBuilder; }
+  get: function () { return chunk635JAMSE_cjs.PluginBuilder; }
 });
 Object.defineProperty(exports, "PluginHelpers", {
   enumerable: true,
-  get: function () { return chunk6FHNRRJ3_cjs.PluginHelpers; }
+  get: function () { return chunk635JAMSE_cjs.PluginHelpers; }
 });
 Object.defineProperty(exports, "QueryFilterBuilder", {
   enumerable: true,
-  get: function () { return chunkYULUPQZV_cjs.QueryFilterBuilder; }
+  get: function () { return chunkVUISYUHY_cjs.QueryFilterBuilder; }
 });
 Object.defineProperty(exports, "SONICJS_VERSION", {
   enumerable: true,
-  get: function () { return chunkYULUPQZV_cjs.SONICJS_VERSION; }
+  get: function () { return chunkVUISYUHY_cjs.SONICJS_VERSION; }
 });
 Object.defineProperty(exports, "TemplateRenderer", {
   enumerable: true,
-  get: function () { return chunkYULUPQZV_cjs.TemplateRenderer; }
+  get: function () { return chunkVUISYUHY_cjs.TemplateRenderer; }
 });
 Object.defineProperty(exports, "buildQuery", {
   enumerable: true,
-  get: function () { return chunkYULUPQZV_cjs.buildQuery; }
+  get: function () { return chunkVUISYUHY_cjs.buildQuery; }
 });
 Object.defineProperty(exports, "getCoreVersion", {
   enumerable: true,
-  get: function () { return chunkYULUPQZV_cjs.getCoreVersion; }
+  get: function () { return chunkVUISYUHY_cjs.getCoreVersion; }
 });
 Object.defineProperty(exports, "renderTemplate", {
   enumerable: true,
-  get: function () { return chunkYULUPQZV_cjs.renderTemplate; }
+  get: function () { return chunkVUISYUHY_cjs.renderTemplate; }
 });
 Object.defineProperty(exports, "templateRenderer", {
   enumerable: true,
-  get: function () { return chunkYULUPQZV_cjs.templateRenderer; }
+  get: function () { return chunkVUISYUHY_cjs.templateRenderer; }
 });
 Object.defineProperty(exports, "metricsTracker", {
   enumerable: true,

@@ -1,20 +1,21 @@
-import { renderConfirmationDialog, getConfirmationDialogScript, api_default, api_media_default, api_system_default, admin_api_default, router, adminCollectionsRoutes, adminFormsRoutes, adminSettingsRoutes, public_forms_default, router2, admin_content_default, adminMediaRoutes, userProfilesPlugin, adminPluginRoutes, adminLogsRoutes, userRoutes, auth_default, test_cleanup_default } from './chunk-23DP6TO5.js';
-export { ROUTES_INFO, admin_api_default as adminApiRoutes, adminCheckboxRoutes, admin_code_examples_default as adminCodeExamplesRoutes, adminCollectionsRoutes, admin_content_default as adminContentRoutes, router as adminDashboardRoutes, adminDesignRoutes, adminLogsRoutes, adminMediaRoutes, adminPluginRoutes, adminSettingsRoutes, admin_testimonials_default as adminTestimonialsRoutes, userRoutes as adminUsersRoutes, api_content_crud_default as apiContentCrudRoutes, api_media_default as apiMediaRoutes, api_default as apiRoutes, api_system_default as apiSystemRoutes, auth_default as authRoutes, createUserProfilesPlugin, defineUserProfile, getUserProfileConfig, userProfilesPlugin } from './chunk-23DP6TO5.js';
+import { renderConfirmationDialog, getConfirmationDialogScript, api_default, api_media_default, api_system_default, admin_api_default, router, adminCollectionsRoutes, adminFormsRoutes, adminSettingsRoutes, public_forms_default, router2, admin_content_default, adminMediaRoutes, userProfilesPlugin, adminPluginRoutes, adminLogsRoutes, userRoutes, auth_default, test_cleanup_default } from './chunk-KCZJDEKT.js';
+export { ROUTES_INFO, admin_api_default as adminApiRoutes, adminCheckboxRoutes, admin_code_examples_default as adminCodeExamplesRoutes, adminCollectionsRoutes, admin_content_default as adminContentRoutes, router as adminDashboardRoutes, adminDesignRoutes, adminLogsRoutes, adminMediaRoutes, adminPluginRoutes, adminSettingsRoutes, admin_testimonials_default as adminTestimonialsRoutes, userRoutes as adminUsersRoutes, api_content_crud_default as apiContentCrudRoutes, api_media_default as apiMediaRoutes, api_default as apiRoutes, api_system_default as apiSystemRoutes, auth_default as authRoutes, createUserProfilesPlugin, defineUserProfile, getUserProfileConfig, userProfilesPlugin } from './chunk-KCZJDEKT.js';
 import { SettingsService, setAppInstance, schema_exports } from './chunk-TBJY2FF7.js';
 export { Logger, apiTokens, collections, content, contentVersions, getLogger, initLogger, insertCollectionSchema, insertContentSchema, insertLogConfigSchema, insertMediaSchema, insertPluginActivityLogSchema, insertPluginAssetSchema, insertPluginHookSchema, insertPluginRouteSchema, insertPluginSchema, insertSystemLogSchema, insertUserSchema, insertWorkflowHistorySchema, logConfig, media, pluginActivityLog, pluginAssets, pluginHooks, pluginRoutes, plugins, selectCollectionSchema, selectContentSchema, selectLogConfigSchema, selectMediaSchema, selectPluginActivityLogSchema, selectPluginAssetSchema, selectPluginHookSchema, selectPluginRouteSchema, selectPluginSchema, selectSystemLogSchema, selectUserSchema, selectWorkflowHistorySchema, systemLogs, users, workflowHistory } from './chunk-TBJY2FF7.js';
-import { requireAuth, AuthManager, metricsMiddleware, bootstrapMiddleware, securityHeadersMiddleware, csrfProtection } from './chunk-AFGOH2F6.js';
-export { AuthManager, PermissionManager, bootstrapMiddleware, cacheHeaders, compressionMiddleware, detailedLoggingMiddleware, getActivePlugins, isPluginActive, logActivity, loggingMiddleware, optionalAuth, performanceLoggingMiddleware, requireActivePlugin, requireActivePlugins, requireAnyPermission, requireAuth, requirePermission, requireRole, securityHeadersMiddleware as securityHeaders, securityLoggingMiddleware } from './chunk-AFGOH2F6.js';
-import { PluginService } from './chunk-H3XXBAMO.js';
-export { PluginBootstrapService, PluginService as PluginServiceClass, backfillFormSubmissions, cleanupRemovedCollections, createContentFromSubmission, deriveCollectionSchemaFromFormio, deriveSubmissionTitle, fullCollectionSync, getAvailableCollectionNames, getManagedCollections, isCollectionManaged, loadCollectionConfig, loadCollectionConfigs, mapFormStatusToContentStatus, registerCollections, syncAllFormCollections, syncCollection, syncCollections, syncFormCollection, validateCollectionConfig } from './chunk-H3XXBAMO.js';
-export { MigrationService } from './chunk-JKNKO6LA.js';
-export { renderFilterBar } from './chunk-CB7ONLGB.js';
-import { init_admin_layout_catalyst_template, renderAdminLayout, renderAdminLayoutCatalyst } from './chunk-JTUCC6WZ.js';
-export { getConfirmationDialogScript, renderAlert, renderConfirmationDialog, renderForm, renderFormField, renderPagination, renderTable } from './chunk-JTUCC6WZ.js';
-export { HookSystemImpl, HookUtils, PluginManager as PluginManagerClass, PluginRegistryImpl, PluginValidator as PluginValidatorClass, ScopedHookSystem as ScopedHookSystemClass } from './chunk-2MXF4RYZ.js';
-import { PluginBuilder } from './chunk-J5WGMRSU.js';
-export { PluginBuilder, PluginHelpers } from './chunk-J5WGMRSU.js';
-import { package_default, getCoreVersion } from './chunk-GAVTTYMC.js';
-export { QueryFilterBuilder, SONICJS_VERSION, TemplateRenderer, buildQuery, getCoreVersion, renderTemplate, templateRenderer } from './chunk-GAVTTYMC.js';
+import { requireAuth, AuthManager, metricsMiddleware, bootstrapMiddleware, securityHeadersMiddleware, csrfProtection } from './chunk-UTU3EFUE.js';
+export { AuthManager, PermissionManager, bootstrapMiddleware, cacheHeaders, compressionMiddleware, detailedLoggingMiddleware, getActivePlugins, isPluginActive, logActivity, loggingMiddleware, optionalAuth, performanceLoggingMiddleware, requireActivePlugin, requireActivePlugins, requireAnyPermission, requireAuth, requirePermission, requireRole, securityHeadersMiddleware as securityHeaders, securityLoggingMiddleware } from './chunk-UTU3EFUE.js';
+import { PluginService, PLUGIN_REGISTRY } from './chunk-TPEGKW45.js';
+export { PluginBootstrapService, PluginService as PluginServiceClass, backfillFormSubmissions, cleanupRemovedCollections, createContentFromSubmission, deriveCollectionSchemaFromFormio, deriveSubmissionTitle, fullCollectionSync, getAvailableCollectionNames, getManagedCollections, isCollectionManaged, loadCollectionConfig, loadCollectionConfigs, mapFormStatusToContentStatus, registerCollections, syncAllFormCollections, syncCollection, syncCollections, syncFormCollection, validateCollectionConfig } from './chunk-TPEGKW45.js';
+export { MigrationService } from './chunk-4UO3WD3V.js';
+export { renderFilterBar } from './chunk-ON5ZMSU4.js';
+import { renderAdminLayout } from './chunk-XWIA3HVX.js';
+export { getConfirmationDialogScript, renderAlert, renderConfirmationDialog, renderForm, renderFormField, renderPagination, renderTable } from './chunk-XWIA3HVX.js';
+import { init_admin_layout_catalyst_template, renderAdminLayoutCatalyst } from './chunk-55RDMDOP.js';
+export { HookSystemImpl, HookUtils, PluginManager as PluginManagerClass, PluginRegistryImpl, PluginValidator as PluginValidatorClass, ScopedHookSystem as ScopedHookSystemClass } from './chunk-TFNTM3OA.js';
+import { PluginBuilder } from './chunk-EXNEW5US.js';
+export { PluginBuilder, PluginHelpers } from './chunk-EXNEW5US.js';
+import { package_default, getCoreVersion } from './chunk-EWXV2KG2.js';
+export { QueryFilterBuilder, SONICJS_VERSION, TemplateRenderer, buildQuery, getCoreVersion, renderTemplate, templateRenderer } from './chunk-EWXV2KG2.js';
 import './chunk-X7ZAEI5S.js';
 export { metricsTracker } from './chunk-FICTAGD4.js';
 export { escapeHtml, sanitizeInput, sanitizeObject } from './chunk-TQABQWOP.js';
@@ -6329,6 +6330,33 @@ var SubscriptionService = class {
     return this.mapRow(result);
   }
   /**
+   * Upsert a subscription by stripe_subscription_id (INSERT or UPDATE on conflict)
+   */
+  async upsert(data) {
+    const result = await this.db.prepare(`
+      INSERT INTO subscriptions (user_id, stripe_customer_id, stripe_subscription_id, stripe_price_id, status, current_period_start, current_period_end, cancel_at_period_end)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(stripe_subscription_id) DO UPDATE SET
+        status = excluded.status,
+        stripe_price_id = excluded.stripe_price_id,
+        current_period_start = excluded.current_period_start,
+        current_period_end = excluded.current_period_end,
+        cancel_at_period_end = excluded.cancel_at_period_end,
+        updated_at = unixepoch()
+      RETURNING *
+    `).bind(
+      data.userId,
+      data.stripeCustomerId,
+      data.stripeSubscriptionId,
+      data.stripePriceId,
+      data.status,
+      data.currentPeriodStart,
+      data.currentPeriodEnd,
+      data.cancelAtPeriodEnd ? 1 : 0
+    ).first();
+    return this.mapRow(result);
+  }
+  /**
    * Update a subscription by its Stripe subscription ID
    */
   async updateByStripeId(stripeSubscriptionId, data) {
@@ -6482,24 +6510,183 @@ var SubscriptionService = class {
   }
 };
 
+// src/plugins/core-plugins/stripe-plugin/services/stripe-event-service.ts
+var StripeEventService = class {
+  constructor(db) {
+    this.db = db;
+  }
+  async ensureTable() {
+    await this.db.prepare(`
+      CREATE TABLE IF NOT EXISTS stripe_events (
+        id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+        stripe_event_id TEXT NOT NULL UNIQUE,
+        type TEXT NOT NULL,
+        object_id TEXT NOT NULL DEFAULT '',
+        object_type TEXT NOT NULL DEFAULT '',
+        data TEXT NOT NULL DEFAULT '{}',
+        processed_at INTEGER NOT NULL DEFAULT (unixepoch()),
+        status TEXT NOT NULL DEFAULT 'processed',
+        error TEXT
+      )
+    `).run();
+    await this.db.prepare(`
+      CREATE INDEX IF NOT EXISTS idx_stripe_events_type ON stripe_events(type)
+    `).run();
+    await this.db.prepare(`
+      CREATE INDEX IF NOT EXISTS idx_stripe_events_status ON stripe_events(status)
+    `).run();
+    await this.db.prepare(`
+      CREATE INDEX IF NOT EXISTS idx_stripe_events_processed_at ON stripe_events(processed_at DESC)
+    `).run();
+  }
+  async log(event) {
+    await this.db.prepare(`
+      INSERT INTO stripe_events (stripe_event_id, type, object_id, object_type, data, status, error)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(stripe_event_id) DO UPDATE SET
+        status = excluded.status,
+        error = excluded.error,
+        processed_at = unixepoch()
+    `).bind(
+      event.stripeEventId,
+      event.type,
+      event.objectId,
+      event.objectType,
+      JSON.stringify(event.data),
+      event.status,
+      event.error || null
+    ).run();
+  }
+  async list(filters = {}) {
+    const where = [];
+    const values = [];
+    if (filters.type) {
+      where.push("type = ?");
+      values.push(filters.type);
+    }
+    if (filters.status) {
+      where.push("status = ?");
+      values.push(filters.status);
+    }
+    if (filters.objectId) {
+      where.push("object_id = ?");
+      values.push(filters.objectId);
+    }
+    const whereClause = where.length > 0 ? `WHERE ${where.join(" AND ")}` : "";
+    const limit = Math.min(filters.limit || 50, 100);
+    const page = filters.page || 1;
+    const offset = (page - 1) * limit;
+    const countResult = await this.db.prepare(
+      `SELECT COUNT(*) as count FROM stripe_events ${whereClause}`
+    ).bind(...values).first();
+    const results = await this.db.prepare(
+      `SELECT * FROM stripe_events ${whereClause} ORDER BY processed_at DESC LIMIT ? OFFSET ?`
+    ).bind(...values, limit, offset).all();
+    return {
+      events: (results.results || []).map((r) => this.mapRow(r)),
+      total: countResult?.count || 0
+    };
+  }
+  async getStats() {
+    const result = await this.db.prepare(`
+      SELECT
+        COUNT(*) as total,
+        SUM(CASE WHEN status = 'processed' THEN 1 ELSE 0 END) as processed,
+        SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) as failed,
+        SUM(CASE WHEN status = 'ignored' THEN 1 ELSE 0 END) as ignored
+      FROM stripe_events
+    `).first();
+    return {
+      total: result?.total || 0,
+      processed: result?.processed || 0,
+      failed: result?.failed || 0,
+      ignored: result?.ignored || 0
+    };
+  }
+  async getDistinctTypes() {
+    const results = await this.db.prepare(
+      "SELECT DISTINCT type FROM stripe_events ORDER BY type"
+    ).all();
+    return (results.results || []).map((r) => r.type);
+  }
+  mapRow(row) {
+    return {
+      id: row.id,
+      stripeEventId: row.stripe_event_id,
+      type: row.type,
+      objectId: row.object_id,
+      objectType: row.object_type,
+      data: row.data,
+      processedAt: row.processed_at,
+      status: row.status,
+      error: row.error || void 0
+    };
+  }
+};
+
 // src/plugins/core-plugins/stripe-plugin/components/subscriptions-page.ts
-function renderSubscriptionsPage(subscriptions, stats, filters) {
+init_admin_layout_catalyst_template();
+
+// src/plugins/core-plugins/stripe-plugin/components/tab-bar.ts
+var TABS = [
+  { label: "Subscriptions", path: "/admin/plugins/stripe" },
+  { label: "Events", path: "/admin/plugins/stripe/events" },
+  { label: "Settings", path: "/admin/plugins/stripe/settings" }
+];
+function renderStripeTabBar(currentPath) {
+  const tabs = TABS.map((tab) => {
+    const isActive = currentPath === tab.path || tab.path === "/admin/plugins/stripe" && currentPath === "/admin/plugins/stripe/";
+    return `
+      <a href="${tab.path}"
+        class="${isActive ? "border-cyan-500 text-zinc-950 dark:text-white" : "border-transparent text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 hover:border-zinc-300 dark:hover:border-zinc-600"} whitespace-nowrap border-b-2 px-4 py-3 text-sm font-medium transition-colors">
+        ${tab.label}
+      </a>`;
+  }).join("");
   return `
-    <div class="space-y-6">
+    <div class="border-b border-zinc-950/5 dark:border-white/10 mb-6">
+      <nav class="-mb-px flex gap-x-2" aria-label="Stripe tabs">
+        ${tabs}
+      </nav>
+    </div>
+  `;
+}
+
+// src/plugins/core-plugins/stripe-plugin/components/subscriptions-page.ts
+function renderSubscriptionsPage(data) {
+  const { subscriptions, stats, filters, user, version, dynamicMenuItems } = data;
+  const content2 = `
+    <div>
+      <div class="sm:flex sm:items-center sm:justify-between mb-6">
+        <div class="sm:flex-auto">
+          <h1 class="text-2xl/8 font-semibold text-zinc-950 dark:text-white sm:text-xl/8">Stripe</h1>
+          <p class="mt-2 text-sm/6 text-zinc-500 dark:text-zinc-400">
+            Manage subscriptions, view billing status, and monitor payment events.
+          </p>
+        </div>
+        <div class="mt-4 sm:mt-0 sm:ml-16">
+          <button id="sync-btn" onclick="syncSubscriptions()"
+            class="inline-flex items-center justify-center rounded-lg bg-zinc-950 dark:bg-white px-3.5 py-2.5 text-sm font-semibold text-white dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-colors shadow-sm">
+            Sync from Stripe
+          </button>
+        </div>
+      </div>
+
+      ${renderStripeTabBar("/admin/plugins/stripe")}
+
       <!-- Stats Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-        ${statsCard("Total", stats.total, "text-gray-700")}
-        ${statsCard("Active", stats.active, "text-green-600")}
-        ${statsCard("Trialing", stats.trialing, "text-blue-600")}
-        ${statsCard("Past Due", stats.pastDue, "text-yellow-600")}
-        ${statsCard("Canceled", stats.canceled, "text-red-600")}
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5 mb-6">
+        ${statsCard("Total", stats.total, "text-zinc-950 dark:text-white")}
+        ${statsCard("Active", stats.active, "text-emerald-600 dark:text-emerald-400")}
+        ${statsCard("Trialing", stats.trialing, "text-blue-600 dark:text-blue-400")}
+        ${statsCard("Past Due", stats.pastDue, "text-amber-600 dark:text-amber-400")}
+        ${statsCard("Canceled", stats.canceled, "text-red-600 dark:text-red-400")}
       </div>
 
       <!-- Filters -->
-      <div class="bg-white rounded-lg shadow p-4">
+      <div class="rounded-xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl p-4 ring-1 ring-zinc-950/5 dark:ring-white/10 shadow-sm mb-6">
         <form method="GET" class="flex items-center gap-4">
-          <label class="text-sm font-medium text-gray-700">Status:</label>
-          <select name="status" class="border rounded px-3 py-1.5 text-sm" onchange="this.form.submit()">
+          <label class="text-sm font-medium text-zinc-500 dark:text-zinc-400">Status:</label>
+          <select name="status" class="rounded-lg border-0 bg-white dark:bg-zinc-800 px-3 py-1.5 text-sm text-zinc-950 dark:text-white ring-1 ring-inset ring-zinc-950/10 dark:ring-white/10" onchange="this.form.submit()">
             <option value="">All</option>
             ${statusOption("active", filters.status)}
             ${statusOption("trialing", filters.status)}
@@ -6512,33 +6699,72 @@ function renderSubscriptionsPage(subscriptions, stats, filters) {
       </div>
 
       <!-- Subscriptions Table -->
-      <div class="bg-white rounded-lg shadow overflow-hidden">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
+      <div class="rounded-xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl ring-1 ring-zinc-950/5 dark:ring-white/10 shadow-sm overflow-hidden">
+        <table class="min-w-full divide-y divide-zinc-950/5 dark:divide-white/5">
+          <thead>
             <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price ID</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current Period</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cancel at End</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stripe</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">User</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Status</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Price ID</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Current Period</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Cancel at End</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Stripe</th>
             </tr>
           </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
-            ${subscriptions.length === 0 ? '<tr><td colspan="6" class="px-6 py-8 text-center text-gray-500">No subscriptions found</td></tr>' : subscriptions.map(renderRow).join("")}
+          <tbody class="divide-y divide-zinc-950/5 dark:divide-white/5">
+            ${subscriptions.length === 0 ? '<tr><td colspan="6" class="px-6 py-8 text-center text-zinc-500 dark:text-zinc-400">No subscriptions found</td></tr>' : subscriptions.map(renderRow).join("")}
           </tbody>
         </table>
 
         ${renderPagination2(filters.page, filters.totalPages, filters.status)}
       </div>
+
+      <div id="sync-message" class="hidden mt-4 rounded-lg p-4 text-sm"></div>
     </div>
+
+    <script>
+      async function syncSubscriptions() {
+        const btn = document.getElementById('sync-btn')
+        const msg = document.getElementById('sync-message')
+        btn.disabled = true
+        btn.textContent = 'Syncing...'
+        msg.className = 'hidden mt-4 rounded-lg p-4 text-sm'
+        try {
+          const res = await fetch('/api/stripe/sync-subscriptions', { method: 'POST' })
+          const result = await res.json()
+          if (result.success) {
+            msg.className = 'mt-4 rounded-lg p-4 text-sm bg-emerald-400/10 text-emerald-500 dark:text-emerald-400 ring-1 ring-inset ring-emerald-400/20'
+            msg.textContent = 'Synced ' + result.synced + ' of ' + result.total + ' subscriptions from Stripe.' + (result.errors > 0 ? ' (' + result.errors + ' errors)' : '')
+            setTimeout(() => location.reload(), 1500)
+          } else {
+            msg.className = 'mt-4 rounded-lg p-4 text-sm bg-red-400/10 text-red-500 dark:text-red-400 ring-1 ring-inset ring-red-400/20'
+            msg.textContent = result.error || 'Sync failed.'
+          }
+        } catch {
+          msg.className = 'mt-4 rounded-lg p-4 text-sm bg-red-400/10 text-red-500 dark:text-red-400 ring-1 ring-inset ring-red-400/20'
+          msg.textContent = 'Network error. Please try again.'
+        }
+        btn.disabled = false
+        btn.textContent = 'Sync from Stripe'
+      }
+    </script>
   `;
+  const layoutData = {
+    title: "Stripe Subscriptions",
+    pageTitle: "Stripe Subscriptions",
+    currentPath: "/admin/plugins/stripe",
+    user,
+    content: content2,
+    version,
+    dynamicMenuItems
+  };
+  return renderAdminLayoutCatalyst(layoutData);
 }
 function statsCard(label, value, colorClass) {
   return `
-    <div class="bg-white rounded-lg shadow p-4">
-      <div class="text-sm font-medium text-gray-500">${label}</div>
-      <div class="text-2xl font-bold ${colorClass}">${value}</div>
+    <div class="rounded-xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl p-5 ring-1 ring-zinc-950/5 dark:ring-white/10 shadow-sm">
+      <p class="text-sm font-medium text-zinc-500 dark:text-zinc-400">${label}</p>
+      <p class="mt-2 text-3xl font-bold ${colorClass}">${value}</p>
     </div>
   `;
 }
@@ -6549,18 +6775,18 @@ function statusOption(value, current) {
 }
 function statusBadge(status) {
   const colors = {
-    active: "bg-green-100 text-green-800",
-    trialing: "bg-blue-100 text-blue-800",
-    past_due: "bg-yellow-100 text-yellow-800",
-    canceled: "bg-red-100 text-red-800",
-    unpaid: "bg-orange-100 text-orange-800",
-    paused: "bg-gray-100 text-gray-800",
-    incomplete: "bg-gray-100 text-gray-500",
-    incomplete_expired: "bg-red-100 text-red-500"
+    active: "bg-emerald-400/10 text-emerald-500 dark:text-emerald-400 ring-emerald-400/20",
+    trialing: "bg-blue-400/10 text-blue-500 dark:text-blue-400 ring-blue-400/20",
+    past_due: "bg-amber-400/10 text-amber-500 dark:text-amber-400 ring-amber-400/20",
+    canceled: "bg-red-400/10 text-red-500 dark:text-red-400 ring-red-400/20",
+    unpaid: "bg-orange-400/10 text-orange-500 dark:text-orange-400 ring-orange-400/20",
+    paused: "bg-zinc-400/10 text-zinc-500 dark:text-zinc-400 ring-zinc-400/20",
+    incomplete: "bg-zinc-400/10 text-zinc-500 dark:text-zinc-400 ring-zinc-400/20",
+    incomplete_expired: "bg-red-400/10 text-red-500 dark:text-red-400 ring-red-400/20"
   };
-  const color = colors[status] || "bg-gray-100 text-gray-800";
+  const color = colors[status] || "bg-zinc-400/10 text-zinc-500 ring-zinc-400/20";
   const label = status.replace("_", " ");
-  return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${color}">${label}</span>`;
+  return `<span class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ring-1 ring-inset ${color}">${label}</span>`;
 }
 function formatDate(timestamp) {
   if (!timestamp) return "-";
@@ -6572,23 +6798,23 @@ function formatDate(timestamp) {
 }
 function renderRow(sub) {
   return `
-    <tr>
+    <tr class="hover:bg-zinc-950/[0.025] dark:hover:bg-white/[0.025]">
       <td class="px-6 py-4 whitespace-nowrap">
-        <div class="text-sm font-medium text-gray-900">${sub.userEmail || sub.userId}</div>
-        <div class="text-xs text-gray-500">${sub.stripeCustomerId}</div>
+        <div class="text-sm font-medium text-zinc-950 dark:text-white">${sub.userEmail || sub.userId}</div>
+        <div class="text-xs text-zinc-500 dark:text-zinc-400">${sub.stripeCustomerId}</div>
       </td>
       <td class="px-6 py-4 whitespace-nowrap">${statusBadge(sub.status)}</td>
-      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${sub.stripePriceId}</td>
-      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+      <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-500 dark:text-zinc-400">${sub.stripePriceId}</td>
+      <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-500 dark:text-zinc-400">
         ${formatDate(sub.currentPeriodStart)} - ${formatDate(sub.currentPeriodEnd)}
       </td>
       <td class="px-6 py-4 whitespace-nowrap text-sm">
-        ${sub.cancelAtPeriodEnd ? '<span class="text-yellow-600 font-medium">Yes</span>' : '<span class="text-gray-400">No</span>'}
+        ${sub.cancelAtPeriodEnd ? '<span class="text-amber-500 dark:text-amber-400 font-medium">Yes</span>' : '<span class="text-zinc-400 dark:text-zinc-500">No</span>'}
       </td>
       <td class="px-6 py-4 whitespace-nowrap text-sm">
         <a href="https://dashboard.stripe.com/subscriptions/${sub.stripeSubscriptionId}"
            target="_blank" rel="noopener noreferrer"
-           class="text-indigo-600 hover:text-indigo-800">
+           class="text-cyan-600 dark:text-cyan-400 hover:text-cyan-500 dark:hover:text-cyan-300">
           View in Stripe
         </a>
       </td>
@@ -6599,13 +6825,161 @@ function renderPagination2(page, totalPages, status) {
   if (totalPages <= 1) return "";
   const params = status ? `&status=${status}` : "";
   return `
-    <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-      <div class="text-sm text-gray-700">
+    <div class="px-6 py-3 flex items-center justify-between border-t border-zinc-950/5 dark:border-white/5">
+      <div class="text-sm text-zinc-500 dark:text-zinc-400">
         Page ${page} of ${totalPages}
       </div>
       <div class="flex gap-2">
-        ${page > 1 ? `<a href="?page=${page - 1}${params}" class="px-3 py-1 border rounded text-sm hover:bg-gray-50">Previous</a>` : ""}
-        ${page < totalPages ? `<a href="?page=${page + 1}${params}" class="px-3 py-1 border rounded text-sm hover:bg-gray-50">Next</a>` : ""}
+        ${page > 1 ? `<a href="?page=${page - 1}${params}" class="px-3 py-1 rounded-lg text-sm text-zinc-950 dark:text-white ring-1 ring-inset ring-zinc-950/10 dark:ring-white/10 hover:bg-zinc-50 dark:hover:bg-zinc-800">Previous</a>` : ""}
+        ${page < totalPages ? `<a href="?page=${page + 1}${params}" class="px-3 py-1 rounded-lg text-sm text-zinc-950 dark:text-white ring-1 ring-inset ring-zinc-950/10 dark:ring-white/10 hover:bg-zinc-50 dark:hover:bg-zinc-800">Next</a>` : ""}
+      </div>
+    </div>
+  `;
+}
+
+// src/plugins/core-plugins/stripe-plugin/components/events-page.ts
+init_admin_layout_catalyst_template();
+function renderEventsPage(data) {
+  const { events, stats, types, filters, user, version, dynamicMenuItems } = data;
+  const content2 = `
+    <div>
+      <div class="sm:flex sm:items-center sm:justify-between mb-6">
+        <div class="sm:flex-auto">
+          <h1 class="text-2xl/8 font-semibold text-zinc-950 dark:text-white sm:text-xl/8">Stripe</h1>
+          <p class="mt-2 text-sm/6 text-zinc-500 dark:text-zinc-400">
+            Webhook event log showing all processed, failed, and ignored Stripe events.
+          </p>
+        </div>
+      </div>
+
+      ${renderStripeTabBar("/admin/plugins/stripe/events")}
+
+      <!-- Stats Cards -->
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
+        ${eventStatsCard("Total Events", stats.total, "text-zinc-950 dark:text-white")}
+        ${eventStatsCard("Processed", stats.processed, "text-emerald-600 dark:text-emerald-400")}
+        ${eventStatsCard("Failed", stats.failed, "text-red-600 dark:text-red-400")}
+        ${eventStatsCard("Ignored", stats.ignored, "text-zinc-500 dark:text-zinc-400")}
+      </div>
+
+      <!-- Filters -->
+      <div class="rounded-xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl p-4 ring-1 ring-zinc-950/5 dark:ring-white/10 shadow-sm mb-6">
+        <form method="GET" class="flex items-center gap-4 flex-wrap">
+          <label class="text-sm font-medium text-zinc-500 dark:text-zinc-400">Type:</label>
+          <select name="type" class="rounded-lg border-0 bg-white dark:bg-zinc-800 px-3 py-1.5 text-sm text-zinc-950 dark:text-white ring-1 ring-inset ring-zinc-950/10 dark:ring-white/10" onchange="this.form.submit()">
+            <option value="">All</option>
+            ${types.map((t) => `<option value="${t}" ${t === filters.type ? "selected" : ""}>${t}</option>`).join("")}
+          </select>
+
+          <label class="text-sm font-medium text-zinc-500 dark:text-zinc-400">Status:</label>
+          <select name="status" class="rounded-lg border-0 bg-white dark:bg-zinc-800 px-3 py-1.5 text-sm text-zinc-950 dark:text-white ring-1 ring-inset ring-zinc-950/10 dark:ring-white/10" onchange="this.form.submit()">
+            <option value="">All</option>
+            ${eventStatusOption("processed", filters.status)}
+            ${eventStatusOption("failed", filters.status)}
+            ${eventStatusOption("ignored", filters.status)}
+          </select>
+        </form>
+      </div>
+
+      <!-- Events Table -->
+      <div class="rounded-xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl ring-1 ring-zinc-950/5 dark:ring-white/10 shadow-sm overflow-hidden">
+        <table class="min-w-full divide-y divide-zinc-950/5 dark:divide-white/5">
+          <thead>
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Time</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Type</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Object</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Status</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Event ID</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-zinc-950/5 dark:divide-white/5">
+            ${events.length === 0 ? '<tr><td colspan="5" class="px-6 py-8 text-center text-zinc-500 dark:text-zinc-400">No events recorded yet</td></tr>' : events.map(renderEventRow).join("")}
+          </tbody>
+        </table>
+
+        ${renderEventPagination(filters.page, filters.totalPages, filters.type, filters.status)}
+      </div>
+    </div>
+  `;
+  const layoutData = {
+    title: "Stripe Events",
+    pageTitle: "Stripe Events",
+    currentPath: "/admin/plugins/stripe",
+    user,
+    content: content2,
+    version,
+    dynamicMenuItems
+  };
+  return renderAdminLayoutCatalyst(layoutData);
+}
+function eventStatsCard(label, value, colorClass) {
+  return `
+    <div class="rounded-xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl p-5 ring-1 ring-zinc-950/5 dark:ring-white/10 shadow-sm">
+      <p class="text-sm font-medium text-zinc-500 dark:text-zinc-400">${label}</p>
+      <p class="mt-2 text-3xl font-bold ${colorClass}">${value}</p>
+    </div>
+  `;
+}
+function eventStatusOption(value, current) {
+  const selected = value === current ? "selected" : "";
+  const label = value.charAt(0).toUpperCase() + value.slice(1);
+  return `<option value="${value}" ${selected}>${label}</option>`;
+}
+function eventStatusBadge(status) {
+  const colors = {
+    processed: "bg-emerald-400/10 text-emerald-500 dark:text-emerald-400 ring-emerald-400/20",
+    failed: "bg-red-400/10 text-red-500 dark:text-red-400 ring-red-400/20",
+    ignored: "bg-zinc-400/10 text-zinc-500 dark:text-zinc-400 ring-zinc-400/20"
+  };
+  const color = colors[status] || "bg-zinc-400/10 text-zinc-500 ring-zinc-400/20";
+  return `<span class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ring-1 ring-inset ${color}">${status}</span>`;
+}
+function formatTimestamp3(timestamp) {
+  if (!timestamp) return "-";
+  const d = new Date(timestamp * 1e3);
+  return d.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit"
+  });
+}
+function renderEventRow(event) {
+  const errorTooltip = event.error ? ` title="${event.error.replace(/"/g, "&quot;")}"` : "";
+  return `
+    <tr class="hover:bg-zinc-950/[0.025] dark:hover:bg-white/[0.025]"${errorTooltip}>
+      <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-500 dark:text-zinc-400">
+        ${formatTimestamp3(event.processedAt)}
+      </td>
+      <td class="px-6 py-4 whitespace-nowrap">
+        <span class="text-sm font-mono text-zinc-950 dark:text-white">${event.type}</span>
+      </td>
+      <td class="px-6 py-4 whitespace-nowrap">
+        <div class="text-sm font-mono text-zinc-500 dark:text-zinc-400">${event.objectId || "-"}</div>
+        <div class="text-xs text-zinc-400 dark:text-zinc-500">${event.objectType}</div>
+      </td>
+      <td class="px-6 py-4 whitespace-nowrap">${eventStatusBadge(event.status)}</td>
+      <td class="px-6 py-4 whitespace-nowrap text-xs font-mono text-zinc-400 dark:text-zinc-500">${event.stripeEventId}</td>
+    </tr>
+  `;
+}
+function renderEventPagination(page, totalPages, type, status) {
+  if (totalPages <= 1) return "";
+  const params = [];
+  if (type) params.push(`type=${type}`);
+  if (status) params.push(`status=${status}`);
+  const extra = params.length > 0 ? `&${params.join("&")}` : "";
+  return `
+    <div class="px-6 py-3 flex items-center justify-between border-t border-zinc-950/5 dark:border-white/5">
+      <div class="text-sm text-zinc-500 dark:text-zinc-400">
+        Page ${page} of ${totalPages}
+      </div>
+      <div class="flex gap-2">
+        ${page > 1 ? `<a href="?page=${page - 1}${extra}" class="px-3 py-1 rounded-lg text-sm text-zinc-950 dark:text-white ring-1 ring-inset ring-zinc-950/10 dark:ring-white/10 hover:bg-zinc-50 dark:hover:bg-zinc-800">Previous</a>` : ""}
+        ${page < totalPages ? `<a href="?page=${page + 1}${extra}" class="px-3 py-1 rounded-lg text-sm text-zinc-950 dark:text-white ring-1 ring-inset ring-zinc-950/10 dark:ring-white/10 hover:bg-zinc-50 dark:hover:bg-zinc-800">Next</a>` : ""}
       </div>
     </div>
   `;
@@ -6613,6 +6987,7 @@ function renderPagination2(page, totalPages, status) {
 
 // src/plugins/core-plugins/stripe-plugin/types.ts
 var DEFAULT_SETTINGS3 = {
+  stripePublishableKey: "",
   stripeSecretKey: "",
   stripeWebhookSecret: "",
   stripePriceId: "",
@@ -6630,8 +7005,21 @@ adminRoutes3.use("*", async (c, next) => {
   }
   return next();
 });
+async function getSettings3(db) {
+  try {
+    const pluginService = new PluginService(db);
+    const plugin2 = await pluginService.getPlugin("stripe");
+    if (plugin2?.settings) {
+      const settings = typeof plugin2.settings === "string" ? JSON.parse(plugin2.settings) : plugin2.settings;
+      return { ...DEFAULT_SETTINGS3, ...settings };
+    }
+  } catch {
+  }
+  return DEFAULT_SETTINGS3;
+}
 adminRoutes3.get("/", async (c) => {
   const db = c.env.DB;
+  const user = c.get("user");
   const subscriptionService = new SubscriptionService(db);
   await subscriptionService.ensureTable();
   const page = parseInt(c.req.query("page") || "1");
@@ -6642,12 +7030,151 @@ adminRoutes3.get("/", async (c) => {
     subscriptionService.getStats()
   ]);
   const totalPages = Math.ceil(total / limit);
-  const html = renderSubscriptionsPage(subscriptions, stats, {
-    status: statusFilter,
-    page,
-    totalPages
+  const html = renderSubscriptionsPage({
+    subscriptions,
+    stats,
+    filters: { status: statusFilter, page, totalPages },
+    user: user ? { name: user.email, email: user.email, role: user.role } : void 0,
+    version: c.get("appVersion"),
+    dynamicMenuItems: c.get("pluginMenuItems")
   });
   return c.html(html);
+});
+adminRoutes3.get("/events", async (c) => {
+  const db = c.env.DB;
+  const user = c.get("user");
+  const eventService = new StripeEventService(db);
+  await eventService.ensureTable();
+  const page = parseInt(c.req.query("page") || "1");
+  const limit = 50;
+  const typeFilter = c.req.query("type") || void 0;
+  const statusFilter = c.req.query("status");
+  const [{ events, total }, stats, types] = await Promise.all([
+    eventService.list({ type: typeFilter, status: statusFilter, page, limit }),
+    eventService.getStats(),
+    eventService.getDistinctTypes()
+  ]);
+  const totalPages = Math.ceil(total / limit);
+  const html = renderEventsPage({
+    events,
+    stats,
+    types,
+    filters: { type: typeFilter, status: statusFilter, page, totalPages },
+    user: user ? { name: user.email, email: user.email, role: user.role } : void 0,
+    version: c.get("appVersion"),
+    dynamicMenuItems: c.get("pluginMenuItems")
+  });
+  return c.html(html);
+});
+adminRoutes3.get("/settings", async (c) => {
+  const db = c.env.DB;
+  const user = c.get("user");
+  const settings = await getSettings3(db);
+  const { renderAdminLayoutCatalyst: renderAdminLayoutCatalyst2 } = await import('./admin-layout-catalyst.template-UMTIN66R.js');
+  const content2 = `
+    <div>
+      <div class="mb-6">
+        <h1 class="text-2xl/8 font-semibold text-zinc-950 dark:text-white sm:text-xl/8">Stripe</h1>
+        <p class="mt-2 text-sm/6 text-zinc-500 dark:text-zinc-400">
+          Configure your Stripe API keys and checkout options.
+        </p>
+      </div>
+
+      ${renderStripeTabBar("/admin/plugins/stripe/settings")}
+
+      <div id="settings-message" class="hidden mb-4 rounded-lg p-4 text-sm"></div>
+
+      <form id="stripe-settings-form" class="rounded-xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl ring-1 ring-zinc-950/5 dark:ring-white/10 shadow-sm divide-y divide-zinc-950/5 dark:divide-white/5">
+        <div class="p-6 space-y-5">
+          <div>
+            <label class="block text-sm font-medium text-zinc-950 dark:text-white mb-1.5">Publishable Key</label>
+            <input type="text" name="stripePublishableKey" value="${settings.stripePublishableKey}"
+              placeholder="pk_..."
+              class="w-full rounded-lg border-0 bg-white dark:bg-zinc-800 px-3.5 py-2 text-sm text-zinc-950 dark:text-white ring-1 ring-inset ring-zinc-950/10 dark:ring-white/10 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:ring-2 focus:ring-cyan-500" />
+            <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Your Stripe publishable key (starts with pk_)</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-zinc-950 dark:text-white mb-1.5">Secret Key</label>
+            <input type="password" name="stripeSecretKey" value="${settings.stripeSecretKey}"
+              placeholder="sk_..."
+              class="w-full rounded-lg border-0 bg-white dark:bg-zinc-800 px-3.5 py-2 text-sm text-zinc-950 dark:text-white ring-1 ring-inset ring-zinc-950/10 dark:ring-white/10 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:ring-2 focus:ring-cyan-500" />
+            <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Your Stripe secret API key (starts with sk_)</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-zinc-950 dark:text-white mb-1.5">Webhook Signing Secret</label>
+            <input type="password" name="stripeWebhookSecret" value="${settings.stripeWebhookSecret}"
+              placeholder="whsec_..."
+              class="w-full rounded-lg border-0 bg-white dark:bg-zinc-800 px-3.5 py-2 text-sm text-zinc-950 dark:text-white ring-1 ring-inset ring-zinc-950/10 dark:ring-white/10 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:ring-2 focus:ring-cyan-500" />
+            <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Stripe webhook endpoint signing secret (starts with whsec_)</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-zinc-950 dark:text-white mb-1.5">Default Price ID</label>
+            <input type="text" name="stripePriceId" value="${settings.stripePriceId || ""}"
+              placeholder="price_..."
+              class="w-full rounded-lg border-0 bg-white dark:bg-zinc-800 px-3.5 py-2 text-sm text-zinc-950 dark:text-white ring-1 ring-inset ring-zinc-950/10 dark:ring-white/10 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:ring-2 focus:ring-cyan-500" />
+            <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Default Stripe Price ID for checkout sessions (optional)</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-zinc-950 dark:text-white mb-1.5">Checkout Success URL</label>
+            <input type="text" name="successUrl" value="${settings.successUrl}"
+              class="w-full rounded-lg border-0 bg-white dark:bg-zinc-800 px-3.5 py-2 text-sm text-zinc-950 dark:text-white ring-1 ring-inset ring-zinc-950/10 dark:ring-white/10 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:ring-2 focus:ring-cyan-500" />
+            <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Redirect URL after successful checkout</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-zinc-950 dark:text-white mb-1.5">Checkout Cancel URL</label>
+            <input type="text" name="cancelUrl" value="${settings.cancelUrl}"
+              class="w-full rounded-lg border-0 bg-white dark:bg-zinc-800 px-3.5 py-2 text-sm text-zinc-950 dark:text-white ring-1 ring-inset ring-zinc-950/10 dark:ring-white/10 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:ring-2 focus:ring-cyan-500" />
+            <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Redirect URL if checkout is cancelled</p>
+          </div>
+        </div>
+
+        <div class="px-6 py-4 flex justify-end">
+          <button type="submit"
+            class="inline-flex items-center justify-center rounded-lg bg-zinc-950 dark:bg-white px-3.5 py-2.5 text-sm font-semibold text-white dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-colors shadow-sm">
+            Save Settings
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <script>
+      document.getElementById('stripe-settings-form').addEventListener('submit', async (e) => {
+        e.preventDefault()
+        const form = e.target
+        const data = Object.fromEntries(new FormData(form))
+        const msg = document.getElementById('settings-message')
+        try {
+          const res = await fetch('/admin/plugins/stripe/settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          })
+          const result = await res.json()
+          msg.className = result.success
+            ? 'mb-4 rounded-lg p-4 text-sm bg-emerald-400/10 text-emerald-500 dark:text-emerald-400 ring-1 ring-inset ring-emerald-400/20'
+            : 'mb-4 rounded-lg p-4 text-sm bg-red-400/10 text-red-500 dark:text-red-400 ring-1 ring-inset ring-red-400/20'
+          msg.textContent = result.success ? 'Settings saved successfully.' : (result.error || 'Failed to save settings.')
+        } catch {
+          msg.className = 'mb-4 rounded-lg p-4 text-sm bg-red-400/10 text-red-500 dark:text-red-400 ring-1 ring-inset ring-red-400/20'
+          msg.textContent = 'Network error. Please try again.'
+        }
+      })
+    </script>
+  `;
+  return c.html(renderAdminLayoutCatalyst2({
+    title: "Stripe Settings",
+    pageTitle: "Stripe Settings",
+    currentPath: "/admin/plugins/stripe",
+    user: user ? { name: user.email, email: user.email, role: user.role } : void 0,
+    content: content2,
+    version: c.get("appVersion"),
+    dynamicMenuItems: c.get("pluginMenuItems")
+  }));
 });
 adminRoutes3.post("/settings", async (c) => {
   try {
@@ -6739,6 +7266,30 @@ var StripeAPI = class {
     return this.request("POST", "/customers", body);
   }
   /**
+   * List subscriptions with pagination (auto-expands across pages)
+   */
+  async listSubscriptions(params) {
+    const qs = new URLSearchParams();
+    qs.append("limit", String(params?.limit || 100));
+    if (params?.status) qs.append("status", params.status);
+    if (params?.startingAfter) qs.append("starting_after", params.startingAfter);
+    return this.request("GET", `/subscriptions?${qs.toString()}`);
+  }
+  /**
+   * Fetch ALL subscriptions from Stripe (handles pagination automatically)
+   */
+  async listAllSubscriptions() {
+    const all = [];
+    let startingAfter;
+    while (true) {
+      const result = await this.listSubscriptions({ limit: 100, startingAfter });
+      all.push(...result.data);
+      if (!result.has_more || result.data.length === 0) break;
+      startingAfter = result.data[result.data.length - 1].id;
+    }
+    return all;
+  }
+  /**
    * Search for a customer by email
    */
   async findCustomerByEmail(email) {
@@ -6776,7 +7327,7 @@ function timingSafeEqual(a, b) {
 
 // src/plugins/core-plugins/stripe-plugin/routes/api.ts
 var apiRoutes3 = new Hono();
-async function getSettings3(db) {
+async function getSettings4(db) {
   try {
     const pluginService = new PluginService(db);
     const plugin2 = await pluginService.getPlugin("stripe");
@@ -6803,7 +7354,7 @@ function mapStripeStatus(status) {
 }
 apiRoutes3.post("/webhook", async (c) => {
   const db = c.env.DB;
-  const settings = await getSettings3(db);
+  const settings = await getSettings4(db);
   if (!settings.stripeWebhookSecret) {
     return c.json({ error: "Webhook secret not configured" }, 500);
   }
@@ -6816,7 +7367,11 @@ apiRoutes3.post("/webhook", async (c) => {
   }
   const event = JSON.parse(rawBody);
   const subscriptionService = new SubscriptionService(db);
-  await subscriptionService.ensureTable();
+  const eventService = new StripeEventService(db);
+  await Promise.all([subscriptionService.ensureTable(), eventService.ensureTable()]);
+  const obj = event.data.object;
+  const objectId = obj?.id || "";
+  const objectType = obj?.object || event.type.split(".")[0] || "";
   try {
     switch (event.type) {
       case "customer.subscription.created": {
@@ -6891,8 +7446,35 @@ apiRoutes3.post("/webhook", async (c) => {
       }
       default:
         console.log(`[Stripe] Unhandled event type: ${event.type}`);
+        await eventService.log({
+          stripeEventId: event.id,
+          type: event.type,
+          objectId,
+          objectType,
+          data: event.data.object,
+          status: "ignored"
+        });
+        return c.json({ received: true });
     }
+    await eventService.log({
+      stripeEventId: event.id,
+      type: event.type,
+      objectId,
+      objectType,
+      data: event.data.object,
+      status: "processed"
+    });
   } catch (error) {
+    await eventService.log({
+      stripeEventId: event.id,
+      type: event.type,
+      objectId,
+      objectType,
+      data: event.data.object,
+      status: "failed",
+      error: error instanceof Error ? error.message : String(error)
+    }).catch(() => {
+    });
     console.error(`[Stripe] Error processing webhook event ${event.type}:`, error);
     return c.json({ error: "Webhook processing failed" }, 500);
   }
@@ -6902,7 +7484,7 @@ apiRoutes3.post("/create-checkout-session", requireAuth(), async (c) => {
   const db = c.env.DB;
   const user = c.get("user");
   if (!user) return c.json({ error: "Unauthorized" }, 401);
-  const settings = await getSettings3(db);
+  const settings = await getSettings4(db);
   if (!settings.stripeSecretKey) {
     return c.json({ error: "Stripe not configured" }, 500);
   }
@@ -6975,6 +7557,74 @@ apiRoutes3.get("/stats", requireAuth(), async (c) => {
   const stats = await subscriptionService.getStats();
   return c.json(stats);
 });
+apiRoutes3.post("/sync-subscriptions", requireAuth(), async (c) => {
+  const user = c.get("user");
+  if (user?.role !== "admin") return c.json({ error: "Access denied" }, 403);
+  const db = c.env.DB;
+  const settings = await getSettings4(db);
+  if (!settings.stripeSecretKey) {
+    return c.json({ error: "Stripe secret key not configured" }, 400);
+  }
+  const stripeApi = new StripeAPI(settings.stripeSecretKey);
+  const subscriptionService = new SubscriptionService(db);
+  await subscriptionService.ensureTable();
+  try {
+    const allSubs = await stripeApi.listAllSubscriptions();
+    let synced = 0;
+    let errors = 0;
+    for (const sub of allSubs) {
+      try {
+        const userId = sub.metadata?.sonicjs_user_id || await subscriptionService.getUserIdByStripeCustomer(sub.customer) || "";
+        await subscriptionService.upsert({
+          userId,
+          stripeCustomerId: typeof sub.customer === "string" ? sub.customer : sub.customer.id,
+          stripeSubscriptionId: sub.id,
+          stripePriceId: sub.items?.data?.[0]?.price?.id || "",
+          status: mapStripeStatus(sub.status),
+          currentPeriodStart: sub.current_period_start,
+          currentPeriodEnd: sub.current_period_end,
+          cancelAtPeriodEnd: sub.cancel_at_period_end
+        });
+        synced++;
+      } catch (err) {
+        console.error(`[Stripe Sync] Failed to upsert subscription ${sub.id}:`, err);
+        errors++;
+      }
+    }
+    return c.json({
+      success: true,
+      total: allSubs.length,
+      synced,
+      errors
+    });
+  } catch (error) {
+    console.error("[Stripe Sync] Error:", error);
+    return c.json({
+      success: false,
+      error: error instanceof Error ? error.message : "Sync failed"
+    }, 500);
+  }
+});
+apiRoutes3.get("/events", requireAuth(), async (c) => {
+  const user = c.get("user");
+  if (user?.role !== "admin") return c.json({ error: "Access denied" }, 403);
+  const db = c.env.DB;
+  const eventService = new StripeEventService(db);
+  await eventService.ensureTable();
+  const filters = {
+    type: c.req.query("type") || void 0,
+    status: c.req.query("status") || void 0,
+    objectId: c.req.query("objectId") || void 0,
+    page: c.req.query("page") ? parseInt(c.req.query("page")) : 1,
+    limit: c.req.query("limit") ? parseInt(c.req.query("limit")) : 50
+  };
+  const [result, stats, types] = await Promise.all([
+    eventService.list(filters),
+    eventService.getStats(),
+    eventService.getDistinctTypes()
+  ]);
+  return c.json({ ...result, stats, types });
+});
 
 // src/plugins/core-plugins/stripe-plugin/index.ts
 function createStripePlugin() {
@@ -7021,13 +7671,35 @@ function createStripePlugin() {
 var stripePlugin = createStripePlugin();
 
 // src/middleware/plugin-menu.ts
-var MENU_PLUGINS = [
-  securityAuditPlugin
-];
+var REGISTRY_MENU_PLUGINS = Object.values(PLUGIN_REGISTRY).filter((p) => p.adminMenu !== null).map((p) => ({
+  codeName: p.codeName,
+  label: p.adminMenu.label,
+  path: p.adminMenu.path,
+  icon: p.adminMenu.icon,
+  order: p.adminMenu.order
+}));
+var ICON_SVG = {
+  "magnifying-glass": '<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"/></svg>',
+  "chart-bar": '<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z"/></svg>',
+  "image": '<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/></svg>',
+  "palette": '<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.098 19.902a3.75 3.75 0 0 0 5.304 0l6.401-6.402M6.75 21A3.75 3.75 0 0 1 3 17.25V4.125C3 3.504 3.504 3 4.125 3h5.25c.621 0 1.125.504 1.125 1.125v4.072M6.75 21a3.75 3.75 0 0 0 3.75-3.75V8.197M6.75 21h13.125c.621 0 1.125-.504 1.125-1.125v-5.25c0-.621-.504-1.125-1.125-1.125h-4.072M10.5 8.197l2.88-2.88c.438-.439 1.15-.439 1.59 0l3.712 3.713c.44.44.44 1.152 0 1.59l-2.879 2.88M6.75 17.25h.008v.008H6.75v-.008Z"/></svg>',
+  "envelope": '<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"/></svg>',
+  "hand-raised": '<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.05 4.575a1.575 1.575 0 1 0-3.15 0v3m3.15-3v-1.5a1.575 1.575 0 0 1 3.15 0v1.5m-3.15 0 .075 5.925m3.075-5.925v2.925m0-2.925a1.575 1.575 0 0 1 3.15 0V9.9m-3.15-2.4v5.325M16.5 9.9a1.575 1.575 0 0 1 3.15 0V15a6.15 6.15 0 0 1-6.15 6.15H12A6.15 6.15 0 0 1 5.85 15V9.525"/></svg>',
+  "key": '<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1 1 21.75 8.25Z"/></svg>',
+  "arrow-right": '<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>',
+  "shield-check": '<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>',
+  "credit-card": '<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z"/></svg>'
+};
+function resolveIcon(iconName) {
+  if (!iconName) return "";
+  if (iconName.startsWith("<svg") || iconName.startsWith("<")) return iconName;
+  return ICON_SVG[iconName] || "";
+}
 var MARKER = "<!-- DYNAMIC_PLUGIN_MENU -->";
 function renderMenuItem(item, currentPath) {
   const isActive = currentPath === item.path || currentPath.startsWith(item.path);
   const fallbackIcon = `<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>`;
+  const resolvedIcon = resolveIcon(item.icon) || fallbackIcon;
   return `
     <span class="relative">
       ${isActive ? '<span class="absolute inset-y-2 -left-4 w-0.5 rounded-full bg-cyan-500 dark:bg-cyan-400"></span>' : ""}
@@ -7037,7 +7709,7 @@ function renderMenuItem(item, currentPath) {
         ${isActive ? 'data-current="true"' : ""}
       >
         <span class="shrink-0 ${isActive ? "fill-zinc-950 dark:fill-white" : "fill-zinc-500 dark:fill-zinc-400"}">
-          ${item.icon || fallbackIcon}
+          ${resolvedIcon}
         </span>
         <span class="truncate">${item.label}</span>
       </a>
@@ -7052,23 +7724,28 @@ function pluginMenuMiddleware() {
     let activeMenuItems = [];
     try {
       const db = c.env.DB;
-      const pluginNames = MENU_PLUGINS.map((p) => p.name);
-      if (pluginNames.length > 0) {
-        const placeholders = pluginNames.map(() => "?").join(",");
+      const pluginCodeNames = REGISTRY_MENU_PLUGINS.map((p) => p.codeName);
+      if (pluginCodeNames.length > 0) {
+        const placeholders = pluginCodeNames.map(() => "?").join(",");
         const result = await db.prepare(
           `SELECT name FROM plugins WHERE name IN (${placeholders}) AND status = 'active'`
-        ).bind(...pluginNames).all();
+        ).bind(...pluginCodeNames).all();
         const activeNames = new Set((result.results || []).map((r) => r.name));
-        for (const plugin2 of MENU_PLUGINS) {
-          if (activeNames.has(plugin2.name) && plugin2.menuItems) {
-            activeMenuItems.push(...plugin2.menuItems);
+        for (const plugin2 of REGISTRY_MENU_PLUGINS) {
+          if (activeNames.has(plugin2.codeName)) {
+            activeMenuItems.push({
+              label: plugin2.label,
+              path: plugin2.path,
+              icon: plugin2.icon,
+              order: plugin2.order
+            });
           }
         }
-        activeMenuItems.sort((a, b) => (a.order || 0) - (b.order || 0));
+        activeMenuItems.sort((a, b) => a.order - b.order);
       }
     } catch {
     }
-    c.set("pluginMenuItems", activeMenuItems.map((m) => ({ label: m.label, path: m.path, icon: m.icon || "" })));
+    c.set("pluginMenuItems", activeMenuItems.map((m) => ({ label: m.label, path: m.path, icon: resolveIcon(m.icon) || "" })));
     await next();
     if (activeMenuItems.length > 0 && c.res.headers.get("content-type")?.includes("text/html")) {
       const status = c.res.status;
@@ -9000,16 +9677,16 @@ function createSonicJSApp(config = {}) {
       app2.route(route.path, route.handler);
     }
   }
-  app2.route("/admin/plugins", adminPluginRoutes);
-  app2.route("/admin/logs", adminLogsRoutes);
-  app2.route("/admin", userRoutes);
-  app2.route("/auth", auth_default);
-  app2.route("/", test_cleanup_default);
   if (stripePlugin.routes && stripePlugin.routes.length > 0) {
     for (const route of stripePlugin.routes) {
       app2.route(route.path, route.handler);
     }
   }
+  app2.route("/admin/plugins", adminPluginRoutes);
+  app2.route("/admin/logs", adminLogsRoutes);
+  app2.route("/admin", userRoutes);
+  app2.route("/auth", auth_default);
+  app2.route("/", test_cleanup_default);
   if (emailPlugin.routes && emailPlugin.routes.length > 0) {
     for (const route of emailPlugin.routes) {
       app2.route(route.path, route.handler);
