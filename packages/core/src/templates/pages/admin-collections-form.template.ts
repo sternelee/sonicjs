@@ -2,6 +2,7 @@ import { renderAdminLayoutCatalyst, AdminLayoutCatalystData } from '../layouts/a
 import { renderForm, FormData, FormField } from '../form.template'
 import { renderAlert } from '../components/alert.template'
 import { renderConfirmationDialog, getConfirmationDialogScript } from '../components/confirmation-dialog.template'
+import { escapeHtml } from '../../utils/sanitize'
 
 export interface CollectionField {
   id: string
@@ -201,6 +202,22 @@ export function renderCollectionFormPage(data: CollectionFormData): string {
               <h2 class="text-base/7 font-semibold text-zinc-950 dark:text-white">Collection Details</h2>
               <p class="text-sm/6 text-zinc-500 dark:text-zinc-400">Configure your collection settings below</p>
             </div>
+
+            ${isEdit && data.name ? `
+            <!-- Export Button: only on edit (need a collection name to fetch) -->
+            <div class="ml-auto">
+              <button
+                type="button"
+                id="export-collection-btn"
+                title="Export as code"
+                class="inline-flex items-center gap-x-1.5 px-3.5 py-2.5 bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 font-semibold text-sm rounded-lg hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-colors shadow-sm"
+              >
+                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M7 8L3 11.6923L7 16M17 8L21 11.6923L17 16M14 4L10 20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </div>
+            ` : ''}
           </div>
         </div>
 
@@ -660,6 +677,176 @@ export function renderCollectionFormPage(data: CollectionFormData): string {
       </div>
     </div>
 
+    ${isEdit && data.name ? `
+    <!-- Code Export Modal -->
+    <div id="code-export-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+      <div class="rounded-xl bg-white dark:bg-zinc-900 shadow-xl ring-1 ring-zinc-950/5 dark:ring-white/10 w-full max-w-2xl mx-4">
+        <div class="px-6 py-4 border-b border-zinc-950/5 dark:border-white/10">
+          <div class="flex items-center justify-between">
+            <h3 id="code-export-modal-title" class="text-lg font-semibold text-zinc-950 dark:text-white">
+              Code-Based version of ${escapeHtml(data.display_name || 'this collection')}
+            </h3>
+            <button onclick="toggleCodeExportModal()" class="text-zinc-500 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white transition-colors">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div id="code-export-form" class="p-6 space-y-4">
+          <div id="code-export-options-container">
+            <div class="relative">
+              <textarea
+                id="code-export-options"
+                name="code_export_options"
+                rows="8"
+                class="w-full rounded-lg bg-white dark:bg-zinc-800 px-4 py-3 text-sm text-zinc-950 dark:text-white placeholder-zinc-500 dark:placeholder-zinc-400 ring-1 ring-inset ring-zinc-950/10 dark:ring-white/10 focus:ring-2 focus:ring-blue-600 dark:focus:ring-blue-500 focus:outline-none transition-colors font-mono"
+                readonly
+              ></textarea>
+              <button
+                id="copy-options-btn"
+                type="button"
+                class="absolute top-2 right-4 p-1 rounded bg-white/10 dark:bg-zinc-800/10 text-zinc-500 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors cursor-copy"
+                title="Copy to clipboard"
+              >
+                <svg class="w-5 h-5" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" fill="none">
+                  <path fill="currentColor" fill-rule="evenodd" d="M4 2a2 2 0 00-2 2v9a2 2 0 002 2h2v2a2 2 0 002 2h9a2 2 0 002-2V8a2 2 0 00-2-2h-2V4a2 2 0 00-2-2H4zm9 4V4H4v9h2V8a2 2 0 012-2h5zM8 8h9v9H8V8z"/>
+                </svg>
+              </button>
+            </div>
+            <div class="flex items-center justify-between mt-1 gap-x-4">
+              <p class="text-xs text-zinc-500 dark:text-zinc-400">
+                This is a code-based representation of ${data.display_name ? `the ${escapeHtml(data.display_name)}` : 'this'} collection.
+                Learn more about
+                <a href="https://sonicjs.com/collections" target="_blank" class="text-blue-600 dark:text-blue-400 hover:underline">
+                  collections here.
+                </a>
+              </p>
+              <span id="copy-options-feedback" class="invisible text-xs text-green-600 dark:text-green-400">Copied!</span>
+            </div>
+          </div>
+
+          <div class="flex justify-end space-x-3 pt-4 border-t border-zinc-950/5 dark:border-white/10">
+            <button
+              type="button"
+              onclick="toggleCodeExportModal()"
+              class="rounded-lg bg-white dark:bg-zinc-800 px-4 py-2 text-sm font-semibold text-zinc-950 dark:text-white ring-1 ring-inset ring-zinc-950/10 dark:ring-white/10 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (function() {
+        const collectionName = ${JSON.stringify(data.name || '')};
+
+        // Fields returned by the collections API that aren't part of CollectionConfig.
+        const unwantedKeys = ['id', 'source_type', 'source_id', 'created_at', 'updated_at'];
+
+        function normalizeCollectionObject(obj) {
+          if (Array.isArray(obj)) {
+            return obj.map(normalizeCollectionObject);
+          } else if (obj !== null && typeof obj === 'object') {
+            return Object.keys(obj).reduce((acc, key) => {
+              if (unwantedKeys.includes(key)) return acc;
+              const camelCaseKey = key.replace(/_([a-z])/g, g => g[1].toUpperCase());
+              acc[camelCaseKey] = normalizeCollectionObject(obj[key]);
+              return acc;
+            }, {});
+          }
+          return obj;
+        }
+
+        function generateCollectionTemplate(data) {
+          const normalizedData = normalizeCollectionObject(data);
+          return "import type { CollectionConfig } from '@sonicjs-cms/core';\\n\\n" +
+            \`export default \${JSON.stringify(normalizedData, null, 2)} satisfies CollectionConfig;\`;
+        }
+
+        const modal = document.getElementById('code-export-modal');
+        const triggerBtn = document.getElementById('export-collection-btn');
+        if (!modal || !triggerBtn) return;
+
+        function isOpen() {
+          return !modal.classList.contains('hidden');
+        }
+
+        function toggleModal() {
+          modal.classList.toggle('hidden');
+          if (!isOpen()) {
+            modal.querySelector('#code-export-options').value = '';
+          }
+        }
+        // Exposed for inline onclick handlers in the modal markup.
+        window.toggleCodeExportModal = toggleModal;
+
+        async function fetchCollectionByName(name) {
+          try {
+            const response = await fetch(\`/api/collections/\${encodeURIComponent(name)}/content\`, {
+              headers: { 'Accept': 'application/json' }
+            });
+            if (!response.ok) throw new Error('Network response was not ok');
+            const res = await response.json();
+            return res.meta?.collection || {};
+          } catch (error) {
+            console.error('Error fetching collection data for export:', error);
+            alert('Failed to load collection data for export. Please try again.');
+            return null;
+          }
+        }
+
+        async function copyToClipboard(text) {
+          if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(text);
+            return;
+          }
+          // Fallback for non-secure contexts.
+          const textarea = modal.querySelector('#code-export-options');
+          textarea.select();
+          textarea.setSelectionRange(0, 99999);
+          if (!document.execCommand('copy')) throw new Error('Copy command was unsuccessful');
+        }
+
+        triggerBtn.addEventListener('click', async function() {
+          if (!collectionName) return;
+          const res = await fetchCollectionByName(collectionName);
+          if (!res) return;
+          try {
+            modal.querySelector('#code-export-options').value = generateCollectionTemplate(res);
+            toggleModal();
+          } catch (e) {
+            console.error('Error preparing collection data for export:', e);
+            alert('Failed to prepare collection data for export. Please try again.');
+          }
+        });
+
+        modal.querySelector('#copy-options-btn').addEventListener('click', async function() {
+          const textarea = modal.querySelector('#code-export-options');
+          try {
+            await copyToClipboard(textarea.value);
+            const feedback = modal.querySelector('#copy-options-feedback');
+            feedback.classList.remove('invisible');
+            setTimeout(() => feedback.classList.add('invisible'), 2000);
+          } catch (err) {
+            console.error('Error copying to clipboard:', err);
+            alert('Failed to copy to clipboard. Please try copying manually.');
+          }
+        });
+
+        document.addEventListener('keydown', function(e) {
+          if (e.key === 'Escape' && isOpen()) toggleModal();
+        });
+
+        modal.addEventListener('click', function(e) {
+          if (e.target === modal) toggleModal();
+        });
+      })();
+    </script>
+    ` : ''}
     <script>
       const collectionId = '${data.id || ''}';
       
