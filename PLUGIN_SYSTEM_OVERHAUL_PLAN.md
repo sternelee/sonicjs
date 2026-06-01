@@ -583,7 +583,24 @@ Extend the existing specs (`15-plugins`, `29-email-plugin-settings`, `43-cache-p
 
 **Tests:** `__tests__/plugins/mount.test.ts` (16 unit, incl. sync-guard + behavioral catch-all-shadowing) and `__tests__/plugins/mount-integration.test.ts` (5, incl. #758 regression + `disableAll` matrix) — all green. Full core suite: **1498 passed, 0 failed**; `tsc --noEmit` clean.
 
-**Not yet done (follow-ups):** land #834 (Zod `PluginService` rows, Phase 0 hardening); the imperative `definePlugin()` + two-phase `onBoot`/wiring, capabilities, typed hooks, and cron are Phases 2–5.
+**Not yet done (follow-ups):** land #834 (Zod `PluginService` rows, Phase 0 hardening).
+
+---
+
+## Appendix C — Phase 2 status (foundation implemented)
+
+**Finding:** hooks were *dead metadata at runtime* — `HookSystemImpl` is only instantiated inside `PluginManager`, which is never instantiated in the running app, and no route dispatches lifecycle events. Same disease as routes pre-Phase 1. (Subscribing plugin hooks is therefore inert until dispatch sites are added — which makes activating the wiring safe.)
+
+**Landed (the typed-hook + two-phase-wiring foundation):**
+- `plugins/hooks/catalog.ts` — typed event catalog (6 content + 3 auth events) → payload types; `HookEventName`, `HookPayload<E>`, runtime `HOOK_EVENT_NAMES` + `isKnownHookEvent()`.
+- `plugins/hooks/typed-hooks.ts` — `createTypedHooks(hookSystem)` → `{ on<E>, dispatch<E> }` with catalog inference; structural `HookSystemLike` (both `HookSystemImpl` and `ScopedHookSystem` satisfy it).
+- `plugins/hooks/hook-system-singleton.ts` — `get/set/has/resetHookSystem()` + `getTypedHooks()`. Throw-before-get; idempotent set (multi-app/test safe); `reset` for isolation. Gives env-independent access for cron (Phase 4).
+- `plugins/wire.ts` — `wireRegisteredPlugins(plugins, ctx)`: subscribe ALL plugin `hooks[]` first, then run each `onBoot` (per-plugin error isolation); structural `WirablePlugin` with async `onBoot`. `createPluginWirer()` once-guard for the lazy first-request trigger.
+- Exported the whole surface from `plugins/index.ts`.
+
+**Tests:** `typed-hooks.test.ts` (11 runtime + a `tsc`-validated type-level block proving narrowed payloads and rejected unknown events/fields) and `wire.test.ts` (8: subscribe→dispatch, onBoot ordering "all hooks before any onBoot", error isolation, once-guard runs exactly once under concurrency, lazy list eval). Full core suite **1517 passed, 0 failed**; `tsc` clean.
+
+**Deliberately deferred to Phase 2b (its own careful change):** activating the wiring in the live app — eager `setHookSystem()` in `createSonicJSApp`, a once-guarded first-request `wireRegisteredPlugins` call, and real `dispatch()` sites in content/auth routes. Safe to do precisely because subscriptions are inert without dispatchers, but it touches the hot path + many route files, so it warrants dedicated integration tests.
 
 ---
 

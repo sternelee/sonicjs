@@ -24,6 +24,34 @@ export {
 } from './mount'
 export type { MountResult, MountedRoute, RegisterPluginRoutesOptions } from './mount'
 
+// Typed hook catalog + facade
+export {
+  HOOK_EVENT_NAMES,
+  isKnownHookEvent,
+} from './hooks/catalog'
+export type {
+  HookEventName,
+  HookEventPayloads,
+  HookPayload,
+  ContentEventPayload,
+  AuthRegistrationCompletedPayload,
+  AuthPasswordResetRequestedPayload,
+  AuthPasswordResetCompletedPayload,
+} from './hooks/catalog'
+export { createTypedHooks } from './hooks/typed-hooks'
+export type { TypedHooks, TypedHookHandler, TypedHookContext, HookSystemLike } from './hooks/typed-hooks'
+export {
+  setHookSystem,
+  getHookSystem,
+  hasHookSystem,
+  resetHookSystem,
+  getTypedHooks,
+} from './hooks/hook-system-singleton'
+
+// Two-phase wiring
+export { wireRegisteredPlugins, createPluginWirer } from './wire'
+export type { WirablePlugin, WirableHook, PluginBootContext, WireResult } from './wire'
+
 // Core Plugins
 export { 
   verifyTurnstile, 
