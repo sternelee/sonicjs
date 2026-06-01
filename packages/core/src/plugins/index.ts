@@ -52,6 +52,28 @@ export {
 export { wireRegisteredPlugins, createPluginWirer } from './wire'
 export type { WirablePlugin, WirableHook, PluginBootContext, WireResult } from './wire'
 
+// Capabilities
+export {
+  FIXED_CAPABILITIES,
+  isKnownCapability,
+  SonicCapabilityError,
+  hasCapability,
+  assertCapability,
+  validateCapabilities,
+  createCapabilityContext,
+} from './capabilities'
+export type {
+  Capability,
+  FixedCapability,
+  DbCapability,
+  CapabilityProviders,
+  PluginCapabilityContext,
+} from './capabilities'
+
+// Service singletons
+export { createServiceSingleton } from './singletons/service-singleton'
+export type { ServiceSingleton } from './singletons/service-singleton'
+
 // Core Plugins
 export { 
   verifyTurnstile, 

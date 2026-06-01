@@ -617,6 +617,19 @@ Extend the existing specs (`15-plugins`, `29-email-plugin-settings`, `43-cache-p
 
 ---
 
+## Appendix E — Phase 3 status (capabilities + service singletons)
+
+**Landed (pure infrastructure, no behavior change):**
+- `plugins/capabilities.ts` — Phase 1 capability vocabulary (`FIXED_CAPABILITIES` + parameterized `db:<table>`), `isKnownCapability` / `validateCapabilities`, `SonicCapabilityError`, `hasCapability` / `assertCapability`, and `createCapabilityContext(granted, providers, plugin)` — a context whose powerful accessors are **lazy throwing getters**: `ctx.email` throws `SonicCapabilityError` unless `email:send` was declared (the isolation boundary Strapi/Payload lack). Payment/queue capabilities deferred to Phase 2 vocabulary per open question 2.
+- `plugins/singletons/service-singleton.ts` — `createServiceSingleton<T>(label)` generalizing the hook-system-singleton pattern: throw-before-get, idempotent set, reset; **env-independent** so cron / `scheduled()` handlers (no `c.env`) can reach services.
+- Exported both from `plugins/index.ts`.
+
+**Tests:** `capabilities.test.ts` (19): vocabulary incl. `db:<table>` pattern matching, granted/denied gating (throws `SonicCapabilityError` with the right `.capability`/`.plugin`), `cache` accepting read-or-write, lazy provider invocation, and the service-singleton contract (throw-before-get, idempotent set, cron-reachable without env, slot independence). Full core suite **1540 passed, 0 failed**; `tsc` clean.
+
+**Wiring into the live app** (providing real `email`/`cache`/`http` providers + passing the gated context to plugins) lands with `definePlugin()` in Phase 5, where plugins actually declare `capabilities` and consume `ctx`.
+
+---
+
 ### Appendix A — Source references
 - **Infowall v3 Plugin Architecture · Progress Update, May 13 2026** (companion architecture overview) — two-phase boot, SmartRouter fix, capabilities, cron, email reference.
 - **Strapi v5** — docs.strapi.io (plugin-structure, server-api, admin-panel-api, configurations/plugins, document-service middlewares) + `strapi/strapi` `main` (`loaders/plugins/*`, `registries/plugins.ts`, `types/.../strapi-server/*`).
