@@ -51,6 +51,9 @@ import { shortcodesPlugin } from './plugins/core-plugins/shortcodes-plugin'
 import cachePlugin from './plugins/cache'
 import type { Plugin } from './plugins/types'
 import { registerPluginRoutes } from './plugins/mount'
+import { HookSystemImpl } from './plugins/hook-system'
+import { setHookSystem } from './plugins/hooks/hook-system-singleton'
+import { createPluginWirer } from './plugins/wire'
 import { faviconSvg } from './assets/favicon'
 import { setAppInstance } from './services/route-metadata'
 
@@ -187,6 +190,47 @@ export function createSonicJSApp(config: SonicJSConfig = {}): SonicJSApp {
   const appVersion = config.version || getCoreVersion()
   const appName = config.name || 'SonicJS AI'
 
+  // ── Plugin hook system (two-phase boot) ───────────────────────────────────
+  // Create the app's hook system and publish it as the process singleton so
+  // env-independent callers (e.g. cron handlers) can reach it. Route mounting is
+  // synchronous (below); hook subscriptions + plugin onBoot run lazily on the
+  // first request via wireRegisteredPlugins (see plugins/wire.ts).
+  const hookSystem = new HookSystemImpl()
+  setHookSystem(hookSystem)
+
+  // Core plugins, split by where their routes mount relative to the /admin
+  // catch-all. Defined once and reused for both mounting and wiring so the two
+  // never drift.
+  // Not annotated as Plugin[]: the core plugins are typed against the built
+  // `dist` declarations, which TS treats as a distinct identity from the `src`
+  // Plugin. Both consumers (registerPluginRoutes, createPluginWirer) accept a
+  // structural subset, so inference is the right call here.
+  const magicLinkPlugin = createMagicLinkAuthPlugin()
+  const corePluginsBeforeCatchAll = [
+    securityAuditPlugin,
+    aiSearchPlugin,
+    oauthProvidersPlugin,
+    userProfilesPlugin,
+    otpLoginPlugin,
+    analyticsPlugin,
+    stripePlugin,
+    // Previously declared via PluginBuilder.addRoute() but never mounted in
+    // app.ts, so their routes 404'd in production. Fixes #758.
+    globalVariablesPlugin,
+    shortcodesPlugin,
+  ]
+  const corePluginsAfterCatchAll = [emailPlugin, magicLinkPlugin]
+
+  // Lazy, once-guarded plugin wiring (the async half of two-phase boot). The
+  // first request subscribes every plugin's hooks and runs their onBoot; later
+  // requests await the same cached pass. Errors are isolated so wiring can never
+  // break a request.
+  const wirePlugins = createPluginWirer(
+    () => [...corePluginsBeforeCatchAll, ...corePluginsAfterCatchAll, ...(config.plugins?.register ?? [])],
+    () => ({ hooks: hookSystem, env: firstRequestEnv })
+  )
+  let firstRequestEnv: Record<string, unknown> | undefined
+
   // App version middleware
   app.use('*', async (c, next) => {
     c.set('appVersion', appVersion)
@@ -198,6 +242,20 @@ export function createSonicJSApp(config: SonicJSConfig = {}): SonicJSApp {
 
   // Bootstrap middleware - runs migrations, syncs collections, and initializes plugins
   app.use('*', bootstrapMiddleware(config))
+
+  // Plugin wiring middleware - lazily subscribes plugin hooks and runs onBoot
+  // exactly once, after bootstrap. Skipped entirely when plugins are disabled.
+  app.use('*', async (c, next) => {
+    if (!config.plugins?.disableAll) {
+      firstRequestEnv = c.env as unknown as Record<string, unknown>
+      try {
+        await wirePlugins()
+      } catch (err) {
+        console.error('[plugins] wiring failed:', err)
+      }
+    }
+    return next()
+  })
 
   // Custom middleware - before auth
   if (config.middleware?.beforeAuth) {
@@ -262,23 +320,7 @@ export function createSonicJSApp(config: SonicJSConfig = {}): SonicJSApp {
   //
   // `disableAll` turns off every plugin — core AND user — for a bare core app.
   if (!config.plugins?.disableAll) {
-    registerPluginRoutes(
-      app,
-      [
-        securityAuditPlugin,
-        aiSearchPlugin,
-        oauthProvidersPlugin,
-        userProfilesPlugin,
-        otpLoginPlugin,
-        analyticsPlugin,
-        stripePlugin,
-        // Previously declared via PluginBuilder.addRoute() but never mounted in
-        // app.ts, so their routes 404'd in production. Fixes #758.
-        globalVariablesPlugin,
-        shortcodesPlugin,
-      ],
-      { source: 'core' }
-    )
+    registerPluginRoutes(app, corePluginsBeforeCatchAll, { source: 'core' })
 
     // Plugin routes - Cache (dashboard and management API)
     // Fixes GitHub Issue #461: Cache routes were not registered
@@ -306,7 +348,7 @@ export function createSonicJSApp(config: SonicJSConfig = {}): SonicJSApp {
   // Email (/admin/plugins/email) and magic-link auth routes were historically
   // registered here; position preserved to keep route-match precedence identical.
   if (!config.plugins?.disableAll) {
-    registerPluginRoutes(app, [emailPlugin, createMagicLinkAuthPlugin()], { source: 'core' })
+    registerPluginRoutes(app, corePluginsAfterCatchAll, { source: 'core' })
   }
 
   // Serve favicon

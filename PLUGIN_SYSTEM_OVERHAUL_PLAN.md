@@ -600,7 +600,20 @@ Extend the existing specs (`15-plugins`, `29-email-plugin-settings`, `43-cache-p
 
 **Tests:** `typed-hooks.test.ts` (11 runtime + a `tsc`-validated type-level block proving narrowed payloads and rejected unknown events/fields) and `wire.test.ts` (8: subscribe→dispatch, onBoot ordering "all hooks before any onBoot", error isolation, once-guard runs exactly once under concurrency, lazy list eval). Full core suite **1517 passed, 0 failed**; `tsc` clean.
 
-**Deliberately deferred to Phase 2b (its own careful change):** activating the wiring in the live app — eager `setHookSystem()` in `createSonicJSApp`, a once-guarded first-request `wireRegisteredPlugins` call, and real `dispatch()` sites in content/auth routes. Safe to do precisely because subscriptions are inert without dispatchers, but it touches the hot path + many route files, so it warrants dedicated integration tests.
+---
+
+## Appendix D — Phase 2b status (wiring activated in the live app)
+
+**Landed:** the wiring foundation is now active in `createSonicJSApp`:
+- Eager `setHookSystem(new HookSystemImpl())` at construction — the singleton is published before anything else.
+- Core plugins extracted into shared `corePluginsBeforeCatchAll` / `corePluginsAfterCatchAll` arrays, reused for **both** route mounting and wiring so the two never drift (annotations dropped to dodge the `src`/`dist` `Plugin` identity clash; both consumers are structural).
+- A once-guarded first-request middleware (after bootstrap) runs `wireRegisteredPlugins` exactly once: subscribes every core + user plugin's `hooks[]` to the app hook system and runs their `onBoot`. Error-isolated (never breaks a request) and skipped entirely under `disableAll`.
+
+**Effect:** the hook system is now genuinely live — the first request subscribes the real core plugin hooks (`request:start`, `content:read` ×2 from global-variables/shortcodes, `user:login`, …). These remain **inert until dispatch sites are added**, so no existing behavior changes; the infrastructure is proven working end-to-end.
+
+**Tests:** `wire-integration.test.ts` (4): singleton published at construction; first request runs `onBoot` + subscribes hooks (verified by dispatching `content:create` and seeing the handler fire); wires exactly once across 3 requests; `disableAll` skips wiring. Full core suite **1521 passed, 0 failed**; `tsc` clean.
+
+**Next (Phase 5 / dispatch sites):** add real `dispatch()` calls in content/auth routes and migrate the email plugin to subscribe `auth:registration:completed` — the point at which wiring becomes user-visible (and where the `reset_link` leak / `email_log` work lands). Deferred here because it changes behavior and belongs with the email reference migration.
 
 ---
 
