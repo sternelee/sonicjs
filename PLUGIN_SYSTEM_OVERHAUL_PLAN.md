@@ -452,9 +452,10 @@ Each phase is independently shippable and test-gated. **No phase merges without 
 - **Exit:** a plugin's `onCronTick` fires on schedule in a Miniflare/integration test; graceful skip when credentials/bindings absent.
 
 ### Phase 5 — `definePlugin()` + Email reference migration (PR-E equivalent)
-- Ship `definePlugin()`.
-- Migrate the **email plugin** as the reference (it touches capabilities, hooks, cron, singleton, routes — if it holds for email it holds for all). Close the `reset_link` leak; add `email_log` observability.
-- Fix **magic-link** (`c.env.plugins?.get('email')` → `getEmailService().send()`).
+- **5a — `definePlugin()` ✅ DONE** (stacked branch `lane711/plugin-system-define`). See Appendix G.
+- 5b — Migrate the **email plugin** as the reference (it touches capabilities, hooks, cron, singleton, routes — if it holds for email it holds for all). Close the `reset_link` leak; add `email_log` observability.
+- 5c — Fix **magic-link** (`c.env.plugins?.get('email')` → `getEmailService().send()`).
+- 5d — Add real `dispatch()` sites in content/auth routes (this *activates* the now-subscribed core plugin hooks; behavior-changing — needs dedicated integration tests).
 - **Exit:** email plugin runs fully on v3; documented as the template for the rest.
 
 ### Phase 6 — Migrate remaining core plugins (~20)
@@ -651,3 +652,18 @@ Built on the stacked branch `lane711/plugin-system-cron` (PR base = the foundati
 - **Strapi v5** — docs.strapi.io (plugin-structure, server-api, admin-panel-api, configurations/plugins, document-service middlewares) + `strapi/strapi` `main` (`loaders/plugins/*`, `registries/plugins.ts`, `types/.../strapi-server/*`).
 - **Payload v3** — payloadcms.com/docs (plugins/overview, build-your-own, hooks/*, jobs-queue/*, admin/components, database/migrations) + `payloadcms/payload` `main` (`config/types.ts`, `templates/plugin/src/index.ts`).
 - **SonicJS current source** — `packages/core/src/plugins/*`, `services/plugin-service.ts`, `app.ts`, `db/schema.ts`, `routes/admin-plugins.ts`, `tests/e2e/*plugin*`.
+
+---
+
+## Appendix G — Phase 5a status (`definePlugin()`)
+
+Built on the stacked branch `lane711/plugin-system-define` (PR base = the cron branch). Purely additive authoring API — no behavior change; nothing yet *uses* it in core.
+
+**Landed:**
+- `plugins/sdk/define-plugin.ts` — `definePlugin(input)` returns a unified `DefinedPlugin` that structurally satisfies `MountablePlugin` (routes/register), `WirablePlugin` (onBoot), and `CronablePlugin` (crons/onCronTick), plus the legacy metadata fields the admin/registry read. Normalizes `id → name`; validates declared `capabilities` (warns on unknown); tags output with `__sonicV3` (+ `isDefinedPlugin()` guard).
+- **Enriched context:** the author's `onBoot`/`onCronTick` receive `{ hooks, cap, env, raw }` — a *typed* hook facade (`ctx.hooks.on('auth:registration:completed', …)` with narrowed payloads) and the *capability-gated* service context (`ctx.cap.email` throws `SonicCapabilityError` without `email:send`). `definePlugin` wraps the author functions so the runtime keeps passing the plain `PluginBootContext`/`CronContext`; providers ride on `raw.providers` (host-supplied).
+- Exported from `plugins/index.ts`.
+
+**Tests:** `define-plugin.test.ts` (13: shape/normalization, id/version required, unknown-capability warning, mounts via `registerPluginRoutes`, typed-hook subscription fires through the live system, capability gating throws, provider resolution, env exposure, cron enriched context) + `define-plugin-integration.test.ts` (3: mounts through `createSonicJSApp`, honors `disableAll`, `onBoot` runs exactly once on first request via live wiring). Full core suite **1565 passed, 0 failed**; `tsc` clean.
+
+**Next (5b–5d):** migrate the email plugin onto `definePlugin` (capabilities + `onBoot` hook subscriptions + `email_log` + reconciliation cron, closing the `reset_link` leak), fix magic-link, and add the content/auth `dispatch()` sites — all behavior-changing, each with its own integration coverage.

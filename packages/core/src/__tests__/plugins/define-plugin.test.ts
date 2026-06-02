@@ -1,0 +1,160 @@
+import { describe, it, expect, vi, afterEach } from 'vitest'
+import { Hono } from 'hono'
+import { definePlugin, isDefinedPlugin } from '../../plugins/sdk/define-plugin'
+import { registerPluginRoutes } from '../../plugins/mount'
+import { wireRegisteredPlugins, type PluginBootContext } from '../../plugins/wire'
+import { dispatchCronTick } from '../../plugins/cron'
+import { HookSystemImpl } from '../../plugins/hook-system'
+import { SonicCapabilityError } from '../../plugins/capabilities'
+
+afterEach(() => vi.restoreAllMocks())
+
+function bootCtx(extra: Record<string, unknown> = {}): PluginBootContext {
+  return { hooks: new HookSystemImpl(), ...extra }
+}
+
+describe('definePlugin — shape', () => {
+  it('normalizes id → name and carries metadata + the v3 marker', () => {
+    const p = definePlugin({ id: 'my-plugin', version: '1.2.3', description: 'd', dependencies: ['auth'] })
+    expect(p.name).toBe('my-plugin')
+    expect(p.id).toBe('my-plugin')
+    expect(p.version).toBe('1.2.3')
+    expect(p.description).toBe('d')
+    expect(p.dependencies).toEqual(['auth'])
+    expect(p.capabilities).toEqual([])
+    expect(isDefinedPlugin(p)).toBe(true)
+    expect(isDefinedPlugin({ name: 'x' })).toBe(false)
+  })
+
+  it('requires id and version', () => {
+    // @ts-expect-error missing id
+    expect(() => definePlugin({ version: '1.0.0' })).toThrow(/`id` is required/)
+    // @ts-expect-error missing version
+    expect(() => definePlugin({ id: 'x' })).toThrow(/`version` is required/)
+  })
+
+  it('warns on unknown capabilities but keeps them', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const p = definePlugin({ id: 'x', version: '1.0.0', capabilities: ['email:send', 'totally:fake' as any] })
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('unknown capabilities: totally:fake'))
+    expect(p.capabilities).toContain('totally:fake')
+  })
+})
+
+describe('definePlugin — mounts like any plugin', () => {
+  it('declarative routes mount via registerPluginRoutes', async () => {
+    const sub = new Hono().get('/', (c) => c.text('defined-ok'))
+    const p = definePlugin({ id: 'routed', version: '1.0.0', routes: [{ path: '/api/defined', handler: sub }] })
+
+    const app = new Hono()
+    registerPluginRoutes(app, [p])
+
+    expect(await (await app.request('/api/defined')).text()).toBe('defined-ok')
+  })
+
+  it('synchronous register(app) is invoked at mount', async () => {
+    const p = definePlugin({
+      id: 'imp',
+      version: '1.0.0',
+      register(app) {
+        app.route('/imp', new Hono().get('/', (c) => c.text('imp-ok')))
+      },
+    })
+    const app = new Hono()
+    registerPluginRoutes(app, [p])
+    expect(await (await app.request('/imp')).text()).toBe('imp-ok')
+  })
+})
+
+describe('definePlugin — onBoot enriched context', () => {
+  it('subscribes a typed hook that fires on dispatch through the live system', async () => {
+    let seenEmail = ''
+    const p = definePlugin({
+      id: 'welcome',
+      version: '1.0.0',
+      capabilities: ['hooks.auth:subscribe'],
+      onBoot(ctx) {
+        ctx.hooks.on('auth:registration:completed', (payload) => {
+          seenEmail = payload.user.email // typed, no cast
+        })
+      },
+    })
+
+    const ctx = bootCtx()
+    await wireRegisteredPlugins([p], ctx)
+
+    await ctx.hooks.execute('auth:registration:completed', {
+      user: { id: 'u1', email: 'new@user.com', role: 'user' },
+    })
+    expect(seenEmail).toBe('new@user.com')
+  })
+
+  it('gates services by capability: ctx.cap.email throws without email:send', async () => {
+    let thrown: unknown
+    const p = definePlugin({
+      id: 'nogate',
+      version: '1.0.0',
+      capabilities: [], // did NOT declare email:send
+      onBoot(ctx) {
+        try {
+          void ctx.cap.email
+        } catch (e) {
+          thrown = e
+        }
+      },
+    })
+    await wireRegisteredPlugins([p], bootCtx())
+    expect(thrown).toBeInstanceOf(SonicCapabilityError)
+  })
+
+  it('resolves a declared capability through a host-supplied provider', async () => {
+    const fakeEmail = { send: () => 'sent' }
+    let resolved: unknown
+    const p = definePlugin({
+      id: 'sender',
+      version: '1.0.0',
+      capabilities: ['email:send'],
+      onBoot(ctx) {
+        resolved = ctx.cap.email
+      },
+    })
+    // Host supplies providers on the boot context.
+    await wireRegisteredPlugins([p], bootCtx({ providers: { email: () => fakeEmail } }))
+    expect(resolved).toBe(fakeEmail)
+  })
+
+  it('exposes env on the enriched context', async () => {
+    let seenEnv: unknown
+    const p = definePlugin({
+      id: 'envy',
+      version: '1.0.0',
+      onBoot(ctx) {
+        seenEnv = ctx.env
+      },
+    })
+    await wireRegisteredPlugins([p], bootCtx({ env: { DB: 'binding' } }))
+    expect(seenEnv).toEqual({ DB: 'binding' })
+  })
+})
+
+describe('definePlugin — cron', () => {
+  it('onCronTick receives the event and the enriched (typed) context', async () => {
+    let firedFamily = ''
+    let hasTypedHooks = false
+    const p = definePlugin({
+      id: 'reconciler',
+      version: '1.0.0',
+      capabilities: ['cron:register'],
+      crons: [{ schedule: '*/15 * * * *', hookFamily: 'reconcile' }],
+      onCronTick(event, ctx) {
+        firedFamily = event.hookFamily
+        hasTypedHooks = typeof ctx.hooks.on === 'function'
+      },
+    })
+
+    const result = await dispatchCronTick([p], '*/15 * * * *', 1000, { hooks: new HookSystemImpl() })
+    expect(firedFamily).toBe('reconcile')
+    expect(hasTypedHooks).toBe(true)
+    expect(result.invoked).toEqual([{ plugin: 'reconciler', hookFamily: 'reconcile' }])
+  })
+})

@@ -74,6 +74,10 @@ export type {
 export { createServiceSingleton } from './singletons/service-singleton'
 export type { ServiceSingleton } from './singletons/service-singleton'
 
+// v3 authoring API
+export { definePlugin, isDefinedPlugin } from './sdk/define-plugin'
+export type { DefinePluginInput, DefinedPlugin, DefinedPluginContext } from './sdk/define-plugin'
+
 // Cron surface
 export {
   collectCrons,
