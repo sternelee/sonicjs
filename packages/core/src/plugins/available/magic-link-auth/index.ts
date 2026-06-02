@@ -10,6 +10,7 @@ import { z } from 'zod'
 import type { Plugin, PluginContext } from '../../types'
 import type { D1Database } from '@cloudflare/workers-types'
 import { AuthManager, getJwtExpirySecondsFromDb } from '../../../middleware/auth'
+import { getEmailService, hasEmailService } from '../../../services/email/email-service-singleton'
 
 const magicLinkRequestSchema = z.object({
   email: z.string().email('Valid email is required')
@@ -97,18 +98,20 @@ export function createMagicLinkAuthPlugin(): Plugin {
       const baseUrl = new URL(c.req.url).origin
       const magicLink = `${baseUrl}/auth/magic-link/verify?token=${token}`
 
-      // Send email via email plugin
+      // Send email via the app-wide EmailService. (Previously this looked up a
+      // `c.env.plugins.get('email')` registry that was never built, so the link
+      // was only ever logged to the console and never delivered.)
       try {
-        const emailPlugin = c.env.plugins?.get('email')
-        if (emailPlugin && emailPlugin.sendEmail) {
-          await emailPlugin.sendEmail({
+        if (hasEmailService()) {
+          await getEmailService().send({
             to: normalizedEmail,
             subject: 'Your Magic Link to Sign In',
+            flow: 'magic-link',
             html: renderMagicLinkEmail(magicLink, linkExpiryMinutes)
           })
         } else {
-          console.error('Email plugin not available')
-          // In production, this should fail. For now, log the link for testing
+          console.error('EmailService not initialized; magic link not sent')
+          // Dev fallback so local flows aren't fully blocked.
           console.log(`Magic link for ${normalizedEmail}: ${magicLink}`)
         }
       } catch (error) {
