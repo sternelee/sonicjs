@@ -132,6 +132,7 @@ export interface DefinedPlugin {
   activate?: (context: unknown) => void | Promise<void>
   deactivate?: (context: unknown) => void | Promise<void>
   /** Marker so tooling/tests can detect a v3-defined plugin. */
+  // eslint-disable-next-line @typescript-eslint/naming-convention -- intentional internal marker
   readonly __sonicV3: true
 }
 
@@ -203,11 +204,13 @@ export function definePlugin(input: DefinePluginInput): DefinedPlugin {
     uninstall: input.uninstall,
     activate: input.activate,
     deactivate: input.deactivate,
+    // eslint-disable-next-line @typescript-eslint/naming-convention -- intentional internal marker
     __sonicV3: true,
   }
 }
 
 /** True if `plugin` was produced by {@link definePlugin}. */
 export function isDefinedPlugin(plugin: unknown): plugin is DefinedPlugin {
+  // eslint-disable-next-line @typescript-eslint/naming-convention -- intentional internal marker
   return !!plugin && typeof plugin === 'object' && (plugin as { __sonicV3?: unknown }).__sonicV3 === true
 }

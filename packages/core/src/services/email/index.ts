@@ -25,6 +25,9 @@ export type { ConsoleProviderOptions } from './providers/console'
 export { resolveEmailProvider } from './resolve-provider'
 export type { ResolveEmailProviderOptions, BuiltInProviderName } from './resolve-provider'
 
+export { loadDbEmailSettings, dbSettingsFrom } from './db-settings'
+export type { DbEmailSettings } from './db-settings'
+
 export {
   getEmailService,
   setEmailService,

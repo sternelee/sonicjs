@@ -50,6 +50,7 @@ export interface AuthPasswordResetCompletedPayload {
  * lookups and can be augmented via declaration merging if a downstream package
  * needs to extend it.
  */
+/* eslint-disable @typescript-eslint/naming-convention -- event names are domain identifiers that contain colons (e.g. content:read) */
 export interface HookEventPayloads {
   // Content lifecycle
   'content:read': ContentEventPayload
@@ -64,6 +65,7 @@ export interface HookEventPayloads {
   'auth:password-reset:requested': AuthPasswordResetRequestedPayload
   'auth:password-reset:completed': AuthPasswordResetCompletedPayload
 }
+/* eslint-enable @typescript-eslint/naming-convention */
 
 /** Union of all catalog event names. */
 export type HookEventName = keyof HookEventPayloads
