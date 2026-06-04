@@ -27,7 +27,7 @@ function makeObservablePlugin(state: { booted: boolean; hookRan: boolean }): Plu
     version: '1.0.0',
     hooks: [
       {
-        name: 'content:create',
+        name: 'content:after:create',
         handler: async (data: any) => {
           state.hookRan = true
           return data
@@ -59,7 +59,7 @@ describe('live plugin wiring via createSonicJSApp', () => {
     expect(state.booted).toBe(true)
 
     // The subscribed hook fires when the event is dispatched on the singleton.
-    await createTypedHooks(getHookSystem()).dispatch('content:create', {
+    await createTypedHooks(getHookSystem()).dispatch('content:after:create', {
       collection: 'posts',
       data: {},
     })
@@ -96,6 +96,6 @@ describe('live plugin wiring via createSonicJSApp', () => {
     // The singleton is still published (set before the disableAll check), but it
     // carries no plugin subscriptions.
     expect(hasHookSystem()).toBe(true)
-    expect(getHookSystem().getHooks?.('content:create') ?? []).toHaveLength(0)
+    expect(getHookSystem().getHooks?.('content:after:create') ?? []).toHaveLength(0)
   })
 })

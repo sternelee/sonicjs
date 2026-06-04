@@ -28,6 +28,9 @@ export type { MountResult, MountedRoute, RegisterPluginRoutesOptions } from './m
 export {
   HOOK_EVENT_NAMES,
   isKnownHookEvent,
+  isLegacyHookEvent,
+  resolveHookEventName,
+  LEGACY_EVENT_ALIASES,
 } from './hooks/catalog'
 export type {
   HookEventName,
@@ -38,9 +41,20 @@ export type {
   AuthRegistrationCompletedPayload,
   AuthPasswordResetRequestedPayload,
   AuthPasswordResetCompletedPayload,
+  AuthMagicLinkConsumedPayload,
+  AuthOtpVerifiedPayload,
+  LegacyHookEventName,
+  LegacyHookEventPayloads,
 } from './hooks/catalog'
 export { createTypedHooks } from './hooks/typed-hooks'
-export type { TypedHooks, TypedHookHandler, TypedHookContext, HookSystemLike } from './hooks/typed-hooks'
+export type {
+  TypedHooks,
+  TypedHookHandler,
+  TypedHookContext,
+  HookSystemLike,
+  SubscribableEvent,
+  PayloadForEvent,
+} from './hooks/typed-hooks'
 export {
   setHookSystem,
   getHookSystem,
