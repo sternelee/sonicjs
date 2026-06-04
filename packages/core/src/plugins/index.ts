@@ -33,6 +33,7 @@ export type {
   HookEventName,
   HookEventPayloads,
   HookPayload,
+  HookActor,
   ContentEventPayload,
   AuthRegistrationCompletedPayload,
   AuthPasswordResetRequestedPayload,

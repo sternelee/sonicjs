@@ -101,6 +101,17 @@ function __typeChecks(): void {
   hooks.on('content:create', (payload) => {
     const collection: string = payload.collection // ✓ narrowed
     void collection
+    // Canonical actor shape: content events use `user.id` (NOT `userId`).
+    const actorId: string | undefined = payload.user?.id
+    void actorId
+    // @ts-expect-error — `userId` was removed; the canonical actor field is `id`
+    void payload.user?.userId
+  })
+
+  // Same actor shape across event families (content `user` and auth `user` agree).
+  hooks.on('auth:registration:completed', (p) => {
+    const id: string = p.user.id
+    void id
   })
 
   // @ts-expect-error — 'not:a:real:event' is not in the catalog

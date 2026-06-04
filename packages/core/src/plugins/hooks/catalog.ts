@@ -13,33 +13,44 @@
  * a real dispatch site exists (or is landing in the same change).
  */
 
+/**
+ * The acting user on a hook event. ONE canonical shape across every event —
+ * always `id` (never `userId`), so a plugin reading `payload.user.id` works on
+ * content events and auth events alike.
+ */
+export interface HookActor {
+  id: string
+  email: string
+  role?: string
+}
+
 /** Common shape for content lifecycle events. */
 export interface ContentEventPayload {
   /** Collection / content-type slug the event is about. */
   collection: string
   /** Content row id, when known (absent for pre-create events). */
   id?: string
-  /** The content data being read/written. Mutable by handlers in the chain. */
+  /** The content data being read/written. Mutable by `before` handlers in the chain. */
   data: Record<string, unknown>
   /** The acting user, when the event originates from an authenticated request. */
-  user?: { userId: string; email: string; role: string }
+  user?: HookActor
 }
 
 /** Emitted after a user completes self-registration. */
 export interface AuthRegistrationCompletedPayload {
-  user: { id: string; email: string; role: string }
+  user: HookActor
 }
 
 /** Emitted when a password reset is requested (carries the reset token internally). */
 export interface AuthPasswordResetRequestedPayload {
-  user: { id: string; email: string }
+  user: HookActor
   /** Single-use reset token. Never expose this in an API response. */
   resetToken: string
 }
 
 /** Emitted after a password reset is confirmed. */
 export interface AuthPasswordResetCompletedPayload {
-  user: { id: string; email: string }
+  user: HookActor
 }
 
 /**
