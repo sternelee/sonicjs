@@ -24,7 +24,9 @@ import {
   adminSettingsRoutes,
   adminFormsRoutes,
   publicFormsRoutes,
-  adminApiReferenceRoutes
+  adminApiReferenceRoutes,
+  apiDocumentsRoutes,
+  adminDocumentsRoutes
 } from './routes'
 import { getCoreVersion } from './utils/version'
 import { bootstrapMiddleware } from './middleware/bootstrap'
@@ -212,6 +214,8 @@ export function createSonicJSApp(config: SonicJSConfig = {}): SonicJSApp {
   app.route('/api', apiRoutes)
   app.route('/api/media', apiMediaRoutes)
   app.route('/api/system', apiSystemRoutes)
+  app.route('/api/documents', apiDocumentsRoutes)
+  app.route('/admin/documents', adminDocumentsRoutes)
   app.route('/admin/api', adminApiRoutes)
   app.route('/admin/dashboard', adminDashboardRoutes)
   app.route('/admin/collections', adminCollectionsRoutes)
