@@ -56,8 +56,6 @@ import { setHookSystem } from './plugins/hooks/hook-system-singleton'
 import { createPluginWirer } from './plugins/wire'
 import { EmailService } from './services/email/email-service'
 import { resolveEmailProvider, type BuiltInProviderName } from './services/email/resolve-provider'
-import { ResendProvider } from './services/email/providers/resend'
-import { ConsoleProvider } from './services/email/providers/console'
 import { loadDbEmailSettings, dbSettingsFrom } from './services/email/db-settings'
 import { setEmailService, getEmailService, hasEmailService } from './services/email/email-service-singleton'
 import type { EmailProvider } from './services/email/types'
@@ -270,6 +268,7 @@ export function createSonicJSApp(config: SonicJSConfig = {}): SonicJSApp {
     if (hasEmailService()) return
     let provider: EmailProvider
     let defaultFrom = config.email?.from
+    let defaultReplyTo: string | undefined
 
     if (
       config.email?.provider ||
@@ -286,15 +285,21 @@ export function createSonicJSApp(config: SonicJSConfig = {}): SonicJSApp {
       // No config/env provider — fall back to admin-UI email settings if present.
       const dbSettings = await loadDbEmailSettings(env.DB as never)
       if (dbSettings?.apiKey) {
-        provider = new ResendProvider({ apiKey: dbSettings.apiKey })
+        // Route the admin-UI key through resolveEmailProvider (consistent provider
+        // selection + degrade-to-console safety) instead of hardcoding Resend.
+        provider = resolveEmailProvider({
+          providerName: 'resend',
+          env: { ...env, RESEND_API_KEY: dbSettings.apiKey },
+        })
         defaultFrom = defaultFrom || dbSettingsFrom(dbSettings)
+        defaultReplyTo = dbSettings.replyTo
       } else {
-        provider = new ConsoleProvider()
+        provider = resolveEmailProvider({ env }) // → console fallback, with its warning
       }
     }
 
     defaultFrom = defaultFrom || (env.DEFAULT_FROM_EMAIL as string | undefined) || 'noreply@sonicjs.local'
-    setEmailService(new EmailService({ provider, defaultFrom, db: env.DB as never }))
+    setEmailService(new EmailService({ provider, defaultFrom, defaultReplyTo, db: env.DB as never }))
   }
 
   // App version middleware

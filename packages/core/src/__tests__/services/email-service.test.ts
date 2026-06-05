@@ -74,6 +74,17 @@ describe('EmailService', () => {
     expect(provider.last?.from).toBe('custom@site.com')
   })
 
+  it('applies defaultReplyTo when a message omits replyTo (and a message overrides it)', async () => {
+    const provider = recordingProvider()
+    const svc = new EmailService({ provider, defaultFrom: 'noreply@site.com', defaultReplyTo: 'support@site.com' })
+
+    await svc.send({ to: 'a@b.com', subject: 'Hi' })
+    expect(provider.last?.replyTo).toBe('support@site.com')
+
+    await svc.send({ to: 'a@b.com', subject: 'Hi', replyTo: 'override@site.com' })
+    expect(provider.last?.replyTo).toBe('override@site.com')
+  })
+
   it('writes a sent row to email_log on success', async () => {
     const { db, rows } = fakeDb()
     const svc = new EmailService({

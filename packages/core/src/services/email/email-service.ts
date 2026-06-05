@@ -28,6 +28,8 @@ export interface EmailServiceOptions {
   provider: EmailProvider
   /** Default from-address used when a message omits `from`. */
   defaultFrom: string
+  /** Default reply-to applied when a message omits `replyTo`. */
+  defaultReplyTo?: string
   /** When provided, every send writes a row to `email_log`. */
   db?: EmailLogDb
   /** Injectable clock (tests). Defaults to `Date.now`. */
@@ -44,6 +46,7 @@ function toArray(value: string | string[] | undefined): string[] | undefined {
 export class EmailService {
   private readonly provider: EmailProvider
   private readonly defaultFrom: string
+  private readonly defaultReplyTo?: string
   private readonly db?: EmailLogDb
   private readonly now: () => number
   private readonly idFactory: () => string
@@ -51,6 +54,7 @@ export class EmailService {
   constructor(options: EmailServiceOptions) {
     this.provider = options.provider
     this.defaultFrom = options.defaultFrom
+    this.defaultReplyTo = options.defaultReplyTo
     this.db = options.db
     this.now = options.now ?? (() => Date.now())
     this.idFactory = options.idFactory ?? (() => crypto.randomUUID())
@@ -72,6 +76,7 @@ export class EmailService {
       ...message,
       to: toArray(message.to) ?? [],
       from: message.from ?? this.defaultFrom,
+      replyTo: message.replyTo ?? this.defaultReplyTo,
       cc: toArray(message.cc),
       bcc: toArray(message.bcc),
     }
