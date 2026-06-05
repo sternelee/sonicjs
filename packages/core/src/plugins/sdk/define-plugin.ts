@@ -34,7 +34,7 @@ import type { Hono } from 'hono'
 import type { Capability } from '../capabilities'
 import {
   createCapabilityContext,
-  validateCapabilities,
+  normalizeCapabilities,
   type CapabilityProviders,
   type PluginCapabilityContext,
 } from '../capabilities'
@@ -167,8 +167,10 @@ export function definePlugin(input: DefinePluginInput): DefinedPlugin {
   if (!input.id) throw new Error('definePlugin: `id` is required')
   if (!input.version) throw new Error(`definePlugin: \`version\` is required (plugin "${input.id}")`)
 
-  const capabilities = input.capabilities ?? []
-  const unknown = validateCapabilities(capabilities)
+  // Normalize declared capabilities to canonical names first (resolves deprecated
+  // / cross-fork spellings like `storage:write` → `media:write`), then warn on any
+  // that remain unknown. Strict-reject at registration is layered in Phase 5d.
+  const { capabilities, unknown } = normalizeCapabilities(input.capabilities ?? [])
   if (unknown.length > 0) {
     // eslint-disable-next-line no-console
     console.warn(

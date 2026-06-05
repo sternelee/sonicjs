@@ -75,6 +75,9 @@ export {
   hasCapability,
   assertCapability,
   validateCapabilities,
+  normalizeCapability,
+  normalizeCapabilities,
+  CAPABILITY_RENAMES,
   createCapabilityContext,
 } from './capabilities'
 export type {

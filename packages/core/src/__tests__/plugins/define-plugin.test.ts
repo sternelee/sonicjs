@@ -33,11 +33,19 @@ describe('definePlugin — shape', () => {
     expect(() => definePlugin({ id: 'x' })).toThrow(/`version` is required/)
   })
 
-  it('warns on unknown capabilities but keeps them', () => {
+  it('warns on unknown capabilities and drops them (keeps the known ones)', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const p = definePlugin({ id: 'x', version: '1.0.0', capabilities: ['email:send', 'totally:fake' as any] })
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('unknown capabilities: totally:fake'))
-    expect(p.capabilities).toContain('totally:fake')
+    // An unknown capability is NOT a granted capability — dropped, not stored.
+    expect(p.capabilities).toEqual(['email:send'])
+  })
+
+  it('normalizes deprecated/cross-fork capability spellings without warning', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const p = definePlugin({ id: 'x', version: '1.0.0', capabilities: ['storage:write' as any, 'hooks.auth:register' as any] })
+    expect(p.capabilities).toEqual(['media:write', 'hooks.auth:subscribe'])
+    expect(warn).not.toHaveBeenCalled()
   })
 })
 
