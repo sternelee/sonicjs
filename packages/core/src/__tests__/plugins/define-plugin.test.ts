@@ -6,8 +6,48 @@ import { wireRegisteredPlugins, type PluginBootContext } from '../../plugins/wir
 import { dispatchCronTick } from '../../plugins/cron'
 import { HookSystemImpl } from '../../plugins/hook-system'
 import { SonicCapabilityError } from '../../plugins/capabilities'
+import type { EmailService } from '../../services/email/email-service'
 
 afterEach(() => vi.restoreAllMocks())
+
+// ── Type-level: const-generic capability narrowing (tsc-validated, never run) ──
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function __capabilityNarrowing(): void {
+  // Declaring email:send narrows ctx.cap.email to EmailService.
+  definePlugin({
+    id: 'with-email',
+    version: '1.0.0',
+    capabilities: ['email:send'],
+    onBoot(ctx) {
+      const svc: EmailService = ctx.cap.email // ✓
+      void svc
+    },
+  })
+
+  // Declaring a different capability leaves ctx.cap.email un-granted (branded),
+  // so using it as an EmailService is a compile error.
+  definePlugin({
+    id: 'other-cap',
+    version: '1.0.0',
+    capabilities: ['cache:read'],
+    onBoot(ctx) {
+      // @ts-expect-error — email:send not declared; ctx.cap.email is not EmailService
+      const svc: EmailService = ctx.cap.email
+      void svc
+    },
+  })
+
+  // Declaring NO capabilities grants nothing.
+  definePlugin({
+    id: 'no-caps',
+    version: '1.0.0',
+    onBoot(ctx) {
+      // @ts-expect-error — no capabilities declared at all
+      const svc: EmailService = ctx.cap.email
+      void svc
+    },
+  })
+}
 
 function bootCtx(extra: Record<string, unknown> = {}): PluginBootContext {
   return { hooks: new HookSystemImpl(), ...extra }

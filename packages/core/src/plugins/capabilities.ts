@@ -14,6 +14,10 @@
  * deferred to Phase 2 (see the overhaul plan §8.4 / open question 2).
  */
 
+// Type-only import (no runtime coupling) so a const-narrowed `ctx.cap.email`
+// resolves to the real EmailService type instead of `unknown`.
+import type { EmailService } from '../services/email/email-service'
+
 /**
  * Fixed capability names. `db:<table>` is parameterized (a plugin owns specific
  * tables), so it is matched by pattern rather than listed here.
@@ -154,29 +158,54 @@ export function normalizeCapabilities(declared: readonly string[]): {
 
 /** Provider factories for capability-backed accessors. Each is called lazily. */
 export interface CapabilityProviders {
-  email?: () => unknown
+  email?: () => EmailService
   cache?: () => unknown
-  http?: () => unknown
+  http?: () => typeof fetch
 }
 
+// ── Type-level capability narrowing ──────────────────────────────────────────
+declare const CAP_NOT_DECLARED: unique symbol
 /**
- * The gated context handed to a plugin. The accessors throw unless the backing
- * capability was declared; `has`/`require` allow explicit checks.
+ * The type of a capability accessor the plugin did NOT declare. Deliberately a
+ * branded type (not `never`, which is assignable to everything): using it where a
+ * service is expected is a compile error, so `ctx.cap.email` without `email:send`
+ * fails to type-check instead of silently passing.
  */
-export interface PluginCapabilityContext {
+export type CapabilityNotDeclared<C extends string = string> = {
+  readonly [CAP_NOT_DECLARED]: C
+}
+
+// `T` if the declared tuple `Caps` contains `C`, else the branded not-declared type.
+type WhenGranted<Caps extends readonly Capability[], C extends string, T> =
+  C extends Caps[number] ? T : CapabilityNotDeclared<C>
+// `T` if `Caps` contains ANY of the union `C`, else the branded not-declared type.
+type WhenGrantedAny<Caps extends readonly Capability[], C extends string, T> =
+  Extract<Caps[number], C> extends never ? CapabilityNotDeclared<C> : T
+
+/**
+ * The gated context handed to a plugin. Accessors throw at runtime unless the
+ * backing capability was declared; with a const-narrowed `Caps` tuple they are
+ * also *typed* to the service (or `never`) at compile time, so `ctx.cap.email`
+ * is `EmailService` only when `'email:send'` was declared.
+ */
+export interface CapabilityContext<Caps extends readonly Capability[] = readonly Capability[]> {
   /** The capabilities granted to this plugin. */
   readonly capabilities: readonly string[]
   /** True if the plugin declared `capability`. */
   has(capability: string): boolean
   /** Throw {@link SonicCapabilityError} unless `capability` was declared. */
   require(capability: string): void
-  /** Email service. Throws unless `email:send` was declared (and a provider exists). */
-  readonly email: unknown
-  /** Cache service. Throws unless `cache:read` or `cache:write` was declared. */
-  readonly cache: unknown
-  /** Outbound fetch. Throws unless `http:fetch` was declared. */
-  readonly http: unknown
+  /** Email service. `EmailService` when `email:send` is declared, else `never`. */
+  readonly email: WhenGranted<Caps, 'email:send', EmailService>
+  /** Cache service. Present when `cache:read` or `cache:write` is declared. */
+  readonly cache: WhenGrantedAny<Caps, 'cache:read' | 'cache:write', unknown>
+  /** Outbound fetch. Present when `http:fetch` is declared. */
+  readonly http: WhenGranted<Caps, 'http:fetch', typeof fetch>
 }
+
+/** The un-narrowed gated context (every accessor typed as its service). */
+export type PluginCapabilityContext = CapabilityContext</** all */ readonly Capability[]>
+
 
 /**
  * Build a capability-gated context.
@@ -189,12 +218,14 @@ export interface PluginCapabilityContext {
  * @param providers Backing service factories (only the granted ones get called).
  * @param plugin    Plugin name, for clearer errors.
  */
-export function createCapabilityContext(
-  granted: readonly string[],
+export function createCapabilityContext<const Caps extends readonly Capability[]>(
+  granted: Caps,
   providers: CapabilityProviders = {},
   plugin?: string
-): PluginCapabilityContext {
-  const gate = (capability: string, anyOf: string[], provider: (() => unknown) | undefined): unknown => {
+): CapabilityContext<Caps> {
+  // `any` so the lazy getters satisfy the narrowed accessor types (the provider
+  // returns the real service at runtime; gating is enforced dynamically below).
+  const gate = (capability: string, anyOf: string[], provider: (() => unknown) | undefined): any => {
     const ok = anyOf.some((c) => hasCapability(granted, c))
     if (!ok) throw new SonicCapabilityError(capability, plugin)
     if (!provider) {
@@ -205,7 +236,7 @@ export function createCapabilityContext(
     return provider()
   }
 
-  const ctx: PluginCapabilityContext = {
+  const ctx: CapabilityContext<Caps> = {
     capabilities: [...granted],
     has: (capability) => hasCapability(granted, capability),
     require: (capability) => assertCapability(granted, capability, plugin),

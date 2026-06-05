@@ -85,6 +85,7 @@ export type {
   FixedCapability,
   DbCapability,
   CapabilityProviders,
+  CapabilityContext,
   PluginCapabilityContext,
 } from './capabilities'
 

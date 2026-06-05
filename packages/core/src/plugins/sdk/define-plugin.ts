@@ -36,7 +36,7 @@ import {
   createCapabilityContext,
   normalizeCapabilities,
   type CapabilityProviders,
-  type PluginCapabilityContext,
+  type CapabilityContext,
 } from '../capabilities'
 import { createTypedHooks, type TypedHooks } from '../hooks/typed-hooks'
 import type { PluginBootContext } from '../wire'
@@ -49,11 +49,15 @@ import type { MountableRoute } from '../mount'
  * Enriches the raw boot/cron context with a typed hook facade and the gated
  * capability context, while keeping `raw` and `env` available as an escape hatch.
  */
-export interface DefinedPluginContext {
+export interface DefinedPluginContext<Caps extends readonly Capability[] = readonly Capability[]> {
   /** Typed hook facade — `ctx.hooks.on('auth:registration:completed', …)`. */
   hooks: TypedHooks
-  /** Capability-gated services — `ctx.cap.email` throws without `email:send`. */
-  cap: PluginCapabilityContext
+  /**
+   * Capability-gated services. With a const-narrowed `Caps`, `ctx.cap.email` is
+   * typed `EmailService` only when `'email:send'` was declared (else `never`),
+   * and throws `SonicCapabilityError` at runtime if accessed undeclared.
+   */
+  cap: CapabilityContext<Caps>
   /** Runtime bindings, when available (absent during construction). */
   env?: Record<string, unknown>
   /** The unwrapped context the runtime passed. */
@@ -61,7 +65,7 @@ export interface DefinedPluginContext {
 }
 
 /** Input to {@link definePlugin}. */
-export interface DefinePluginInput {
+export interface DefinePluginInput<Caps extends readonly Capability[] = readonly []> {
   /** Unique, stable plugin id (kebab-case). Becomes the plugin `name`. */
   id: string
   /** Human-readable display name. Defaults to `id`. */
@@ -74,9 +78,11 @@ export interface DefinePluginInput {
   dependencies?: string[]
   /**
    * Capabilities this plugin declares. The gated `ctx.cap` accessors throw for
-   * anything not listed here. Unknown capabilities are warned about at definition.
+   * anything not listed here. Pass as a literal (`['email:send'] as const` is not
+   * needed — the `const` type param infers the tuple) to get `ctx.cap` narrowed.
+   * Unknown/deprecated names are normalized then warned about at definition.
    */
-  capabilities?: Capability[]
+  capabilities?: Caps
 
   // ── Synchronous registration (routes only) ──
   /** Declarative routes (mounted before the /admin catch-all). */
@@ -92,13 +98,13 @@ export interface DefinePluginInput {
    * Run once on first request, after every plugin has registered. The place for
    * hook subscriptions and env-dependent setup.
    */
-  onBoot?: (context: DefinedPluginContext) => void | Promise<void>
+  onBoot?: (context: DefinedPluginContext<Caps>) => void | Promise<void>
 
   // ── Cron ──
   /** Scheduled-work declarations (also list the expressions in wrangler.toml). */
   crons?: CronDeclaration[]
   /** Handler for a fired cron; branch on `event.hookFamily`. */
-  onCronTick?: (event: CronTickEvent, context: DefinedPluginContext) => void | Promise<void>
+  onCronTick?: (event: CronTickEvent, context: DefinedPluginContext<Caps>) => void | Promise<void>
 
   // ── Lifecycle (DB/schema only — never touches routes) ──
   install?: (context: unknown) => void | Promise<void>
@@ -144,15 +150,17 @@ export interface DefinedPlugin {
  * declared-but-used capability throws "no provider supplied by host", which is the
  * correct signal during early bring-up.
  */
-function enrich(
+function enrich<Caps extends readonly Capability[]>(
   raw: PluginBootContext | CronContext,
-  capabilities: Capability[],
+  runtimeCaps: readonly Capability[],
   pluginName: string
-): DefinedPluginContext {
+): DefinedPluginContext<Caps> {
   const providers = (raw as { providers?: CapabilityProviders }).providers ?? {}
   return {
     hooks: createTypedHooks(raw.hooks),
-    cap: createCapabilityContext(capabilities, providers, pluginName),
+    // Runtime gating uses the normalized capability set; the context TYPE reflects
+    // the declared `Caps` tuple (the narrowing the author sees).
+    cap: createCapabilityContext(runtimeCaps as unknown as Caps, providers, pluginName),
     env: raw.env,
     raw,
   }
@@ -161,9 +169,12 @@ function enrich(
 /**
  * Define a v3 plugin. Validates declared capabilities (warns on unknown), then
  * returns a runtime-ready plugin whose `onBoot`/`onCronTick` receive the enriched,
- * typed, capability-gated context.
+ * typed, capability-gated context. The `const Caps` type parameter captures the
+ * declared capability tuple so `ctx.cap` is narrowed at the author's call site.
  */
-export function definePlugin(input: DefinePluginInput): DefinedPlugin {
+export function definePlugin<const Caps extends readonly Capability[] = readonly []>(
+  input: DefinePluginInput<Caps>
+): DefinedPlugin {
   if (!input.id) throw new Error('definePlugin: `id` is required')
   if (!input.version) throw new Error(`definePlugin: \`version\` is required (plugin "${input.id}")`)
 
