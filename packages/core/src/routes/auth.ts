@@ -13,6 +13,7 @@ import { authValidationService, isRegistrationEnabled, isFirstUserRegistration }
 import type { RegistrationData } from '../services/auth-validation'
 import type { Bindings, Variables } from '../app'
 import { getUserProfileConfig, getRegistrationFields, getProfileFieldDefaults, sanitizeCustomData, saveCustomData, getCustomData } from '../plugins/core-plugins/user-profiles'
+import { dispatchHookEvent } from '../plugins/hooks/dispatch-event'
 
 const JWT_SECRET_FALLBACK = 'your-super-secret-jwt-key-change-in-production'
 
@@ -214,6 +215,14 @@ authRoutes.post('/register',
           await saveCustomData(db, userId, sanitized)
         }
       }
+
+      // Fire auth:registration:completed (fire-and-forget — does not block the response)
+      dispatchHookEvent(
+        c,
+        'auth:registration:completed',
+        { user: { id: userId, email: normalizedEmail, role: 'viewer' } },
+        'fire-and-forget'
+      )
 
       // Generate JWT token
       const tokenTtl = await getJwtExpirySecondsFromDb(c.env.DB, c.env)
@@ -581,6 +590,14 @@ authRoutes.post('/register/form',
         await saveCustomData(db, userId, sanitized)
       }
     }
+
+    // Fire auth:registration:completed (fire-and-forget — does not block the response)
+    dispatchHookEvent(
+      c,
+      'auth:registration:completed',
+      { user: { id: userId, email: normalizedEmail, role } },
+      'fire-and-forget'
+    )
 
     // Generate JWT token
     const tokenTtl = await getJwtExpirySecondsFromDb(c.env.DB, c.env)
@@ -1136,6 +1153,16 @@ authRoutes.post('/request-password-reset',
       user.id
     ).run()
 
+    // Fire auth:password-reset:requested so plugins can audit or send custom emails.
+    // The resetToken is included in the payload for plugins that implement their own
+    // delivery — it MUST NOT be returned in the API response.
+    dispatchHookEvent(
+      c,
+      'auth:password-reset:requested',
+      { user: { id: user.id, email: user.email }, resetToken },
+      'fire-and-forget'
+    )
+
     // Send the reset link via email. The link is NEVER returned in the API
     // response — doing so previously leaked a valid reset token to any caller.
     const resetLink = `${c.req.header('origin') || 'http://localhost:8787'}/auth/reset-password?token=${resetToken}`
@@ -1393,8 +1420,13 @@ authRoutes.post('/reset-password', async (c) => {
       user.id
     ).run()
 
-    // Log the activity (TODO: implement activity logging)
-    // Activity logging is deferred until utils/log-activity is implemented
+    // Fire auth:password-reset:completed for audit/notification plugins.
+    dispatchHookEvent(
+      c,
+      'auth:password-reset:completed',
+      { user: { id: user.id, email: user.email } },
+      'fire-and-forget'
+    )
 
     // Redirect to login with success message
     return c.redirect('/auth/login?message=Password reset successfully. Please log in with your new password.')

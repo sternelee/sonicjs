@@ -17,6 +17,7 @@
 // Type-only import (no runtime coupling) so a const-narrowed `ctx.cap.email`
 // resolves to the real EmailService type instead of `unknown`.
 import type { EmailService } from '../services/email/email-service'
+import type { HookEventName } from './hooks/catalog'
 
 /**
  * Fixed capability names. `db:<table>` is parameterized (a plugin owns specific
@@ -60,7 +61,9 @@ export function isKnownCapability(name: string): name is Capability {
 export class SonicCapabilityError extends Error {
   readonly capability: string
   readonly plugin?: string
-  constructor(capability: string, plugin?: string) {
+  /** The API surface the plugin tried to access (e.g. 'ctx.cap.email'). Optional. */
+  readonly accessedApi?: string
+  constructor(capability: string, plugin?: string, accessedApi?: string) {
     super(
       `${plugin ? `Plugin "${plugin}"` : 'Plugin'} used capability "${capability}" without declaring it. ` +
         `Add "${capability}" to the plugin's capabilities.`
@@ -68,6 +71,7 @@ export class SonicCapabilityError extends Error {
     this.name = 'SonicCapabilityError'
     this.capability = capability
     this.plugin = plugin
+    this.accessedApi = accessedApi
   }
 }
 
@@ -103,7 +107,6 @@ export function validateCapabilities(declared: readonly string[]): string[] {
 // is applied before the known-capability check. Seeded with the sibling fork's
 // (Infowall) spellings so plugins built there are portable here.
 
-/* eslint-disable @typescript-eslint/naming-convention -- capability identifiers contain colons */
 export const CAPABILITY_RENAMES = {
   // storage:* → media:* (this fork scopes the media library as `media`)
   'storage:read': 'media:read',
@@ -120,7 +123,6 @@ export const CAPABILITY_RENAMES = {
   // middleware-insertion surface to gate yet, so it is intentionally absent
   // (a plugin declaring it will surface as unknown rather than silently no-op).
 } as const satisfies Record<string, Capability>
-/* eslint-enable @typescript-eslint/naming-convention */
 
 /**
  * Resolve a (possibly deprecated) capability string to its canonical form, or
@@ -251,4 +253,27 @@ export function createCapabilityContext<const Caps extends readonly Capability[]
     },
   }
   return ctx
+}
+
+// ── Hook-subscription capability map ────────────────────────────────────────
+//
+// Maps each catalog event to the capability a plugin must declare in order to
+// subscribe to it. Used by the wire phase (Phase A) to gate declarative hook
+// registrations. Plugins that don't declare the required capability have the
+// offending hook skipped (warn in prod, error in strict).
+
+export const HOOK_CAPABILITY_MAP: Record<HookEventName, Capability> = {
+  'content:read': 'hooks.content:subscribe',
+  'content:before:create': 'hooks.content:subscribe',
+  'content:before:update': 'hooks.content:subscribe',
+  'content:before:delete': 'hooks.content:subscribe',
+  'content:after:create': 'hooks.content:subscribe',
+  'content:after:update': 'hooks.content:subscribe',
+  'content:after:delete': 'hooks.content:subscribe',
+  'content:after:publish': 'hooks.content:subscribe',
+  'auth:registration:completed': 'hooks.auth:subscribe',
+  'auth:password-reset:requested': 'hooks.auth:subscribe',
+  'auth:password-reset:completed': 'hooks.auth:subscribe',
+  'auth:magic-link:consumed': 'hooks.auth:subscribe',
+  'auth:otp:verified': 'hooks.auth:subscribe',
 }

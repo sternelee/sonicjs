@@ -11,6 +11,7 @@ import type { Plugin, PluginContext } from '../../types'
 import type { D1Database } from '@cloudflare/workers-types'
 import { AuthManager, getJwtExpirySecondsFromDb } from '../../../middleware/auth'
 import { getEmailService, hasEmailService } from '../../../services/email/email-service-singleton'
+import { dispatchHookEvent } from '../../hooks/dispatch-event'
 
 const magicLinkRequestSchema = z.object({
   email: z.string().email('Valid email is required')
@@ -220,6 +221,14 @@ export function createMagicLinkAuthPlugin(): Plugin {
       await db.prepare(`
         UPDATE users SET last_login_at = ? WHERE id = ?
       `).bind(Date.now(), user.id).run()
+
+      // Fire auth:magic-link:consumed for audit/analytics plugins (fire-and-forget).
+      dispatchHookEvent(
+        c,
+        'auth:magic-link:consumed',
+        { user: { id: user.id, email: user.email, role: user.role } },
+        'fire-and-forget'
+      )
 
       // Redirect to admin dashboard
       return c.redirect('/admin/dashboard?message=Successfully signed in')

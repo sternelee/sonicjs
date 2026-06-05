@@ -17,6 +17,7 @@ import { getEmailService, hasEmailService } from '../../../services/email/email-
 import { getJwtExpirySecondsFromDb } from '../../../middleware/auth'
 import { SettingsService } from '../../../services/settings'
 import { getCustomData } from '../user-profiles'
+import { dispatchHookEvent } from '../../hooks/dispatch-event'
 
 // Validation schemas
 const otpRequestSchema = z.object({
@@ -314,6 +315,14 @@ export function createOTPLoginPlugin(): Plugin {
         sameSite: 'Strict',
         maxAge: tokenTtl
       })
+
+      // Fire auth:otp:verified for audit/analytics plugins (fire-and-forget).
+      dispatchHookEvent(
+        c,
+        'auth:otp:verified',
+        { user: { id: user.id, email: user.email, role: user.role } },
+        'fire-and-forget'
+      )
 
       const customData = await getCustomData(db, user.id)
       const { is_active: _isActive, ...publicUser } = user
