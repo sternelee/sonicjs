@@ -38,10 +38,21 @@ import {
   type CapabilityProviders,
   type CapabilityContext,
 } from '../capabilities'
-import { createTypedHooks, type TypedHooks } from '../hooks/typed-hooks'
-import type { PluginBootContext } from '../wire'
+import { createTypedHooks, type TypedHooks, type TypedHookHandler } from '../hooks/typed-hooks'
+import type { HookEventName } from '../hooks/catalog'
+import type { PluginBootContext, WirableHook } from '../wire'
 import type { CronContext, CronDeclaration, CronTickEvent } from '../cron'
 import type { MountableRoute } from '../mount'
+
+/**
+ * Declarative typed hook subscriptions: a map of canonical event name → handler,
+ * each narrowed to that event's payload. Flattened into the plugin's `hooks[]`
+ * and subscribed during the wire phase. Use `onBoot`'s `ctx.hooks.on()` instead
+ * for dynamic/conditional subscriptions.
+ */
+export type DeclarativeHooks = {
+  [E in HookEventName]?: TypedHookHandler<E>
+}
 
 /**
  * Context handed to a defined plugin's `onBoot` / `onCronTick`.
@@ -95,8 +106,13 @@ export interface DefinePluginInput<Caps extends readonly Capability[] = readonly
 
   // ── Asynchronous wiring ──
   /**
+   * Declarative typed hook subscriptions (`{ 'content:after:create': (p) => … }`).
+   * Subscribed during the wire phase; each handler is narrowed to its event payload.
+   */
+  hooks?: DeclarativeHooks
+  /**
    * Run once on first request, after every plugin has registered. The place for
-   * hook subscriptions and env-dependent setup.
+   * dynamic hook subscriptions (`ctx.hooks.on(...)`) and env-dependent setup.
    */
   onBoot?: (context: DefinedPluginContext<Caps>) => void | Promise<void>
 
@@ -128,6 +144,8 @@ export interface DefinedPlugin {
   capabilities: Capability[]
   routes?: MountableRoute[]
   register?: (app: Hono) => void
+  /** Declarative hook subscriptions, flattened for the wire phase. */
+  hooks?: WirableHook[]
   /** Wrapped onBoot accepting the runtime's raw boot context. */
   onBoot?: (context: PluginBootContext) => void | Promise<void>
   crons?: CronDeclaration[]
@@ -200,6 +218,21 @@ export function definePlugin<const Caps extends readonly Capability[] = readonly
     ? (event: CronTickEvent, raw: CronContext) => input.onCronTick!(event, enrich(raw, capabilities, name))
     : undefined
 
+  // Flatten the declarative typed `hooks` map into the wirable `hooks[]` array.
+  // Each handler is wrapped to the raw (data, context) shape, coalescing a void
+  // return back to the incoming payload (matching createTypedHooks().on()).
+  const hooks: WirableHook[] | undefined = input.hooks
+    ? Object.entries(input.hooks)
+        .filter(([, h]) => typeof h === 'function')
+        .map(([eventName, h]) => ({
+          name: eventName,
+          handler: async (data: any, context: any) => {
+            const result = await (h as TypedHookHandler<HookEventName>)(data, context ?? {})
+            return result === undefined ? data : result
+          },
+        }))
+    : undefined
+
   return {
     id: input.id,
     name,
@@ -210,6 +243,7 @@ export function definePlugin<const Caps extends readonly Capability[] = readonly
     capabilities,
     routes: input.routes,
     register: input.register,
+    hooks,
     onBoot,
     crons: input.crons,
     onCronTick,

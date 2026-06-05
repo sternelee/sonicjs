@@ -47,6 +47,24 @@ function __capabilityNarrowing(): void {
       void svc
     },
   })
+
+  // Declarative hooks map: per-event payload narrowing + unknown-event rejection.
+  definePlugin({
+    id: 'decl',
+    version: '1.0.0',
+    hooks: {
+      'content:after:create': (payload) => {
+        const c: string = payload.collection // ✓ narrowed to ContentEventPayload
+        void c
+      },
+      'auth:registration:completed': (payload) => {
+        const id: string = payload.user.id // ✓ narrowed to the auth payload
+        void id
+      },
+      // @ts-expect-error — 'not:an:event' is not a catalog event name
+      'not:an:event': () => {},
+    },
+  })
 }
 
 function bootCtx(extra: Record<string, unknown> = {}): PluginBootContext {
@@ -182,6 +200,38 @@ describe('definePlugin — onBoot enriched context', () => {
     })
     await wireRegisteredPlugins([p], bootCtx({ env: { DB: 'binding' } }))
     expect(seenEnv).toEqual({ DB: 'binding' })
+  })
+})
+
+describe('definePlugin — declarative hooks', () => {
+  it('flattens the typed hooks map into wirable hooks[] that fire on dispatch', async () => {
+    let seenCollection = ''
+    const p = definePlugin({
+      id: 'declarative',
+      version: '1.0.0',
+      capabilities: ['hooks.content:subscribe'],
+      hooks: {
+        'content:after:create': (payload) => {
+          // payload is narrowed to ContentEventPayload
+          seenCollection = payload.collection
+        },
+      },
+    })
+
+    // Flattened onto hooks[] for the wire phase.
+    expect(p.hooks).toHaveLength(1)
+    expect(p.hooks?.[0]?.name).toBe('content:after:create')
+
+    // Wire it and dispatch the canonical event → handler fires with the payload.
+    const c: PluginBootContext = { hooks: new HookSystemImpl() }
+    await wireRegisteredPlugins([p], c)
+    await c.hooks.execute('content:after:create', { collection: 'posts', data: {} })
+    expect(seenCollection).toBe('posts')
+  })
+
+  it('has no hooks[] when none are declared', () => {
+    const p = definePlugin({ id: 'no-hooks', version: '1.0.0' })
+    expect(p.hooks).toBeUndefined()
   })
 })
 
