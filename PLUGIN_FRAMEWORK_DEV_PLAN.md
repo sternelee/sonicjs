@@ -93,6 +93,7 @@ Lowest-risk, highest-leverage. Freeze the public shapes so nothing later is buil
 - **Done when:** no hardcoded `new ResendProvider(...)` in `app.ts`.
 
 **Phase 1 exit:** catalog + capabilities + authoring shapes are final; legacy names alias with warnings; full suite green; tsc + lint clean. Land in #844.
+**Status: ✅ DONE** — commit `7ad63cca1` (T1.6), see Appendix D.
 
 ---
 
@@ -141,6 +142,9 @@ The "stop shipping an inert API" phase. Today a plugin subscribing to anything *
 - **Change:** rewrite it to drive a **real HTTP route** → subscriber fires, instead of manually calling `dispatch`. Removes false confidence that the bus works while production fires nothing.
 
 **Phase 2 exit:** a `definePlugin` plugin can subscribe to auth/content events and **actually fire**; subscription is capability-gated; CI prevents inert events. New PR stacked on #844.
+**Status: ✅ DONE** — commit `ce08884aa`. See Appendix E.
+
+> **Implementation note (cancel semantics):** The underlying `HookSystemImpl.execute` swallows non-CRITICAL errors from handlers (they are logged + chain continues). For in-band before-hooks to hard-cancel a write, the handler must throw `new Error('CRITICAL: ...')`. Full soft-cancel semantics (any throw = cancel) require a hook system upgrade and are tracked for Phase 3.
 
 ---
 
@@ -237,3 +241,26 @@ Can overlap Phase 3 partially; T4.1 is independent and high-value.
 - **`bootIsolate` is a real refactor** (T3.2), not a one-liner — both `initEmailService` and the wire trigger are closures inside `createSonicJSApp` today.
 - **Reconciliation is non-portable** (T3.5): Infowall's CF-GraphQL reconciler can't be copied; per-provider `reconcile()` is net-new; `delivery_state` stays null for providers without delivery webhooks.
 - **Reference-app drift** (T4.6): breaking changes won't surface in `my-sonicjs-app` until it dogfoods the framework.
+
+---
+
+## Appendix E — Phase 2 Status (ce08884aa)
+
+### What landed
+
+| Task | Files | What |
+|---|---|---|
+| **T2.1** | `routes/auth.ts`, `plugins/hooks/dispatch-event.ts` | Auth dispatch: `auth:registration:completed` (JSON + form routes), `auth:password-reset:requested` (carries resetToken for custom notification plugins), `auth:password-reset:completed` |
+| **T2.2** | `plugins/available/magic-link-auth/index.ts`, `plugins/core-plugins/otp-login-plugin/index.ts` | `auth:magic-link:consumed` on successful verify; `auth:otp:verified` on OTP verify |
+| **T2.3** | `routes/api-content-crud.ts` | `content:before:create/update/delete` (in-band, payload mutations flow through to DB write); `content:after:create/update/delete` + `content:after:publish` (fire-and-forget); `content:read` (fire-and-forget) |
+| **T2.4** | `plugins/capabilities.ts` (`HOOK_CAPABILITY_MAP`), `plugins/wire.ts` | Wire Phase A now gates declarative hook subscriptions by required capability; v3 plugins gated, old PluginBuilder plugins exempt; non-strict warns, strict records SonicCapabilityError |
+| **T2.5** | `plugins/capabilities.ts` | `SonicCapabilityError.accessedApi?: string` — optional, non-breaking |
+| **T2.6** | `__tests__/plugins/no-event-without-dispatch-site.test.ts` | CI guard: every HOOK_EVENT_NAMES entry must have a `dispatchHookEvent()` call in source |
+| **T2.7** | `__tests__/plugins/wire-integration.test.ts` | Rewired to call `dispatchHookEvent()` (same helper production routes use) instead of manually calling `hooks.dispatch()` |
+
+### Key design decisions
+- `dispatchHookEvent(c, event, payload, mode)` takes the Hono context and safely extracts `executionCtx` (it's absent in Node test environments — Hono throws on access).
+- Cancel semantics: the underlying `HookSystemImpl` swallows non-CRITICAL errors. Hard-cancel requires `throw new Error('CRITICAL: ...')`. Full soft-cancel is a Phase 3 hook-system upgrade.
+- `content:before:*` mutations: the returned payload's `data` map is applied to the DB write, so plugins can add/change fields pre-insert.
+
+### Tests: +14 new (`dispatch-event.test.ts` — 7; `no-event-without-dispatch-site.test.ts` — 1; wire-integration — 2 rewritten + 2 kept). Full core suite **1622 passed, 0 failed**; tsc + lint clean.
