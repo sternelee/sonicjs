@@ -1,4 +1,5 @@
--- Migration 037: Document Repository
+-- Migration 043: Document Repository
+-- (Renumbered from 037 to avoid collision with feature/better-auth-poc, which claims 037-042.)
 -- Enterprise document model with typed JSON payloads, generated columns for queryable fields,
 -- facet/reference side tables, and per-document ACL overrides.
 
