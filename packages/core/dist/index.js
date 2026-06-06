@@ -1,21 +1,22 @@
-import { getCustomData, renderConfirmationDialog, getConfirmationDialogScript, api_default, api_media_default, api_system_default, admin_api_default, router, adminCollectionsRoutes, adminFormsRoutes, adminSettingsRoutes, public_forms_default, router2, admin_content_default, adminMediaRoutes, userProfilesPlugin, adminPluginRoutes, adminLogsRoutes, userRoutes, auth_default, test_cleanup_default } from './chunk-M2PKQJ6J.js';
-export { ROUTES_INFO, admin_api_default as adminApiRoutes, adminCheckboxRoutes, admin_code_examples_default as adminCodeExamplesRoutes, adminCollectionsRoutes, admin_content_default as adminContentRoutes, router as adminDashboardRoutes, adminDesignRoutes, adminLogsRoutes, adminMediaRoutes, adminPluginRoutes, adminSettingsRoutes, admin_testimonials_default as adminTestimonialsRoutes, userRoutes as adminUsersRoutes, api_content_crud_default as apiContentCrudRoutes, api_media_default as apiMediaRoutes, api_default as apiRoutes, api_system_default as apiSystemRoutes, auth_default as authRoutes, createUserProfilesPlugin, defineUserProfile, getUserProfileConfig, userProfilesPlugin } from './chunk-M2PKQJ6J.js';
-import { SettingsService, setAppInstance, schema_exports } from './chunk-GQEIPW3L.js';
-export { Logger, apiTokens, collections, content, contentVersions, getLogger, initLogger, insertCollectionSchema, insertContentSchema, insertLogConfigSchema, insertMediaSchema, insertPluginActivityLogSchema, insertPluginAssetSchema, insertPluginHookSchema, insertPluginRouteSchema, insertPluginSchema, insertSystemLogSchema, insertUserSchema, insertWorkflowHistorySchema, logConfig, media, pluginActivityLog, pluginAssets, pluginHooks, pluginRoutes, plugins, selectCollectionSchema, selectContentSchema, selectLogConfigSchema, selectMediaSchema, selectPluginActivityLogSchema, selectPluginAssetSchema, selectPluginHookSchema, selectPluginRouteSchema, selectPluginSchema, selectSystemLogSchema, selectUserSchema, selectWorkflowHistorySchema, systemLogs, users, workflowHistory } from './chunk-GQEIPW3L.js';
-import { requireAuth, getJwtExpirySecondsFromDb, AuthManager, metricsMiddleware, bootstrapMiddleware, securityHeadersMiddleware, csrfProtection, requireRole } from './chunk-5QK3FXKX.js';
-export { AuthManager, PermissionManager, bootstrapMiddleware, cacheHeaders, compressionMiddleware, detailedLoggingMiddleware, getActivePlugins, isPluginActive, logActivity, loggingMiddleware, optionalAuth, performanceLoggingMiddleware, requireActivePlugin, requireActivePlugins, requireAnyPermission, requireAuth, requirePermission, requireRole, securityHeadersMiddleware as securityHeaders, securityLoggingMiddleware } from './chunk-5QK3FXKX.js';
-import { PluginService, PLUGIN_REGISTRY } from './chunk-CJOLOONT.js';
-export { PluginBootstrapService, PluginService as PluginServiceClass, backfillFormSubmissions, cleanupRemovedCollections, createContentFromSubmission, deriveCollectionSchemaFromFormio, deriveSubmissionTitle, fullCollectionSync, getAvailableCollectionNames, getManagedCollections, isCollectionManaged, loadCollectionConfig, loadCollectionConfigs, mapFormStatusToContentStatus, registerCollections, syncAllFormCollections, syncCollection, syncCollections, syncFormCollection, validateCollectionConfig } from './chunk-CJOLOONT.js';
-export { MigrationService } from './chunk-CSQWOYGZ.js';
+import { invalidateVariablesCache, hasEmailService, getEmailService, getCustomData, getVariablesCached, setVariablesCache, resolveVariablesInObject, renderConfirmationDialog, getConfirmationDialogScript, userProfilesPlugin, api_default, api_media_default, api_system_default, admin_api_default, router, adminCollectionsRoutes, adminFormsRoutes, adminSettingsRoutes, public_forms_default, router2, admin_content_default, adminMediaRoutes, adminPluginRoutes, adminLogsRoutes, userRoutes, auth_default, test_cleanup_default, setEmailService } from './chunk-HA5ODKZE.js';
+export { ROUTES_INFO, admin_api_default as adminApiRoutes, adminCheckboxRoutes, admin_code_examples_default as adminCodeExamplesRoutes, adminCollectionsRoutes, admin_content_default as adminContentRoutes, router as adminDashboardRoutes, adminDesignRoutes, adminLogsRoutes, adminMediaRoutes, adminPluginRoutes, adminSettingsRoutes, admin_testimonials_default as adminTestimonialsRoutes, userRoutes as adminUsersRoutes, api_content_crud_default as apiContentCrudRoutes, api_media_default as apiMediaRoutes, api_default as apiRoutes, api_system_default as apiSystemRoutes, auth_default as authRoutes, createUserProfilesPlugin, defineUserProfile, getUserProfileConfig, userProfilesPlugin } from './chunk-HA5ODKZE.js';
+import { SettingsService, setAppInstance, schema_exports } from './chunk-UQ4CZVP6.js';
+export { Logger, apiTokens, collections, content, contentVersions, getLogger, initLogger, insertCollectionSchema, insertContentSchema, insertLogConfigSchema, insertMediaSchema, insertPluginActivityLogSchema, insertPluginAssetSchema, insertPluginHookSchema, insertPluginRouteSchema, insertPluginSchema, insertSystemLogSchema, insertUserSchema, insertWorkflowHistorySchema, logConfig, media, pluginActivityLog, pluginAssets, pluginHooks, pluginRoutes, plugins, selectCollectionSchema, selectContentSchema, selectLogConfigSchema, selectMediaSchema, selectPluginActivityLogSchema, selectPluginAssetSchema, selectPluginHookSchema, selectPluginRouteSchema, selectPluginSchema, selectSystemLogSchema, selectUserSchema, selectWorkflowHistorySchema, systemLogs, users, workflowHistory } from './chunk-UQ4CZVP6.js';
+import { requireAuth, getJwtExpirySecondsFromDb, AuthManager, metricsMiddleware, bootstrapMiddleware, securityHeadersMiddleware, csrfProtection, requireRole } from './chunk-K6NPMDDT.js';
+export { AuthManager, PermissionManager, bootstrapMiddleware, cacheHeaders, compressionMiddleware, detailedLoggingMiddleware, getActivePlugins, isPluginActive, logActivity, loggingMiddleware, optionalAuth, performanceLoggingMiddleware, requireActivePlugin, requireActivePlugins, requireAnyPermission, requireAuth, requirePermission, requireRole, securityHeadersMiddleware as securityHeaders, securityLoggingMiddleware } from './chunk-K6NPMDDT.js';
+import { PluginService, PLUGIN_REGISTRY } from './chunk-HZOWO6UH.js';
+export { PluginBootstrapService, PluginService as PluginServiceClass, backfillFormSubmissions, cleanupRemovedCollections, createContentFromSubmission, deriveCollectionSchemaFromFormio, deriveSubmissionTitle, fullCollectionSync, getAvailableCollectionNames, getManagedCollections, isCollectionManaged, loadCollectionConfig, loadCollectionConfigs, mapFormStatusToContentStatus, registerCollections, syncAllFormCollections, syncCollection, syncCollections, syncFormCollection, validateCollectionConfig } from './chunk-HZOWO6UH.js';
+export { MigrationService } from './chunk-5Y2FVU2N.js';
 export { renderFilterBar } from './chunk-ON5ZMSU4.js';
 import { renderAdminLayout } from './chunk-XWIA3HVX.js';
 export { getConfirmationDialogScript, renderAlert, renderConfirmationDialog, renderForm, renderFormField, renderPagination, renderTable } from './chunk-XWIA3HVX.js';
 import { init_admin_layout_catalyst_template, renderAdminLayoutCatalyst } from './chunk-55RDMDOP.js';
-export { HookSystemImpl, HookUtils, PluginManager as PluginManagerClass, PluginRegistryImpl, PluginValidator as PluginValidatorClass, ScopedHookSystem as ScopedHookSystemClass } from './chunk-NGTBJJXZ.js';
-import { PluginBuilder, PluginHelpers } from './chunk-EXNEW5US.js';
-export { PluginBuilder, PluginHelpers } from './chunk-EXNEW5US.js';
-import { package_default, getCoreVersion } from './chunk-NDS4S4AG.js';
-export { QueryFilterBuilder, SONICJS_VERSION, TemplateRenderer, buildQuery, getCoreVersion, renderTemplate, templateRenderer } from './chunk-NDS4S4AG.js';
+import { HookSystemImpl, setHookSystem, createPluginWirer, registerPluginRoutes } from './chunk-OJCTRXHF.js';
+export { HookSystemImpl, HookUtils, PluginManager as PluginManagerClass, PluginRegistryImpl, PluginValidator as PluginValidatorClass, ScopedHookSystem as ScopedHookSystemClass } from './chunk-OJCTRXHF.js';
+import { PluginBuilder, PluginHelpers } from './chunk-3IIMUBT4.js';
+export { PluginBuilder, PluginHelpers } from './chunk-3IIMUBT4.js';
+import { package_default, getCoreVersion } from './chunk-FE77VWGD.js';
+export { QueryFilterBuilder, SONICJS_VERSION, TemplateRenderer, buildQuery, getCoreVersion, renderTemplate, templateRenderer } from './chunk-FE77VWGD.js';
 import './chunk-X7ZAEI5S.js';
 export { metricsTracker } from './chunk-FICTAGD4.js';
 export { escapeHtml, sanitizeInput, sanitizeObject } from './chunk-TQABQWOP.js';
@@ -555,11 +556,11 @@ function formatCellValue(value) {
   if (typeof value === "object") {
     return '<span class="text-xs font-mono text-zinc-600 dark:text-zinc-400">' + JSON.stringify(value).substring(0, 50) + (JSON.stringify(value).length > 50 ? "..." : "") + "</span>";
   }
-  const str = String(value);
-  if (str.length > 100) {
-    return escapeHtml2(str.substring(0, 100)) + "...";
+  const str2 = String(value);
+  if (str2.length > 100) {
+    return escapeHtml2(str2.substring(0, 100)) + "...";
   }
-  return escapeHtml2(str);
+  return escapeHtml2(str2);
 }
 
 // src/plugins/core-plugins/database-tools-plugin/admin-routes.ts
@@ -1874,36 +1875,19 @@ function createOTPLoginPlugin() {
           loginUrl: settings.loginUrl || "",
           loginButtonText: settings.loginButtonText || ""
         });
-        const emailPlugin2 = await db.prepare(`
-          SELECT settings FROM plugins WHERE id = 'email'
-        `).first();
-        if (emailPlugin2?.settings) {
-          const emailSettings = JSON.parse(emailPlugin2.settings);
-          if (emailSettings.apiKey && emailSettings.fromEmail && emailSettings.fromName) {
-            const emailResponse = await fetch("https://api.resend.com/emails", {
-              method: "POST",
-              headers: {
-                "Authorization": `Bearer ${emailSettings.apiKey}`,
-                "Content-Type": "application/json"
-              },
-              body: JSON.stringify({
-                from: `${emailSettings.fromName} <${emailSettings.fromEmail}>`,
-                to: [normalizedEmail],
-                subject: `Your login code for ${siteName}`,
-                html: emailContent.html,
-                text: emailContent.text,
-                reply_to: emailSettings.replyTo || emailSettings.fromEmail
-              })
-            });
-            if (!emailResponse.ok) {
-              const errorData = await emailResponse.json();
-              console.error("Failed to send OTP email via Resend:", errorData);
-            }
-          } else {
-            console.warn("Email plugin is not fully configured (missing apiKey, fromEmail, or fromName)");
+        if (hasEmailService()) {
+          const sent = await getEmailService().send({
+            to: normalizedEmail,
+            subject: `Your login code for ${siteName}`,
+            flow: "otp",
+            html: emailContent.html,
+            text: emailContent.text
+          });
+          if (!sent.ok) {
+            console.error("Failed to send OTP email:", sent.error);
           }
         } else {
-          console.warn("Email plugin is not active or has no settings configured");
+          console.warn("EmailService not initialized; OTP email not sent");
         }
         const response = {
           message: "If an account exists for this email, you will receive a verification code shortly.",
@@ -2005,7 +1989,7 @@ function createOTPLoginPlugin() {
         maxAge: tokenTtl
       });
       const customData = await getCustomData(db, user.id);
-      const { is_active, ...publicUser } = user;
+      const { is_active: _isActive, ...publicUser } = user;
       return c.json({
         success: true,
         user: {
@@ -4535,15 +4519,15 @@ function createMagicLinkAuthPlugin() {
       const baseUrl = new URL(c.req.url).origin;
       const magicLink = `${baseUrl}/auth/magic-link/verify?token=${token}`;
       try {
-        const emailPlugin2 = c.env.plugins?.get("email");
-        if (emailPlugin2 && emailPlugin2.sendEmail) {
-          await emailPlugin2.sendEmail({
+        if (hasEmailService()) {
+          await getEmailService().send({
             to: normalizedEmail,
             subject: "Your Magic Link to Sign In",
+            flow: "magic-link",
             html: renderMagicLinkEmail(magicLink, linkExpiryMinutes)
           });
         } else {
-          console.error("Email plugin not available");
+          console.error("EmailService not initialized; magic link not sent");
           console.log(`Magic link for ${normalizedEmail}: ${magicLink}`);
         }
       } catch (error) {
@@ -6056,10 +6040,10 @@ function extractRequestInfo(c) {
   return { ip, userAgent, countryCode, path, method };
 }
 function generateFingerprint(ip, userAgent) {
-  const str = `${ip}:${userAgent}`;
+  const str2 = `${ip}:${userAgent}`;
   let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
+  for (let i = 0; i < str2.length; i++) {
+    const char = str2.charCodeAt(i);
     hash = (hash << 5) - hash + char;
     hash |= 0;
   }
@@ -7980,8 +7964,8 @@ adminRoutes4.get("/", async (c) => {
     dynamicMenuItems: c.get("pluginMenuItems")
   }));
 });
-function escapeHtml4(str) {
-  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+function escapeHtml4(str2) {
+  return str2.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
 // src/plugins/core-plugins/analytics/index.ts
@@ -8507,6 +8491,1351 @@ apiRoutes4.get("/stats", async (c) => {
   const stats = await service.getStats(startDate, endDate);
   return c.json(stats);
 });
+
+// src/plugins/core-plugins/_shared/admin-template.ts
+function wrapAdminPage(opts) {
+  return `<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${opts.title} - SonicJS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <script src="https://unpkg.com/htmx.org@2.0.3"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+  <style>body { font-family: 'Inter', system-ui, sans-serif; }</style>
+
+  <!-- CSRF: Auto-attach token to all HTMX and fetch requests (matches core admin pattern) -->
+  <script>
+    function getCsrfToken() {
+      var cookie = document.cookie.split('; ')
+        .find(function(row) { return row.startsWith('csrf_token='); });
+      return cookie ? cookie.substring(cookie.indexOf('=') + 1) : '';
+    }
+
+    // HTMX: attach CSRF token to all requests
+    document.addEventListener('htmx:configRequest', function(event) {
+      var token = getCsrfToken();
+      if (token) {
+        event.detail.headers['X-CSRF-Token'] = token;
+      }
+    });
+
+    // fetch(): attach CSRF token to mutating requests
+    (function() {
+      var originalFetch = window.fetch;
+      window.fetch = function(url, options) {
+        options = options || {};
+        var method = (options.method || 'GET').toUpperCase();
+        if (method !== 'GET' && method !== 'HEAD' && method !== 'OPTIONS') {
+          options.headers = options.headers || {};
+          if (options.headers instanceof Headers) {
+            if (!options.headers.has('X-CSRF-Token')) {
+              options.headers.set('X-CSRF-Token', getCsrfToken());
+            }
+          } else if (!Array.isArray(options.headers) && !options.headers['X-CSRF-Token']) {
+            options.headers['X-CSRF-Token'] = getCsrfToken();
+          }
+        }
+        return originalFetch.call(this, url, options);
+      };
+    })();
+  </script>
+</head>
+<body class="bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 min-h-screen">
+  ${opts.body}
+</body>
+</html>`;
+}
+
+// src/plugins/core-plugins/global-variables-plugin/index.ts
+var MIGRATION_SQL = `
+CREATE TABLE IF NOT EXISTS global_variables (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  key TEXT NOT NULL UNIQUE,
+  value TEXT NOT NULL DEFAULT '',
+  description TEXT,
+  category TEXT DEFAULT 'general',
+  is_active INTEGER NOT NULL DEFAULT 1,
+  created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+  updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_global_variables_key ON global_variables(key);
+CREATE INDEX IF NOT EXISTS idx_global_variables_category ON global_variables(category);
+CREATE INDEX IF NOT EXISTS idx_global_variables_active ON global_variables(is_active);
+`;
+function formatVariable(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    key: row.key,
+    value: row.value,
+    description: row.description,
+    category: row.category,
+    isActive: row.is_active === 1 || row.is_active === true,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+function esc(s) {
+  return (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+async function getVariablesMap(db) {
+  let variables = getVariablesCached();
+  if (variables) return variables;
+  try {
+    const { results } = await db.prepare(
+      "SELECT key, value FROM global_variables WHERE is_active = 1"
+    ).all();
+    variables = /* @__PURE__ */ new Map();
+    for (const row of results || []) {
+      variables.set(row.key, row.value);
+    }
+    setVariablesCache(variables);
+    return variables;
+  } catch {
+    return /* @__PURE__ */ new Map();
+  }
+}
+var apiRoutes5 = new Hono();
+apiRoutes5.use("*", async (c, next) => {
+  try {
+    const db = c.env?.DB;
+    if (db) {
+      const row = await db.prepare("SELECT status FROM plugins WHERE id = 'global-variables' AND status = 'active'").first();
+      if (!row) return c.json({ error: "Plugin not active" }, 404);
+    }
+  } catch {
+  }
+  await next();
+});
+apiRoutes5.get("/", async (c) => {
+  try {
+    const db = c.env.DB;
+    const category = c.req.query("category");
+    const active = c.req.query("active");
+    let query = "SELECT * FROM global_variables WHERE 1=1";
+    const params = [];
+    if (category) {
+      query += " AND category = ?";
+      params.push(category);
+    }
+    if (active !== void 0) {
+      query += " AND is_active = ?";
+      params.push(active === "true" ? 1 : 0);
+    }
+    query += " ORDER BY category ASC, key ASC";
+    const { results } = await db.prepare(query).bind(...params).all();
+    return c.json({ success: true, data: (results || []).map(formatVariable) });
+  } catch {
+    return c.json({ success: false, error: "Failed to fetch global variables" }, 500);
+  }
+});
+apiRoutes5.get("/resolve", async (c) => {
+  try {
+    const map = await getVariablesMap(c.env.DB);
+    return c.json({ success: true, data: Object.fromEntries(map) });
+  } catch {
+    return c.json({ success: false, error: "Failed to resolve variables" }, 500);
+  }
+});
+apiRoutes5.get("/:id", async (c) => {
+  try {
+    const result = await c.env.DB.prepare("SELECT * FROM global_variables WHERE id = ?").bind(c.req.param("id")).first();
+    if (!result) return c.json({ error: "Variable not found" }, 404);
+    return c.json({ success: true, data: formatVariable(result) });
+  } catch {
+    return c.json({ success: false, error: "Failed to fetch variable" }, 500);
+  }
+});
+apiRoutes5.post("/", async (c) => {
+  try {
+    const db = c.env.DB;
+    const { key, value, description, category, isActive } = await c.req.json();
+    if (!key || !/^[a-z0-9_]+$/.test(key)) {
+      return c.json({ error: "Key must be lowercase alphanumeric with underscores" }, 400);
+    }
+    const existing = await db.prepare("SELECT id FROM global_variables WHERE key = ?").bind(key).first();
+    if (existing) return c.json({ error: `Variable with key "${key}" already exists` }, 409);
+    await db.prepare(
+      "INSERT INTO global_variables (key, value, description, category, is_active) VALUES (?, ?, ?, ?, ?)"
+    ).bind(key, value || "", description || "", category || "general", isActive !== false ? 1 : 0).run();
+    invalidateVariablesCache();
+    const created = await db.prepare("SELECT * FROM global_variables WHERE key = ?").bind(key).first();
+    return c.json({ success: true, data: formatVariable(created) }, 201);
+  } catch {
+    return c.json({ success: false, error: "Failed to create variable" }, 500);
+  }
+});
+apiRoutes5.put("/:id", async (c) => {
+  try {
+    const db = c.env.DB;
+    const id = c.req.param("id");
+    const existing = await db.prepare("SELECT * FROM global_variables WHERE id = ?").bind(id).first();
+    if (!existing) return c.json({ error: "Variable not found" }, 404);
+    const body = await c.req.json();
+    const updates = [];
+    const params = [];
+    if (body.value !== void 0) {
+      updates.push("value = ?");
+      params.push(body.value);
+    }
+    if (body.description !== void 0) {
+      updates.push("description = ?");
+      params.push(body.description);
+    }
+    if (body.category !== void 0) {
+      updates.push("category = ?");
+      params.push(body.category);
+    }
+    if (body.isActive !== void 0) {
+      updates.push("is_active = ?");
+      params.push(body.isActive ? 1 : 0);
+    }
+    if (body.key !== void 0) {
+      if (!/^[a-z0-9_]+$/.test(body.key)) return c.json({ error: "Invalid key format" }, 400);
+      if (body.key !== existing.key) {
+        const dup = await db.prepare("SELECT id FROM global_variables WHERE key = ? AND id != ?").bind(body.key, id).first();
+        if (dup) return c.json({ error: `Key "${body.key}" already exists` }, 409);
+      }
+      updates.push("key = ?");
+      params.push(body.key);
+    }
+    if (updates.length === 0) return c.json({ error: "No fields to update" }, 400);
+    updates.push("updated_at = strftime('%s', 'now')");
+    params.push(id);
+    await db.prepare(`UPDATE global_variables SET ${updates.join(", ")} WHERE id = ?`).bind(...params).run();
+    invalidateVariablesCache();
+    const updated = await db.prepare("SELECT * FROM global_variables WHERE id = ?").bind(id).first();
+    return c.json({ success: true, data: formatVariable(updated) });
+  } catch {
+    return c.json({ success: false, error: "Failed to update variable" }, 500);
+  }
+});
+apiRoutes5.delete("/:id", async (c) => {
+  try {
+    const db = c.env.DB;
+    const id = c.req.param("id");
+    const existing = await db.prepare("SELECT id FROM global_variables WHERE id = ?").bind(id).first();
+    if (!existing) return c.json({ error: "Variable not found" }, 404);
+    await db.prepare("DELETE FROM global_variables WHERE id = ?").bind(id).run();
+    invalidateVariablesCache();
+    return c.json({ success: true });
+  } catch {
+    return c.json({ success: false, error: "Failed to delete variable" }, 500);
+  }
+});
+var adminRoutes5 = new Hono();
+adminRoutes5.use("*", async (c, next) => {
+  try {
+    const db = c.env?.DB;
+    if (db) {
+      const row = await db.prepare("SELECT status FROM plugins WHERE id = 'global-variables' AND status = 'active'").first();
+      if (!row) return c.html('<html><body><h1>Plugin not active</h1><p>Enable the Global Variables plugin from <a href="/admin/plugins">Plugins</a>.</p></body></html>', 404);
+    }
+  } catch {
+  }
+  await next();
+});
+adminRoutes5.get("/", async (c) => {
+  const db = c.env.DB;
+  let variables = [];
+  try {
+    const { results } = await db.prepare("SELECT * FROM global_variables ORDER BY category ASC, key ASC").all();
+    variables = (results || []).map(formatVariable);
+  } catch {
+  }
+  let editorActive = false;
+  let activeEditorName = "";
+  let enableEditorIntegration = true;
+  try {
+    const qeRow = await db.prepare("SELECT status FROM plugins WHERE (id = 'quill-editor' OR name = 'quill-editor') AND status = 'active'").first();
+    const tmRow = await db.prepare("SELECT status FROM plugins WHERE (id = 'tinymce-plugin' OR name = 'tinymce-plugin') AND status = 'active'").first();
+    if (qeRow) {
+      editorActive = true;
+      activeEditorName = "Quill Editor";
+    } else if (tmRow) {
+      editorActive = true;
+      activeEditorName = "TinyMCE";
+    }
+    const gvRow = await db.prepare("SELECT settings FROM plugins WHERE id = 'global-variables'").first();
+    if (gvRow?.settings) {
+      const settings = typeof gvRow.settings === "string" ? JSON.parse(gvRow.settings) : gvRow.settings;
+      enableEditorIntegration = settings.enableEditorIntegration !== false;
+    }
+  } catch {
+  }
+  return c.html(renderAdminPage(variables, { editorActive, activeEditorName, enableEditorIntegration }));
+});
+adminRoutes5.put("/:id", async (c) => {
+  const db = c.env.DB;
+  const id = c.req.param("id");
+  let body;
+  try {
+    body = await c.req.json();
+  } catch {
+    body = await c.req.parseBody();
+  }
+  const value = body.value;
+  if (value !== void 0) {
+    await db.prepare("UPDATE global_variables SET value = ?, updated_at = strftime('%s', 'now') WHERE id = ?").bind(value, id).run();
+    invalidateVariablesCache();
+  }
+  return c.html('<span class="text-green-400 text-xs">Saved</span>');
+});
+adminRoutes5.post("/:id/toggle", async (c) => {
+  const db = c.env.DB;
+  const id = c.req.param("id");
+  await db.prepare("UPDATE global_variables SET is_active = CASE WHEN is_active = 1 THEN 0 ELSE 1 END, updated_at = strftime('%s', 'now') WHERE id = ?").bind(id).run();
+  invalidateVariablesCache();
+  c.header("HX-Redirect", "/admin/global-variables");
+  return c.body(null, 204);
+});
+adminRoutes5.post("/", async (c) => {
+  const db = c.env.DB;
+  const form = await c.req.parseBody();
+  const key = (form.key || "").trim();
+  const value = (form.value || "").trim();
+  const category = (form.category || "general").trim();
+  const description = (form.description || "").trim();
+  if (!key || !/^[a-z0-9_]+$/.test(key)) {
+    return c.html('<div class="bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-lg px-4 py-2 mb-4">Key must be lowercase alphanumeric with underscores only</div>');
+  }
+  const existing = await db.prepare("SELECT id FROM global_variables WHERE key = ?").bind(key).first();
+  if (existing) {
+    return c.html(`<div class="bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-lg px-4 py-2 mb-4">Variable with key "${esc(key)}" already exists</div>`);
+  }
+  await db.prepare(
+    "INSERT INTO global_variables (key, value, description, category) VALUES (?, ?, ?, ?)"
+  ).bind(key, value, description, category).run();
+  invalidateVariablesCache();
+  c.header("HX-Redirect", "/admin/global-variables");
+  return c.body(null, 204);
+});
+adminRoutes5.post("/settings/editor-integration", async (c) => {
+  const db = c.env.DB;
+  try {
+    const row = await db.prepare("SELECT settings FROM plugins WHERE id = 'global-variables'").first();
+    const settings = row?.settings ? typeof row.settings === "string" ? JSON.parse(row.settings) : row.settings : {};
+    settings.enableEditorIntegration = !settings.enableEditorIntegration;
+    await db.prepare("UPDATE plugins SET settings = ? WHERE id = 'global-variables'").bind(JSON.stringify(settings)).run();
+    return c.json({ success: true, enableEditorIntegration: settings.enableEditorIntegration });
+  } catch {
+    return c.json({ success: false, error: "Failed to update setting" }, 500);
+  }
+});
+adminRoutes5.delete("/:id", async (c) => {
+  const db = c.env.DB;
+  await db.prepare("DELETE FROM global_variables WHERE id = ?").bind(c.req.param("id")).run();
+  invalidateVariablesCache();
+  return c.html("");
+});
+function renderAdminPage(variables, editorStatus = { editorActive: false, activeEditorName: "", enableEditorIntegration: true }) {
+  const groups = /* @__PURE__ */ new Map();
+  for (const v of variables) {
+    const cat = v.category || "general";
+    if (!groups.has(cat)) groups.set(cat, []);
+    groups.get(cat).push(v);
+  }
+  const categoryHtml = Array.from(groups.entries()).map(([cat, vars]) => `
+    <div class="mb-6">
+      <h3 class="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2 flex items-center gap-2">
+        <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+        ${esc(cat)} <span class="text-zinc-600">(${vars.length})</span>
+      </h3>
+      <div class="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+        <table class="w-full">
+          <tbody>
+            ${vars.map((v) => `
+              <tr class="border-b border-zinc-100 dark:border-zinc-800 last:border-0 group" id="var-${v.id}" data-original="${esc(v.value)}">
+                <td class="px-4 py-3 w-48">
+                  <code class="text-sm font-mono text-blue-600 dark:text-blue-400">{${esc(v.key)}}</code>
+                  ${v.description ? `<div class="text-xs text-zinc-500 mt-0.5 truncate max-w-[200px]">${esc(v.description)}</div>` : ""}
+                </td>
+                <td class="px-4 py-3">
+                  <div class="flex items-center gap-2">
+                    <input type="text" value="${esc(v.value)}" data-id="${v.id}"
+                           class="var-value-input flex-1 rounded-md border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:bg-white dark:focus:bg-zinc-900"
+                           oninput="markDirty(this)" />
+                    <button onclick="saveVariable(${v.id}, this)" class="save-btn hidden rounded-md bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-500 transition-colors">
+                      Save
+                    </button>
+                    <span class="save-status text-xs w-16"></span>
+                  </div>
+                </td>
+                <td class="px-3 py-3 w-20 text-center">
+                  <button onclick="toggleVariable(${v.id})"
+                          class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium transition-colors cursor-pointer
+                          ${v.isActive ? "bg-green-500/10 text-green-600 dark:text-green-400 hover:bg-green-500/20" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-700"}"
+                          title="Click to ${v.isActive ? "deactivate" : "activate"}">
+                    ${v.isActive ? "Active" : "Off"}
+                  </button>
+                </td>
+                <td class="px-3 py-3 w-10">
+                  <button onclick="deleteVariable(${v.id}, '{${esc(v.key)}}')"
+                          class="rounded p-1.5 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-all"
+                          title="Delete">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                  </button>
+                </td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `).join("");
+  return wrapAdminPage({ title: "Global Variables", body: `
+  <div class="max-w-4xl mx-auto px-6 py-8">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <div class="flex items-center gap-2 mb-1">
+          <a href="/admin/dashboard" class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+          </a>
+          <h1 class="text-2xl font-bold">Global Variables</h1>
+        </div>
+        <p class="text-sm text-zinc-500">
+          Dynamic content tokens. Use <code class="text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-1.5 py-0.5 rounded text-xs">{variable_key}</code> in rich text \u2014 resolved server-side on content read.
+        </p>
+      </div>
+      <div class="text-sm text-zinc-500">${variables.length} variable${variables.length !== 1 ? "s" : ""}</div>
+    </div>
+
+    <!-- Variables list -->
+    <div id="variables-list">
+      ${categoryHtml || `
+        <div class="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-12 text-center">
+          <div class="text-4xl mb-3">\u{1F524}</div>
+          <h3 class="text-lg font-medium mb-1">No variables yet</h3>
+          <p class="text-sm text-zinc-500">Create your first variable below to get started.</p>
+        </div>
+      `}
+    </div>
+
+    <!-- Add new variable form -->
+    <div class="mt-6 bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-5">
+      <h3 class="text-sm font-semibold mb-3">Add Variable</h3>
+      <form class="space-y-3">
+        <div class="grid grid-cols-12 gap-3">
+          <div class="col-span-3">
+            <label class="block text-xs text-zinc-500 mb-1">Key</label>
+            <input type="text" name="key" required pattern="[a-z0-9_]+" placeholder="variable_key"
+                   class="w-full rounded-md border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-2 text-sm font-mono placeholder-zinc-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
+          </div>
+          <div class="col-span-3">
+            <label class="block text-xs text-zinc-500 mb-1">Value</label>
+            <input type="text" name="value" required placeholder="Value"
+                   class="w-full rounded-md border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-2 text-sm placeholder-zinc-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
+          </div>
+          <div class="col-span-2">
+            <label class="block text-xs text-zinc-500 mb-1">Category</label>
+            <input type="text" name="category" placeholder="general" value="general"
+                   class="w-full rounded-md border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-2 text-sm placeholder-zinc-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
+          </div>
+          <div class="col-span-3">
+            <label class="block text-xs text-zinc-500 mb-1">Description</label>
+            <input type="text" name="description" placeholder="Optional"
+                   class="w-full rounded-md border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-2 text-sm placeholder-zinc-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
+          </div>
+          <div class="col-span-1 flex items-end">
+            <button type="submit" class="w-full rounded-md bg-zinc-900 dark:bg-white px-3 py-2 text-sm font-medium text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-colors">
+              Add
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Rich Text Editor Integration -->
+    <div class="mt-6 bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-5">
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-sm font-semibold flex items-center gap-2">
+            Rich Text Editor Integration
+            ${editorStatus.editorActive && editorStatus.enableEditorIntegration ? `<span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs bg-green-500/10 text-green-600 dark:text-green-400">Active \u2014 ${esc(editorStatus.activeEditorName)}</span>` : '<span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs bg-zinc-100 dark:bg-zinc-800 text-zinc-500">Inactive</span>'}
+          </h3>
+          <p class="text-xs text-zinc-500 mt-1">
+            Adds a <strong>Var</strong> toolbar button to the rich text editor for inserting global variables as inline chips. Works with both Quill and TinyMCE.
+          </p>
+        </div>
+        ${editorStatus.editorActive ? `<button onclick="toggleEditorIntegration()" id="editor-toggle-btn"
+                    class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${editorStatus.enableEditorIntegration ? "bg-blue-600" : "bg-zinc-600"}"
+                    role="switch" aria-checked="${editorStatus.enableEditorIntegration}">
+              <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${editorStatus.enableEditorIntegration ? "translate-x-5" : "translate-x-0"}"></span>
+            </button>` : ""}
+      </div>
+      ${!editorStatus.editorActive ? `<div class="mt-3 rounded-md bg-yellow-500/10 border border-yellow-500/20 px-4 py-3">
+            <div class="flex items-start gap-2">
+              <svg class="w-5 h-5 text-yellow-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+              <div>
+                <p class="text-sm font-medium text-yellow-600 dark:text-yellow-400">No rich text editor plugin is active</p>
+                <p class="text-xs text-yellow-600/80 dark:text-yellow-400/80 mt-0.5">
+                  To use variable insertion in the editor, enable either the <strong>Quill Editor</strong> or <strong>TinyMCE</strong> plugin from the
+                  <a href="/admin/plugins" class="underline hover:text-yellow-500">Plugins page</a>.
+                </p>
+              </div>
+            </div>
+          </div>` : ""}
+    </div>
+
+    <!-- API reference -->
+    <details class="mt-6">
+      <summary class="text-sm text-zinc-500 cursor-pointer hover:text-zinc-700 dark:hover:text-zinc-300">API Reference</summary>
+      <div class="mt-2 bg-zinc-100 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-4 text-sm text-zinc-600 dark:text-zinc-400 space-y-1">
+        <div><code>GET /api/global-variables</code> \u2014 List all</div>
+        <div><code>GET /api/global-variables/resolve</code> \u2014 Key\u2192value map</div>
+        <div><code>POST /api/global-variables</code> \u2014 Create <code>{ key, value, description, category }</code></div>
+        <div><code>PUT /api/global-variables/:id</code> \u2014 Update <code>{ value, description, category, isActive }</code></div>
+        <div><code>DELETE /api/global-variables/:id</code> \u2014 Delete</div>
+      </div>
+    </details>
+
+    <!-- Toast container -->
+    <div id="toast" class="fixed bottom-6 right-6 z-50 hidden">
+      <div class="rounded-lg px-4 py-3 text-sm font-medium shadow-lg transition-all" id="toast-inner"></div>
+    </div>
+
+    <!-- JavaScript: save/delete/toggle via fetch (handles CSRF properly) -->
+    <script>
+      function showToast(message, type) {
+        var toast = document.getElementById('toast');
+        var inner = document.getElementById('toast-inner');
+        inner.textContent = message;
+        inner.className = 'rounded-lg px-4 py-3 text-sm font-medium shadow-lg transition-all ' +
+          (type === 'success' ? 'bg-green-600 text-white' :
+           type === 'error' ? 'bg-red-600 text-white' : 'bg-zinc-700 text-white');
+        toast.classList.remove('hidden');
+        setTimeout(function() { toast.classList.add('hidden'); }, 3000);
+      }
+
+      function markDirty(input) {
+        var row = input.closest('tr');
+        var original = row.getAttribute('data-original');
+        var saveBtn = row.querySelector('.save-btn');
+        var status = row.querySelector('.save-status');
+        if (input.value !== original) {
+          saveBtn.classList.remove('hidden');
+          status.textContent = '';
+          input.classList.add('border-yellow-500');
+        } else {
+          saveBtn.classList.add('hidden');
+          input.classList.remove('border-yellow-500');
+        }
+      }
+
+      async function saveVariable(id, btn) {
+        var row = document.getElementById('var-' + id);
+        var input = row.querySelector('.var-value-input');
+        var status = row.querySelector('.save-status');
+        btn.disabled = true;
+        btn.textContent = 'Saving...';
+        try {
+          var resp = await fetch('/api/global-variables/' + id, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ value: input.value })
+          });
+          var json = await resp.json();
+          if (json.success) {
+            row.setAttribute('data-original', input.value);
+            input.classList.remove('border-yellow-500');
+            btn.classList.add('hidden');
+            status.innerHTML = '<span class="text-green-500">Saved</span>';
+            showToast('Variable updated', 'success');
+            setTimeout(function() { status.textContent = ''; }, 2000);
+          } else {
+            showToast(json.error || 'Save failed', 'error');
+          }
+        } catch(e) {
+          showToast('Network error', 'error');
+        }
+        btn.disabled = false;
+        btn.textContent = 'Save';
+      }
+
+      async function toggleVariable(id) {
+        try {
+          // Get current state, flip it
+          var resp = await fetch('/api/global-variables/' + id);
+          var json = await resp.json();
+          if (!json.success) { showToast('Failed to load variable', 'error'); return; }
+          var newState = !json.data.isActive;
+          var resp2 = await fetch('/api/global-variables/' + id, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ isActive: newState })
+          });
+          var json2 = await resp2.json();
+          if (json2.success) {
+            showToast(newState ? 'Activated' : 'Deactivated', 'success');
+            setTimeout(function() { location.reload(); }, 500);
+          } else {
+            showToast(json2.error || 'Toggle failed', 'error');
+          }
+        } catch(e) {
+          showToast('Network error', 'error');
+        }
+      }
+
+      async function deleteVariable(id, keyName) {
+        if (!confirm('Delete variable ' + keyName + '?')) return;
+        try {
+          var resp = await fetch('/api/global-variables/' + id, { method: 'DELETE' });
+          var json = await resp.json();
+          if (json.success) {
+            document.getElementById('var-' + id).remove();
+            showToast('Variable deleted', 'success');
+          } else {
+            showToast(json.error || 'Delete failed', 'error');
+          }
+        } catch(e) {
+          showToast('Network error', 'error');
+        }
+      }
+
+      async function toggleEditorIntegration() {
+        try {
+          var resp = await fetch('/admin/global-variables/settings/editor-integration', { method: 'POST' });
+          var json = await resp.json();
+          if (json.success) {
+            showToast(json.enableEditorIntegration ? 'Quill integration enabled' : 'Quill integration disabled', 'success');
+            setTimeout(function() { location.reload(); }, 500);
+          } else {
+            showToast(json.error || 'Failed to update', 'error');
+          }
+        } catch(e) {
+          showToast('Network error', 'error');
+        }
+      }
+
+      // Add form submit via fetch (not HTMX)
+      document.querySelector('form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        var form = e.target;
+        var data = {
+          key: form.key.value.trim(),
+          value: form.value.value.trim(),
+          category: form.category.value.trim() || 'general',
+          description: form.description.value.trim()
+        };
+        if (!data.key || !/^[a-z0-9_]+$/.test(data.key)) {
+          showToast('Key must be lowercase alphanumeric with underscores', 'error');
+          return;
+        }
+        try {
+          var resp = await fetch('/api/global-variables', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+          var json = await resp.json();
+          if (json.success) {
+            showToast('Variable created', 'success');
+            setTimeout(function() { location.reload(); }, 500);
+          } else {
+            showToast(json.error || 'Create failed', 'error');
+          }
+        } catch(e) {
+          showToast('Network error', 'error');
+        }
+      });
+    </script>
+  </div>
+  ` });
+}
+function createGlobalVariablesPlugin() {
+  const builder = PluginBuilder.create({
+    name: "global-variables",
+    version: "1.1.0",
+    description: "Dynamic content variables with inline token support and CRUD admin page"
+  });
+  builder.metadata({
+    author: { name: "SonicJS Community", email: "community@sonicjs.com" },
+    license: "MIT",
+    compatibility: "^2.0.0"
+  });
+  builder.addRoute("/api/global-variables", apiRoutes5, {
+    description: "Global variables CRUD API",
+    requiresAuth: true,
+    priority: 50
+  });
+  builder.addRoute("/admin/global-variables", adminRoutes5, {
+    description: "Global variables admin page with full CRUD",
+    requiresAuth: true,
+    priority: 50
+  });
+  builder.addMenuItem("Global Variables", "/admin/global-variables", {
+    icon: "variable",
+    order: 45,
+    permissions: ["global-variables:view"]
+  });
+  builder.addHook("content:read", async (data, context) => {
+    try {
+      const db = context?.context?.env?.DB;
+      if (!db || !data) return data;
+      const variables = await getVariablesMap(db);
+      if (variables.size === 0) return data;
+      return resolveVariablesInObject(data, variables);
+    } catch {
+      return data;
+    }
+  }, {
+    priority: 50,
+    description: "Resolve {variable_key} tokens in content data"
+  });
+  builder.lifecycle({
+    install: async (ctx) => {
+      const db = ctx?.env?.DB;
+      if (db) {
+        const statements = MIGRATION_SQL.split(";").map((s) => s.trim()).filter((s) => s.length > 0);
+        for (const stmt of statements) {
+          await db.prepare(stmt).run();
+        }
+        console.info("[GlobalVariables] Tables created");
+      }
+    },
+    activate: async () => {
+      console.info("[GlobalVariables] Plugin activated");
+    },
+    deactivate: async () => {
+      invalidateVariablesCache();
+      console.info("[GlobalVariables] Plugin deactivated, cache cleared");
+    },
+    uninstall: async (ctx) => {
+      const db = ctx?.env?.DB;
+      if (db) {
+        await db.prepare("DROP TABLE IF EXISTS global_variables").run();
+        console.info("[GlobalVariables] Tables dropped");
+      }
+    }
+  });
+  return builder.build();
+}
+var globalVariablesPlugin = createGlobalVariablesPlugin();
+
+// src/plugins/core-plugins/shortcodes-plugin/shortcode-resolver.ts
+var handlerRegistry = /* @__PURE__ */ new Map();
+function registerShortcodeHandler(key, handler) {
+  handlerRegistry.set(key, handler);
+}
+function getRegisteredHandlers() {
+  return Array.from(handlerRegistry.keys());
+}
+function hasHandler(key) {
+  return handlerRegistry.has(key);
+}
+var SHORTCODE_PATTERN = /\[\[(\w+)([^\]]*)\]\]/g;
+function parseShortcodeParams(paramStr) {
+  const params = {};
+  const regex = /(\w+)="([^"]*)"/g;
+  let match;
+  while ((match = regex.exec(paramStr)) !== null) {
+    params[match[1]] = match[2];
+  }
+  return params;
+}
+async function resolveShortcodes(text, context) {
+  if (!text) return text;
+  if (!text.includes("[[")) return text;
+  SHORTCODE_PATTERN.lastIndex = 0;
+  const replacements = [];
+  let m;
+  while ((m = SHORTCODE_PATTERN.exec(text)) !== null) {
+    const name = m[1];
+    const paramStr = m[2] || "";
+    const params = parseShortcodeParams(paramStr);
+    const handler = handlerRegistry.get(name);
+    if (handler) {
+      try {
+        const result2 = await handler(params, context);
+        if (typeof result2 === "string") {
+          replacements.push({ match: m[0], replacement: result2 });
+        } else {
+          replacements.push({ match: m[0], replacement: `<!-- shortcode ${name}: handler returned non-string -->` });
+        }
+      } catch {
+        replacements.push({ match: m[0], replacement: `<!-- shortcode error: ${name} -->` });
+      }
+    }
+  }
+  let result = text;
+  for (const r of replacements) {
+    result = result.replace(r.match, r.replacement);
+  }
+  return result;
+}
+async function resolveShortcodesInObject(obj, context) {
+  if (!obj) return obj;
+  if (typeof obj === "string") {
+    return resolveShortcodes(obj, context);
+  }
+  if (Array.isArray(obj)) {
+    return Promise.all(obj.map((item) => resolveShortcodesInObject(item, context)));
+  }
+  if (typeof obj === "object") {
+    const result = {};
+    for (const [key, value] of Object.entries(obj)) {
+      result[key] = await resolveShortcodesInObject(value, context);
+    }
+    return result;
+  }
+  return obj;
+}
+registerShortcodeHandler("current_date", (params) => {
+  const now = /* @__PURE__ */ new Date();
+  const format = params.format || "MMMM D, YYYY";
+  const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const monthsShort = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  return format.replace("YYYY", String(now.getFullYear())).replace("YY", String(now.getFullYear()).slice(-2)).replace("MMMM", months[now.getMonth()]).replace("MMM", monthsShort[now.getMonth()]).replace("MM", String(now.getMonth() + 1).padStart(2, "0")).replace("DD", String(now.getDate()).padStart(2, "0")).replace("D", String(now.getDate()));
+});
+registerShortcodeHandler("phone_link", (params) => {
+  const number = params.number || "";
+  const digits = number.replace(/\D/g, "");
+  return `<a href="tel:+1${digits}" class="text-blue-600 hover:underline">${number}</a>`;
+});
+registerShortcodeHandler("cta_button", (params) => {
+  const text = params.text || "Learn More";
+  const url = params.url || "/";
+  const style = params.style || "primary";
+  const colors = style === "primary" ? "bg-blue-600 hover:bg-blue-700 text-white" : "bg-zinc-200 hover:bg-zinc-300 text-zinc-900";
+  return `<a href="${url}" class="inline-block rounded-lg px-6 py-3 font-semibold ${colors} transition-colors">${text}</a>`;
+});
+registerShortcodeHandler("plan_count", (params) => {
+  const type = params.type || "residential";
+  return `<span data-shortcode="plan_count" data-type="${type}" class="font-semibold">1,000+</span>`;
+});
+registerShortcodeHandler("provider_rating", (params) => {
+  const format = params.format || "stars";
+  const display = format === "numeric" ? "4.2/5" : "\u2605\u2605\u2605\u2605\u2606";
+  return `<span data-shortcode="provider_rating" data-provider="${params.provider || ""}" class="text-yellow-500">${display}</span>`;
+});
+
+// src/plugins/core-plugins/shortcodes-plugin/index.ts
+var MIGRATION_SQL2 = `
+CREATE TABLE IF NOT EXISTS shortcodes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL UNIQUE,
+  display_name TEXT NOT NULL DEFAULT '',
+  description TEXT,
+  category TEXT DEFAULT 'general',
+  handler_key TEXT NOT NULL,
+  default_params TEXT DEFAULT '{}',
+  example_usage TEXT,
+  is_active INTEGER NOT NULL DEFAULT 1,
+  created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+  updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_shortcodes_name ON shortcodes(name);
+CREATE INDEX IF NOT EXISTS idx_shortcodes_category ON shortcodes(category);
+CREATE INDEX IF NOT EXISTS idx_shortcodes_active ON shortcodes(is_active);
+`;
+function formatShortcode(row) {
+  if (!row) return null;
+  let defaultParams = {};
+  try {
+    defaultParams = typeof row.default_params === "string" ? JSON.parse(row.default_params) : row.default_params || {};
+  } catch {
+  }
+  return {
+    id: row.id,
+    name: row.name,
+    displayName: row.display_name,
+    description: row.description,
+    category: row.category,
+    handlerKey: row.handler_key,
+    defaultParams,
+    exampleUsage: row.example_usage,
+    isActive: row.is_active === 1 || row.is_active === true,
+    handlerRegistered: hasHandler(row.handler_key),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+function esc2(s) {
+  return (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+var apiRoutes6 = new Hono();
+apiRoutes6.use("*", async (c, next) => {
+  try {
+    const db = c.env?.DB;
+    if (db) {
+      const row = await db.prepare("SELECT status FROM plugins WHERE id = 'shortcodes' AND status = 'active'").first();
+      if (!row) return c.json({ error: "Plugin not active" }, 404);
+    }
+  } catch {
+  }
+  await next();
+});
+apiRoutes6.get("/", async (c) => {
+  try {
+    const db = c.env.DB;
+    const active = c.req.query("active");
+    const resolvable = c.req.query("resolvable");
+    let query = "SELECT * FROM shortcodes";
+    const params = [];
+    if (active !== void 0) {
+      query += " WHERE is_active = ?";
+      params.push(active === "true" ? 1 : 0);
+    }
+    query += " ORDER BY category ASC, name ASC";
+    const { results } = await db.prepare(query).bind(...params).all();
+    let data = (results || []).map(formatShortcode);
+    if (resolvable === "true") {
+      data = data.filter((sc) => sc.handlerRegistered);
+    }
+    return c.json({ success: true, data });
+  } catch {
+    return c.json({ success: false, error: "Failed to fetch shortcodes" }, 500);
+  }
+});
+apiRoutes6.get("/handlers/registered", async (c) => {
+  return c.json({ success: true, data: getRegisteredHandlers() });
+});
+apiRoutes6.post("/preview", async (c) => {
+  try {
+    const { text } = await c.req.json();
+    if (!text) return c.json({ error: "text is required" }, 400);
+    const output = await resolveShortcodes(text);
+    return c.json({ success: true, data: { input: text, output } });
+  } catch {
+    return c.json({ success: false, error: "Failed to preview shortcode" }, 500);
+  }
+});
+apiRoutes6.get("/:id", async (c) => {
+  try {
+    const result = await c.env.DB.prepare("SELECT * FROM shortcodes WHERE id = ?").bind(c.req.param("id")).first();
+    if (!result) return c.json({ error: "Shortcode not found" }, 404);
+    return c.json({ success: true, data: formatShortcode(result) });
+  } catch {
+    return c.json({ success: false, error: "Failed to fetch shortcode" }, 500);
+  }
+});
+apiRoutes6.post("/", async (c) => {
+  try {
+    const db = c.env.DB;
+    const { name, display_name, displayName, description, handler_key, handlerKey, default_params, defaultParams, example_usage, exampleUsage, category } = await c.req.json();
+    const scName = name;
+    const scHandlerKey = handler_key || handlerKey;
+    const scDisplayName = display_name || displayName || scName;
+    const scDefaultParams = default_params || defaultParams || {};
+    const scExampleUsage = example_usage || exampleUsage || "";
+    if (!scName || !/^\w+$/.test(scName)) return c.json({ error: "Name must be alphanumeric with underscores" }, 400);
+    if (!scHandlerKey) return c.json({ error: "handler_key is required" }, 400);
+    const existing = await db.prepare("SELECT id FROM shortcodes WHERE name = ?").bind(scName).first();
+    if (existing) return c.json({ error: `Shortcode "${scName}" already exists` }, 409);
+    await db.prepare(
+      "INSERT INTO shortcodes (name, display_name, description, handler_key, default_params, example_usage, category) VALUES (?, ?, ?, ?, ?, ?, ?)"
+    ).bind(scName, scDisplayName, description || "", scHandlerKey, JSON.stringify(scDefaultParams), scExampleUsage, category || "general").run();
+    const created = await db.prepare("SELECT * FROM shortcodes WHERE name = ?").bind(scName).first();
+    return c.json({ success: true, data: formatShortcode(created) }, 201);
+  } catch {
+    return c.json({ success: false, error: "Failed to create shortcode" }, 500);
+  }
+});
+apiRoutes6.put("/:id", async (c) => {
+  try {
+    const db = c.env.DB;
+    const id = c.req.param("id");
+    const existing = await db.prepare("SELECT * FROM shortcodes WHERE id = ?").bind(id).first();
+    if (!existing) return c.json({ error: "Shortcode not found" }, 404);
+    const body = await c.req.json();
+    const updates = [];
+    const params = [];
+    if (body.display_name !== void 0 || body.displayName !== void 0) {
+      updates.push("display_name = ?");
+      params.push(body.display_name || body.displayName);
+    }
+    if (body.description !== void 0) {
+      updates.push("description = ?");
+      params.push(body.description);
+    }
+    if (body.handler_key !== void 0 || body.handlerKey !== void 0) {
+      updates.push("handler_key = ?");
+      params.push(body.handler_key || body.handlerKey);
+    }
+    if (body.default_params !== void 0 || body.defaultParams !== void 0) {
+      updates.push("default_params = ?");
+      params.push(JSON.stringify(body.default_params || body.defaultParams));
+    }
+    if (body.example_usage !== void 0 || body.exampleUsage !== void 0) {
+      updates.push("example_usage = ?");
+      params.push(body.example_usage || body.exampleUsage);
+    }
+    if (body.category !== void 0) {
+      updates.push("category = ?");
+      params.push(body.category);
+    }
+    if (body.isActive !== void 0 || body.is_active !== void 0) {
+      updates.push("is_active = ?");
+      params.push(body.isActive ?? body.is_active ? 1 : 0);
+    }
+    if (updates.length === 0) return c.json({ error: "No fields to update" }, 400);
+    updates.push("updated_at = strftime('%s', 'now')");
+    params.push(id);
+    await db.prepare(`UPDATE shortcodes SET ${updates.join(", ")} WHERE id = ?`).bind(...params).run();
+    const updated = await db.prepare("SELECT * FROM shortcodes WHERE id = ?").bind(id).first();
+    return c.json({ success: true, data: formatShortcode(updated) });
+  } catch {
+    return c.json({ success: false, error: "Failed to update shortcode" }, 500);
+  }
+});
+apiRoutes6.delete("/:id", async (c) => {
+  try {
+    const db = c.env.DB;
+    const id = c.req.param("id");
+    const existing = await db.prepare("SELECT id FROM shortcodes WHERE id = ?").bind(id).first();
+    if (!existing) return c.json({ error: "Shortcode not found" }, 404);
+    await db.prepare("DELETE FROM shortcodes WHERE id = ?").bind(id).run();
+    return c.json({ success: true });
+  } catch {
+    return c.json({ success: false, error: "Failed to delete shortcode" }, 500);
+  }
+});
+var adminRoutes6 = new Hono();
+adminRoutes6.use("*", async (c, next) => {
+  try {
+    const db = c.env?.DB;
+    if (db) {
+      const row = await db.prepare("SELECT status FROM plugins WHERE id = 'shortcodes' AND status = 'active'").first();
+      if (!row) return c.html('<html><body><h1>Plugin not active</h1><p>Enable the Shortcodes plugin from <a href="/admin/plugins">Plugins</a>.</p></body></html>', 404);
+    }
+  } catch {
+  }
+  await next();
+});
+adminRoutes6.get("/", async (c) => {
+  const db = c.env.DB;
+  let shortcodes = [];
+  try {
+    const { results } = await db.prepare("SELECT * FROM shortcodes ORDER BY category ASC, name ASC").all();
+    shortcodes = (results || []).map(formatShortcode);
+  } catch {
+  }
+  let editorActive = false;
+  let activeEditorName = "";
+  let enableEditorIntegration = true;
+  try {
+    const qeRow = await db.prepare("SELECT status FROM plugins WHERE (id = 'quill-editor' OR name = 'quill-editor') AND status = 'active'").first();
+    const tmRow = await db.prepare("SELECT status FROM plugins WHERE (id = 'tinymce-plugin' OR name = 'tinymce-plugin') AND status = 'active'").first();
+    if (qeRow) {
+      editorActive = true;
+      activeEditorName = "Quill Editor";
+    } else if (tmRow) {
+      editorActive = true;
+      activeEditorName = "TinyMCE";
+    }
+    const scRow = await db.prepare("SELECT settings FROM plugins WHERE id = 'shortcodes'").first();
+    if (scRow?.settings) {
+      const settings = typeof scRow.settings === "string" ? JSON.parse(scRow.settings) : scRow.settings;
+      enableEditorIntegration = settings.enableEditorIntegration !== false;
+    }
+  } catch {
+  }
+  return c.html(renderAdminPage2(shortcodes, { editorActive, activeEditorName, enableEditorIntegration }));
+});
+adminRoutes6.post("/", async (c) => {
+  const db = c.env.DB;
+  const form = await c.req.parseBody();
+  const name = (form.name || "").trim();
+  const displayName = (form.display_name || name).trim();
+  const handlerKey = (form.handler_key || "").trim();
+  const category = (form.category || "general").trim();
+  const description = (form.description || "").trim();
+  const exampleUsage = (form.example_usage || "").trim();
+  if (!name || !/^\w+$/.test(name)) {
+    return c.html('<div class="bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-lg px-4 py-2 mb-4">Name must be alphanumeric with underscores</div>');
+  }
+  if (!handlerKey) {
+    return c.html('<div class="bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-lg px-4 py-2 mb-4">Handler is required</div>');
+  }
+  await db.prepare(
+    "INSERT OR IGNORE INTO shortcodes (name, display_name, description, handler_key, default_params, example_usage, category) VALUES (?, ?, ?, ?, '{}', ?, ?)"
+  ).bind(name, displayName, description, handlerKey, exampleUsage, category).run();
+  c.header("HX-Redirect", "/admin/shortcodes");
+  return c.body(null, 204);
+});
+adminRoutes6.post("/settings/editor-integration", async (c) => {
+  const db = c.env.DB;
+  try {
+    const row = await db.prepare("SELECT settings FROM plugins WHERE id = 'shortcodes'").first();
+    const settings = row?.settings ? typeof row.settings === "string" ? JSON.parse(row.settings) : row.settings : {};
+    settings.enableEditorIntegration = !settings.enableEditorIntegration;
+    await db.prepare("UPDATE plugins SET settings = ? WHERE id = 'shortcodes'").bind(JSON.stringify(settings)).run();
+    return c.json({ success: true, enableEditorIntegration: settings.enableEditorIntegration });
+  } catch {
+    return c.json({ success: false, error: "Failed to update setting" }, 500);
+  }
+});
+adminRoutes6.delete("/:id", async (c) => {
+  await c.env.DB.prepare("DELETE FROM shortcodes WHERE id = ?").bind(c.req.param("id")).run();
+  return c.html("");
+});
+function renderAdminPage2(shortcodes, editorStatus = { editorActive: false, activeEditorName: "", enableEditorIntegration: true }) {
+  const groups = /* @__PURE__ */ new Map();
+  for (const sc of shortcodes) {
+    const cat = sc.category || "general";
+    if (!groups.has(cat)) groups.set(cat, []);
+    groups.get(cat).push(sc);
+  }
+  const handlers = getRegisteredHandlers();
+  const categoryHtml = Array.from(groups.entries()).map(([cat, scs]) => `
+    <div class="mb-6">
+      <h3 class="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2 flex items-center gap-2">
+        <span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
+        ${esc2(cat)} <span class="text-zinc-600">(${scs.length})</span>
+      </h3>
+      <div class="space-y-2">
+        ${scs.map((sc) => `
+          <div class="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-4 group" id="sc-${sc.id}">
+            <div class="flex items-start justify-between gap-4">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="text-sm font-semibold">${esc2(sc.displayName || sc.name)}</span>
+                  <code class="text-xs font-mono text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/10 rounded px-1.5 py-0.5">[[${esc2(sc.name)}]]</code>
+                  <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs ${sc.isActive ? "bg-green-500/10 text-green-600 dark:text-green-400" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500"}">
+                    ${sc.isActive ? "Active" : "Off"}
+                  </span>
+                  ${sc.handlerRegistered ? '<span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs bg-blue-500/10 text-blue-600 dark:text-blue-400" title="Resolves to inline HTML on content read">Resolvable</span>' : '<span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs bg-red-500/10 text-red-600 dark:text-red-400" title="No handler registered \u2014 will not resolve in content">No handler</span>'}
+                </div>
+                ${sc.description ? `<p class="text-xs text-zinc-500 mb-1">${esc2(sc.description)}</p>` : ""}
+                ${sc.exampleUsage ? `<code class="text-xs font-mono text-zinc-500 bg-zinc-50 dark:bg-zinc-800 rounded px-2 py-0.5">${esc2(sc.exampleUsage)}</code>` : ""}
+              </div>
+              <button hx-delete="/admin/shortcodes/${sc.id}" hx-confirm="Delete shortcode '${esc2(sc.name)}'?"
+                      hx-target="#sc-${sc.id}" hx-swap="outerHTML"
+                      class="rounded p-1.5 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-all">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              </button>
+            </div>
+          </div>
+        `).join("")}
+      </div>
+    </div>
+  `).join("");
+  const handlerOptions = handlers.map((h) => `<option value="${h}">${h}</option>`).join("");
+  return wrapAdminPage({ title: "Shortcodes", body: `
+  <div class="max-w-4xl mx-auto px-6 py-8">
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <div class="flex items-center gap-2 mb-1">
+          <a href="/admin/dashboard" class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+          </a>
+          <h1 class="text-2xl font-bold">Shortcodes</h1>
+        </div>
+        <p class="text-sm text-zinc-500">
+          Inline content functions. Use <code class="text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/10 px-1.5 py-0.5 rounded text-xs">[[shortcode_name param="value"]]</code> in rich text \u2014 each resolves to an inline HTML string on content read. Only shortcodes with registered handlers are available in the Quill editor picker.
+        </p>
+      </div>
+      <div class="text-sm text-zinc-500">${shortcodes.length} shortcode${shortcodes.length !== 1 ? "s" : ""} &middot; ${handlers.length} handler${handlers.length !== 1 ? "s" : ""}</div>
+    </div>
+
+    <div id="shortcodes-list">
+      ${categoryHtml || `
+        <div class="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-12 text-center">
+          <div class="text-4xl mb-3">\u26A1</div>
+          <h3 class="text-lg font-medium mb-1">No shortcodes yet</h3>
+          <p class="text-sm text-zinc-500">Register a shortcode below.</p>
+        </div>
+      `}
+    </div>
+
+    <!-- Add shortcode form -->
+    <div class="mt-6 bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-5">
+      <h3 class="text-sm font-semibold mb-3">Register Shortcode</h3>
+      <form hx-post="/admin/shortcodes" hx-target="#form-errors" hx-swap="innerHTML" class="space-y-3">
+        <div id="form-errors"></div>
+        <div class="grid grid-cols-12 gap-3">
+          <div class="col-span-3">
+            <label class="block text-xs text-zinc-500 mb-1">Name</label>
+            <input type="text" name="name" required pattern="\\w+" placeholder="my_shortcode"
+                   class="w-full rounded-md border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-2 text-sm font-mono placeholder-zinc-400 focus:border-purple-500 focus:ring-1 focus:ring-purple-500" />
+          </div>
+          <div class="col-span-3">
+            <label class="block text-xs text-zinc-500 mb-1">Display Name</label>
+            <input type="text" name="display_name" required placeholder="My Shortcode"
+                   class="w-full rounded-md border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-2 text-sm placeholder-zinc-400 focus:border-purple-500 focus:ring-1 focus:ring-purple-500" />
+          </div>
+          <div class="col-span-3">
+            <label class="block text-xs text-zinc-500 mb-1">Handler</label>
+            <select name="handler_key" required
+                    class="w-full rounded-md border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-2 text-sm focus:border-purple-500 focus:ring-1 focus:ring-purple-500">
+              <option value="">Select...</option>
+              ${handlerOptions}
+            </select>
+          </div>
+          <div class="col-span-2">
+            <label class="block text-xs text-zinc-500 mb-1">Category</label>
+            <input type="text" name="category" value="general"
+                   class="w-full rounded-md border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-2 text-sm placeholder-zinc-400 focus:border-purple-500 focus:ring-1 focus:ring-purple-500" />
+          </div>
+          <div class="col-span-1 flex items-end">
+            <button type="submit" class="w-full rounded-md bg-zinc-900 dark:bg-white px-3 py-2 text-sm font-medium text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-colors">
+              Add
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Preview -->
+    <div class="mt-6 bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-5">
+      <h3 class="text-sm font-semibold mb-3">Preview</h3>
+      <div class="flex gap-3">
+        <input type="text" id="preview-input" placeholder='[[current_date format="MM/DD/YYYY"]]'
+               class="flex-1 rounded-md border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-2 text-sm font-mono placeholder-zinc-400 focus:border-purple-500 focus:ring-1 focus:ring-purple-500" />
+        <button onclick="previewShortcode()" class="rounded-md bg-zinc-200 dark:bg-zinc-800 px-4 py-2 text-sm hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors">Preview</button>
+      </div>
+      <div id="preview-output" class="mt-3 bg-zinc-50 dark:bg-zinc-800 rounded-md p-3 text-sm hidden"></div>
+    </div>
+
+    <script>
+      async function previewShortcode() {
+        var input = document.getElementById('preview-input').value;
+        if (!input) return;
+        var resp = await fetch('/api/shortcodes/preview', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: input })
+        });
+        var json = await resp.json();
+        var output = document.getElementById('preview-output');
+        output.classList.remove('hidden');
+        output.innerHTML = '<span class="text-zinc-500 text-xs">Output:</span><br>' + (json.data?.output || json.error || 'No output');
+      }
+    </script>
+
+    <!-- Rich Text Editor Integration -->
+    <div class="mt-6 bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-5">
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-sm font-semibold flex items-center gap-2">
+            Rich Text Editor Integration
+            ${editorStatus.editorActive && editorStatus.enableEditorIntegration ? `<span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs bg-green-500/10 text-green-600 dark:text-green-400">Active \u2014 ${esc2(editorStatus.activeEditorName)}</span>` : '<span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs bg-zinc-100 dark:bg-zinc-800 text-zinc-500">Inactive</span>'}
+          </h3>
+          <p class="text-xs text-zinc-500 mt-1">
+            Adds an <strong>SC</strong> toolbar button to the rich text editor for inserting shortcodes as inline chips. Works with both Quill and TinyMCE.
+          </p>
+        </div>
+        ${editorStatus.editorActive ? `<button onclick="toggleEditorIntegration()" id="editor-toggle-btn"
+                    class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 ${editorStatus.enableEditorIntegration ? "bg-purple-600" : "bg-zinc-600"}"
+                    role="switch" aria-checked="${editorStatus.enableEditorIntegration}">
+              <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${editorStatus.enableEditorIntegration ? "translate-x-5" : "translate-x-0"}"></span>
+            </button>` : ""}
+      </div>
+      ${!editorStatus.editorActive ? `<div class="mt-3 rounded-md bg-yellow-500/10 border border-yellow-500/20 px-4 py-3">
+            <div class="flex items-start gap-2">
+              <svg class="w-5 h-5 text-yellow-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+              <div>
+                <p class="text-sm font-medium text-yellow-600 dark:text-yellow-400">No rich text editor plugin is active</p>
+                <p class="text-xs text-yellow-600/80 dark:text-yellow-400/80 mt-0.5">
+                  To use shortcode insertion in the editor, enable either the <strong>Quill Editor</strong> or <strong>TinyMCE</strong> plugin from the
+                  <a href="/admin/plugins" class="underline hover:text-yellow-500">Plugins page</a>.
+                </p>
+              </div>
+            </div>
+          </div>` : ""}
+    </div>
+
+    <script>
+      async function toggleEditorIntegration() {
+        try {
+          var resp = await fetch('/admin/shortcodes/settings/editor-integration', { method: 'POST' });
+          var json = await resp.json();
+          if (json.success) {
+            var toast = document.createElement('div');
+            toast.className = 'fixed bottom-6 right-6 z-50 rounded-lg px-4 py-3 text-sm font-medium shadow-lg bg-green-600 text-white';
+            toast.textContent = json.enableEditorIntegration ? 'Editor integration enabled' : 'Editor integration disabled';
+            document.body.appendChild(toast);
+            setTimeout(function() { location.reload(); }, 500);
+          }
+        } catch(e) {
+          alert('Network error');
+        }
+      }
+    </script>
+
+    <details class="mt-6">
+      <summary class="text-sm text-zinc-500 cursor-pointer hover:text-zinc-700 dark:hover:text-zinc-300">API Reference</summary>
+      <div class="mt-2 bg-zinc-100 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 p-4 text-sm text-zinc-600 dark:text-zinc-400 space-y-1">
+        <div><code>GET /api/shortcodes</code> \u2014 List all</div>
+        <div><code>GET /api/shortcodes/handlers/registered</code> \u2014 Handler keys</div>
+        <div><code>POST /api/shortcodes/preview</code> \u2014 Live preview</div>
+        <div><code>POST /api/shortcodes</code> \u2014 Create</div>
+        <div><code>PUT /api/shortcodes/:id</code> \u2014 Update</div>
+        <div><code>DELETE /api/shortcodes/:id</code> \u2014 Delete</div>
+      </div>
+    </details>
+  </div>
+  ` });
+}
+function createShortcodesPlugin() {
+  const builder = PluginBuilder.create({
+    name: "shortcodes",
+    version: "1.0.0",
+    description: "Registered shortcode functions for dynamic content with [[shortcode]] syntax"
+  });
+  builder.metadata({
+    author: { name: "SonicJS Community", email: "community@sonicjs.com" },
+    license: "MIT",
+    compatibility: "^2.0.0"
+  });
+  builder.addRoute("/api/shortcodes", apiRoutes6, {
+    description: "Shortcodes CRUD API + preview + handler list",
+    requiresAuth: true,
+    priority: 50
+  });
+  builder.addRoute("/admin/shortcodes", adminRoutes6, {
+    description: "Shortcodes admin page with CRUD and preview",
+    requiresAuth: true,
+    priority: 50
+  });
+  builder.addMenuItem("Shortcodes", "/admin/shortcodes", {
+    icon: "bolt",
+    order: 46,
+    permissions: ["shortcodes:view"]
+  });
+  builder.addHook("content:read", async (data, context) => {
+    try {
+      if (!data) return data;
+      return resolveShortcodesInObject(data, context);
+    } catch {
+      return data;
+    }
+  }, {
+    priority: 60,
+    // Run after global-variables (50)
+    description: "Resolve [[shortcode]] tokens in content data"
+  });
+  builder.lifecycle({
+    install: async (ctx) => {
+      const db = ctx?.env?.DB;
+      if (db) {
+        const statements = MIGRATION_SQL2.split(";").map((s) => s.trim()).filter((s) => s.length > 0);
+        for (const stmt of statements) {
+          await db.prepare(stmt).run();
+        }
+        console.info("[Shortcodes] Tables created");
+      }
+    },
+    activate: async () => {
+      console.info("[Shortcodes] Plugin activated");
+    },
+    deactivate: async () => {
+      console.info("[Shortcodes] Plugin deactivated");
+    },
+    uninstall: async (ctx) => {
+      const db = ctx?.env?.DB;
+      if (db) {
+        await db.prepare("DROP TABLE IF EXISTS shortcodes").run();
+        console.info("[Shortcodes] Tables dropped");
+      }
+    }
+  });
+  return builder.build();
+}
+var shortcodesPlugin = createShortcodesPlugin();
 
 // src/plugins/cache/services/cache-config.ts
 var CACHE_CONFIGS = {
@@ -10325,6 +11654,288 @@ var CachePlugin = class {
 var plugin = new CachePlugin();
 var cache_default = plugin;
 
+// src/services/email/email-service.ts
+function toArray(value) {
+  if (value === void 0) return void 0;
+  return Array.isArray(value) ? value : [value];
+}
+var EmailService = class {
+  provider;
+  defaultFrom;
+  db;
+  now;
+  idFactory;
+  constructor(options) {
+    this.provider = options.provider;
+    this.defaultFrom = options.defaultFrom;
+    this.db = options.db;
+    this.now = options.now ?? (() => Date.now());
+    this.idFactory = options.idFactory ?? (() => crypto.randomUUID());
+  }
+  /** Name of the active transport (e.g. `'resend'`). */
+  getProviderName() {
+    return this.provider.name;
+  }
+  /** True if the active transport is ready to send. */
+  isConfigured() {
+    return this.provider.isConfigured();
+  }
+  /** Normalize, send, and log. Never throws for ordinary delivery failures. */
+  async send(message) {
+    const normalized = {
+      ...message,
+      to: toArray(message.to) ?? [],
+      from: message.from ?? this.defaultFrom,
+      cc: toArray(message.cc),
+      bcc: toArray(message.bcc)
+    };
+    let result;
+    try {
+      result = await this.provider.send(normalized);
+    } catch (error) {
+      result = {
+        ok: false,
+        provider: this.provider.name,
+        error: error instanceof Error ? error.message : String(error)
+      };
+    }
+    const logId = await this.writeLog(normalized, result);
+    return logId ? { ...result, logId } : result;
+  }
+  /** Best-effort insert into `email_log`. Returns the row id, or undefined if not logged. */
+  async writeLog(message, result) {
+    if (!this.db) return void 0;
+    const id = this.idFactory();
+    const ts = this.now();
+    try {
+      await this.db.prepare(
+        `INSERT INTO email_log (
+             id, to_email, from_email, subject, status, provider, provider_id,
+             error, flow, metadata, failed_at_send, delivery_state, delivery_synced_at, created_at
+           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      ).bind(
+        id,
+        message.to.join(","),
+        message.from,
+        message.subject,
+        result.ok ? "sent" : "failed",
+        result.provider,
+        result.providerId ?? null,
+        result.error ?? null,
+        message.flow ?? null,
+        message.metadata ? JSON.stringify(message.metadata) : null,
+        result.ok ? null : ts,
+        null,
+        null,
+        ts
+      ).run();
+      return id;
+    } catch (error) {
+      console.error("[email] failed to write email_log row:", error);
+      return void 0;
+    }
+  }
+};
+
+// src/services/email/providers/resend.ts
+var RESEND_ENDPOINT = "https://api.resend.com/emails";
+var ResendProvider = class {
+  name = "resend";
+  apiKey;
+  endpoint;
+  fetchImpl;
+  constructor(options = {}) {
+    this.apiKey = options.apiKey;
+    this.endpoint = options.endpoint ?? RESEND_ENDPOINT;
+    this.fetchImpl = options.fetchImpl ?? fetch;
+  }
+  isConfigured() {
+    return !!this.apiKey;
+  }
+  async send(message) {
+    if (!this.isConfigured()) {
+      return { ok: false, provider: this.name, error: "Resend API key is not configured" };
+    }
+    try {
+      const res = await this.fetchImpl(this.endpoint, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${this.apiKey}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          from: message.from,
+          to: message.to,
+          subject: message.subject,
+          html: message.html,
+          text: message.text,
+          cc: message.cc,
+          bcc: message.bcc,
+          reply_to: message.replyTo,
+          headers: message.headers
+        })
+      });
+      if (!res.ok) {
+        const detail = await safeText(res);
+        return { ok: false, provider: this.name, error: `Resend responded ${res.status}: ${detail}` };
+      }
+      const body = await res.json().catch(() => ({}));
+      return { ok: true, provider: this.name, providerId: body.id };
+    } catch (error) {
+      return { ok: false, provider: this.name, error: error instanceof Error ? error.message : String(error) };
+    }
+  }
+};
+async function safeText(res) {
+  try {
+    return (await res.text()).slice(0, 500);
+  } catch {
+    return "<unreadable body>";
+  }
+}
+
+// src/services/email/providers/sendgrid.ts
+var SENDGRID_ENDPOINT = "https://api.sendgrid.com/v3/mail/send";
+var SendGridProvider = class {
+  name = "sendgrid";
+  apiKey;
+  endpoint;
+  fetchImpl;
+  constructor(options = {}) {
+    this.apiKey = options.apiKey;
+    this.endpoint = options.endpoint ?? SENDGRID_ENDPOINT;
+    this.fetchImpl = options.fetchImpl ?? fetch;
+  }
+  isConfigured() {
+    return !!this.apiKey;
+  }
+  async send(message) {
+    if (!this.isConfigured()) {
+      return { ok: false, provider: this.name, error: "SendGrid API key is not configured" };
+    }
+    try {
+      const content2 = [];
+      if (message.text) content2.push({ type: "text/plain", value: message.text });
+      if (message.html) content2.push({ type: "text/html", value: message.html });
+      const res = await this.fetchImpl(this.endpoint, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${this.apiKey}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          personalizations: [
+            {
+              to: message.to.map((email) => ({ email })),
+              cc: message.cc?.map((email) => ({ email })),
+              bcc: message.bcc?.map((email) => ({ email }))
+            }
+          ],
+          from: { email: message.from },
+          reply_to: message.replyTo ? { email: message.replyTo } : void 0,
+          subject: message.subject,
+          content: content2,
+          headers: message.headers
+        })
+      });
+      if (!res.ok) {
+        const detail = await safeText2(res);
+        return { ok: false, provider: this.name, error: `SendGrid responded ${res.status}: ${detail}` };
+      }
+      const providerId = res.headers.get("x-message-id") ?? void 0;
+      return { ok: true, provider: this.name, providerId };
+    } catch (error) {
+      return { ok: false, provider: this.name, error: error instanceof Error ? error.message : String(error) };
+    }
+  }
+};
+async function safeText2(res) {
+  try {
+    return (await res.text()).slice(0, 500);
+  } catch {
+    return "<unreadable body>";
+  }
+}
+
+// src/services/email/providers/console.ts
+var ConsoleProvider = class {
+  name = "console";
+  log;
+  includeBody;
+  constructor(options = {}) {
+    this.log = options.log ?? ((line) => console.log(line));
+    this.includeBody = options.includeBody ?? false;
+  }
+  isConfigured() {
+    return true;
+  }
+  async send(message) {
+    const parts = [
+      `[email:console] ${message.flow ? `(${message.flow}) ` : ""}`,
+      `from=${message.from} to=${message.to.join(",")} subject=${JSON.stringify(message.subject)}`
+    ];
+    if (this.includeBody && (message.text || message.html)) {
+      parts.push(`
+${message.text ?? message.html}`);
+    }
+    this.log(parts.join(""));
+    return { ok: true, provider: this.name, providerId: `console-${message.to.join(",")}` };
+  }
+};
+
+// src/services/email/resolve-provider.ts
+function str(value) {
+  return typeof value === "string" && value.length > 0 ? value : void 0;
+}
+function buildNamed(name, env, fetchImpl) {
+  switch (name) {
+    case "resend":
+      return new ResendProvider({ apiKey: str(env.RESEND_API_KEY), fetchImpl });
+    case "sendgrid":
+      return new SendGridProvider({ apiKey: str(env.SENDGRID_API_KEY), fetchImpl });
+    case "console":
+      return new ConsoleProvider();
+  }
+}
+function resolveEmailProvider(options = {}) {
+  const env = options.env ?? {};
+  if (options.provider) return options.provider;
+  let provider;
+  if (options.providerName) {
+    provider = buildNamed(options.providerName, env, options.fetchImpl);
+  } else if (str(env.RESEND_API_KEY)) {
+    provider = new ResendProvider({ apiKey: str(env.RESEND_API_KEY), fetchImpl: options.fetchImpl });
+  } else if (str(env.SENDGRID_API_KEY)) {
+    provider = new SendGridProvider({ apiKey: str(env.SENDGRID_API_KEY), fetchImpl: options.fetchImpl });
+  } else {
+    provider = new ConsoleProvider();
+  }
+  if (!provider.isConfigured()) {
+    console.warn(
+      `[email] provider "${provider.name}" is not configured (missing API key); falling back to the console provider \u2014 emails will be logged, not delivered.`
+    );
+    return new ConsoleProvider();
+  }
+  return provider;
+}
+
+// src/services/email/db-settings.ts
+async function loadDbEmailSettings(db) {
+  if (!db || typeof db.prepare !== "function") return null;
+  try {
+    const row = await db.prepare(`SELECT settings FROM plugins WHERE id = 'email'`).first();
+    if (!row?.settings) return null;
+    const parsed = JSON.parse(row.settings);
+    return parsed && typeof parsed === "object" ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+function dbSettingsFrom(settings) {
+  if (!settings.fromEmail) return void 0;
+  return settings.fromName ? `${settings.fromName} <${settings.fromEmail}>` : settings.fromEmail;
+}
+
 // src/assets/favicon.ts
 var faviconSvg = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <svg
@@ -10359,12 +11970,78 @@ function createSonicJSApp(config = {}) {
   const app2 = new Hono();
   const appVersion = config.version || getCoreVersion();
   const appName = config.name || "SonicJS AI";
+  const hookSystem = new HookSystemImpl();
+  setHookSystem(hookSystem);
+  const magicLinkPlugin = createMagicLinkAuthPlugin();
+  const corePluginsBeforeCatchAll = [
+    securityAuditPlugin,
+    aiSearchPlugin,
+    oauthProvidersPlugin,
+    userProfilesPlugin,
+    otpLoginPlugin,
+    analyticsPlugin,
+    stripePlugin,
+    // Previously declared via PluginBuilder.addRoute() but never mounted in
+    // app.ts, so their routes 404'd in production. Fixes #758.
+    globalVariablesPlugin,
+    shortcodesPlugin
+  ];
+  const corePluginsAfterCatchAll = [emailPlugin, magicLinkPlugin];
+  const wirePlugins = createPluginWirer(
+    () => [...corePluginsBeforeCatchAll, ...corePluginsAfterCatchAll, ...config.plugins?.register ?? []],
+    // The capability-gated `ctx.cap.email` resolves to the app EmailService, which
+    // is initialized (below) just before wiring on the first request.
+    () => ({
+      hooks: hookSystem,
+      env: firstRequestEnv,
+      providers: { email: () => getEmailService() }
+    })
+  );
+  let firstRequestEnv;
+  const initEmailService = async (env = {}) => {
+    if (hasEmailService()) return;
+    let provider;
+    let defaultFrom = config.email?.from;
+    if (config.email?.provider || config.email?.providerName || env.RESEND_API_KEY || env.SENDGRID_API_KEY) {
+      provider = resolveEmailProvider({
+        provider: config.email?.provider,
+        providerName: config.email?.providerName,
+        env
+      });
+    } else {
+      const dbSettings = await loadDbEmailSettings(env.DB);
+      if (dbSettings?.apiKey) {
+        provider = new ResendProvider({ apiKey: dbSettings.apiKey });
+        defaultFrom = defaultFrom || dbSettingsFrom(dbSettings);
+      } else {
+        provider = new ConsoleProvider();
+      }
+    }
+    defaultFrom = defaultFrom || env.DEFAULT_FROM_EMAIL || "noreply@sonicjs.local";
+    setEmailService(new EmailService({ provider, defaultFrom, db: env.DB }));
+  };
   app2.use("*", async (c, next) => {
     c.set("appVersion", appVersion);
     await next();
   });
   app2.use("*", metricsMiddleware());
   app2.use("*", bootstrapMiddleware(config));
+  app2.use("*", async (c, next) => {
+    if (!config.plugins?.disableAll) {
+      firstRequestEnv = c.env;
+      try {
+        await initEmailService(firstRequestEnv);
+      } catch (err) {
+        console.error("[email] init failed:", err);
+      }
+      try {
+        await wirePlugins();
+      } catch (err) {
+        console.error("[plugins] wiring failed:", err);
+      }
+    }
+    return next();
+  });
   if (config.middleware?.beforeAuth) {
     for (const middleware of config.middleware.beforeAuth) {
       app2.use("*", middleware);
@@ -10400,58 +12077,21 @@ function createSonicJSApp(config = {}) {
   app2.route("/admin/content", admin_content_default);
   app2.route("/admin/media", adminMediaRoutes);
   app2.use("/auth/*", securityAuditMiddleware());
-  if (securityAuditPlugin.routes && securityAuditPlugin.routes.length > 0) {
-    for (const route of securityAuditPlugin.routes) {
-      app2.route(route.path, route.handler);
-    }
-  }
-  if (aiSearchPlugin.routes && aiSearchPlugin.routes.length > 0) {
-    for (const route of aiSearchPlugin.routes) {
-      app2.route(route.path, route.handler);
-    }
-  }
-  app2.route("/admin/cache", cache_default.getRoutes());
-  if (oauthProvidersPlugin.routes && oauthProvidersPlugin.routes.length > 0) {
-    for (const route of oauthProvidersPlugin.routes) {
-      app2.route(route.path, route.handler);
-    }
-  }
-  if (userProfilesPlugin.routes && userProfilesPlugin.routes.length > 0) {
-    for (const route of userProfilesPlugin.routes) {
-      app2.route(route.path, route.handler);
-    }
-  }
-  if (otpLoginPlugin.routes && otpLoginPlugin.routes.length > 0) {
-    for (const route of otpLoginPlugin.routes) {
-      app2.route(route.path, route.handler);
-    }
-  }
-  if (analyticsPlugin.routes && analyticsPlugin.routes.length > 0) {
-    for (const route of analyticsPlugin.routes) {
-      app2.route(route.path, route.handler);
+  if (!config.plugins?.disableAll) {
+    registerPluginRoutes(app2, corePluginsBeforeCatchAll, { source: "core" });
+    app2.route("/admin/cache", cache_default.getRoutes());
+    if (config.plugins?.register && config.plugins.register.length > 0) {
+      registerPluginRoutes(app2, config.plugins.register, { source: "user" });
     }
   }
   app2.route("/api/events", apiRoutes4);
-  if (stripePlugin.routes && stripePlugin.routes.length > 0) {
-    for (const route of stripePlugin.routes) {
-      app2.route(route.path, route.handler);
-    }
-  }
   app2.route("/admin/plugins", adminPluginRoutes);
   app2.route("/admin/logs", adminLogsRoutes);
   app2.route("/admin", userRoutes);
   app2.route("/auth", auth_default);
   app2.route("/", test_cleanup_default);
-  if (emailPlugin.routes && emailPlugin.routes.length > 0) {
-    for (const route of emailPlugin.routes) {
-      app2.route(route.path, route.handler);
-    }
-  }
-  const magicLinkPlugin = createMagicLinkAuthPlugin();
-  if (magicLinkPlugin.routes && magicLinkPlugin.routes.length > 0) {
-    for (const route of magicLinkPlugin.routes) {
-      app2.route(route.path, route.handler);
-    }
+  if (!config.plugins?.disableAll) {
+    registerPluginRoutes(app2, corePluginsAfterCatchAll, { source: "core" });
   }
   app2.get("/favicon.svg", (c) => {
     return new Response(faviconSvg, {
