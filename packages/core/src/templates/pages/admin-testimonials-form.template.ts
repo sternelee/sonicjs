@@ -68,7 +68,7 @@ export function renderTestimonialsForm(data: TestimonialsFormData): string {
                 <input type="text"
                        name="authorName"
                        id="authorName"
-                       value="${testimonial?.authorName || ''}"
+                       value="${escapeHtml(testimonial?.authorName || '')}"
                        required
                        maxlength="100"
                        class="block w-full rounded-md border-0 bg-gray-700 py-1.5 text-gray-100 shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
@@ -91,7 +91,7 @@ export function renderTestimonialsForm(data: TestimonialsFormData): string {
                   <input type="text"
                          name="authorTitle"
                          id="authorTitle"
-                         value="${testimonial?.authorTitle || ''}"
+                         value="${escapeHtml(testimonial?.authorTitle || '')}"
                          maxlength="100"
                          class="block w-full rounded-md border-0 bg-gray-700 py-1.5 text-gray-100 shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
                          placeholder="CEO">
@@ -112,7 +112,7 @@ export function renderTestimonialsForm(data: TestimonialsFormData): string {
                   <input type="text"
                          name="authorCompany"
                          id="authorCompany"
-                         value="${testimonial?.authorCompany || ''}"
+                         value="${escapeHtml(testimonial?.authorCompany || '')}"
                          maxlength="100"
                          class="block w-full rounded-md border-0 bg-gray-700 py-1.5 text-gray-100 shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
                          placeholder="Acme Corp">
@@ -144,7 +144,7 @@ export function renderTestimonialsForm(data: TestimonialsFormData): string {
                           required
                           maxlength="1000"
                           class="backdrop-blur-sm bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white placeholder-gray-300 focus:border-blue-400 focus:outline-none transition-colors w-full"
-                          placeholder="Enter the customer's testimonial...">${testimonial?.testimonialText || ''}</textarea>
+                          placeholder="Enter the customer's testimonial...">${escapeHtml(testimonial?.testimonialText || '')}</textarea>
                 <p class="mt-1 text-sm text-gray-300">
                   <span id="testimonial-count">0</span>/1000 characters
                 </p>

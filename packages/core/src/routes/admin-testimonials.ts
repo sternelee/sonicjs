@@ -217,11 +217,16 @@ adminTestimonialsRoutes.put('/:id', async (c) => {
       },
     }, user?.userId)
 
-    // Sync publish state: publish or unpublish based on form value.
-    if (validated.isPublished && !newDraft.isPublished) {
+    // Sync publish state. saveDraft ALWAYS returns an unpublished draft, so we cannot gate on
+    // newDraft.isPublished (it is always false). Act on the root's currently-published row instead.
+    const pubRow = await db
+      .prepare('SELECT id FROM documents WHERE root_id = ? AND is_published = 1 AND tenant_id = ?')
+      .bind(rootId, 'default')
+      .first<{ id: string }>()
+    if (validated.isPublished) {
       await svc.publish(newDraft.id, user?.userId)
-    } else if (!validated.isPublished && newDraft.isPublished) {
-      await svc.unpublish(newDraft.id)
+    } else if (pubRow) {
+      await svc.unpublish(pubRow.id)
     }
 
     return c.redirect('/admin/testimonials?message=Testimonial updated successfully')

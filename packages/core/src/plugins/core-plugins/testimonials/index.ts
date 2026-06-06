@@ -163,8 +163,16 @@ testimonialAPIRoutes.put('/:id', async (c) => {
       title: validated.authorName, sortOrder: validated.sortOrder, data,
     })
 
-    if (validated.isPublished === true && !newDraft.isPublished) await svc.publish(newDraft.id)
-    else if (validated.isPublished === false && newDraft.isPublished) await svc.unpublish(newDraft.id)
+    // saveDraft always returns an unpublished draft, so sync against the root's published row
+    // (gating on newDraft.isPublished would make unpublish dead code).
+    if (validated.isPublished !== undefined) {
+      const pubRow = await db
+        .prepare('SELECT id FROM documents WHERE root_id = ? AND is_published = 1 AND tenant_id = ?')
+        .bind(rootId, 'default')
+        .first() as { id: string } | null
+      if (validated.isPublished) await svc.publish(newDraft.id)
+      else if (pubRow) await svc.unpublish(pubRow.id)
+    }
 
     const saved = await db.prepare('SELECT * FROM documents WHERE id = ?').bind(newDraft.id).first()
     return c.json({ success: true, data: docToApiShape(saved), message: 'Testimonial updated successfully' })
