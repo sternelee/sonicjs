@@ -35,7 +35,10 @@ export class DocumentTypeRegistry {
     const now = Math.floor(Date.now() / 1000)
     const existing = await this.findById(def.id)
 
-    const schemaJson = JSON.stringify(def.schema ? {} : {})
+    // A z.ZodSchema is not JSON-serializable, so persist a stable serializable shape derived from
+    // the type's queryable fields + settings. This is what schemaChanged compares, so schema_version
+    // bumps whenever a type's filterable shape changes (and is stamped onto documents.type_version).
+    const schemaJson = JSON.stringify({ queryableFields: def.queryableFields ?? [], settings: def.settings ?? {} })
     const queryableJson = JSON.stringify(def.queryableFields ?? [])
     const settingsJson = JSON.stringify(def.settings ?? {})
 

@@ -1,4 +1,9 @@
 // @ts-nocheck
+// LOGIC-ONLY mock coverage. This file uses a pure vi.fn() store that does NOT execute SQL, so it
+// can only assert that services issue the expected calls / pure-function results. Real SQL behavior
+// (bind/column balance, partial unique indexes, batch atomicity, generated columns, tenant scoping,
+// version_number, erase, golden reindex) is verified in documents.sqlite.test.ts against better-sqlite3.
+// Do NOT re-add SQL-simulation tests here — they masked the saveDraft bind bug (D1).
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { DocumentsService } from '../../services/documents'
 import { DocumentPermissionsService } from '../../services/document-permissions'
@@ -208,61 +213,10 @@ describe('DocumentsService.create', () => {
   })
 })
 
-describe('DocumentsService.saveDraft', () => {
-  it('creates a new version row while keeping the published row live', async () => {
-    const db = makeMockDb()
-    const svc = makeService(db)
-
-    // Create and publish the initial doc
-    const v1 = await svc.create({ typeId: FAQ_TYPE_ID, tenantId: TENANT, data: { question: 'v1' } })
-    const published = await svc.publish(v1.id)
-
-    // Now save a new draft
-    const v2 = await svc.saveDraft(v1.rootId, { data: { question: 'v2' } })
-
-    expect(v2.rootId).toBe(v1.rootId)
-    expect(v2.id).not.toBe(v1.id)
-    expect(v2.isCurrentDraft).toBe(true)
-    expect(v2.isPublished).toBe(false)
-    expect(v2.versionOfId).toBe(v1.id)
-
-    // Published row is still live
-    const publishedRow = db._store.get(published.id)
-    expect(publishedRow.is_published).toBe(1)
-  })
-
-  it('demotes the previous current draft', async () => {
-    const db = makeMockDb()
-    const svc = makeService(db)
-
-    const v1 = await svc.create({ typeId: FAQ_TYPE_ID, tenantId: TENANT, data: { question: 'v1' } })
-    await svc.saveDraft(v1.rootId, { data: { question: 'v2' } })
-
-    const v1Row = db._store.get(v1.id)
-    expect(v1Row.is_current_draft).toBe(0)
-  })
-
-  it('merges data from previous draft', async () => {
-    const db = makeMockDb()
-    const svc = makeService(db)
-
-    const v1 = await svc.create({ typeId: FAQ_TYPE_ID, tenantId: TENANT, data: { question: 'Q?', category: 'general' } })
-    const v2 = await svc.saveDraft(v1.rootId, { data: { answer: 'A!' } })
-
-    expect(v2.data).toMatchObject({ question: 'Q?', category: 'general', answer: 'A!' })
-  })
-
-  it('uses a single db.batch call (atomic)', async () => {
-    const db = makeMockDb()
-    const svc = makeService(db)
-
-    const v1 = await svc.create({ typeId: FAQ_TYPE_ID, tenantId: TENANT, data: {} })
-    const batchCallsBefore = db._batchCalls.length
-    await svc.saveDraft(v1.rootId, { data: { answer: 'A' } })
-    // One extra batch call for saveDraft
-    expect(db._batchCalls.length).toBe(batchCallsBefore + 1)
-  })
-})
+// NOTE: saveDraft behavior (new version row, demote-prev, data merge, batch atomicity, tenant
+// scoping) is covered against real SQL in documents.sqlite.test.ts. The former mock-simulation
+// tests here were theater (the mock hardcoded version_number=2 and could not catch the bind bug)
+// and have been removed deliberately.
 
 describe('DocumentsService.publish', () => {
   it('sets is_published on the target row', async () => {
@@ -277,24 +231,7 @@ describe('DocumentsService.publish', () => {
     expect(row.status).toBe('published')
   })
 
-  it('clears is_published on the previously published row', async () => {
-    const db = makeMockDb()
-    const svc = makeService(db)
-
-    const v1 = await svc.create({ typeId: FAQ_TYPE_ID, tenantId: TENANT, data: { q: 'v1' } })
-    await svc.publish(v1.id)
-
-    const v2 = await svc.saveDraft(v1.rootId, { data: { q: 'v2' } })
-
-    // Now v1 is published, v2 is current draft. Publish v2.
-    // Mock: we need to tell the db about the published state of v1
-    db._store.set(v1.id, { ...db._store.get(v1.id), is_published: 1 })
-
-    await svc.publish(v2.id)
-
-    const v1Row = db._store.get(v1.id)
-    expect(v1Row.is_published).toBe(0)
-  })
+  // (Publish-transition that demotes a previously-published row is covered in documents.sqlite.test.ts.)
 
   it('throws if document not found', async () => {
     const db = makeMockDb()

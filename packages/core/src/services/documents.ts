@@ -50,16 +50,20 @@ export interface DocumentsServiceOptions {
   queryableFields?: QueryableField[]
   typeSchemaVersion?: number
   maxVersionsPerRoot?: number
+  /** Tenant this service operates within. Every root-keyed lookup is scoped to it (R3). POC default: 'default'. */
+  tenantId?: string
 }
 
 export class DocumentsService {
   private projection: DocumentProjection
+  private tenantId: string
 
   constructor(
     private db: D1Database,
     private opts: DocumentsServiceOptions = {},
   ) {
     this.projection = new DocumentProjection(db)
+    this.tenantId = opts.tenantId ?? 'default'
   }
 
   // ─── Create ───────────────────────────────────────────────────────────────
@@ -131,10 +135,11 @@ export class DocumentsService {
     const now = Math.floor(Date.now() / 1000)
     const newId = nanoid()
 
-    // Fetch current state synchronously before starting the batch.
+    // Fetch current state synchronously before starting the batch. Tenant-scoped (R3): a service
+    // for tenant B must not find or mutate tenant A's root.
     const prevDraftRow = await this.db
-      .prepare('SELECT * FROM documents WHERE root_id = ? AND is_current_draft = 1')
-      .bind(rootId)
+      .prepare('SELECT * FROM documents WHERE root_id = ? AND tenant_id = ? AND is_current_draft = 1')
+      .bind(rootId, this.tenantId)
       .first<DocumentRow>()
 
     if (!prevDraftRow) throw new Error(`No current draft found for root ${rootId}`)
@@ -172,13 +177,17 @@ export class DocumentsService {
 
     const statements: D1PreparedStatement[] = [
       // 1. Demote previous current draft FIRST (unique index: never two current drafts mid-batch).
-      this.db.prepare('UPDATE documents SET is_current_draft = 0, updated_at = ? WHERE id = ?')
-        .bind(now, prevDraft.id),
+      this.db.prepare('UPDATE documents SET is_current_draft = 0, updated_at = ? WHERE id = ? AND tenant_id = ?')
+        .bind(now, prevDraft.id, this.tenantId),
 
       // 2. If the previous draft was not also the published row, delete its derived rows.
       ...(!prevIsPublished ? this.projection.buildDerivedDeleteStatements(prevDraft.id) : []),
 
       // 3. Insert new draft. version_number derived in SQL (COALESCE(MAX)+1 from existing rows).
+      // R5 arithmetic — keep balanced: 30 columns = 5 leading '?' + 1 version_number subquery
+      //   + 3 literals (1,0,'draft') + 21 trailing '?'. Total placeholders: 5 + 1 (subquery
+      //   root_id) + 21 = 27, which MUST equal the 27 .bind() args below. Do not change one side
+      //   without recounting the other.
       this.db.prepare(
         `INSERT INTO documents (id, root_id, type_id, type_version, version_of_id, version_number,
            is_current_draft, is_published, status, parent_root_id, slug, path, title, zone,
@@ -187,7 +196,7 @@ export class DocumentsService {
            owner_id, created_by, updated_by, created_at, updated_at)
          SELECT ?,?,?,?,?,
            (SELECT COALESCE(MAX(version_number), 0) + 1 FROM documents WHERE root_id = ?),
-           1,0,'draft',?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?
+           1,0,'draft',?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?
          WHERE 1=1`,
       ).bind(
         newId, rootId, newDoc.typeId, newDoc.typeVersion, prevDraft.id,
@@ -207,12 +216,12 @@ export class DocumentsService {
     const maxVersions = this.opts.maxVersionsPerRoot ?? DEFAULT_MAX_VERSIONS
     statements.push(
       this.db.prepare(
-        `DELETE FROM documents WHERE root_id = ? AND is_current_draft = 0 AND is_published = 0
+        `DELETE FROM documents WHERE root_id = ? AND tenant_id = ? AND is_current_draft = 0 AND is_published = 0
          AND id NOT IN (
-           SELECT id FROM documents WHERE root_id = ? AND is_current_draft = 0 AND is_published = 0
+           SELECT id FROM documents WHERE root_id = ? AND tenant_id = ? AND is_current_draft = 0 AND is_published = 0
            ORDER BY version_number DESC LIMIT ?
          )`,
-      ).bind(rootId, rootId, maxVersions),
+      ).bind(rootId, this.tenantId, rootId, this.tenantId, maxVersions),
     )
 
     await this.db.batch(statements)
@@ -231,15 +240,15 @@ export class DocumentsService {
     const now = Math.floor(Date.now() / 1000)
 
     const targetRow = await this.db
-      .prepare('SELECT * FROM documents WHERE id = ?')
-      .bind(documentId)
+      .prepare('SELECT * FROM documents WHERE id = ? AND tenant_id = ?')
+      .bind(documentId, this.tenantId)
       .first<DocumentRow>()
 
     if (!targetRow) throw new Error(`Document ${documentId} not found`)
 
     const prevPublishedRow = await this.db
-      .prepare('SELECT * FROM documents WHERE root_id = ? AND is_published = 1 AND id != ?')
-      .bind(targetRow.root_id, documentId)
+      .prepare('SELECT * FROM documents WHERE root_id = ? AND tenant_id = ? AND is_published = 1 AND id != ?')
+      .bind(targetRow.root_id, this.tenantId, documentId)
       .first<DocumentRow>()
 
     const statements: D1PreparedStatement[] = []
@@ -281,8 +290,8 @@ export class DocumentsService {
     const now = Math.floor(Date.now() / 1000)
 
     const row = await this.db
-      .prepare('SELECT * FROM documents WHERE id = ?')
-      .bind(documentId)
+      .prepare('SELECT * FROM documents WHERE id = ? AND tenant_id = ?')
+      .bind(documentId, this.tenantId)
       .first<DocumentRow>()
 
     if (!row) throw new Error(`Document ${documentId} not found`)
@@ -309,8 +318,8 @@ export class DocumentsService {
   async softDelete(documentId: string): Promise<void> {
     const now = Math.floor(Date.now() / 1000)
     await this.db
-      .prepare('UPDATE documents SET deleted_at = ?, updated_at = ? WHERE id = ?')
-      .bind(now, now, documentId)
+      .prepare('UPDATE documents SET deleted_at = ?, updated_at = ? WHERE id = ? AND tenant_id = ?')
+      .bind(now, now, documentId, this.tenantId)
       .run()
   }
 

@@ -114,11 +114,13 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20251014.0",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^24.9.2",
     "@types/qrcode-svg": "^1.1.5",
     "@typescript-eslint/eslint-plugin": "^8.50.0",
     "@typescript-eslint/parser": "^8.50.0",
     "@vitest/coverage-v8": "^4.0.5",
+    "better-sqlite3": "^12.10.0",
     "drizzle-orm": "^0.45.2",
     "eslint": "^9.39.2",
     "glob": "^10.5.0",
