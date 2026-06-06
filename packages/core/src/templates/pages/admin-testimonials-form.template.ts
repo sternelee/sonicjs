@@ -2,7 +2,7 @@ import { renderAdminLayout, AdminLayoutData } from '../layouts/admin-layout-v2.t
 import { renderAlert } from '../alert.template'
 
 interface Testimonial {
-  id?: number
+  id?: string
   authorName: string
   authorTitle?: string
   authorCompany?: string

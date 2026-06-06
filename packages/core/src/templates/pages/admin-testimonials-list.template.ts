@@ -4,7 +4,7 @@ import { renderAlert } from '../alert.template'
 import { renderTable } from '../table.template'
 
 interface Testimonial {
-  id: number
+  id: string
   author_name: string
   author_title?: string
   author_company?: string
