@@ -12,6 +12,10 @@ import { ContentListPageData, renderContentListPage } from '../templates/pages/a
 import { getBlocksFieldConfig, parseBlocksValue } from '../utils/blocks'
 import { escapeHtml, sanitizeRichText } from '../utils/sanitize'
 import { buildSchemaFieldOptions, resolveSchemaFieldType } from './admin-content-field-types'
+import { DocumentTypeRegistry } from '../services/document-type-registry'
+import { DocumentsService } from '../services/documents'
+import { renderDocumentFormPage } from '../templates/pages/admin-documents-form.template'
+import { createDocumentSchema } from '../schemas/document'
 
 const adminContentRoutes = new Hono<{ Bindings: Bindings; Variables: Variables }>()
 
@@ -281,11 +285,64 @@ adminContentRoutes.get('/', async (c) => {
     // Get all collections for filter dropdown (exclude form-sourced)
     const collectionsStmt = db.prepare("SELECT id, name, display_name FROM collections WHERE is_active = 1 AND (source_type IS NULL OR source_type = 'user') ORDER BY display_name")
     const { results: collectionsResults } = await collectionsStmt.all()
-    const models = (collectionsResults || []).map((row: any) => ({
-      name: row.name,
-      displayName: row.display_name
-    }))
 
+    // Also include active document types in the models dropdown (prefixed with doc: to distinguish)
+    const docTypeRegistry = new DocumentTypeRegistry(db)
+    const docTypes = await docTypeRegistry.findAll()
+
+    const models = [
+      ...(collectionsResults || []).map((row: any) => ({ name: row.name, displayName: row.display_name })),
+      ...docTypes.map(dt => ({ name: `doc:${dt.id}`, displayName: dt.displayName })),
+    ]
+
+    // ── Document-type branch: query documents table instead of content ──────────
+    const isDocModel = modelName.startsWith('doc:')
+    if (isDocModel) {
+      const typeId = modelName.slice(4)
+      const docType = docTypes.find(dt => dt.id === typeId)
+
+      const docParams: (string | number)[] = ['default', typeId]
+      let docSql = `SELECT * FROM documents WHERE tenant_id = ? AND type_id = ? AND is_current_draft = 1 AND deleted_at IS NULL`
+      if (search) {
+        docSql += ` AND (title LIKE ? OR json_extract(data,'$.question') LIKE ? OR json_extract(data,'$.authorName') LIKE ? OR json_extract(data,'$.name') LIKE ?)`
+        const term = `%${search}%`
+        docParams.push(term, term, term, term)
+      }
+      const countRow = await db.prepare(docSql.replace('SELECT *', 'SELECT COUNT(*) as count')).bind(...docParams).first() as any
+      docSql += ' ORDER BY updated_at DESC LIMIT ? OFFSET ?'
+      docParams.push(limit, offset)
+      const { results: docRows } = await db.prepare(docSql).bind(...docParams).all()
+
+      const statusBadgeCss = {
+        published: 'bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-400 ring-1 ring-inset ring-green-600/20 dark:ring-green-500/20',
+        draft: 'bg-zinc-50 dark:bg-zinc-500/10 text-zinc-700 dark:text-zinc-400 ring-1 ring-inset ring-zinc-600/20 dark:ring-zinc-500/20',
+      }
+      const contentItems = (docRows || []).map((row: any) => {
+        const data = JSON.parse(row.data ?? '{}')
+        const label = row.is_published ? 'Published' : 'Draft'
+        const css = row.is_published ? statusBadgeCss.published : statusBadgeCss.draft
+        return {
+          id: `documents/${typeId}/${row.root_id}`,
+          title: row.title || data.question || data.authorName || data.name || row.root_id,
+          slug: row.slug || '',
+          modelName: docType?.displayName ?? typeId,
+          statusBadge: `<span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${css}">${label}</span>`,
+          authorName: row.created_by || 'System',
+          formattedDate: new Date((row.updated_at ?? 0) * 1000).toLocaleDateString(),
+          availableActions: row.is_published ? ['unpublish'] : ['publish'],
+        }
+      })
+
+      return c.html(renderContentListPage({
+        modelName, status, page, search, models, contentItems,
+        totalItems: countRow?.count ?? 0,
+        itemsPerPage: limit,
+        user: user ? { name: user.email, email: user.email, role: user.role } : undefined,
+        version: c.get('appVersion'),
+      }))
+    }
+
+    // ── Legacy content branch ──────────────────────────────────────────────────
     // Build where conditions
     const conditions: string[] = []
     const params: any[] = []
@@ -319,7 +376,7 @@ adminContentRoutes.get('/', async (c) => {
 
     // Get total count
     const countStmt = db.prepare(`
-      SELECT COUNT(*) as count 
+      SELECT COUNT(*) as count
       FROM content c
       JOIN collections col ON c.collection_id = col.id
       ${whereClause}
@@ -1585,4 +1642,206 @@ ${escapeHtml(JSON.stringify(data, null, 2))}
     return c.html('<p>Error generating preview</p>')
   }
 })
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DOCUMENT MODEL ROUTES  (/admin/content/documents/:typeId/...)
+// Document-backed content types managed within the existing content admin.
+// Edit links in the content list use id = "documents/:typeId/:rootId" which
+// maps to these routes via the existing /:id/edit handler (see redirect below).
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function userCtx(c: any) {
+  const u = c.get('user')
+  return u ? { name: u.email, email: u.email, role: u.role } : undefined
+}
+
+function parseDocFormData(formData: FormData): { title: string | null; slug: string | null; data: Record<string, unknown> } {
+  const title = (formData.get('title') as string | null) || null
+  const slug = (formData.get('slug') as string | null) || null
+  const data: Record<string, unknown> = {}
+  for (const [key, val] of formData.entries()) {
+    if (key.startsWith('data[') && key.endsWith(']')) {
+      const fieldName = key.slice(5, -1)
+      const strVal = val as string
+      if (strVal.includes(',') && !strVal.startsWith('{')) {
+        data[fieldName] = strVal.split(',').map(s => s.trim()).filter(Boolean)
+      } else if (strVal === 'true') { data[fieldName] = true }
+      else if (strVal === 'false') { data[fieldName] = false }
+      else if (strVal !== '' && !isNaN(Number(strVal)) && strVal.trim() !== '') { data[fieldName] = Number(strVal) }
+      else { data[fieldName] = strVal }
+    }
+  }
+  return { title, slug, data }
+}
+
+async function getDocService(db: D1Database, typeId: string) {
+  const registry = new DocumentTypeRegistry(db)
+  const docType = await registry.findById(typeId)
+  const svc = new DocumentsService(db, {
+    queryableFields: docType?.queryableFields ?? [],
+    typeSchemaVersion: docType?.schemaVersion ?? 1,
+    maxVersionsPerRoot: docType?.settings?.maxVersionsPerRoot ?? 50,
+  })
+  return { svc, docType }
+}
+
+// ─── New document form ────────────────────────────────────────────────────────
+adminContentRoutes.get('/documents/:typeId/new', async (c) => {
+  const { typeId } = c.req.param()
+  const registry = new DocumentTypeRegistry(c.env.DB)
+  const docType = await registry.findById(typeId)
+  if (!docType) return c.html('<p>Unknown document type.</p>', 404)
+  return c.html(renderDocumentFormPage({ docType, isEdit: false, user: userCtx(c) }))
+})
+
+// ─── Create document ──────────────────────────────────────────────────────────
+adminContentRoutes.post('/documents/:typeId/new', async (c) => {
+  const { typeId } = c.req.param()
+  const db = c.env.DB
+  const user = c.get('user') as any
+  try {
+    const { svc, docType } = await getDocService(db, typeId)
+    if (!docType) return c.html('<p>Unknown document type.</p>', 404)
+    const formData = await c.req.formData()
+    const { title, slug, data } = parseDocFormData(formData)
+    const doc = await svc.create(createDocumentSchema.parse({
+      typeId, tenantId: 'default', locale: 'default',
+      title: title ?? undefined, slug: slug ?? undefined, data,
+    }), user?.userId)
+    return c.redirect(`/admin/content/documents/${typeId}/${doc.rootId}/edit?message=Created+successfully`)
+  } catch (err: any) {
+    const registry = new DocumentTypeRegistry(c.env.DB)
+    const docType = await registry.findById(typeId)
+    if (!docType) return c.html('<p>Unknown document type.</p>', 404)
+    return c.html(renderDocumentFormPage({ docType, isEdit: false, user: userCtx(c), message: err?.message ?? 'Failed to create', messageType: 'error' }))
+  }
+})
+
+// ─── Edit document form ───────────────────────────────────────────────────────
+adminContentRoutes.get('/documents/:typeId/:rootId/edit', async (c) => {
+  const { typeId, rootId } = c.req.param()
+  const db = c.env.DB
+  const message = c.req.query('message')
+  const registry = new DocumentTypeRegistry(db)
+  const docType = await registry.findById(typeId)
+  if (!docType) return c.html('<p>Unknown document type.</p>', 404)
+
+  const draftRow = await db.prepare(
+    'SELECT * FROM documents WHERE root_id = ? AND tenant_id = ? AND is_current_draft = 1'
+  ).bind(rootId, 'default').first() as any
+  if (!draftRow) return c.html('<p>Document not found.</p>', 404)
+
+  let publishedDoc = null
+  if (!draftRow.is_published) {
+    const pubRow = await db.prepare(
+      'SELECT * FROM documents WHERE root_id = ? AND tenant_id = ? AND is_published = 1'
+    ).bind(rootId, 'default').first() as any
+    if (pubRow) publishedDoc = { id: pubRow.id, rootId: pubRow.root_id, typeId: pubRow.type_id, versionNumber: pubRow.version_number, isCurrentDraft: false, isPublished: true, status: pubRow.status, data: JSON.parse(pubRow.data ?? '{}') } as any
+  }
+
+  const doc = {
+    id: draftRow.id, rootId: draftRow.root_id, typeId: draftRow.type_id, typeVersion: draftRow.type_version,
+    versionOfId: draftRow.version_of_id, versionNumber: draftRow.version_number,
+    isCurrentDraft: draftRow.is_current_draft === 1, isPublished: draftRow.is_published === 1, status: draftRow.status,
+    parentRootId: draftRow.parent_root_id, slug: draftRow.slug, path: draftRow.path, title: draftRow.title,
+    zone: draftRow.zone, sortOrder: draftRow.sort_order, visible: draftRow.visible === 1,
+    publishedAt: draftRow.published_at, scheduledAt: draftRow.scheduled_at, expiresAt: draftRow.expires_at,
+    deletedAt: draftRow.deleted_at, tenantId: draftRow.tenant_id, locale: draftRow.locale,
+    translationGroupId: draftRow.translation_group_id, data: JSON.parse(draftRow.data ?? '{}'),
+    metadata: JSON.parse(draftRow.metadata ?? '{}'), ownerId: draftRow.owner_id,
+    createdBy: draftRow.created_by, updatedBy: draftRow.updated_by,
+    createdAt: draftRow.created_at, updatedAt: draftRow.updated_at,
+  } as any
+
+  return c.html(renderDocumentFormPage({ docType, doc, publishedDoc, isEdit: true, message, user: userCtx(c) }))
+})
+
+// ─── Save draft ───────────────────────────────────────────────────────────────
+adminContentRoutes.post('/documents/:typeId/:rootId', async (c) => {
+  const { typeId, rootId } = c.req.param()
+  const db = c.env.DB
+  const user = c.get('user') as any
+  try {
+    const formData = await c.req.formData()
+    const _method = formData.get('_method') as string | null
+    if (_method !== 'PUT') return c.redirect(`/admin/content/documents/${typeId}/${rootId}/edit?message=Unknown+action`)
+    const { title, slug, data } = parseDocFormData(formData)
+    const { svc } = await getDocService(db, typeId)
+    await svc.saveDraft(rootId, { title, slug, data }, user?.userId)
+    return c.redirect(`/admin/content/documents/${typeId}/${rootId}/edit?message=Draft+saved`)
+  } catch (err: any) {
+    return c.redirect(`/admin/content/documents/${typeId}/${rootId}/edit?message=${encodeURIComponent(err?.message ?? 'Save failed')}`)
+  }
+})
+
+// ─── Publish ──────────────────────────────────────────────────────────────────
+adminContentRoutes.post('/documents/:typeId/:documentId/publish', async (c) => {
+  const { typeId, documentId } = c.req.param()
+  const db = c.env.DB
+  const user = c.get('user') as any
+  try {
+    const row = await db.prepare('SELECT root_id FROM documents WHERE id = ?').bind(documentId).first() as any
+    const { svc } = await getDocService(db, typeId)
+    await svc.publish(documentId, user?.userId)
+    return c.redirect(`/admin/content/documents/${typeId}/${row?.root_id}/edit?message=Published`)
+  } catch (err: any) {
+    return c.redirect(`/admin/content?model=doc:${typeId}&message=${encodeURIComponent(err?.message ?? 'Publish failed')}`)
+  }
+})
+
+// ─── Unpublish ────────────────────────────────────────────────────────────────
+adminContentRoutes.post('/documents/:typeId/:documentId/unpublish', async (c) => {
+  const { typeId, documentId } = c.req.param()
+  const db = c.env.DB
+  try {
+    const row = await db.prepare('SELECT root_id FROM documents WHERE id = ?').bind(documentId).first() as any
+    const { svc } = await getDocService(db, typeId)
+    await svc.unpublish(documentId)
+    return c.redirect(`/admin/content/documents/${typeId}/${row?.root_id}/edit?message=Unpublished`)
+  } catch (err: any) {
+    return c.redirect(`/admin/content?model=doc:${typeId}&message=${encodeURIComponent(err?.message ?? 'Unpublish failed')}`)
+  }
+})
+
+// ─── Delete (soft) ────────────────────────────────────────────────────────────
+adminContentRoutes.post('/documents/:typeId/:documentId/delete', async (c) => {
+  const { typeId, documentId } = c.req.param()
+  const db = c.env.DB
+  try {
+    const { svc, docType } = await getDocService(db, typeId)
+    if (docType?.settings?.pii) {
+      const row = await db.prepare('SELECT root_id FROM documents WHERE id = ?').bind(documentId).first() as any
+      if (row) await svc.erase(row.root_id, 'default')
+    } else {
+      await svc.softDelete(documentId)
+    }
+    return c.redirect(`/admin/content?model=doc:${typeId}&message=Deleted`)
+  } catch (err: any) {
+    return c.redirect(`/admin/content?model=doc:${typeId}&message=${encodeURIComponent(err?.message ?? 'Delete failed')}`)
+  }
+})
+
+// ─── Version history fragment (HTMX) ─────────────────────────────────────────
+adminContentRoutes.get('/documents/:typeId/:rootId/versions', async (c) => {
+  const { typeId, rootId } = c.req.param()
+  const db = c.env.DB
+  const { renderVersionHistoryFragment } = await import('../templates/pages/admin-documents-form.template')
+  const registry = new DocumentTypeRegistry(db)
+  const docType = await registry.findById(typeId)
+  if (!docType) return c.html('<div>Unknown type.</div>', 404)
+  const result = await db.prepare(
+    'SELECT id, version_number, is_current_draft, is_published, status, updated_at, created_by FROM documents WHERE root_id = ? AND tenant_id = ? ORDER BY version_number DESC LIMIT 50'
+  ).bind(rootId, 'default').all()
+  const versions = (result.results ?? []).map((r: any) => ({
+    id: r.id, versionNumber: r.version_number, isCurrentDraft: r.is_current_draft === 1,
+    isPublished: r.is_published === 1, status: r.status, updatedAt: r.updated_at, createdBy: r.created_by,
+  }))
+  return c.html(renderVersionHistoryFragment({ versions, docType, rootId }))
+})
+
+// ─── Redirect: /:id/edit where id = "documents/:typeId/:rootId" ───────────────
+// The content list sets item.id = "documents/:typeId/:rootId" so the template
+// generates /admin/content/documents/:typeId/:rootId/edit — handled above.
+// This catch-all handles the case where the browser strips the path segments.
+
 export default adminContentRoutes
