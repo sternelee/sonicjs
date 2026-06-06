@@ -7,6 +7,8 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { createTestD1 } from '../utils/d1-sqlite'
 import { DocumentsService } from '../../services/documents'
 import { DocumentProjection } from '../../services/document-projection'
+import { DocumentRepository } from '../../services/document-repository'
+import { DocumentPermissionsService } from '../../services/document-permissions'
 
 const TST_FIELDS = [
   { name: 'rating', kind: 'scalar', type: 'integer', column: 'q_tst_rating' },
@@ -133,5 +135,44 @@ describe('DocumentsService — real SQLite (migration 037)', () => {
 
     expect(count(db, 'SELECT COUNT(*) n FROM documents WHERE root_id=?', doc.rootId).n).toBe(0)
     expect(count(db, 'SELECT COUNT(*) n FROM document_facets WHERE root_id=?', doc.rootId).n).toBe(0)
+  })
+})
+
+describe('Document ACL — isAllowed against real document_permissions (D5/D11)', () => {
+  let db
+  beforeEach(() => { db = createTestD1() })
+  afterEach(() => db.close())
+
+  const PUBLIC_READ = { baseGrants: { public: ['read'], editor: ['read', 'update'] } }   // faq/testimonial/media
+  const NO_PUBLIC = { baseGrants: { admin: ['read', 'manage'], editor: ['read'] } }        // contact_message (PII)
+
+  it('public principal can read a type that grants public:[read]', async () => {
+    const repo = new DocumentRepository(db, 'default')
+    expect(await repo.isAllowed([{ type: 'public', id: '*' }], 'root1', 'read', PUBLIC_READ)).toBe(true)
+  })
+
+  it('public principal is denied a type with no public grant (contact_message stays hidden)', async () => {
+    const repo = new DocumentRepository(db, 'default')
+    expect(await repo.isAllowed([{ type: 'public', id: '*' }], 'root1', 'read', NO_PUBLIC)).toBe(false)
+  })
+
+  it('explicit public deny override hides a published-but-public type (deny wins)', async () => {
+    const perms = new DocumentPermissionsService(db)
+    await perms.grantPermission({ tenantId: 'default', rootId: 'root1', principalType: 'public', principalId: '*', permission: 'read', effect: 'deny' })
+    const repo = new DocumentRepository(db, 'default')
+    expect(await repo.isAllowed([{ type: 'public', id: '*' }], 'root1', 'read', PUBLIC_READ)).toBe(false)
+  })
+
+  it('an authed user matches role base grants only when the role principal is included (D11)', async () => {
+    const repo = new DocumentRepository(db, 'default')
+    expect(await repo.isAllowed([{ type: 'user', id: 'u1' }], 'root1', 'update', PUBLIC_READ)).toBe(false)
+    expect(await repo.isAllowed([{ type: 'user', id: 'u1' }, { type: 'role', id: 'editor' }], 'root1', 'update', PUBLIC_READ)).toBe(true)
+  })
+
+  it('a deny override in tenant A does not affect resolution in tenant B', async () => {
+    const perms = new DocumentPermissionsService(db)
+    await perms.grantPermission({ tenantId: 'tenantA', rootId: 'root1', principalType: 'public', principalId: '*', permission: 'read', effect: 'deny' })
+    const repoB = new DocumentRepository(db, 'tenantB')
+    expect(await repoB.isAllowed([{ type: 'public', id: '*' }], 'root1', 'read', PUBLIC_READ)).toBe(true)
   })
 })

@@ -21,7 +21,9 @@ export async function bootstrapDocumentTypes(db: D1Database): Promise<void> {
     source: 'system',
     schema: anyObject,
     settings: {
-      baseGrants: { admin: ['read', 'create', 'update', 'delete', 'publish', 'manage'], editor: ['read', 'create', 'update', 'publish'], viewer: ['read'] },
+      // public:['read'] makes published FAQs publicly readable through the ACL resolver; the public
+      // API routes everything through isAllowed (no ACL-skipping path), so this grant is required.
+      baseGrants: { public: ['read'], admin: ['read', 'create', 'update', 'delete', 'publish', 'manage'], editor: ['read', 'create', 'update', 'publish'], viewer: ['read'] },
       maxVersionsPerRoot: 50,
     },
     queryableFields: [
@@ -38,7 +40,7 @@ export async function bootstrapDocumentTypes(db: D1Database): Promise<void> {
     source: 'system',
     schema: anyObject,
     settings: {
-      baseGrants: { admin: ['read', 'create', 'update', 'delete', 'publish', 'manage'], editor: ['read', 'create', 'update', 'publish'], viewer: ['read'] },
+      baseGrants: { public: ['read'], admin: ['read', 'create', 'update', 'delete', 'publish', 'manage'], editor: ['read', 'create', 'update', 'publish'], viewer: ['read'] },
       maxVersionsPerRoot: 50,
     },
     queryableFields: [
@@ -74,7 +76,7 @@ export async function bootstrapDocumentTypes(db: D1Database): Promise<void> {
     source: 'system',
     schema: anyObject,
     settings: {
-      baseGrants: { admin: ['read', 'create', 'update', 'delete', 'publish', 'manage'], editor: ['read', 'create', 'update', 'publish'], viewer: ['read'] },
+      baseGrants: { public: ['read'], admin: ['read', 'create', 'update', 'delete', 'publish', 'manage'], editor: ['read', 'create', 'update', 'publish'], viewer: ['read'] },
       maxVersionsPerRoot: 5,
     },
     queryableFields: [

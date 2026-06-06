@@ -10,6 +10,10 @@ import { createDocumentSchema, updateDocumentSchema } from '../schemas/document'
 const adminDocumentsRoutes = new Hono<{ Bindings: Bindings; Variables: Variables }>()
 
 adminDocumentsRoutes.use('*', requireAuth())
+// NOTE (D19): the AUTHORITATIVE admin gate is the global app.use('/admin/*', requireRole(adminRoles))
+// in app.ts, where adminRoles defaults to ['admin']. That guard runs BEFORE this one, so for editors
+// to reach these routes the host app must set config.adminAccessRoles to include 'editor'. This
+// per-router list is the intended document-route role set; keep it in sync with that config.
 adminDocumentsRoutes.use('*', requireRole(['admin', 'editor']))
 
 // ─── List document types ──────────────────────────────────────────────────────
@@ -237,7 +241,12 @@ adminDocumentsRoutes.post('/', async (c) => {
       return c.json({ error: 'Unknown document type' }, 400)
     }
 
-    const dataValidation = docType.schema ? (docType as any)._zodSchema?.safeParse(input.data) : null
+    // TODO(doc-model, D6): validate input.data against the registered type's Zod schema.
+    // Deferred for the POC — types register with an `anyObject` passthrough and z.ZodSchema cannot
+    // survive the JSON round-trip in document_types.schema. When implemented, keep a module-level
+    // Map<typeId, z.ZodSchema> populated by bootstrapDocumentTypes and safeParse here, returning
+    // { error: 'Validation failed', details: result.error.issues } with 400. (Removed the previous
+    // broken no-op that referenced a nonexistent _zodSchema.)
 
     const svc = new DocumentsService(db, {
       queryableFields: docType.queryableFields,

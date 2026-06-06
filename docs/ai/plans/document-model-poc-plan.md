@@ -202,7 +202,11 @@ The `INSERT INTO documents (… 30 columns …) SELECT …` supplies only **29**
 
 ---
 
-### Phase 2 — Security: ACL wiring, principals, validation, XSS
+### Phase 2 — Security: ACL wiring, principals, validation, XSS — 🟡 MOSTLY DONE
+
+> Done: **D5 (public fail-open closed)** — `api-documents.ts` list + both single-doc reads now route through `isAllowed`; a single coupling helper `getDocumentRequestContext(c)` derives tenant + principal set (the one place better-auth's RBAC convergence will touch). Seed types `faq`/`testimonial`/`media_asset` now grant `public:['read']`; `contact_message` deliberately does not (PII stays hidden). **D11** — principal contract enforced in the helper + covered by tests. **D17** — testimonials templates escaped (XSS). **D19** — role-guard authority documented at `admin-documents.ts`. **D6** — deferred: removed the broken dead `_zodSchema` no-op, left a TODO (real per-type Zod validation is out of POC scope). 5 new real-DB ACL tests (deny-wins, no-public-grant denial, tenant-scoped overrides). Full suite **1509 passed**.
+>
+> Deferred (defense-in-depth, not fail-open — admin routes are already `requireAuth`+`requireRole` gated): per-document `isAllowed` on admin **mutations** (create/update/publish/delete) and route-level tenant scoping of the admin raw lookups. Track as Phase 2b.
 
 **2.1 — D5: Wire `isAllowed` into routes.** The resolver in `document-permissions.ts`/`document-repository.ts` is correct but **never called**.
 - **Public** (`api-documents.ts`): build `const repo = new DocumentRepository(db, 'default')` and `const principalSet = [{ type: 'public', id: '*' }]`.

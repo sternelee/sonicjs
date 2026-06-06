@@ -2,6 +2,22 @@ import { Hono } from 'hono'
 import type { Bindings, Variables } from '../app'
 import { DocumentRepository } from '../services/document-repository'
 import { DocumentTypeRegistry } from '../services/document-type-registry'
+import { getDocumentRequestContext } from '../services/document-request-context'
+import type { D1Database } from '@cloudflare/workers-types'
+import type { PrincipalRef } from '../schemas/document'
+
+// Resolve the row's type and evaluate read ACL for the given principal set. A published-but-restricted
+// document (or a non-public type like contact_message) returns false → caller responds 404 (D5).
+async function aclAllowsRead(
+  db: D1Database,
+  tenantId: string,
+  principalSet: PrincipalRef[],
+  row: { type_id: string; root_id: string },
+): Promise<boolean> {
+  const docType = await new DocumentTypeRegistry(db).findById(row.type_id)
+  if (!docType) return false
+  return new DocumentRepository(db, tenantId).isAllowed(principalSet, row.root_id, 'read', docType.settings)
+}
 
 const apiDocumentsRoutes = new Hono<{ Bindings: Bindings; Variables: Variables }>()
 
@@ -12,7 +28,7 @@ const apiDocumentsRoutes = new Hono<{ Bindings: Bindings; Variables: Variables }
 apiDocumentsRoutes.get('/', async (c) => {
   try {
     const db = c.env.DB
-    const tenantId = 'default'
+    const { tenantId, principalSet } = getDocumentRequestContext(c)
     const now = Math.floor(Date.now() / 1000)
 
     const typeId = c.req.query('type') ?? ''
@@ -124,12 +140,21 @@ apiDocumentsRoutes.get('/', async (c) => {
       data: JSON.parse(r.data ?? '{}'),
     }))
 
+    // ACL: published reads still flow through isAllowed as the resolved principal (public for anon),
+    // so a published-but-restricted document is hidden (D5). nextCursor is computed from the RAW page
+    // so pagination advances even when some rows are filtered out by ACL.
+    const repo = new DocumentRepository(db, tenantId)
+    const allowed = await Promise.all(
+      items.map(it => repo.isAllowed(principalSet, it.rootId, 'read', docType.settings)),
+    )
+    const visible = items.filter((_, i) => allowed[i])
+
     const lastItem = items[items.length - 1]
     const nextCursor = items.length === limit && lastItem
       ? { cursor_updated_at: lastItem.updatedAt, cursor_id: lastItem.id }
       : null
 
-    return c.json({ data: items, pagination: { limit, nextCursor } })
+    return c.json({ data: visible, pagination: { limit, nextCursor } })
   } catch (error) {
     console.error('Error listing published documents:', error)
     return c.json({ error: 'Failed to list documents' }, 500)
@@ -140,7 +165,7 @@ apiDocumentsRoutes.get('/', async (c) => {
 apiDocumentsRoutes.get('/root/:rootId', async (c) => {
   try {
     const db = c.env.DB
-    const tenantId = 'default'
+    const { tenantId, principalSet } = getDocumentRequestContext(c)
     const now = Math.floor(Date.now() / 1000)
     const { rootId } = c.req.param()
 
@@ -152,6 +177,10 @@ apiDocumentsRoutes.get('/root/:rootId', async (c) => {
     ).bind(rootId, tenantId, now, now).first() as any
 
     if (!row) return c.json({ error: 'Not found' }, 404)
+
+    if (!(await aclAllowsRead(db, tenantId, principalSet, row))) {
+      return c.json({ error: 'Not found' }, 404)
+    }
 
     return c.json({
       id: row.id, rootId: row.root_id, typeId: row.type_id,
@@ -169,7 +198,7 @@ apiDocumentsRoutes.get('/root/:rootId', async (c) => {
 apiDocumentsRoutes.get('/:id', async (c) => {
   try {
     const db = c.env.DB
-    const tenantId = 'default'
+    const { tenantId, principalSet } = getDocumentRequestContext(c)
     const now = Math.floor(Date.now() / 1000)
     const { id } = c.req.param()
 
@@ -181,6 +210,10 @@ apiDocumentsRoutes.get('/:id', async (c) => {
     ).bind(id, tenantId, now, now).first() as any
 
     if (!row) return c.json({ error: 'Not found' }, 404)
+
+    if (!(await aclAllowsRead(db, tenantId, principalSet, row))) {
+      return c.json({ error: 'Not found' }, 404)
+    }
 
     return c.json({
       id: row.id, rootId: row.root_id, typeId: row.type_id,
