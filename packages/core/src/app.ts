@@ -34,6 +34,7 @@ import { securityHeadersMiddleware } from './middleware/security-headers'
 import { createDatabaseToolsAdminRoutes } from './plugins/core-plugins/database-tools-plugin/admin-routes'
 import { createSeedDataAdminRoutes } from './plugins/core-plugins/seed-data-plugin/admin-routes'
 import { emailPlugin } from './plugins/core-plugins/email-plugin'
+import { emailReconciliationPlugin } from './plugins/core-plugins/email-reconciliation'
 import { otpLoginPlugin } from './plugins/core-plugins/otp-login-plugin'
 import { oauthProvidersPlugin } from './plugins/core-plugins/oauth-providers'
 import { userProfilesPlugin } from './plugins/core-plugins/user-profiles'
@@ -258,7 +259,7 @@ export function createSonicJSApp(config: SonicJSConfig = {}): SonicJSApp {
     globalVariablesPlugin,
     shortcodesPlugin,
   ]
-  const corePluginsAfterCatchAll = [emailPlugin, magicLinkPlugin]
+  const corePluginsAfterCatchAll = [emailPlugin, magicLinkPlugin, emailReconciliationPlugin]
 
   // Lazy, once-guarded plugin wiring (the async half of two-phase boot). The
   // first request subscribes every plugin's hooks and runs their onBoot; later

@@ -70,6 +70,25 @@ export class EmailService {
     return this.provider.isConfigured()
   }
 
+  /**
+   * Ask the active provider to reconcile delivery state for a batch of
+   * recently-sent email_log rows. Returns an empty array when the provider
+   * does not implement `reconcile()` (Resend, SendGrid, Console).
+   *
+   * Called by the `email-reconciliation` cron plugin.
+   */
+  async reconcileDelivery(
+    rows: import('./types').EmailLogRow[]
+  ): Promise<Array<{ id: string; delivery_state: string }>> {
+    if (!this.provider.reconcile) return []
+    try {
+      return await this.provider.reconcile(rows)
+    } catch (err) {
+      console.error('[email] reconcile() failed:', err)
+      return []
+    }
+  }
+
   /** Normalize, send, and log. Never throws for ordinary delivery failures. */
   async send(message: EmailMessage): Promise<SendResult> {
     const normalized: NormalizedEmailMessage = {
