@@ -261,6 +261,13 @@ describe('Document ACL — isAllowed against real document_permissions (D5/D11)'
     expect(await repo.isAllowed([{ type: 'user', id: 'u1' }, { type: 'role', id: 'editor' }], 'root1', 'update', PUBLIC_READ)).toBe(true)
   })
 
+  it("'create' check with empty root falls to base grants (Phase 2b: editor yes, viewer no)", async () => {
+    const repo = new DocumentRepository(db, 'default')
+    const settings = { baseGrants: { editor: ['create', 'read'], viewer: ['read'] } }
+    expect(await repo.isAllowed([{ type: 'role', id: 'editor' }], '', 'create', settings)).toBe(true)
+    expect(await repo.isAllowed([{ type: 'role', id: 'viewer' }], '', 'create', settings)).toBe(false)
+  })
+
   it('a deny override in tenant A does not affect resolution in tenant B', async () => {
     const perms = new DocumentPermissionsService(db)
     await perms.grantPermission({ tenantId: 'tenantA', rootId: 'root1', principalType: 'public', principalId: '*', permission: 'read', effect: 'deny' })

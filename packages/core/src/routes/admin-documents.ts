@@ -5,7 +5,26 @@ import { z } from 'zod'
 import { DocumentsService } from '../services/documents'
 import { DocumentTypeRegistry } from '../services/document-type-registry'
 import { DocumentRepository } from '../services/document-repository'
+import { getDocumentRequestContext } from '../services/document-request-context'
 import { createDocumentSchema, updateDocumentSchema } from '../schemas/document'
+import type { Permission, DocumentTypeSettings } from '../schemas/document'
+import type { D1Database } from '@cloudflare/workers-types'
+import type { Context } from 'hono'
+
+// Phase 2b — per-document ACL on admin mutations (defense-in-depth on top of the route role guards).
+// Returns a 403 Response when denied, else null. rootId '' performs a base-grant-only check (create).
+async function denyIfNotAllowed(
+  c: Context,
+  db: D1Database,
+  rootId: string,
+  permission: Permission,
+  typeSettings?: DocumentTypeSettings,
+) {
+  const { principalSet, tenantId } = getDocumentRequestContext(c)
+  const repo = new DocumentRepository(db, tenantId)
+  const ok = await repo.isAllowed(principalSet, rootId, permission, typeSettings ?? {})
+  return ok ? null : c.json({ error: 'Forbidden' }, 403)
+}
 
 const adminDocumentsRoutes = new Hono<{ Bindings: Bindings; Variables: Variables }>()
 
@@ -194,6 +213,10 @@ adminDocumentsRoutes.post('/', async (c) => {
       return c.json({ error: 'Unknown document type' }, 400)
     }
 
+    // ACL: 'create' is a base-grant check (no root yet) (Phase 2b).
+    const createDenied = await denyIfNotAllowed(c, db, '', 'create', docType.settings)
+    if (createDenied) return createDenied
+
     // TODO(doc-model, D6): validate input.data against the registered type's Zod schema.
     // Deferred for the POC — types register with an `anyObject` passthrough and z.ZodSchema cannot
     // survive the JSON round-trip in document_types.schema. When implemented, keep a module-level
@@ -250,6 +273,9 @@ adminDocumentsRoutes.put('/:rootId', async (c) => {
     const registry = new DocumentTypeRegistry(db)
     const docType = await registry.findById(existing.type_id)
 
+    const updateDenied = await denyIfNotAllowed(c, db, rootId, 'update', docType?.settings)
+    if (updateDenied) return updateDenied
+
     const svc = new DocumentsService(db, {
       queryableFields: docType?.queryableFields ?? [],
       typeSchemaVersion: docType?.schemaVersion,
@@ -272,11 +298,14 @@ adminDocumentsRoutes.post('/:id/publish', async (c) => {
     const db = c.env.DB
     const user = c.get('user') as { userId: string; email: string; role: string }
 
-    const row = await db.prepare('SELECT type_id FROM documents WHERE id = ?').bind(id).first() as any
+    const row = await db.prepare('SELECT type_id, root_id FROM documents WHERE id = ?').bind(id).first() as any
     if (!row) return c.json({ error: 'Document not found' }, 404)
 
     const registry = new DocumentTypeRegistry(db)
     const docType = await registry.findById(row.type_id)
+
+    const publishDenied = await denyIfNotAllowed(c, db, row.root_id, 'publish', docType?.settings)
+    if (publishDenied) return publishDenied
 
     const svc = new DocumentsService(db, {
       queryableFields: docType?.queryableFields ?? [],
@@ -298,11 +327,14 @@ adminDocumentsRoutes.post('/:id/unpublish', async (c) => {
     const { id } = c.req.param()
     const db = c.env.DB
 
-    const row = await db.prepare('SELECT type_id FROM documents WHERE id = ?').bind(id).first() as any
+    const row = await db.prepare('SELECT type_id, root_id FROM documents WHERE id = ?').bind(id).first() as any
     if (!row) return c.json({ error: 'Document not found' }, 404)
 
     const registry = new DocumentTypeRegistry(db)
     const docType = await registry.findById(row.type_id)
+
+    const unpublishDenied = await denyIfNotAllowed(c, db, row.root_id, 'publish', docType?.settings)
+    if (unpublishDenied) return unpublishDenied
 
     const svc = new DocumentsService(db, {
       queryableFields: docType?.queryableFields ?? [],
@@ -324,18 +356,20 @@ adminDocumentsRoutes.delete('/:id', async (c) => {
     const { id } = c.req.param()
     const db = c.env.DB
 
-    const row = await db.prepare('SELECT type_id FROM documents WHERE id = ?').bind(id).first() as any
+    const row = await db.prepare('SELECT type_id, root_id FROM documents WHERE id = ?').bind(id).first() as any
     if (!row) return c.json({ error: 'Document not found' }, 404)
 
     const registry = new DocumentTypeRegistry(db)
     const docType = await registry.findById(row.type_id)
 
+    const deleteDenied = await denyIfNotAllowed(c, db, row.root_id, 'delete', docType?.settings)
+    if (deleteDenied) return deleteDenied
+
     const svc = new DocumentsService(db, { queryableFields: docType?.queryableFields ?? [] })
 
     // Hard erase PII types; soft delete others.
     if (docType?.settings.pii) {
-      const rootId = (await db.prepare('SELECT root_id FROM documents WHERE id = ?').bind(id).first() as any)?.root_id
-      if (rootId) await svc.erase(rootId, 'default')
+      if (row.root_id) await svc.erase(row.root_id, 'default')
     } else {
       await svc.softDelete(id)
     }
@@ -356,6 +390,9 @@ adminDocumentsRoutes.post('/types/:typeId/reindex', async (c) => {
     const registry = new DocumentTypeRegistry(db)
     const docType = await registry.findById(typeId)
     if (!docType) return c.json({ error: 'Unknown document type' }, 400)
+
+    const reindexDenied = await denyIfNotAllowed(c, db, '', 'manage', docType.settings)
+    if (reindexDenied) return reindexDenied
 
     const { DocumentProjection } = await import('../services/document-projection')
     const projection = new DocumentProjection(db)
