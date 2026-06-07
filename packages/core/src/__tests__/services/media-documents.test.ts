@@ -68,13 +68,13 @@ describe('media-as-document (Phase 6)', () => {
     expect(file.isVideo).toBe(false)
     expect(file.isDocument).toBe(false)
     expect(file.fileSize).toBe('120.6 KB')
-    expect(file.public_url).toBe('/media/uploads/hero.jpg') // no host configured → relative
+    expect(file.public_url).toBe('/files/uploads/hero.jpg') // no host configured → relative
   })
 
   it('thumbnail only for images with an Images account', () => {
     expect(deriveMediaThumbnailUrl('a/b.pdf', 'application/pdf', { imagesAccountId: 'x' })).toBeNull()
     expect(deriveMediaThumbnailUrl('a/b.jpg', 'image/jpeg', {})).toBeNull()
-    expect(deriveMediaPublicUrl('a/b.jpg', {})).toBe('/media/a/b.jpg')
+    expect(deriveMediaPublicUrl('a/b.jpg', {})).toBe('/files/a/b.jpg')
   })
 
   it('reference-aware delete: a strong inbound reference blocks hard-delete; weak does not', async () => {

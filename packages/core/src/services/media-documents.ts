@@ -40,7 +40,9 @@ const MEDIA_QUERYABLE: QueryableField[] = [
 ]
 
 export function deriveMediaPublicUrl(r2Key: string, opts: MediaUrlOptions = {}): string {
-  return opts.r2PublicHost ? `https://${opts.r2PublicHost}/${r2Key}` : `/media/${r2Key}`
+  // Default matches the admin media library's serving route (/files/<r2Key>); pass r2PublicHost for
+  // the public R2 domain instead.
+  return opts.r2PublicHost ? `https://${opts.r2PublicHost}/${r2Key}` : `/files/${r2Key}`
 }
 
 export function deriveMediaThumbnailUrl(r2Key: string, mimeType: string, opts: MediaUrlOptions = {}): string | null {
