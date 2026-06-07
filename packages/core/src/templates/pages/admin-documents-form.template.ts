@@ -34,7 +34,10 @@ function renderFieldInput(field: QueryableField, value: unknown, error?: string)
               step="${field.type === 'integer' ? '1' : 'any'}"
               class="${inputClass(error)}">`
   } else if (field.type === 'boolean') {
+    // Hidden 'false' before the checkbox: an unchecked checkbox submits nothing, so without this a
+    // boolean could never be set back to false (D15). When checked, the checkbox value wins.
     input = `<div class="flex items-center gap-2">
+               <input type="hidden" name="${name}" value="false">
                <input type="checkbox" id="${id}" name="${name}" value="true" ${strVal === 'true' ? 'checked' : ''}
                  class="h-4 w-4 rounded border-zinc-300 dark:border-zinc-600 text-blue-600 focus:ring-blue-500">
                <span class="text-sm text-zinc-700 dark:text-zinc-300">${label}</span>
@@ -111,9 +114,11 @@ export function renderDocumentFormPage(data: DocumentFormData): string {
   const hasNewerDraft = isEdit && doc && !doc.isPublished && publishedDoc
   const isPublishedAndDraft = isEdit && doc?.isPublished && doc?.isCurrentDraft
 
+  // Real document CRUD lives under /admin/content/documents/:typeId/... (admin-content.ts), NOT
+  // /admin/documents/ui (those are GET redirects only). Edit/save POSTs to :rootId; create to /new.
   const formAction = isEdit
-    ? `/admin/documents/ui/${escapeHtml(docType.id)}/${escapeHtml(doc!.rootId)}`
-    : `/admin/documents/ui/${escapeHtml(docType.id)}/new`
+    ? `/admin/content/documents/${escapeHtml(docType.id)}/${escapeHtml(doc!.rootId)}`
+    : `/admin/content/documents/${escapeHtml(docType.id)}/new`
 
   const publishBannerHtml = (() => {
     if (!isEdit || !doc) return ''
@@ -132,6 +137,8 @@ export function renderDocumentFormPage(data: DocumentFormData): string {
     return ''
   })()
 
+  // Reference-kind fields are intentionally not rendered yet (D27) — fine for FAQ/testimonial, which
+  // have none. When media references land (Phase 6), render a root-id picker here.
   const queryableInputs = queryableFields
     .filter(f => f.kind !== 'reference')
     .map(f => renderFieldInput(f, docData[f.name], errors[`data.${f.name}`]))
@@ -145,9 +152,9 @@ export function renderDocumentFormPage(data: DocumentFormData): string {
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div class="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400 mb-1">
-            <a href="/admin/documents/ui" class="hover:text-zinc-950 dark:hover:text-white">Documents</a>
+            <a href="/admin/content" class="hover:text-zinc-950 dark:hover:text-white">Content</a>
             <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.22 5.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L11.94 10 8.22 6.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd"/></svg>
-            <a href="/admin/documents/ui/${escapeHtml(docType.id)}" class="hover:text-zinc-950 dark:hover:text-white">${escapeHtml(docType.displayName)}</a>
+            <a href="/admin/content?model=doc:${escapeHtml(docType.id)}" class="hover:text-zinc-950 dark:hover:text-white">${escapeHtml(docType.displayName)}</a>
             <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.22 5.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L11.94 10 8.22 6.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd"/></svg>
             <span class="text-zinc-950 dark:text-white font-medium">${isEdit ? 'Edit' : 'New'}</span>
           </div>
@@ -161,13 +168,13 @@ export function renderDocumentFormPage(data: DocumentFormData): string {
         ${isEdit && doc && isEditor ? `
         <div class="mt-4 sm:mt-0 flex gap-2">
           ${!doc.isPublished ? `
-          <form method="POST" action="/admin/documents/ui/${escapeHtml(docType.id)}/${escapeHtml(doc.id)}/publish">
+          <form method="POST" action="/admin/content/documents/${escapeHtml(docType.id)}/${escapeHtml(doc.id)}/publish">
             <button type="submit"
               class="inline-flex items-center rounded-lg bg-green-600 px-3.5 py-2.5 text-sm font-semibold text-white hover:bg-green-500 transition-colors shadow-sm">
               Publish
             </button>
           </form>` : `
-          <form method="POST" action="/admin/documents/ui/${escapeHtml(docType.id)}/${escapeHtml(doc.id)}/unpublish">
+          <form method="POST" action="/admin/content/documents/${escapeHtml(docType.id)}/${escapeHtml(doc.id)}/unpublish">
             <button type="submit"
               class="inline-flex items-center rounded-lg bg-amber-500 px-3.5 py-2.5 text-sm font-semibold text-white hover:bg-amber-400 transition-colors shadow-sm">
               Unpublish
@@ -221,7 +228,7 @@ export function renderDocumentFormPage(data: DocumentFormData): string {
 
             <!-- Actions -->
             <div class="border-t border-zinc-200 dark:border-zinc-700 pt-6 flex items-center justify-between">
-              <a href="/admin/documents/ui/${escapeHtml(docType.id)}"
+              <a href="/admin/content?model=doc:${escapeHtml(docType.id)}"
                 class="inline-flex items-center rounded-lg bg-white dark:bg-zinc-800 px-3.5 py-2.5 text-sm font-semibold text-zinc-700 dark:text-zinc-200 ring-1 ring-inset ring-zinc-300 dark:ring-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors">
                 Cancel
               </a>
@@ -247,7 +254,7 @@ export function renderDocumentFormPage(data: DocumentFormData): string {
         </summary>
         <div class="mt-3 rounded-xl bg-white dark:bg-zinc-900 ring-1 ring-zinc-950/5 dark:ring-white/10 overflow-hidden">
           <div id="version-history-placeholder" class="px-6 py-4 text-sm text-zinc-500 dark:text-zinc-400"
-               hx-get="/admin/documents/ui/${escapeHtml(docType.id)}/${escapeHtml(doc.rootId)}/versions"
+               hx-get="/admin/content/documents/${escapeHtml(docType.id)}/${escapeHtml(doc.rootId)}/versions"
                hx-trigger="revealed"
                hx-swap="outerHTML">
             Loading version history…
@@ -255,13 +262,11 @@ export function renderDocumentFormPage(data: DocumentFormData): string {
         </div>
       </details>` : ''}
     </div>
-
-    <script src="https://unpkg.com/htmx.org@2.0.0/dist/htmx.min.js"></script>
   `
 
   return renderAdminLayoutCatalyst({
     title: `${isEdit ? 'Edit' : 'New'} ${docType.displayName} — Documents`,
-    currentPath: `/admin/documents/ui/${docType.id}`,
+    currentPath: '/admin/content',
     user: data.user,
     version: data.version,
     content,

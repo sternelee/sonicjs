@@ -69,6 +69,8 @@ export class DocumentsService {
   // ─── Create ───────────────────────────────────────────────────────────────
 
   async create(input: CreateDocumentInput, createdBy?: string): Promise<Document> {
+    // D23: document timestamps are stored in SECONDS (legacy `content` rows use milliseconds). Any
+    // Date() rendering of a document timestamp must multiply by 1000.
     const now = Math.floor(Date.now() / 1000)
     const id = nanoid()
     const publish = input.publishOnCreate ?? false

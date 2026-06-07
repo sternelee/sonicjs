@@ -16,6 +16,7 @@ import { DocumentTypeRegistry } from '../services/document-type-registry'
 import { DocumentsService } from '../services/documents'
 import { renderDocumentFormPage } from '../templates/pages/admin-documents-form.template'
 import { createDocumentSchema } from '../schemas/document'
+import type { QueryableField } from '../schemas/document'
 
 const adminContentRoutes = new Hono<{ Bindings: Bindings; Variables: Variables }>()
 
@@ -328,8 +329,13 @@ adminContentRoutes.get('/', async (c) => {
           modelName: docType?.displayName ?? typeId,
           statusBadge: `<span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${css}">${label}</span>`,
           authorName: row.created_by || 'System',
+          // Document timestamps are stored in SECONDS (documents.ts), unlike legacy content rows which
+          // store MILLISECONDS — hence the *1000 here (D23).
           formattedDate: new Date((row.updated_at ?? 0) * 1000).toLocaleDateString(),
-          availableActions: row.is_published ? ['unpublish'] : ['publish'],
+          // No list-level publish/unpublish for document rows (D14): those content-list action endpoints
+          // operate on the legacy `content` table and are keyed by a version :documentId, not root_id.
+          // Publish/unpublish happen in the edit form, which posts to the working document routes.
+          availableActions: [],
         }
       })
 
@@ -1655,15 +1661,23 @@ function userCtx(c: any) {
   return u ? { name: u.email, email: u.email, role: u.role } : undefined
 }
 
-function parseDocFormData(formData: FormData): { title: string | null; slug: string | null; data: Record<string, unknown> } {
+function parseDocFormData(
+  formData: FormData,
+  queryableFields: QueryableField[] = [],
+): { title: string | null; slug: string | null; data: Record<string, unknown> } {
   const title = (formData.get('title') as string | null) || null
   const slug = (formData.get('slug') as string | null) || null
+  // Facet fields are ALWAYS arrays (D16) — a single value like 'homepage' has no comma but must still
+  // become ['homepage'] so document_facets materializes it. Field-kind drives this, not comma-sniffing.
+  const facetNames = new Set(queryableFields.filter(f => f.kind === 'facet').map(f => f.name))
   const data: Record<string, unknown> = {}
   for (const [key, val] of formData.entries()) {
     if (key.startsWith('data[') && key.endsWith(']')) {
       const fieldName = key.slice(5, -1)
       const strVal = val as string
-      if (strVal.includes(',') && !strVal.startsWith('{')) {
+      if (facetNames.has(fieldName)) {
+        data[fieldName] = strVal.split(',').map(s => s.trim()).filter(Boolean)
+      } else if (strVal.includes(',') && !strVal.startsWith('{')) {
         data[fieldName] = strVal.split(',').map(s => s.trim()).filter(Boolean)
       } else if (strVal === 'true') { data[fieldName] = true }
       else if (strVal === 'false') { data[fieldName] = false }
@@ -1703,7 +1717,7 @@ adminContentRoutes.post('/documents/:typeId/new', async (c) => {
     const { svc, docType } = await getDocService(db, typeId)
     if (!docType) return c.html('<p>Unknown document type.</p>', 404)
     const formData = await c.req.formData()
-    const { title, slug, data } = parseDocFormData(formData)
+    const { title, slug, data } = parseDocFormData(formData, docType.queryableFields)
     const doc = await svc.create(createDocumentSchema.parse({
       typeId, tenantId: 'default', locale: 'default',
       title: title ?? undefined, slug: slug ?? undefined, data,
@@ -1765,8 +1779,8 @@ adminContentRoutes.post('/documents/:typeId/:rootId', async (c) => {
     const formData = await c.req.formData()
     const _method = formData.get('_method') as string | null
     if (_method !== 'PUT') return c.redirect(`/admin/content/documents/${typeId}/${rootId}/edit?message=Unknown+action`)
-    const { title, slug, data } = parseDocFormData(formData)
-    const { svc } = await getDocService(db, typeId)
+    const { svc, docType } = await getDocService(db, typeId)
+    const { title, slug, data } = parseDocFormData(formData, docType?.queryableFields ?? [])
     await svc.saveDraft(rootId, { title, slug, data }, user?.userId)
     return c.redirect(`/admin/content/documents/${typeId}/${rootId}/edit?message=Draft+saved`)
   } catch (err: any) {
@@ -1839,9 +1853,8 @@ adminContentRoutes.get('/documents/:typeId/:rootId/versions', async (c) => {
   return c.html(renderVersionHistoryFragment({ versions, docType, rootId }))
 })
 
-// ─── Redirect: /:id/edit where id = "documents/:typeId/:rootId" ───────────────
-// The content list sets item.id = "documents/:typeId/:rootId" so the template
-// generates /admin/content/documents/:typeId/:rootId/edit — handled above.
-// This catch-all handles the case where the browser strips the path segments.
+// The content list sets item.id = "documents/:typeId/:rootId", so the rendered edit link is
+// /admin/content/documents/:typeId/:rootId/edit — served by the GET handler above. No catch-all is
+// needed here (removed a stale comment that promised one but defined nothing — D14).
 
 export default adminContentRoutes

@@ -102,77 +102,28 @@ adminDocumentsRoutes.get('/', async (c) => {
     const sortColumn = sortField !== 'updated_at' ? scalarColumns.get(sortField) ?? null : null
     const sortDir = (c.req.query('dir') ?? 'desc').toLowerCase() === 'asc' ? 'ASC' : 'DESC'
 
-    const useFacetJoin = !!facetFilter
-    const params: (string | number)[] = [tenantId, typeId]
+    // Single source of list SQL: the tenant-scoped repository chokepoint (R4/D10). No inline SQL.
+    const repo = new DocumentRepository(db, tenantId)
+    const docs = await repo.list({
+      typeId, status, locale, limit, cursorUpdatedAt, cursorId,
+      scalarFilters, facetFilter: facetFilter ?? undefined, sortColumn, sortDir,
+    })
 
-    let sql: string
-    if (useFacetJoin) {
-      sql = `SELECT d.* FROM documents d
-             JOIN document_facets f ON f.document_id = d.id
-             WHERE d.tenant_id = ? AND d.type_id = ? AND d.deleted_at IS NULL
-               AND f.field_name = ? AND f.value_text = ?`
-      params.push(facetFilter!.field, facetFilter!.value)
-
-      if (status === 'draft') {
-        sql += ' AND d.is_current_draft = 1'
-      } else if (status === 'published') {
-        sql += ' AND d.is_published = 1'
-      } else {
-        sql += ' AND (d.is_current_draft = 1 OR d.is_published = 1)'
-      }
-    } else {
-      sql = `SELECT * FROM documents WHERE tenant_id = ? AND type_id = ? AND deleted_at IS NULL`
-      if (status === 'draft') {
-        sql += ' AND is_current_draft = 1'
-      } else if (status === 'published') {
-        sql += ' AND is_published = 1'
-      } else {
-        sql += ' AND (is_current_draft = 1 OR is_published = 1)'
-      }
-    }
-
-    if (locale !== 'default') {
-      sql += ` AND ${useFacetJoin ? 'd.' : ''}locale = ?`
-      params.push(locale)
-    }
-
-    for (const sf of scalarFilters) {
-      sql += ` AND ${useFacetJoin ? 'd.' : ''}${sf.column} = ?`
-      params.push(sf.value)
-    }
-
-    if (cursorUpdatedAt !== undefined && cursorId) {
-      const prefix = useFacetJoin ? 'd.' : ''
-      sql += ` AND (${prefix}updated_at < ? OR (${prefix}updated_at = ? AND ${prefix}id < ?))`
-      params.push(cursorUpdatedAt, cursorUpdatedAt, cursorId)
-    }
-
-    const orderPrefix = useFacetJoin ? 'd.' : ''
-    if (sortColumn) {
-      sql += ` ORDER BY ${orderPrefix}${sortColumn} ${sortDir}, ${orderPrefix}id ${sortDir} LIMIT ?`
-    } else {
-      sql += ` ORDER BY ${orderPrefix}updated_at ${sortDir}, ${orderPrefix}id ${sortDir} LIMIT ?`
-    }
-    params.push(limit)
-
-    const result = await db.prepare(sql).bind(...params).all()
-    const rows = (result.results ?? []) as any[]
-
-    const items = rows.map(r => ({
-      id: r.id,
-      rootId: r.root_id,
-      typeId: r.type_id,
-      title: r.title,
-      slug: r.slug,
-      status: r.status,
-      isCurrentDraft: r.is_current_draft === 1,
-      isPublished: r.is_published === 1,
-      versionNumber: r.version_number,
-      locale: r.locale,
-      publishedAt: r.published_at,
-      updatedAt: r.updated_at,
-      createdAt: r.created_at,
-      data: JSON.parse(r.data ?? '{}'),
+    const items = docs.map(d => ({
+      id: d.id,
+      rootId: d.rootId,
+      typeId: d.typeId,
+      title: d.title,
+      slug: d.slug,
+      status: d.status,
+      isCurrentDraft: d.isCurrentDraft,
+      isPublished: d.isPublished,
+      versionNumber: d.versionNumber,
+      locale: d.locale,
+      publishedAt: d.publishedAt,
+      updatedAt: d.updatedAt,
+      createdAt: d.createdAt,
+      data: d.data,
     }))
 
     const lastItem = items[items.length - 1]
@@ -188,6 +139,8 @@ adminDocumentsRoutes.get('/', async (c) => {
 })
 
 // ─── Get single document by ID (current draft) ───────────────────────────────
+// D25: this dynamic GET /:id MUST stay BELOW the literal-prefixed GET routes (/types, /ui*) above —
+// inserting a new GET /:something before them would shadow those literals (see commit 5af9dea).
 adminDocumentsRoutes.get('/:id', async (c) => {
   try {
     const repo = new DocumentRepository(c.env.DB, 'default')

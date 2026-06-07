@@ -239,7 +239,11 @@ The `INSERT INTO documents (… 30 columns …) SELECT …` supplies only **29**
 
 ---
 
-### Phase 3 — Repository chokepoint + list / filter / sort
+### Phase 3 — Repository chokepoint + list / filter / sort — 🟡 MOSTLY DONE
+
+> Done: **D10** — added `DocumentRepository.list()` (the single place document list SQL is built: status mode, generated-column scalar filters, facet join, sort, keyset cursor, schedule window, all tenant-scoped) with a `SAFE_IDENTIFIER` guard on interpolated column names; `listPublished`/`listDrafts` are now thin wrappers. Both `api-documents.ts` and `admin-documents.ts` list handlers now call `repo.list()` — **all inline list SQL removed from handlers** (R4). **D13** — `admin-testimonials.ts` count now shares one WHERE clause with the page query (no more phantom pages). **D22** — OFFSET documented as an intentional exception for the page-number admin HTML table (JSON APIs use keyset). **D8** — deleted the dead `admin-documents-list.template.ts` (zero importers). 5 new real-DB tests (scalar filter, facet join, sort, unsafe-identifier rejection, tenant scoping). Full suite **1514 passed**.
+>
+> Deferred to **Phase 3b**: surface the generated-column filter/sort *controls* in the rendered `/admin/content` doc-list UI (the data layer is done via `repo.list()` and exercised by the JSON admin API; this is HTML control wiring only).
 
 **3.1 — D10: Extend the repository, route lists through it.** `document-repository.ts`.
 - Add filter/sort options to `ListDocumentsOptions` and to `listPublished`/`listDrafts`:
@@ -268,7 +272,11 @@ The `INSERT INTO documents (… 30 columns …) SELECT …` supplies only **29**
 
 ---
 
-### Phase 4 — Admin UI correctness
+### Phase 4 — Admin UI correctness — ✅ DONE
+
+> Done: **D7** — fixed all form-template action URLs (`/admin/documents/ui/…` → `/admin/content/documents/…`; breadcrumb/cancel/currentPath → `/admin/content`), so create/save/publish/unpublish/versions no longer 404. **D15** — hidden `false` input before each boolean checkbox so a boolean can be cleared. **D16** — `parseDocFormData` is now field-kind-aware: facet fields always parse to arrays (single values too). **D14** — document rows in the content list emit no list-level publish/unpublish actions (they're driven by the edit form); removed the stale "catch-all" comment. **D18** — removed the duplicate HTMX `<script>` (layout owns it). **D23** — documented the seconds-vs-ms timestamp split at the source + render sites. **D25** — guard comment keeping `GET /:id` below the literal routes. **D27** — documented the reference-field form exclusion. Type-check clean; full suite **1514 passed**.
+>
+> Deferred (cosmetic): migrate `admin-testimonials-form.template.ts` from the old `admin-layout-v2` to catalyst styling for visual consistency.
 
 **4.1 — D7: Fix the form template URLs.** `templates/pages/admin-documents-form.template.ts`. Replace the base `/admin/documents/ui` with the **real** routes (verified in `admin-content.ts`):
 - `formAction` (114-116): edit → `/admin/content/documents/${docType.id}/${doc.rootId}` (POST, route `:1760`); new → `/admin/content/documents/${docType.id}/new` (POST, route `:1698`).
