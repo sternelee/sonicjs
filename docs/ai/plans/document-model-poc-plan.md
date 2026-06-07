@@ -345,6 +345,28 @@ The `INSERT INTO documents (… 30 columns …) SELECT …` supplies only **29**
 
 ---
 
+## Decommissioning the legacy `content` / `media` tables (readiness + plan)
+
+**Status: NOT ready to drop `content`.** New writes go to `documents` and existing rows can be
+backfilled, but many live subsystems still READ/WRITE `content` and would break on drop. `collections`
+is NOT a deletion target — it is the permanent schema/type registry that drives the document-backed
+editor (`getCollectionFields` reads `collections.schema`) and `autoRegisterCollectionDocumentTypes`.
+
+Active `content` consumers (blockers), from the audit:
+- **Public content API** — `routes/api-content-crud.ts`, `routes/api.ts`, `routes/api-system.ts` (serves live content).
+- **Workflow plugin** — `plugins/core-plugins/workflow-plugin/*` (automation, scheduler, notifications, content-workflow, workflow-service, routes, admin-routes) + `content_versions`. Largest dependency.
+- **AI search** — `ai-search-plugin/services/{indexer,ai-search,custom-rag}.ts` (indexes content).
+- **Dashboard** — `routes/admin-dashboard.ts` (counts/stats). **Cache warming**, **seed-data**, **database-tools**, **admin-api**, **form-collection-sync**.
+- Already OFF content: the `admin-content.ts` create/update/delete/edit legacy branches are now dead code (every collection is document-backed); the all-view content half returns nothing.
+
+Ordered decommission plan (each step independently shippable + testable):
+1. Keep `collections` permanently.
+2. Flip READ paths to `documents`: public content API (api-content-crud / api / api-system), dashboard stats, cache-warming.
+3. Migrate dependent subsystems: workflow plugin → operate on the documents two-axis model (big); AI search indexer → index documents.
+4. Remove the dead legacy content branches in `admin-content.ts`; stop all `content`/`content_versions` writes.
+5. Backfill (`scripts/backfill-content.ts`) + verify zero `content` readers remain (grep gate in CI).
+6. Drop `content` + `content_versions` in a migration. (Media: finish the slice-3 read-flip first, then drop `media`.)
+
 ## All content is document-backed (global)
 
 `autoRegisterCollectionDocumentTypes(db)` runs at bootstrap (after collection sync) and registers a
