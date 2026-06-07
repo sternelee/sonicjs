@@ -77,6 +77,33 @@ describe('media-as-document (Phase 6)', () => {
     expect(deriveMediaPublicUrl('a/b.jpg', {})).toBe('/files/a/b.jpg')
   })
 
+  it('list() filters by folder/type and aggregates folders/types via generated columns', async () => {
+    const svc = new MediaDocumentService(db)
+    await svc.createFromUpload({ ...META, filename: 'a.jpg', r2Key: 'uploads/a.jpg', mimeType: 'image/jpeg', folder: 'uploads', size: 10 }, 'u1')
+    await svc.createFromUpload({ ...META, filename: 'b.png', r2Key: 'photos/b.png', mimeType: 'image/png', folder: 'photos', size: 20, tags: [] }, 'u1')
+    await svc.createFromUpload({ ...META, filename: 'c.pdf', r2Key: 'docs/c.pdf', mimeType: 'application/pdf', folder: 'docs', size: 30, tags: [] }, 'u1')
+
+    const all = await svc.list()
+    expect(all.files).toHaveLength(3)
+
+    const images = await svc.list({ type: 'images' })
+    expect(images.files).toHaveLength(2)
+
+    const docs = await svc.list({ type: 'documents' })
+    expect(docs.files.map(f => f.data.filename)).toEqual(['c.pdf'])
+
+    const inPhotos = await svc.list({ folder: 'photos' })
+    expect(inPhotos.files.map(f => f.data.filename)).toEqual(['b.png'])
+
+    // aggregations cover all media regardless of the page filter
+    const folderCounts = Object.fromEntries(all.folders.map(f => [f.folder, f.count]))
+    expect(folderCounts).toMatchObject({ uploads: 1, photos: 1, docs: 1 })
+    const typeCounts = Object.fromEntries(all.types.map(t => [t.type, t.count]))
+    expect(typeCounts).toMatchObject({ images: 2, documents: 1 })
+    // a listed file maps cleanly to the MediaFile view-model
+    expect(mediaDocToFile(inPhotos.files[0]).isImage).toBe(true)
+  })
+
   it('reference-aware delete: a strong inbound reference blocks hard-delete; weak does not', async () => {
     const mediaSvc = new MediaDocumentService(db)
     const media = await mediaSvc.createFromUpload(META, 'u1')

@@ -334,7 +334,8 @@ The `INSERT INTO documents (… 30 columns …) SELECT …` supplies only **29**
 - **Backfill** — `my-sonicjs-app/scripts/backfill-media.ts` mirrors existing `media` rows into documents (non-destructive, idempotent by `r2Key`).
 - Tests: media service (5), api-media upload mirror (1), admin-media upload+delete-block (3).
 
-**Remaining (slice 3)**: flip the library list/selector/search reads to documents via `mediaDocToFile` (then drop the legacy write), and resolve image-field references to roots-only.
+**Slice 3 (in progress)**: `MediaDocumentService.list()` added — media-library list sourced from `media_asset` documents with folder/type filters + folder/type aggregations all running off the `q_media_*` generated columns (the verified building block for the read-flip). Tested.
+**Remaining**: wire the admin media library handlers (list + `:id/details` + `PUT :id` + `DELETE :id` + selector/search) to documents **together** — they're all keyed by the media-table `id`, so the read-flip must move them to the document `rootId` id-space as one coordinated change (a partial flip breaks details/delete). Then drop the legacy `media` write and resolve image-field references to roots-only. Best done with a live media-UI verification pass since these are HTML/picker surfaces.
 
 **6.2 — D28: ACL admin UI (decide).** Either add a read-only base-grants display + per-document override form (POST to a new `/admin/content/documents/:typeId/:rootId/permissions` route writing `document_permissions` via the repository), or explicitly defer with a note. Do not silently drop the Phase-3 bullet.
 

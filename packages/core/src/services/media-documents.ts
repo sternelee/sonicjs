@@ -107,6 +107,32 @@ export function mediaDocToFile(doc: Document, opts: MediaUrlOptions = {}) {
   }
 }
 
+function rowToMinimalDoc(row: Record<string, any>): Document {
+  return {
+    id: row.id,
+    rootId: row.root_id,
+    typeId: row.type_id,
+    data: typeof row.data === 'string' ? JSON.parse(row.data) : (row.data ?? {}),
+    ownerId: row.owner_id ?? null,
+    createdBy: row.created_by ?? null,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  } as unknown as Document
+}
+
+export interface MediaListOptions {
+  folder?: string
+  type?: 'all' | 'images' | 'videos' | 'documents' | string
+  limit?: number
+  offset?: number
+}
+
+export interface MediaListResult {
+  files: Document[]
+  folders: Array<{ folder: string; count: number; totalSize: number }>
+  types: Array<{ type: string; count: number }>
+}
+
 export interface MediaDeleteImpact {
   canHardDelete: boolean
   strongRefs: Array<{ fromDocumentId: string; fieldName: string }>
@@ -143,6 +169,51 @@ export class MediaDocumentService {
       }),
       createdBy,
     )
+  }
+
+  /**
+   * Media library list sourced from media_asset documents — folder/type filters + folder/type
+   * aggregations all run off the q_media_* generated columns (the same shape the legacy `media` query
+   * used). Building block for flipping the admin media library reads to documents.
+   */
+  async list(opts: MediaListOptions = {}): Promise<MediaListResult> {
+    const limit = Math.min(opts.limit ?? 24, 200)
+    const offset = opts.offset ?? 0
+    const base = "type_id = 'media_asset' AND tenant_id = ? AND is_current_draft = 1 AND deleted_at IS NULL"
+
+    const where = [base]
+    const params: (string | number)[] = [this.tenantId]
+    if (opts.folder && opts.folder !== 'all') {
+      where.push('q_media_folder = ?')
+      params.push(opts.folder)
+    }
+    if (opts.type && opts.type !== 'all') {
+      if (opts.type === 'images') where.push("q_media_mime LIKE 'image/%'")
+      else if (opts.type === 'videos') where.push("q_media_mime LIKE 'video/%'")
+      else if (opts.type === 'documents') where.push("q_media_mime IN ('application/pdf', 'text/plain', 'application/msword')")
+    }
+
+    const listed = await this.db
+      .prepare(`SELECT * FROM documents WHERE ${where.join(' AND ')} ORDER BY updated_at DESC LIMIT ? OFFSET ?`)
+      .bind(...params, limit, offset)
+      .all<Record<string, any>>()
+    const files = (listed.results ?? []).map(rowToMinimalDoc)
+
+    // Aggregations cover ALL media (not the folder/type-filtered page), matching the legacy sidebar.
+    const folderAgg = await this.db
+      .prepare(`SELECT q_media_folder AS folder, COUNT(*) AS count, SUM(q_media_size) AS totalSize FROM documents WHERE ${base} GROUP BY q_media_folder ORDER BY q_media_folder`)
+      .bind(this.tenantId)
+      .all<{ folder: string; count: number; totalSize: number }>()
+    const typeAgg = await this.db
+      .prepare(`SELECT CASE WHEN q_media_mime LIKE 'image/%' THEN 'images' WHEN q_media_mime LIKE 'video/%' THEN 'videos' WHEN q_media_mime IN ('application/pdf', 'text/plain') THEN 'documents' ELSE 'other' END AS type, COUNT(*) AS count FROM documents WHERE ${base} GROUP BY type`)
+      .bind(this.tenantId)
+      .all<{ type: string; count: number }>()
+
+    return {
+      files,
+      folders: (folderAgg.results ?? []).map(f => ({ folder: f.folder, count: f.count, totalSize: f.totalSize ?? 0 })),
+      types: (typeAgg.results ?? []).map(t => ({ type: t.type, count: t.count })),
+    }
   }
 
   /** Reference-aware delete: strong inbound references block hard-delete (offer archive instead). */
