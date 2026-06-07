@@ -68,6 +68,26 @@ export async function bootstrapDocumentTypes(db: D1Database): Promise<void> {
     ],
   })
 
+  // Blog posts: the existing code-managed `blog_posts` collection is backed by the document model
+  // (Option B). The rich /admin/content collection editor stays; storage moves to documents. The
+  // matching id ('blog_posts' == collection name) is how the content admin detects doc-backing.
+  await registry.register({
+    id: 'blog_posts',
+    name: 'blog_posts',
+    displayName: 'Blog Posts',
+    description: 'Blog posts (document-backed; edited via the content collection UI)',
+    source: 'system',
+    schema: anyObject,
+    settings: {
+      baseGrants: { public: ['read'], admin: ['read', 'create', 'update', 'delete', 'publish', 'manage'], editor: ['read', 'create', 'update', 'publish'], viewer: ['read'] },
+      maxVersionsPerRoot: 50,
+    },
+    queryableFields: [
+      { name: 'difficulty', kind: 'scalar', type: 'text', column: 'q_blog_difficulty' },
+      { name: 'author',     kind: 'scalar', type: 'text', column: 'q_blog_author' },
+    ],
+  })
+
   await registry.register({
     id: 'media_asset',
     name: 'media_asset',
