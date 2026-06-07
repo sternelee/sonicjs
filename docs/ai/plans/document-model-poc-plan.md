@@ -328,7 +328,7 @@ The `INSERT INTO documents (… 30 columns …) SELECT …` supplies only **29**
 
 ### Phase 6 — Remaining original scope + E2E + final acceptance
 
-**6.1 — Media-as-document (original Phase 4, not yet built).** Implement per Appendix A "Media Handling": R2 upload → `media_asset` document; scalar generated columns + `tags` facet; compatibility adapter mapping a `media_asset` document to the **real** `media` table/`MediaFile` view-model shape — **deriving** `public_url`/`thumbnail_url` from `r2Key` at read time (the document payload intentionally omits them); reference-aware delete (strong inbound refs block hard-delete). References resolve to **roots only**.
+**6.1 — Media-as-document (original Phase 4).** 🟡 Foundation DONE: `services/media-documents.ts` — `MediaDocumentService.createFromUpload(meta)` creates a `media_asset` document (q_media_* generated columns + `tags` facet), `mediaDocToRecord`/`mediaDocToFile` adapters reproduce the legacy `media` row + `MediaFile` view-model with `public_url`/`thumbnail_url` **derived** from `r2Key` (payload omits them), and `getDeleteImpact()` does reference-aware delete (strong inbound refs block hard-delete). 5 real-DB tests. **Remaining**: wire `api-media.ts` upload to create the document (source of truth, R2 unchanged), convert the admin media library list to read documents via the adapter, and reference resolution to roots-only in image fields.
 
 **6.2 — D28: ACL admin UI (decide).** Either add a read-only base-grants display + per-document override form (POST to a new `/admin/content/documents/:typeId/:rootId/permissions` route writing `document_permissions` via the repository), or explicitly defer with a note. Do not silently drop the Phase-3 bullet.
 
