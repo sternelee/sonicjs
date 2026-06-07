@@ -11,10 +11,9 @@ import { dirname, join } from 'node:path'
 // Foreign keys are left OFF to mirror D1 (whose FK enforcement is not guaranteed); the
 // services delete derived rows explicitly rather than relying on cascade.
 
-const MIGRATION_037 = join(
-  dirname(fileURLToPath(import.meta.url)),
-  '../../../migrations/043_document_repository.sql',
-)
+const MIGRATIONS_DIR = join(dirname(fileURLToPath(import.meta.url)), '../../../migrations')
+// Document-model migrations applied to the test DB, in order. 044 ALTERs the documents table from 043.
+const DOC_MIGRATIONS = ['043_document_repository.sql', '044_blog_post_document_columns.sql']
 
 // better-sqlite3 only accepts numbers/strings/bigints/buffers/null. Coerce the values the
 // services bind (undefined, booleans) the same way D1's binder tolerates them.
@@ -76,7 +75,9 @@ export function createTestD1(): TestD1 {
   // services intentionally delete derived rows explicitly instead of relying on cascade. Turn them
   // OFF so the harness mirrors D1 behavior rather than testing a stricter contract than production.
   sqlite.pragma('foreign_keys = OFF')
-  sqlite.exec(readFileSync(MIGRATION_037, 'utf8'))
+  for (const m of DOC_MIGRATIONS) {
+    sqlite.exec(readFileSync(join(MIGRATIONS_DIR, m), 'utf8'))
+  }
 
   return {
     prepare(sql: string) {

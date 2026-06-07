@@ -138,6 +138,98 @@ describe('DocumentsService — real SQLite (migration 037)', () => {
   })
 })
 
+describe('DocumentRepository.list — filters / facet / sort / tenant (D10)', () => {
+  let db
+  beforeEach(() => {
+    db = createTestD1()
+    db.raw
+      .prepare(
+        `INSERT INTO document_types (id,name,display_name,schema,queryable_fields,settings,source,schema_version,is_system,is_active,created_at,updated_at)
+         VALUES ('testimonial','testimonial','Testimonial','{}','[]','{}','system',1,1,1,1,1)`,
+      )
+      .run()
+  })
+  afterEach(() => db.close())
+
+  async function seed() {
+    const s = svc(db)
+    await s.create({ typeId: 'testimonial', tenantId: 'default', title: 'A', data: { rating: 5, authorCompany: 'Acme', sortOrder: 2, tags: ['vip', 'home'] }, publishOnCreate: true })
+    await s.create({ typeId: 'testimonial', tenantId: 'default', title: 'B', data: { rating: 3, authorCompany: 'Beta', sortOrder: 1, tags: ['home'] }, publishOnCreate: true })
+  }
+
+  it('filters on a generated scalar column', async () => {
+    await seed()
+    const r = await new DocumentRepository(db, 'default').list({ typeId: 'testimonial', status: 'published', scalarFilters: [{ column: 'q_tst_rating', value: 5 }] })
+    expect(r.map(d => d.title)).toEqual(['A'])
+  })
+
+  it('filters via the document_facets join', async () => {
+    await seed()
+    const repo = new DocumentRepository(db, 'default')
+    expect((await repo.list({ typeId: 'testimonial', status: 'published', facetFilter: { field: 'tags', value: 'vip' } })).map(d => d.title)).toEqual(['A'])
+    expect((await repo.list({ typeId: 'testimonial', status: 'published', facetFilter: { field: 'tags', value: 'home' } })).map(d => d.title).sort()).toEqual(['A', 'B'])
+  })
+
+  it('sorts by a generated column ascending', async () => {
+    await seed()
+    const r = await new DocumentRepository(db, 'default').list({ typeId: 'testimonial', status: 'published', sortColumn: 'q_tst_sort_order', sortDir: 'ASC' })
+    expect(r.map(d => d.title)).toEqual(['B', 'A'])
+  })
+
+  it('rejects an unsafe filter/sort identifier (defense-in-depth)', async () => {
+    const repo = new DocumentRepository(db, 'default')
+    await expect(repo.list({ typeId: 'testimonial', scalarFilters: [{ column: 'q_tst_rating; DROP TABLE documents', value: 1 }] })).rejects.toThrow(/Unsafe/i)
+    await expect(repo.list({ typeId: 'testimonial', sortColumn: 'updated_at)); DROP' })).rejects.toThrow(/Unsafe/i)
+  })
+
+  it('is tenant-scoped', async () => {
+    await seed()
+    expect(await new DocumentRepository(db, 'other').list({ typeId: 'testimonial', status: 'published' })).toEqual([])
+  })
+})
+
+describe('Blog posts document-backed (Option B, migration 044)', () => {
+  let db
+  beforeEach(() => {
+    db = createTestD1()
+    db.raw
+      .prepare(
+        `INSERT INTO document_types (id,name,display_name,schema,queryable_fields,settings,source,schema_version,is_system,is_active,created_at,updated_at)
+         VALUES ('blog_posts','blog_posts','Blog Posts','{}','[]','{}','system',1,1,1,1,1)`,
+      )
+      .run()
+  })
+  afterEach(() => db.close())
+
+  const BLOG_FIELDS = [
+    { name: 'difficulty', kind: 'scalar', type: 'text', column: 'q_blog_difficulty' },
+    { name: 'author', kind: 'scalar', type: 'text', column: 'q_blog_author' },
+  ]
+
+  it('create populates q_blog_* generated columns and filters via repo.list', async () => {
+    const s = new DocumentsService(db, { queryableFields: BLOG_FIELDS, tenantId: 'default' })
+    await s.create({ typeId: 'blog_posts', tenantId: 'default', title: 'Hello', slug: 'hello', data: { difficulty: 'advanced', author: 'Lane', content: '<p>hi</p>', excerpt: 'x' }, publishOnCreate: true })
+    await s.create({ typeId: 'blog_posts', tenantId: 'default', title: 'Easy One', slug: 'easy', data: { difficulty: 'beginner', author: 'Sam', content: '<p>yo</p>' }, publishOnCreate: true })
+
+    const row = db.raw.prepare("SELECT q_blog_difficulty d, q_blog_author a FROM documents WHERE slug='hello'").get()
+    expect(row.d).toBe('advanced')
+    expect(row.a).toBe('Lane')
+
+    const filtered = await new DocumentRepository(db, 'default').list({ typeId: 'blog_posts', status: 'published', scalarFilters: [{ column: 'q_blog_difficulty', value: 'advanced' }] })
+    expect(filtered.map(d => d.title)).toEqual(['Hello'])
+  })
+
+  it('edit-while-published: saveDraft keeps the published post live, publish swaps it', async () => {
+    const s = new DocumentsService(db, { queryableFields: BLOG_FIELDS, tenantId: 'default' })
+    const post = await s.create({ typeId: 'blog_posts', tenantId: 'default', title: 'V1', slug: 'p', data: { difficulty: 'beginner', author: 'Lane', content: 'v1' }, publishOnCreate: true })
+    const draft = await s.saveDraft(post.rootId, { title: 'V2', data: { content: 'v2' } })
+    // published row is still v1
+    expect(db.raw.prepare('SELECT title FROM documents WHERE root_id=? AND is_published=1').get(post.rootId).title).toBe('V1')
+    await s.publish(draft.id)
+    expect(db.raw.prepare('SELECT title FROM documents WHERE root_id=? AND is_published=1').get(post.rootId).title).toBe('V2')
+  })
+})
+
 describe('Document ACL — isAllowed against real document_permissions (D5/D11)', () => {
   let db
   beforeEach(() => { db = createTestD1() })

@@ -268,6 +268,56 @@ async function getCollection(db: D1Database, collectionId: string) {
   )
 }
 
+// ─── Document-backing (Option B) ────────────────────────────────────────────────
+// A collection is "document-backed" when a document type with the SAME id as the collection name is
+// registered + active (e.g. the `blog_posts` collection ↔ the `blog_posts` document type). Such
+// collections keep the rich /admin/content editor UI but store data in the `documents` table.
+async function getDocBackingType(db: D1Database, collectionName?: string | null) {
+  if (!collectionName) return null
+  const dt = await new DocumentTypeRegistry(db).findById(collectionName)
+  return dt && dt.isActive ? dt : null
+}
+
+async function getCollectionByName(db: D1Database, name: string) {
+  const row = await db.prepare('SELECT * FROM collections WHERE name = ? AND is_active = 1').bind(name).first() as any
+  if (!row) return null
+  return {
+    id: row.id, name: row.name, display_name: row.display_name,
+    description: row.description, schema: row.schema ? JSON.parse(row.schema) : {},
+  }
+}
+
+// Rich-editor plugin flags/settings the content form needs (Quill/TinyMCE/MDX/workflow), so a
+// document-backed edit form looks identical to the legacy content editor.
+async function loadContentEditorFlags(db: D1Database): Promise<Record<string, unknown>> {
+  const flags: Record<string, unknown> = { workflowEnabled: await isPluginActive(db, 'workflow') }
+  const editors: Array<[string, string]> = [['tinymce-plugin', 'tinymce'], ['quill-editor', 'quill'], ['easy-mdx', 'mdxeditor']]
+  for (const [plugin, key] of editors) {
+    const enabled = await isPluginActive(db, plugin)
+    flags[`${key}Enabled`] = enabled
+    if (enabled) {
+      const ps = new PluginService(db)
+      const p = await ps.getPlugin(plugin)
+      flags[`${key}Settings`] = p?.settings
+    }
+  }
+  return flags
+}
+
+function makeDocService(db: D1Database, docType: any) {
+  return new DocumentsService(db, {
+    queryableFields: docType.queryableFields ?? [],
+    typeSchemaVersion: docType.schemaVersion ?? 1,
+    maxVersionsPerRoot: docType.settings?.maxVersionsPerRoot ?? 50,
+    tenantId: 'default',
+  })
+}
+
+function slugify(s?: string | null): string | null {
+  if (!s) return null
+  return s.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').replace(/^-+|-+$/g, '') || null
+}
+
 // Content list (main page)
 adminContentRoutes.get('/', async (c) => {
   try {
@@ -291,15 +341,22 @@ adminContentRoutes.get('/', async (c) => {
     const docTypeRegistry = new DocumentTypeRegistry(db)
     const docTypes = await docTypeRegistry.findAll()
 
+    // A document type whose id matches a collection name backs that collection (Option B) and is
+    // managed through the collection entry — don't also list it as a separate doc: model.
+    const collectionNames = new Set((collectionsResults || []).map((r: any) => r.name))
     const models = [
       ...(collectionsResults || []).map((row: any) => ({ name: row.name, displayName: row.display_name })),
-      ...docTypes.map(dt => ({ name: `doc:${dt.id}`, displayName: dt.displayName })),
+      ...docTypes.filter(dt => !collectionNames.has(dt.id)).map(dt => ({ name: `doc:${dt.id}`, displayName: dt.displayName })),
     ]
 
     // ── Document-type branch: query documents table instead of content ──────────
-    const isDocModel = modelName.startsWith('doc:')
+    // Triggered by a `doc:` model OR a document-backed collection (collection name == doc type id).
+    const docBackedCollection = !modelName.startsWith('doc:') && modelName !== 'all'
+      ? docTypes.find(dt => dt.id === modelName)
+      : undefined
+    const isDocModel = modelName.startsWith('doc:') || !!docBackedCollection
     if (isDocModel) {
-      const typeId = modelName.slice(4)
+      const typeId = modelName.startsWith('doc:') ? modelName.slice(4) : modelName
       const docType = docTypes.find(dt => dt.id === typeId)
 
       const docParams: (string | number)[] = ['default', typeId]
@@ -323,7 +380,9 @@ adminContentRoutes.get('/', async (c) => {
         const label = row.is_published ? 'Published' : 'Draft'
         const css = row.is_published ? statusBadgeCss.published : statusBadgeCss.draft
         return {
-          id: `documents/${typeId}/${row.root_id}`,
+          // Doc-backed collections edit through the rich collection editor at /admin/content/:rootId/edit;
+          // pure doc: types use the generic document form at /admin/content/documents/:typeId/:rootId.
+          id: docBackedCollection ? row.root_id : `documents/${typeId}/${row.root_id}`,
           title: row.title || data.question || data.authorName || data.name || row.root_id,
           slug: row.slug || '',
           modelName: docType?.displayName ?? typeId,
@@ -658,6 +717,37 @@ adminContentRoutes.get('/:id/edit', async (c) => {
     // Capture referrer parameters to preserve filters when returning to list
     const referrerParams = url.searchParams.get('ref') || ''
 
+    // ── Option B: if :id is a document-backed root, render the rich editor from the document ──
+    const docRow = await db
+      .prepare("SELECT * FROM documents WHERE root_id = ? AND is_current_draft = 1 AND tenant_id = 'default' AND deleted_at IS NULL")
+      .bind(id).first() as any
+    if (docRow) {
+      const docType = await getDocBackingType(db, docRow.type_id)
+      const dcoll = docType ? await getCollectionByName(db, docRow.type_id) : null
+      if (docType && dcoll) {
+        const fields = await getCollectionFields(db, dcoll.id)
+        const flags = await loadContentEditorFlags(db)
+        const formData: ContentFormData = {
+          id: docRow.root_id,
+          title: docRow.title,
+          slug: docRow.slug,
+          created_at: docRow.created_at,
+          updated_at: docRow.updated_at,
+          published_at: docRow.published_at,
+          data: docRow.data ? JSON.parse(docRow.data) : {},
+          status: docRow.is_published ? 'published' : (docRow.status ?? 'draft'),
+          collection: dcoll,
+          fields,
+          isEdit: true,
+          referrerParams,
+          user: user ? { name: user.email, email: user.email, role: user.role } : undefined,
+          version: c.get('appVersion'),
+          ...flags,
+        } as ContentFormData
+        return c.html(renderContentFormPage(formData))
+      }
+    }
+
     // Get content with caching
     const cache = getCacheService(CACHE_CONFIGS.content!)
     const content = await cache.getOrSet(
@@ -849,6 +939,26 @@ adminContentRoutes.post('/', async (c) => {
     const scheduledPublishAt = formData.get('scheduled_publish_at') as string
     const scheduledUnpublishAt = formData.get('scheduled_unpublish_at') as string
 
+    // ── Option B: document-backed collection → store in `documents`, not `content` ──
+    const createDocType = await getDocBackingType(db, collection.name)
+    if (createDocType) {
+      const svc = makeDocService(db, createDocType)
+      const doc = await svc.create(createDocumentSchema.parse({
+        typeId: createDocType.id, tenantId: 'default', locale: 'default',
+        title: data.title || slug || 'Untitled', slug: slug || undefined,
+        data, publishOnCreate: status === 'published',
+      }), user?.userId)
+      const cache = getCacheService(CACHE_CONFIGS.content!)
+      await cache.invalidate(`content:list:${collectionId}:*`)
+      const referrerParams = formData.get('referrer_params') as string
+      const redirectUrl = action === 'save_and_continue'
+        ? `/admin/content/${doc.rootId}/edit?success=Content saved successfully!`
+        : `/admin/content?model=${collection.name}&success=Content created successfully!`
+      return c.req.header('HX-Request') === 'true'
+        ? c.text('', 200, { 'HX-Redirect': redirectUrl })
+        : c.redirect(redirectUrl)
+    }
+
     // Create content
     const contentId = crypto.randomUUID()
     const now = Date.now()
@@ -948,6 +1058,47 @@ adminContentRoutes.put('/:id', async (c) => {
     const action = formData.get('action') as string
 
     const db = c.env.DB
+
+    // ── Option B: if :id is a document-backed root, save a new draft + sync publish state ──
+    const docRowU = await db
+      .prepare("SELECT id, type_id FROM documents WHERE root_id = ? AND is_current_draft = 1 AND tenant_id = 'default'")
+      .bind(id).first() as any
+    if (docRowU) {
+      const docType = await getDocBackingType(db, docRowU.type_id)
+      const dcoll = docType ? await getCollectionByName(db, docRowU.type_id) : null
+      if (docType && dcoll) {
+        const fields = await getCollectionFields(db, dcoll.id)
+        const { data, errors } = extractFieldData(fields, formData)
+        if (Object.keys(errors).length > 0) {
+          const flags = await loadContentEditorFlags(db)
+          return c.html(renderContentFormPage({
+            id, collection: dcoll, fields, data, validationErrors: errors,
+            error: 'Please fix the validation errors below.', isEdit: true,
+            user: user ? { name: user.email, email: user.email, role: user.role } : undefined,
+            ...flags,
+          } as ContentFormData))
+        }
+        const slug = slugify(data.slug || data.title)
+        let status = formData.get('status') as string || 'draft'
+        if (action === 'save_and_publish') status = 'published'
+
+        const svc = makeDocService(db, docType)
+        const newDraft = await svc.saveDraft(id, { title: data.title ?? null, slug, data }, user?.userId)
+        // saveDraft always returns an unpublished draft; sync against the root's published row.
+        const pub = await db.prepare("SELECT id FROM documents WHERE root_id = ? AND is_published = 1 AND tenant_id = 'default'").bind(id).first() as any
+        if (status === 'published') await svc.publish(newDraft.id, user?.userId)
+        else if (pub) await svc.unpublish(pub.id)
+
+        await getCacheService(CACHE_CONFIGS.content!).invalidate(`content:list:*`)
+        const referrerParams = formData.get('referrer_params') as string
+        const redirectUrl = action === 'save_and_continue'
+          ? `/admin/content/${id}/edit?success=Content updated successfully!`
+          : `/admin/content?model=${docType.id}&success=Content updated successfully!`
+        return c.req.header('HX-Request') === 'true'
+          ? c.text('', 200, { 'HX-Redirect': redirectUrl })
+          : c.redirect(redirectUrl)
+      }
+    }
 
     // Get existing content
     const contentStmt = db.prepare('SELECT * FROM content WHERE id = ?')
@@ -1392,6 +1543,21 @@ adminContentRoutes.delete('/:id', async (c) => {
     const id = c.req.param('id')
     const db = c.env.DB
     const user = c.get('user')
+
+    // ── Option B: if :id is a document-backed root, soft-delete every version row of the root ──
+    const docDel = await db
+      .prepare("SELECT type_id FROM documents WHERE root_id = ? AND tenant_id = 'default' LIMIT 1")
+      .bind(id).first() as any
+    if (docDel && (await getDocBackingType(db, docDel.type_id))) {
+      const now = Math.floor(Date.now() / 1000)
+      await db.prepare("UPDATE documents SET deleted_at = ?, updated_at = ? WHERE root_id = ? AND tenant_id = 'default'").bind(now, now, id).run()
+      await getCacheService(CACHE_CONFIGS.content!).invalidate('content:list:*')
+      return c.html(`
+        <div id="content-list" hx-get="/admin/content?model=${docDel.type_id}" hx-trigger="load" hx-swap="outerHTML">
+          <div class="flex items-center justify-center p-8"><span class="text-zinc-500">Deleting…</span></div>
+        </div>
+      `)
+    }
 
     // Check if content exists
     const contentStmt = db.prepare('SELECT id, title FROM content WHERE id = ?')
