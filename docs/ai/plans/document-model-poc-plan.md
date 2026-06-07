@@ -362,6 +362,12 @@ Active `content` consumers (blockers), from the audit:
 Ordered decommission plan (each step independently shippable + testable):
 1. Keep `collections` permanently.
 2. Flip READ paths to `documents`: public content API (api-content-crud / api / api-system), dashboard stats, cache-warming.
+   - ✅ **Dashboard content count** flipped to documents (counts current-draft docs for user-collection types + legacy content only for non-doc-backed collections → no double-count of backfilled items). Verified via real SQLite.
+   - ⏳ **Public content API** (`api.ts` `/api/content` + `/api/collections/:collection/content`, `api-content-crud.ts`) — design before coding (external surface, needs live verification):
+     - **De-dupe to one row per root**: documents is multi-version. Map role→visibility: anon/viewer/author → `is_published = 1`; admin/editor → `is_current_draft = 1`. (The old code forced `status='published'` for anon via `normalizePublicContentFilter`.)
+     - **Collection mapping**: `collection` name → `type_id` (== name). Return `collectionId = collections.id` (look up) to keep the response shape stable: `{ id: rootId, title, slug, status, collectionId, data, created_at, updated_at }`.
+     - **Filter parity decision**: the generic `QueryFilterBuilder` targets `content` columns; documents keeps fields in `data` JSON + `q_*` generated columns. Either (a) re-target the builder to `documents` with `json_extract(data,'$.field')` predicates + the version/visibility clause, or (b) support the common subset (collection/status/limit/offset/sort) first and treat advanced field filters as a follow-up. Pick (a) for parity if external consumers use field filters.
+     - **`api-content-crud.ts`** GET `/:id` → look up document by `root_id` (fallback to `content`); `check-slug` → also check documents; POST/PUT/DELETE → route to the document services (or leave the programmatic write API last). Keep the `{data:{...}}` shape.
 3. Migrate dependent subsystems: workflow plugin → operate on the documents two-axis model (big); AI search indexer → index documents.
 4. Remove the dead legacy content branches in `admin-content.ts`; stop all `content`/`content_versions` writes.
 5. Backfill (`scripts/backfill-content.ts`) + verify zero `content` readers remain (grep gate in CI).
