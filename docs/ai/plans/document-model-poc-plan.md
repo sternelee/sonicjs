@@ -338,6 +338,16 @@ The `INSERT INTO documents (… 30 columns …) SELECT …` supplies only **29**
 
 ---
 
+## Test coverage (as of this session)
+
+- **Real-DB service tests** (`documents.sqlite.test.ts`, better-sqlite3 + migrations 043/044): create, saveDraft (D1 bind regression), two-axis publish/unpublish, tenant isolation (D9), version monotonicity + partial unique index, golden reindex, erase, ACL (deny-wins / base-grants / tenant-scoped / create base-grant), blog generated columns + `repo.list` filter/facet/sort, edit-while-published.
+- **Route-integration tests** (mounted real routers + real SQLite + stubbed auth, runnable in vitest):
+  - `admin-documents.integration.test.ts` — full document API CRUD + **Phase 2b ACL** (viewer 403, editor allowed).
+  - `admin-content-docbacked.integration.test.ts` — **Option B** blog branches: create→documents, list, edit-form load, update+republish, status=draft→unpublish, **all-view union**.
+- **E2E** (Playwright, run with `npm run e2e`): `63-document-blog-crud` (blog list renders; published doc on public API, draft hidden; **Option B create via the real content route**), `64-document-testimonials-admin` (mount fix: list renders + create via the real route).
+
+Verified here: everything except the live browser/Worker (the two e2e specs need `npm run e2e` against the dev server).
+
 ## 5. Verification
 
 Run from the repo **root** unless noted:

@@ -61,4 +61,35 @@ test.describe('Blog posts on the document model (Option B)', () => {
     const draftFound = (pub2.data ?? []).find((d: any) => d.slug === draftSlug)
     expect(draftFound, 'unpublished draft must be hidden from the public API').toBeFalsy()
   })
+
+  test('Option B: creating a blog post through the content collection route stores a document', async ({ page }) => {
+    // The blog editor posts to /admin/content with the collection_id; for the doc-backed blog_posts
+    // collection that create handler routes to the document model. Drive it via an authenticated form
+    // POST to the REAL route (no fragile field selectors / Quill interaction).
+    await page.goto('/admin/content/new?collection=blog_posts')
+    await waitForHTMX(page)
+    const collectionId = await page.locator('input[name="collection_id"]').first().inputValue()
+    expect(collectionId, 'blog editor should carry a collection_id').toBeTruthy()
+
+    const unique = await page.evaluate(() => Math.random().toString(36).slice(2, 8))
+    const slug = `e2e-formblog-${unique}`
+    const res = await page.request.post('/admin/content', {
+      multipart: {
+        collection_id: collectionId,
+        title: `E2E Form Blog ${unique}`,
+        slug,
+        author: 'E2E',
+        difficulty: 'advanced',
+        content: '<p>body</p>',
+        excerpt: 'x',
+        status: 'published',
+        action: 'save_and_publish',
+      },
+    })
+    expect([200, 302]).toContain(res.status())
+
+    // It must now be a published blog_posts DOCUMENT on the public API.
+    const pub = await (await page.request.get('/api/documents?type=blog_posts&limit=200')).json()
+    expect((pub.data ?? []).some((d: any) => d.slug === slug), 'form-created blog post should be a published document').toBeTruthy()
+  })
 })
