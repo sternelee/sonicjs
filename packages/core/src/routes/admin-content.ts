@@ -407,6 +407,83 @@ adminContentRoutes.get('/', async (c) => {
       }))
     }
 
+    // ── All-view union (a) ──────────────────────────────────────────────────────
+    // /admin/content (All) must show document-backed collections too. Merge legacy `content` with
+    // doc-backed `documents` in one sorted+paginated query. Doc-backed collections are EXCLUDED from
+    // the content half so backfilled posts (which keep their legacy row) don't show twice. Timestamps
+    // are normalized — documents store SECONDS, content stores MS — so the merged ORDER BY is correct.
+    const docBackedTypeIds = docTypes.filter(dt => collectionNames.has(dt.id)).map(dt => dt.id)
+    if (modelName === 'all' && docBackedTypeIds.length > 0) {
+      const ph = docBackedTypeIds.map(() => '?').join(',')
+      const like = search ? `%${search}%` : null
+
+      const contentConds = ["(col.source_type IS NULL OR col.source_type = 'user')", `col.name NOT IN (${ph})`]
+      const contentParams: any[] = [...docBackedTypeIds]
+      if (status === 'deleted') contentConds.push("c.status = 'deleted'")
+      else {
+        contentConds.push("c.status != 'deleted'")
+        if (status !== 'all') { contentConds.push('c.status = ?'); contentParams.push(status) }
+      }
+      if (like) { contentConds.push('(c.title LIKE ? OR c.slug LIKE ? OR c.data LIKE ?)'); contentParams.push(like, like, like) }
+
+      const docConds = ['d.is_current_draft = 1', "d.tenant_id = 'default'", `d.type_id IN (${ph})`]
+      const docParams: any[] = [...docBackedTypeIds]
+      if (status === 'deleted') docConds.push('d.deleted_at IS NOT NULL')
+      else {
+        docConds.push('d.deleted_at IS NULL')
+        if (status === 'published') docConds.push('d.is_published = 1')
+        else if (status === 'draft') docConds.push('d.is_published = 0')
+      }
+      if (like) { docConds.push("(d.title LIKE ? OR json_extract(d.data,'$.author') LIKE ?)"); docParams.push(like, like) }
+
+      const unionSql = `
+        SELECT id, title, slug, status, updated_at, cdisplay, author_label FROM (
+          SELECT c.id AS id, c.title AS title, c.slug AS slug, c.status AS status, c.updated_at AS updated_at,
+                 col.display_name AS cdisplay,
+                 COALESCE(NULLIF(TRIM(COALESCE(u.first_name,'') || ' ' || COALESCE(u.last_name,'')), ''), u.email, 'Unknown') AS author_label
+          FROM content c JOIN collections col ON c.collection_id = col.id LEFT JOIN users u ON c.author_id = u.id
+          WHERE ${contentConds.join(' AND ')}
+          UNION ALL
+          SELECT d.root_id AS id, d.title AS title, d.slug AS slug,
+                 CASE WHEN d.is_published = 1 THEN 'published' ELSE 'draft' END AS status,
+                 d.updated_at * 1000 AS updated_at,
+                 dt.display_name AS cdisplay, COALESCE(d.created_by, 'System') AS author_label
+          FROM documents d JOIN document_types dt ON dt.id = d.type_id
+          WHERE ${docConds.join(' AND ')}
+        )
+        ORDER BY updated_at DESC LIMIT ? OFFSET ?`
+      const { results: unionRows } = await db.prepare(unionSql).bind(...contentParams, ...docParams, limit, offset).all()
+
+      const countRow = await db.prepare(
+        `SELECT (SELECT COUNT(*) FROM content c JOIN collections col ON c.collection_id = col.id WHERE ${contentConds.join(' AND ')})
+              + (SELECT COUNT(*) FROM documents d WHERE ${docConds.join(' AND ')}) AS count`,
+      ).bind(...contentParams, ...docParams).first() as any
+
+      const badge: Record<string, string> = {
+        published: 'bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-400 ring-1 ring-inset ring-green-600/20 dark:ring-green-500/20',
+        draft: 'bg-zinc-50 dark:bg-zinc-500/10 text-zinc-700 dark:text-zinc-400 ring-1 ring-inset ring-zinc-600/20 dark:ring-zinc-500/20',
+        deleted: 'bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400 ring-1 ring-inset ring-red-600/20 dark:ring-red-500/20',
+      }
+      const contentItems = (unionRows || []).map((row: any) => ({
+        id: row.id,
+        title: row.title || row.slug || row.id,
+        slug: row.slug || '',
+        modelName: row.cdisplay,
+        statusBadge: `<span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${badge[row.status] ?? badge.draft}">${row.status}</span>`,
+        authorName: row.author_label,
+        formattedDate: new Date(row.updated_at ?? 0).toLocaleDateString(),
+        availableActions: [],
+      }))
+
+      return c.html(renderContentListPage({
+        modelName, status, page, search, models, contentItems,
+        totalItems: countRow?.count ?? 0,
+        itemsPerPage: limit,
+        user: user ? { name: user.email, email: user.email, role: user.role } : undefined,
+        version: c.get('appVersion'),
+      }))
+    }
+
     // ── Legacy content branch ──────────────────────────────────────────────────
     // Build where conditions
     const conditions: string[] = []
