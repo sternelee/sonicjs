@@ -30,14 +30,26 @@ apiContentCrudRoutes.get('/check-slug', async (c) => {
     }
     
     const existing = await db.prepare(query).bind(...params).first()
-    
+
     if (existing) {
-      return c.json({ 
-        available: false, 
-        message: 'This URL slug is already in use in this collection' 
+      return c.json({
+        available: false,
+        message: 'This URL slug is already in use in this collection'
       })
     }
-    
+
+    // Also check document-backed content (slug uniqueness per type == collection name).
+    const coll = await db.prepare('SELECT name FROM collections WHERE id = ?').bind(collectionId).first() as any
+    if (coll?.name) {
+      let docQuery = "SELECT root_id FROM documents WHERE type_id = ? AND tenant_id = 'default' AND is_current_draft = 1 AND deleted_at IS NULL AND slug = ?"
+      const docParams: string[] = [coll.name, slug]
+      if (excludeId) { docQuery += ' AND root_id != ?'; docParams.push(excludeId) }
+      const docExisting = await db.prepare(docQuery).bind(...docParams).first()
+      if (docExisting) {
+        return c.json({ available: false, message: 'This URL slug is already in use in this collection' })
+      }
+    }
+
     return c.json({ available: true })
   } catch (error: unknown) {
     console.error('Error checking slug:', error)
@@ -54,22 +66,41 @@ apiContentCrudRoutes.get('/:id', async (c) => {
     const id = c.req.param('id')
     const db = c.env.DB
 
-    const stmt = db.prepare('SELECT * FROM content WHERE id = ?')
-    const content = await stmt.bind(id).first()
+    // Document-backed: /api/content now returns document root ids, so resolve by root id (published
+    // revision) first; fall back to a legacy content row by id.
+    const docRow = await db
+      .prepare("SELECT * FROM documents WHERE root_id = ? AND tenant_id = 'default' AND is_published = 1 AND deleted_at IS NULL")
+      .bind(id)
+      .first() as any
 
-    if (!content) {
-      return c.json({ error: 'Content not found' }, 404)
-    }
-
-    const transformedContent = {
-      id: (content as any).id,
-      title: (content as any).title,
-      slug: (content as any).slug,
-      status: (content as any).status,
-      collectionId: (content as any).collection_id,
-      data: (content as any).data ? JSON.parse((content as any).data) : {},
-      created_at: (content as any).created_at,
-      updated_at: (content as any).updated_at
+    let transformedContent: any
+    if (docRow) {
+      const coll = await db.prepare('SELECT id FROM collections WHERE name = ?').bind(docRow.type_id).first() as any
+      transformedContent = {
+        id: docRow.root_id,
+        title: docRow.title,
+        slug: docRow.slug,
+        status: docRow.status,
+        collectionId: coll?.id ?? docRow.type_id,
+        data: docRow.data ? JSON.parse(docRow.data) : {},
+        created_at: docRow.created_at,
+        updated_at: docRow.updated_at,
+      }
+    } else {
+      const content = await db.prepare('SELECT * FROM content WHERE id = ?').bind(id).first() as any
+      if (!content) {
+        return c.json({ error: 'Content not found' }, 404)
+      }
+      transformedContent = {
+        id: content.id,
+        title: content.title,
+        slug: content.slug,
+        status: content.status,
+        collectionId: content.collection_id,
+        data: content.data ? JSON.parse(content.data) : {},
+        created_at: content.created_at,
+        updated_at: content.updated_at,
+      }
     }
 
     // Resolve {variable_key} tokens in content data
