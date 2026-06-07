@@ -26,7 +26,8 @@ import {
   publicFormsRoutes,
   adminApiReferenceRoutes,
   apiDocumentsRoutes,
-  adminDocumentsRoutes
+  adminDocumentsRoutes,
+  adminTestimonialsRoutes
 } from './routes'
 import { getCoreVersion } from './utils/version'
 import { bootstrapMiddleware } from './middleware/bootstrap'
@@ -216,6 +217,10 @@ export function createSonicJSApp(config: SonicJSConfig = {}): SonicJSApp {
   app.route('/api/system', apiSystemRoutes)
   app.route('/api/documents', apiDocumentsRoutes)
   app.route('/admin/documents', adminDocumentsRoutes)
+  // Testimonials admin (document-backed). The plugin adds the sidebar item to /admin/testimonials,
+  // but the HTML router itself must be mounted here like the other core admin routers — it was missing,
+  // so the Testimonials page and "add testimonial" form (hx-post /admin/testimonials) 404'd.
+  app.route('/admin/testimonials', adminTestimonialsRoutes)
   app.route('/admin/api', adminApiRoutes)
   app.route('/admin/dashboard', adminDashboardRoutes)
   app.route('/admin/collections', adminCollectionsRoutes)

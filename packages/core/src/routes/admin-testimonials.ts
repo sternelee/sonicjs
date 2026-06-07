@@ -1,7 +1,7 @@
 /**
- * Admin testimonials routes — backed by the document model (migration 037).
- * The `testimonials` table was dropped in migration 038.
- * These routes keep the same URL paths and template interface as before.
+ * Admin testimonials routes — backed by the document model (043_document_repository).
+ * The legacy `testimonials` table is retained during the POC (the destructive 038 drop was removed).
+ * Mounted at /admin/testimonials in app.ts; keeps the same URL paths/templates as before.
  */
 import { Hono } from 'hono'
 import { z } from 'zod'
@@ -81,36 +81,39 @@ adminTestimonialsRoutes.get('/', async (c) => {
     const limit = 20
     const offset = (currentPage - 1) * limit
 
-    const params: (string | number)[] = ['default', 'testimonial']
-    let sql = `SELECT * FROM documents
-               WHERE tenant_id = ? AND type_id = ? AND is_current_draft = 1 AND deleted_at IS NULL`
+    // Build ONE WHERE clause shared by both COUNT and the page query so the total reflects the active
+    // filters (D13: previously COUNT ignored published/minRating/search → phantom pages).
+    const whereParts: string[] = ['tenant_id = ?', 'type_id = ?', 'is_current_draft = 1', 'deleted_at IS NULL']
+    const whereParams: (string | number)[] = ['default', 'testimonial']
 
     if (published !== undefined) {
-      sql += ' AND is_published = ?'
-      params.push(published === 'true' ? 1 : 0)
+      whereParts.push('is_published = ?')
+      whereParams.push(published === 'true' ? 1 : 0)
     }
     if (minRating) {
-      sql += ' AND q_tst_rating >= ?'
-      params.push(parseInt(minRating, 10))
+      whereParts.push('q_tst_rating >= ?')
+      whereParams.push(parseInt(minRating, 10))
     }
     if (search) {
-      // Search across stored JSON fields via json_extract
-      sql += ` AND (json_extract(data,'$.authorName') LIKE ?
+      whereParts.push(`(json_extract(data,'$.authorName') LIKE ?
                OR json_extract(data,'$.testimonialText') LIKE ?
-               OR json_extract(data,'$.authorCompany') LIKE ?)`
+               OR json_extract(data,'$.authorCompany') LIKE ?)`)
       const term = `%${search}%`
-      params.push(term, term, term)
+      whereParams.push(term, term, term)
     }
+    const whereClause = whereParts.join(' AND ')
 
     const countResult = await db.prepare(
-      `SELECT COUNT(*) as count FROM documents WHERE tenant_id = ? AND type_id = ? AND is_current_draft = 1 AND deleted_at IS NULL`
-    ).bind('default', 'testimonial').first() as any
+      `SELECT COUNT(*) as count FROM documents WHERE ${whereClause}`
+    ).bind(...whereParams).first() as any
     const totalCount = countResult?.count ?? 0
 
-    sql += ' ORDER BY q_tst_sort_order ASC, updated_at DESC LIMIT ? OFFSET ?'
-    params.push(limit, offset)
-
-    const { results } = await db.prepare(sql).bind(...params).all()
+    // NOTE (D22): this admin HTML list deliberately keeps OFFSET page-number pagination to match the
+    // renderTestimonialsList page-number UI. The JSON document APIs use keyset cursors; OFFSET here is
+    // an intentional, isolated exception for the rendered admin table, not the public read path.
+    const listSql = `SELECT * FROM documents WHERE ${whereClause}
+                     ORDER BY q_tst_sort_order ASC, updated_at DESC LIMIT ? OFFSET ?`
+    const { results } = await db.prepare(listSql).bind(...whereParams, limit, offset).all()
     const testimonials = (results ?? []).map(docToListItem)
 
     return c.html(renderTestimonialsList({
