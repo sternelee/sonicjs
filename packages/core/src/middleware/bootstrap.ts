@@ -3,7 +3,7 @@ import { syncCollections } from "../services/collection-sync";
 import { syncAllFormCollections } from "../services/form-collection-sync";
 import { MigrationService } from "../services/migrations";
 import { PluginBootstrapService } from "../services/plugin-bootstrap";
-import { bootstrapDocumentTypes } from "../services/document-types-seed";
+import { bootstrapDocumentTypes, autoRegisterCollectionDocumentTypes } from "../services/document-types-seed";
 import type { SonicJSConfig } from "../app";
 
 type Bindings = {
@@ -131,6 +131,14 @@ export function bootstrapMiddleware(config: SonicJSConfig = {}) {
         await bootstrapDocumentTypes(c.env.DB);
       } catch (error) {
         console.error("[Bootstrap] Error registering document types:", error);
+      }
+
+      // 3b. Make every content collection document-backed (so all new content goes to `documents`).
+      try {
+        const auto = await autoRegisterCollectionDocumentTypes(c.env.DB);
+        if (auto.length) console.log(`[Bootstrap] Document-backed collections registered: ${auto.join(", ")}`);
+      } catch (error) {
+        console.error("[Bootstrap] Error auto-registering collection document types:", error);
       }
 
       // 4. Bootstrap core plugins (unless disableAll is set)

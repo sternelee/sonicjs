@@ -107,3 +107,49 @@ export async function bootstrapDocumentTypes(db: D1Database): Promise<void> {
     ],
   })
 }
+
+/**
+ * Make EVERY content collection document-backed: register a document type whose id == the collection
+ * name for each active user collection that doesn't already have one. After this, all content created
+ * through /admin/content is stored in the `documents` table (the content admin detects doc-backing by
+ * the matching id). Types registered here have no queryable generated columns (CRUD only) — a type can
+ * be hand-tuned later (like blog_posts) to add filterable columns.
+ *
+ * Idempotent. Returns the collection names newly registered. Safe to call when the collections table
+ * is absent (e.g. minimal test envs) — it no-ops. Run AFTER syncCollections so the table is populated.
+ */
+export async function autoRegisterCollectionDocumentTypes(db: D1Database): Promise<string[]> {
+  const registry = new DocumentTypeRegistry(db)
+
+  let collections: Array<{ name: string; display_name: string }> = []
+  try {
+    const res = await db
+      .prepare("SELECT name, display_name FROM collections WHERE is_active = 1 AND (source_type IS NULL OR source_type = 'user')")
+      .all<{ name: string; display_name: string }>()
+    collections = res.results ?? []
+  } catch {
+    return [] // collections table not present — nothing to do
+  }
+
+  const registered: string[] = []
+  for (const col of collections) {
+    if (!col.name) continue
+    const existing = await registry.findById(col.name)
+    if (existing) continue // already registered (e.g. blog_posts, faq, …) — keep its hand-tuned config
+    await registry.register({
+      id: col.name,
+      name: col.name,
+      displayName: col.display_name ?? col.name,
+      description: `Document-backed collection (${col.name})`,
+      source: 'system',
+      schema: anyObject,
+      settings: {
+        baseGrants: { public: ['read'], admin: ['read', 'create', 'update', 'delete', 'publish', 'manage'], editor: ['read', 'create', 'update', 'publish'], viewer: ['read'] },
+        maxVersionsPerRoot: 50,
+      },
+      queryableFields: [],
+    })
+    registered.push(col.name)
+  }
+  return registered
+}

@@ -345,6 +345,18 @@ The `INSERT INTO documents (… 30 columns …) SELECT …` supplies only **29**
 
 ---
 
+## All content is document-backed (global)
+
+`autoRegisterCollectionDocumentTypes(db)` runs at bootstrap (after collection sync) and registers a
+document type (id == collection name) for **every active user collection** that doesn't already have
+one — so all content created through `/admin/content` (news, pages, page-blocks, …) is stored in the
+`documents` table, not just the hand-tuned types (blog_posts/faq/…). Form-sourced and inactive
+collections are excluded. Existing legacy `content` rows are migrated by `scripts/backfill-content.ts`
+(non-destructive, idempotent by collection+slug) — run it once to move pre-existing items (e.g. a news
+post created before its collection was document-backed). Note: after a collection becomes doc-backed,
+its per-collection list reads from documents, so run the backfill so legacy rows don't disappear from
+the filtered view (the all-view excludes doc-backed collections from the content half to avoid dupes).
+
 ## Test coverage (as of this session)
 
 - **Real-DB service tests** (`documents.sqlite.test.ts`, better-sqlite3 + migrations 043/044): create, saveDraft (D1 bind regression), two-axis publish/unpublish, tenant isolation (D9), version monotonicity + partial unique index, golden reindex, erase, ACL (deny-wins / base-grants / tenant-scoped / create base-grant), blog generated columns + `repo.list` filter/facet/sort, edit-while-published.
