@@ -78,6 +78,15 @@ describe('admin-content Option B (document-backed blog_posts) — integration', 
     })
   }
 
+  it('create as DRAFT stays unpublished (regression: new draft must not auto-publish)', async () => {
+    const res = await createPost('mydraft', 'draft')
+    expect([200, 302]).toContain(res.status)
+    const doc = db.raw.prepare("SELECT is_published, is_current_draft, status FROM documents WHERE slug='mydraft'").get()
+    expect(doc.is_published).toBe(0)
+    expect(doc.is_current_draft).toBe(1)
+    expect(doc.status).toBe('draft')
+  })
+
   it('create routes to the documents table (not content)', async () => {
     const res = await createPost('hello')
     expect([200, 302]).toContain(res.status)

@@ -194,7 +194,7 @@ export function renderTestimonialsForm(data: TestimonialsFormData): string {
                          name="isPublished"
                          type="radio"
                          value="true"
-                         ${!testimonial || testimonial.isPublished ? 'checked' : ''}
+                         ${testimonial && testimonial.isPublished ? 'checked' : ''}
                          class="h-4 w-4 text-blue-600 focus:ring-blue-600 border-gray-600 bg-gray-700">
                   <label for="published" class="ml-2 block text-sm text-white">
                     Published <span class="text-gray-300">(visible to users)</span>
@@ -205,7 +205,7 @@ export function renderTestimonialsForm(data: TestimonialsFormData): string {
                          name="isPublished"
                          type="radio"
                          value="false"
-                         ${testimonial && !testimonial.isPublished ? 'checked' : ''}
+                         ${!testimonial || !testimonial.isPublished ? 'checked' : ''}
                          class="h-4 w-4 text-blue-600 focus:ring-blue-600 border-gray-600 bg-gray-700">
                   <label for="draft" class="ml-2 block text-sm text-white">
                     Draft <span class="text-gray-300">(not visible to users)</span>

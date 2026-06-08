@@ -17,7 +17,7 @@ const testimonialSchema = z.object({
   authorCompany: z.string().max(100).optional(),
   testimonialText: z.string().min(1, 'Testimonial text is required').max(1000),
   rating: z.number().min(1).max(5).optional(),
-  isPublished: z.boolean().default(true),
+  isPublished: z.boolean().default(false), // new testimonials default to DRAFT, not auto-published
   sortOrder: z.number().default(0),
 })
 
