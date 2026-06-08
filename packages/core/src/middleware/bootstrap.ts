@@ -103,10 +103,11 @@ export function bootstrapMiddleware(config: SonicJSConfig = {}) {
     try {
       console.log("[Bootstrap] Starting system initialization...");
 
-      // 1. Run database migrations first
-      console.log("[Bootstrap] Running database migrations...");
+      // 1. Run idempotent schema compatibility repairs. Migration state and
+      // migration execution are owned by Cloudflare D1/Wrangler.
+      console.log("[Bootstrap] Checking schema compatibility...");
       const migrationService = new MigrationService(c.env.DB);
-      await migrationService.runPendingMigrations();
+      await migrationService.ensureSchemaCompatibility();
 
       // 2. Sync collection configurations
       console.log("[Bootstrap] Syncing collection configurations...");

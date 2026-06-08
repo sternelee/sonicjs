@@ -230,37 +230,11 @@ export function renderSettingsPage(data: SettingsPageData): string {
       };
 
       window.runPendingMigrations = async function() {
-        const btn = document.getElementById('run-migrations-btn');
-        if (!btn || btn.disabled) return;
-
-        showConfirmDialog('run-migrations-confirm');
+        alert('Migrations are managed by Cloudflare D1. Run wrangler d1 migrations apply DB --local or wrangler d1 migrations apply DB --remote.');
       };
 
       window.performRunMigrations = async function() {
-        const btn = document.getElementById('run-migrations-btn');
-        if (!btn) return;
-
-        btn.disabled = true;
-        btn.innerHTML = 'Running...';
-
-        try {
-          const response = await fetch('/admin/settings/api/migrations/run', {
-            method: 'POST'
-          });
-          const result = await response.json();
-
-          if (result.success) {
-            alert(result.message);
-            setTimeout(() => window.refreshMigrationStatus(), 1000);
-          } else {
-            alert(result.error || 'Failed to run migrations');
-          }
-        } catch (error) {
-          alert('Error running migrations');
-        } finally {
-          btn.disabled = false;
-          btn.innerHTML = 'Run Pending';
-        }
+        alert('Migrations are managed by Cloudflare D1. Run wrangler d1 migrations apply DB --local or wrangler d1 migrations apply DB --remote.');
       };
 
       window.validateSchema = async function() {
@@ -293,7 +267,7 @@ export function renderSettingsPage(data: SettingsPageData): string {
         
         const runBtn = document.getElementById('run-migrations-btn');
         if (runBtn) {
-          runBtn.disabled = data.pendingMigrations === 0;
+          runBtn.disabled = true;
         }
         
         // Update migrations list
@@ -496,7 +470,7 @@ export function renderSettingsPage(data: SettingsPageData): string {
     ${renderConfirmationDialog({
       id: 'run-migrations-confirm',
       title: 'Run Migrations',
-      message: 'Are you sure you want to run pending migrations? This action cannot be undone.',
+      message: 'Migrations are managed by Cloudflare D1. Run Wrangler migrations from your deployment workflow.',
       confirmText: 'Run Migrations',
       cancelText: 'Cancel',
       iconColor: 'blue',
@@ -1383,13 +1357,13 @@ function renderMigrationSettings(settings?: MigrationSettings): string {
         <button 
           onclick="window.runPendingMigrations()"
           id="run-migrations-btn"
-          class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors"
-          ${(settings?.pendingMigrations || 0) === 0 ? 'disabled' : ''}
+          class="inline-flex items-center px-4 py-2 bg-zinc-600 text-white text-sm font-medium rounded-lg transition-colors opacity-60 cursor-not-allowed"
+          disabled
         >
           <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1.586a1 1 0 01.707.293l2.414 2.414a1 1 0 00.707.293H15M9 10v4.586a1 1 0 00.293.707l2.414 2.414a1 1 0 00.707.293H15M9 10V9a2 2 0 012-2h2a2 2 0 012 2v1"/>
           </svg>
-          Run Pending
+          Managed by Wrangler
         </button>
 
         <button 
@@ -1440,37 +1414,11 @@ function renderMigrationSettings(settings?: MigrationSettings): string {
         };
 
         window.runPendingMigrations = async function() {
-          const btn = document.getElementById('run-migrations-btn');
-          if (!btn || btn.disabled) return;
-
-          showConfirmDialog('run-migrations-confirm');
+          alert('Migrations are managed by Cloudflare D1. Run wrangler d1 migrations apply DB --local or wrangler d1 migrations apply DB --remote.');
         };
 
         window.performRunMigrations = async function() {
-          const btn = document.getElementById('run-migrations-btn');
-          if (!btn) return;
-
-          btn.disabled = true;
-          btn.innerHTML = 'Running...';
-
-          try {
-            const response = await fetch('/admin/settings/api/migrations/run', {
-              method: 'POST'
-            });
-            const result = await response.json();
-
-            if (result.success) {
-              alert(result.message);
-              setTimeout(() => window.refreshMigrationStatus(), 1000);
-            } else {
-              alert(result.error || 'Failed to run migrations');
-            }
-          } catch (error) {
-            alert('Error running migrations');
-          } finally {
-            btn.disabled = false;
-            btn.innerHTML = 'Run Pending';
-          }
+          alert('Migrations are managed by Cloudflare D1. Run wrangler d1 migrations apply DB --local or wrangler d1 migrations apply DB --remote.');
         };
 
         window.validateSchema = async function() {
@@ -1503,7 +1451,7 @@ function renderMigrationSettings(settings?: MigrationSettings): string {
           
           const runBtn = document.getElementById('run-migrations-btn');
           if (runBtn) {
-            runBtn.disabled = data.pendingMigrations === 0;
+            runBtn.disabled = true;
           }
           
           // Update migrations list
