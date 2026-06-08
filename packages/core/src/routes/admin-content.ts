@@ -193,8 +193,8 @@ async function getCollectionFields(db: D1Database, collectionId: string) {
   return cache.getOrSet(
     cache.generateKey('fields', collectionId),
     async () => {
-      // First, check if collection has a schema (code-based collection)
-      const collectionStmt = db.prepare('SELECT schema FROM collections WHERE id = ?')
+      // First, check if document type has a schema
+      const collectionStmt = db.prepare('SELECT schema FROM document_types WHERE id = ?')
       const collectionRow = await collectionStmt.bind(collectionId).first() as any
 
       if (collectionRow && collectionRow.schema) {
@@ -223,24 +223,8 @@ async function getCollectionFields(db: D1Database, collectionId: string) {
         }
       }
 
-      // Fall back to content_fields table for legacy collections
-      const stmt = db.prepare(`
-        SELECT * FROM content_fields
-        WHERE collection_id = ?
-        ORDER BY field_order ASC
-      `)
-      const { results } = await stmt.bind(collectionId).all()
-
-      return (results || []).map((row: any) => ({
-        id: row.id,
-        field_name: row.field_name,
-        field_type: row.field_type,
-        field_label: row.field_label,
-        field_options: row.field_options ? JSON.parse(row.field_options) : {},
-        field_order: row.field_order,
-        is_required: row.is_required === 1,
-        is_searchable: row.is_searchable === 1
-      }))
+      // New model uses schema as source of truth
+      return []
     }
   )
 }
@@ -252,7 +236,7 @@ async function getCollection(db: D1Database, collectionId: string) {
   return cache.getOrSet(
     cache.generateKey('collection', collectionId),
     async () => {
-      const stmt = db.prepare('SELECT * FROM collections WHERE id = ? AND is_active = 1')
+      const stmt = db.prepare('SELECT * FROM document_types WHERE id = ? AND is_active = 1')
       const collection = await stmt.bind(collectionId).first() as any
 
       if (!collection) return null
@@ -279,7 +263,7 @@ async function getDocBackingType(db: D1Database, collectionName?: string | null)
 }
 
 async function getCollectionByName(db: D1Database, name: string) {
-  const row = await db.prepare('SELECT * FROM collections WHERE name = ? AND is_active = 1').bind(name).first() as any
+  const row = await db.prepare('SELECT * FROM document_types WHERE name = ? AND is_active = 1').bind(name).first() as any
   if (!row) return null
   return {
     id: row.id, name: row.name, display_name: row.display_name,
@@ -333,8 +317,8 @@ adminContentRoutes.get('/', async (c) => {
     const search = url.searchParams.get('search') || ''
     const offset = (page - 1) * limit
 
-    // Get all collections for filter dropdown (exclude form-sourced)
-    const collectionsStmt = db.prepare("SELECT id, name, display_name FROM collections WHERE is_active = 1 AND (source_type IS NULL OR source_type = 'user') ORDER BY display_name")
+    // Get all document types for filter dropdown
+    const collectionsStmt = db.prepare("SELECT id, name, display_name FROM document_types WHERE is_active = 1 ORDER BY display_name")
     const { results: collectionsResults } = await collectionsStmt.all()
 
     // Also include active document types in the models dropdown (prefixed with doc: to distinguish)
@@ -654,8 +638,8 @@ adminContentRoutes.get('/new', async (c) => {
     if (!collectionId) {
       // Show collection selection page
       const db = c.env.DB
-      // Exclude form-sourced collections — users shouldn't manually create content in form collections
-      const collectionsStmt = db.prepare("SELECT id, name, display_name, description FROM collections WHERE is_active = 1 AND (source_type IS NULL OR source_type = 'user') ORDER BY display_name")
+      // Get all document types for content creation
+      const collectionsStmt = db.prepare("SELECT id, name, display_name, description FROM document_types WHERE is_active = 1 ORDER BY display_name")
       const { results } = await collectionsStmt.all()
 
       const collections = (results || []).map((row: any) => ({
