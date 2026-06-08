@@ -701,7 +701,10 @@ adminContentRoutes.get('/new', async (c) => {
     }
 
     const db = c.env.DB
-    const collection = await getCollection(db, collectionId)
+    // Resolve ?collection= by id OR name. The content-list "New" button passes the collection id, but
+    // a collection name (== document type id for doc-backed collections, e.g. ?collection=blog_posts)
+    // is the stable identifier callers/links use — accept both so the form always carries a collection_id.
+    const collection = (await getCollection(db, collectionId)) ?? (await getCollectionByName(db, collectionId))
 
     if (!collection) {
       const formData: ContentFormData = {
@@ -717,7 +720,8 @@ adminContentRoutes.get('/new', async (c) => {
       return c.html(renderContentFormPage(formData))
     }
 
-    const fields = await getCollectionFields(db, collectionId)
+    // Use the RESOLVED collection id (the ?collection= param may have been a name).
+    const fields = await getCollectionFields(db, collection.id)
 
     // Check if workflow plugin is active
     const workflowEnabled = await isPluginActive(db, 'workflow')

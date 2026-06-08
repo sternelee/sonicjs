@@ -90,13 +90,17 @@ app.post('/test-cleanup', async (c: Context) => {
     `).run()
     deletedCount += usersResult.meta?.changes || 0
 
-    // Step 5: Delete child data for test collections
+    // Step 5: Delete child data for test collections.
+    // NOTE: `blog_posts` is intentionally NOT in this list — it is a SEEDED collection (migration 001)
+    // that backs the document-model blog feature, not disposable test data. Deleting it here broke the
+    // doc-backed blog e2e (the new-content form had no collection to resolve). Only genuine test
+    // artifacts are removed.
     try {
       await db.prepare(`
         DELETE FROM collection_fields
         WHERE collection_id IN (
           SELECT id FROM collections
-          WHERE name LIKE 'test_%' OR name IN ('blog_posts', 'test_collection', 'products', 'articles')
+          WHERE name LIKE 'test_%' OR name IN ('test_collection', 'products', 'articles')
         )
       `).run()
     } catch (e) {
@@ -108,14 +112,14 @@ app.post('/test-cleanup', async (c: Context) => {
       DELETE FROM content
       WHERE collection_id IN (
         SELECT id FROM collections
-        WHERE name LIKE 'test_%' OR name IN ('blog_posts', 'test_collection', 'products', 'articles')
+        WHERE name LIKE 'test_%' OR name IN ('test_collection', 'products', 'articles')
       )
     `).run()
 
     // Step 6: Delete test collections
     const collectionsResult = await db.prepare(`
       DELETE FROM collections
-      WHERE name LIKE 'test_%' OR name IN ('blog_posts', 'test_collection', 'products', 'articles')
+      WHERE name LIKE 'test_%' OR name IN ('test_collection', 'products', 'articles')
     `).run()
     deletedCount += collectionsResult.meta?.changes || 0
 
@@ -233,7 +237,7 @@ app.post('/test-cleanup/collections', async (c: Context) => {
     const collections = await db.prepare(`
       SELECT id FROM collections
       WHERE name LIKE 'test_%'
-      OR name IN ('blog_posts', 'test_collection', 'products', 'articles')
+      OR name IN ('test_collection', 'products', 'articles')
     `).all()
 
     if (collections.results && collections.results.length > 0) {

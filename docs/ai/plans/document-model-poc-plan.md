@@ -12,10 +12,13 @@
 > core suite **1556 passed / 0 failed**; e2e **25/27** (2 failures are stale-DB artifacts, see D45).
 >
 > ✅ **2026-06-08 fixes applied:** the BLOCKER + all MAJOR behavioral defects are fixed —
-> **D29, D30, D31, D32, D33, D36, D37, D38, D39, D44** and the **D45** migration self-heal, plus the
-> **D34** backfill timestamp-fidelity bug. Core suite now **1569 passed / 0 failed** (+13 new tests),
-> type-check clean. See **[§7 → Fixes applied](#fixes-applied-2026-06-08)**. Remaining: D34 *auto*-backfill
-> (deploy gate), D35, D40, D41, D42.
+> **D29, D30, D31, D32, D33, D36, D37, D38, D39, D44** + the **D45** migration self-heal + the **D34**
+> backfill timestamp-fidelity bug, plus three fresh-install defects surfaced while greening the e2e:
+> **D46** (`/api/testimonials` never mounted), **D47** (`?collection=<name>` empty `collection_id`),
+> **D48** (`/test-cleanup` wiped the seeded `blog_posts`). Core suite **1569 passed / 0 failed** (+13
+> tests), type-check clean, and **e2e 30/30 green on a fresh DB**. See
+> **[§7 → Fixes applied](#fixes-applied-2026-06-08)**. **D34/D35 descoped** (new installs only, no
+> backfill); D40/D41/D42 remain as cleanup.
 
 ## ⚠️ Cross-branch coordination (feature/better-auth-poc)
 
@@ -486,13 +489,20 @@ failed / 328 skipped**, `tsc --noEmit` clean. (Rebuild `packages/core/dist` for 
 | **D37** | ✅ fixed | check-slug + POST dup now match `(is_current_draft = 1 OR is_published = 1)` (`api-content-crud.ts`) | `api-content-documents.integration.test.ts` — published-slug + renamed draft → 409 |
 | **D38** | ✅ fixed | PUT without `status` preserves prior effective state (published stays published) (`api-content-crud.ts`) | same file — PUT no-status keeps published, anon still reads it |
 | **D39** | ✅ fixed | PUT/DELETE doc lookups add `deleted_at IS NULL` → 2nd DELETE 404s, PUT can't resurrect (`api-content-crud.ts`) | same file |
-| **D44** | ✅ fixed | `meta.filter` echoes the caller's filter, not the document-augmented where-tree (`api.ts`) | (covered implicitly; low-risk) |
+| **D44** | ✅ fixed | `meta.filter` echoes the access-policy-normalized caller filter (`normalizePublicContentFilter` — `status=published` forced for anon as the visible enforcement proof), not the internal doc-augmented where-tree (`api.ts`) | e2e `62-public-content-api-status-visibility` |
+| **D46** | ✅ fixed | **Testimonials public API 404 on fresh install** — the plugin declares `/api/testimonials` via `builder.addRoute`, but `app.ts` only mounted the admin router; the public route was never mounted. Added the mount block (`app.ts`) | e2e `64-document-testimonials-admin` |
+| **D47** | ✅ fixed | **`/admin/content/new?collection=<name>` rendered an empty `collection_id`** — the handler resolved `?collection=` by id only. Now resolves by id OR name (`getCollectionByName` fallback) and uses the resolved id for fields (`admin-content.ts`) | e2e `63-document-blog-crud` |
+| **D48** | ✅ fixed | **`/test-cleanup` deleted the SEEDED `blog_posts` collection** (treated as test data), so the e2e global-setup wiped it before the doc-backed blog spec ran. Removed `blog_posts` from the cleanup deletion lists — it's a migration-001 seeded collection, not test data (`test-cleanup.ts`, `test-cleanup-simple.sql`) | e2e `63-document-blog-crud` (green after fix) |
 | **D45** | ✅ fixed | `MigrationService.ensureDocumentGeneratedColumns()` (called from `autoDetectAppliedMigrations`) idempotently adds any missing `q_*` columns at bootstrap via `table_xinfo` + ALTER (`services/migrations.ts`) | `migrations-d45.test.ts` — adds missing cols to a pre-existing table; no-op when present |
 | **D34** | 🟡 partial | **timestamp fidelity fixed**: `create()` accepts optional `createdAt`/`updatedAt` (seconds), backfill script passes the legacy row's ms→s converted timestamps (`schemas/document.ts`, `services/documents.ts`, `scripts/backfill-content.ts`) | `documents.sqlite.test.ts` — create preserves supplied timestamps, seeds publishedAt |
 
-**Still open (deploy / lower-severity):**
-- **D34 (auto-backfill)** — the *automatic* `content`→`documents` backfill (vs read-path legacy fallback) and dashboard/`/api/system/stats` count reconciliation for un-migrated rows is **the gate before the legacy `content` DROP** and a deploy-time design choice (when to run, idempotency at scale, DROP timing). The manual `scripts/backfill-content.ts` now preserves `created_at`; auto-run-at-bootstrap is intentionally deferred for a design decision.
-- **D35** (system/managed collections excluded from unscoped `/api/content`) — really the same legacy-content-union question as D34; deferred with it.
+**Descoped (owner decision 2026-06-08 — "I only care about new installs right now, not backfilling"):**
+- **D34 (auto-backfill) & D35 (legacy-content union)** — out of scope. New installs create everything as
+  documents from the start, so there's nothing to backfill; the upgrade-from-legacy path (auto-backfill
+  vs read fallback, count reconciliation, the `content` DROP gate) is not being pursued now. The manual
+  `scripts/backfill-content.ts` remains and now preserves `created_at` if it's ever needed.
+
+**Still open (lower-severity cleanup):**
 - **D40** (admin doc-search field list differs single-model vs all-view), **D41** (cache warm/invalidate key mismatch), **D42** (latent media public-url scheme) — cleanup batch.
 
 ### E2E run (live server, 2026-06-07)
@@ -511,6 +521,16 @@ Both failures are **environmental (stale local D1), not code regressions** — r
 043/044. The 25 green specs include `05-content` and `07-api` — i.e. the broad content/API surface that
 *doesn't* depend on the doc-model q_* columns is unaffected. (Re-running on a fresh DB was not done here
 to avoid destroying the dev DB's data — 11 testimonial + 6 blog documents currently live in it.)
+
+### E2E run (fresh local D1, 2026-06-08) — ✅ green
+
+Reset the local dev D1 (cleared state, re-applied migrations `001`…`044` fresh, re-seeded demo docs,
+**preserved the admin user account**), rebuilt `packages/core/dist`, then ran `05-content`, `07-api`,
+`62-public-content-api-status-visibility`, `63-document-blog-crud`, `64-document-testimonials-admin`:
+**30 passed / 0 failed**. Reaching green surfaced three fresh-install defects (now fixed): **D46**
+(`/api/testimonials` never mounted), **D47** (`?collection=<name>` empty `collection_id`), **D48**
+(`/test-cleanup` deleted the seeded `blog_posts` collection). Spec 62 confirmed the **D44** meta-filter
+contract (anon `meta.filter` surfaces the forced `status=published`) while visibility stays published-only.
 
 ### Verified-FINE (parity preserved — checked, no regression)
 

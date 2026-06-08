@@ -4,7 +4,7 @@ import { schemaDefinitions } from '../schemas'
 import { getCacheService, CACHE_CONFIGS } from '../services'
 import { QueryFilterBuilder, QueryFilter } from '../utils'
 import { isPluginActive, optionalAuth } from '../middleware'
-import { canReadNonPublicContent } from './api-content-access-policy'
+import { canReadNonPublicContent, normalizePublicContentFilter } from './api-content-access-policy'
 import { documentSecondsToMs } from '../services/documents'
 
 // Document columns the public list is allowed to ORDER BY. The legacy `content` table exposed
@@ -770,7 +770,9 @@ apiRoutes.get('/content', optionalAuth(), async (c) => {
       meta: addTimingMeta(c, {
         count: results.length,
         timestamp: new Date().toISOString(),
-        filter, // D44: echo the caller's filter, not the internal document-augmented where-tree
+        // D44: echo the caller's filter with the access policy applied (status=published forced for
+        // anonymous callers — the visible enforcement proof), NOT the internal doc-augmented where-tree.
+        filter: normalizePublicContentFilter(filter, role),
         cache: {
           hit: false,
           source: 'database'
@@ -815,8 +817,9 @@ apiRoutes.get('/collections/:collection/content', optionalAuth(), async (c) => {
 
     // Parse the user filter, re-target to documents scoped to this collection's type + visibility.
     // type_id == the collection name; one row per root via is_published / is_current_draft.
+    const role = c.get('user')?.role
     const filter: QueryFilter = QueryFilterBuilder.parseFromQuery(queryParams)
-    const normalizedFilter = augmentFilterForDocuments(filter, { typeId: collection, role: c.get('user')?.role })
+    const normalizedFilter = augmentFilterForDocuments(filter, { typeId: collection, role })
 
     if (!normalizedFilter.limit) {
       normalizedFilter.limit = 50
@@ -892,7 +895,9 @@ apiRoutes.get('/collections/:collection/content', optionalAuth(), async (c) => {
         },
         count: results.length,
         timestamp: new Date().toISOString(),
-        filter, // D44: echo the caller's filter, not the internal document-augmented where-tree
+        // D44: echo the caller's filter with the access policy applied (status=published forced for
+        // anonymous callers — the visible enforcement proof), NOT the internal doc-augmented where-tree.
+        filter: normalizePublicContentFilter(filter, role),
         cache: {
           hit: false,
           source: 'database'
