@@ -1,56 +1,20 @@
 /**
- * My SonicJS Application
+ * My SonicJS Application — v3 greenfield
  *
- * Entry point for your SonicJS headless CMS application
+ * Schema is now documents + auth only. All non-critical plugins are disabled
+ * until the code is re-wired to the document model. Auth (password/magic-link/otp)
+ * still works; plugin bootstrap is skipped (no plugins table).
  */
 
-import { Hono } from 'hono'
-import { createSonicJSApp, registerCollections } from '@sonicjs-cms/core'
+import { createSonicJSApp } from '@sonicjs-cms/core'
 import type { SonicJSConfig } from '@sonicjs-cms/core'
 
-// Import custom collections
-import blogPostsCollection from './collections/blog-posts.collection'
-import pageBlocksCollection from './collections/page-blocks.collection'
-import contactMessagesCollection from './collections/contact-messages.collection'
-
-// Import plugins (manual mounting until auto-loading is implemented)
-import contactFormPlugin from './plugins/contact-form/index'
-
-// Register all custom collections
-registerCollections([
-  blogPostsCollection,
-  pageBlocksCollection,
-  contactMessagesCollection
-])
-
-// Application configuration
 const config: SonicJSConfig = {
-  collections: {
-    autoSync: true
-  },
   plugins: {
-    directory: './src/plugins',
-    autoLoad: false,  // Set to true to auto-load custom plugins
-    disableAll: false,  // Enable plugins
-    enabled: ['email', 'contact-form']  // Enable specific plugins
+    disableAll: true,  // v3: plugins table dropped; re-enable per plugin as code is rewired
   }
 }
 
-// Create the core application
-const coreApp = createSonicJSApp(config)
-
-// Create main app and mount plugin routes manually
-// (Plugin auto-mounting not yet implemented in core)
-const app = new Hono()
-
-// Mount plugin routes
-if (contactFormPlugin.routes) {
-  for (const route of contactFormPlugin.routes) {
-    app.route(route.path, route.handler)
-  }
-}
-
-// Mount core app last (catch-all)
-app.route('/', coreApp)
+const app = createSonicJSApp(config)
 
 export default app
