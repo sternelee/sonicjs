@@ -70,7 +70,8 @@
     "test": "echo 'Tests disabled during v3 migration' && exit 0",
     "test:cov": "echo 'Tests disabled during v3 migration' && exit 0",
     "test:watch": "echo 'Tests disabled during v3 migration' && exit 0",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "prepare": "npm run build"
   },
   "keywords": [
     "cms",

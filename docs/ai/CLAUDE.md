@@ -11,6 +11,19 @@ This project is a Cloudflare-native headless CMS built with **Hono.js** and Type
 - **Frontend**: HTMX + HTML for admin interface
 - **Deployment**: Wrangler CLI
 
+## Token-Efficient Tooling (REQUIRED before grep/Read sprees)
+
+Repo indexed by **codegraph**. Bash auto-proxied by **rtk**. Default reply mode **caveman**.
+
+- **Code lookup**: call `mcp__codegraph__codegraph_explore` FIRST for any "how does X work / trace flow / where is X used" question. ONE call returns verbatim source grouped by file — replaces 5-20 Grep/Read calls.
+- **Symbol location only**: `codegraph_search`.
+- **Call graph / impact**: `codegraph_callers`, `codegraph_callees`, `codegraph_impact`.
+- **Bash**: hook rewrites to `rtk <cmd>` automatically. `rtk gain` to audit savings.
+- **Replies**: caveman mode (full) — drop articles/filler. Code/commits/security warnings stay normal. Toggle `/caveman` or "stop caveman".
+- **Subagent delegation** (compressed output, ~60% smaller results): `cavecrew-investigator` (locate), `cavecrew-builder` (1-2 file edit), `cavecrew-reviewer` (diff review).
+
+Anti-patterns: `grep -r` across repo when codegraph answers; reading 5+ files to learn a flow; spawning subagent for a known file; verbose narration.
+
 ## Development Workflow
 
 1. **Plan First**: Read the codebase, understand the problem, and write a plan to project-plan.md

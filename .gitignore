@@ -6,6 +6,8 @@ node_modules/
 # Production builds
 /dist
 /build
+packages/*/dist
+packages/*/build
 
 # Development
 .wrangler/
