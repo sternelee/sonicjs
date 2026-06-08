@@ -6,8 +6,20 @@
  * still works; plugin bootstrap is skipped (no plugins table).
  */
 
-import { createSonicJSApp } from '@sonicjs-cms/core'
+import { createSonicJSApp, registerCollections } from '@sonicjs-cms/core'
 import type { SonicJSConfig } from '@sonicjs-cms/core'
+
+// Import code-defined collections
+import blogPostsCollection from './collections/blog-posts.collection'
+import contactMessagesCollection from './collections/contact-messages.collection'
+import pageBlocksCollection from './collections/page-blocks.collection'
+
+// Register collections so they appear in admin UI
+registerCollections([
+  blogPostsCollection,
+  contactMessagesCollection,
+  pageBlocksCollection
+])
 
 const config: SonicJSConfig = {
   plugins: {

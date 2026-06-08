@@ -17,6 +17,7 @@ import { DocumentsService } from '../services/documents'
 import { renderDocumentFormPage } from '../templates/pages/admin-documents-form.template'
 import { createDocumentSchema } from '../schemas/document'
 import type { QueryableField } from '../schemas/document'
+import { loadCollectionConfigs } from '../services/collection-loader'
 
 const adminContentRoutes = new Hono<{ Bindings: Bindings; Variables: Variables }>()
 
@@ -317,19 +318,29 @@ adminContentRoutes.get('/', async (c) => {
     const search = url.searchParams.get('search') || ''
     const offset = (page - 1) * limit
 
-    // Get all document types for filter dropdown
+    // Get all document types for filter dropdown (database)
     const collectionsStmt = db.prepare("SELECT id, name, display_name FROM document_types WHERE is_active = 1 ORDER BY display_name")
     const { results: collectionsResults } = await collectionsStmt.all()
+
+    // Load code-defined collections
+    const codeCollections = await loadCollectionConfigs()
+    const codeCollectionMap = new Map(codeCollections.map((c: any) => [c.name, c]))
 
     // Also include active document types in the models dropdown (prefixed with doc: to distinguish)
     const docTypeRegistry = new DocumentTypeRegistry(db)
     const docTypes = await docTypeRegistry.findAll()
 
+    // Merge database and code collections (db takes precedence)
+    const allCollections = [
+      ...codeCollections.filter((c: any) => !collectionsResults?.find((r: any) => r.name === c.name)),
+      ...(collectionsResults || []).map((row: any) => ({ name: row.name, displayName: row.display_name }))
+    ]
+
     // A document type whose id matches a collection name backs that collection (Option B) and is
     // managed through the collection entry — don't also list it as a separate doc: model.
-    const collectionNames = new Set((collectionsResults || []).map((r: any) => r.name))
+    const collectionNames = new Set(allCollections.map((c: any) => c.name))
     const models = [
-      ...(collectionsResults || []).map((row: any) => ({ name: row.name, displayName: row.display_name })),
+      ...allCollections.map((c: any) => ({ name: c.name, displayName: c.displayName })),
       ...docTypes.filter(dt => !collectionNames.has(dt.id)).map(dt => ({ name: `doc:${dt.id}`, displayName: dt.displayName })),
     ]
 
@@ -638,16 +649,31 @@ adminContentRoutes.get('/new', async (c) => {
     if (!collectionId) {
       // Show collection selection page
       const db = c.env.DB
-      // Get all document types for content creation
+      // Get all document types for content creation (database)
       const collectionsStmt = db.prepare("SELECT id, name, display_name, description FROM document_types WHERE is_active = 1 ORDER BY display_name")
       const { results } = await collectionsStmt.all()
 
-      const collections = (results || []).map((row: any) => ({
-        id: row.id,
-        name: row.name,
-        display_name: row.display_name,
-        description: row.description
-      }))
+      // Load code-defined collections
+      const codeCollections = await loadCollectionConfigs()
+
+      // Merge code and database collections
+      const dbCollectionNames = new Set((results || []).map((r: any) => r.name))
+      const allCollections = [
+        ...codeCollections.filter((c: any) => !dbCollectionNames.has(c.name)).map((c: any) => ({
+          id: c.name,
+          name: c.name,
+          display_name: c.displayName,
+          description: c.description
+        })),
+        ...(results || []).map((row: any) => ({
+          id: row.id,
+          name: row.name,
+          display_name: row.display_name,
+          description: row.description
+        }))
+      ]
+
+      const collections = allCollections
 
       // Render collection selection page
       const selectionHTML = `

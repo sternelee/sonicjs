@@ -5,6 +5,7 @@ import { isPluginActive } from '../middleware/plugin-middleware'
 import { normalizeFieldType } from './admin-collections-field-types'
 import { renderCollectionsListPage } from '../templates/pages/admin-collections-list.template'
 import { renderCollectionFormPage } from '../templates/pages/admin-collections-form.template'
+import { loadCollectionConfigs } from '../services/collection-loader'
 
 // Type definitions for collections
 interface Collection {
@@ -127,10 +128,28 @@ adminCollectionsRoutes.get('/', async (c) => {
       results = queryResults.results
     }
 
-    // Field counts come from schema only in new model
-    const fieldCounts = new Map<string, number>()
+    // Load code-defined collections
+    const codeCollections = await loadCollectionConfigs()
 
-    const collections: Collection[] = (results || [])
+    // Convert code collections to Collection type
+    const codeCollectionsMap = new Map(
+      codeCollections.map((cfg: any) => {
+        const fieldCount = cfg.schema?.properties ? Object.keys(cfg.schema.properties).length : 0
+        return [cfg.name, {
+          id: cfg.name,
+          name: cfg.name,
+          display_name: cfg.displayName,
+          description: cfg.description,
+          created_at: 0,
+          formattedDate: 'Code-defined',
+          field_count: fieldCount,
+          managed: cfg.managed !== false
+        } as Collection]
+      })
+    )
+
+    // Convert database results to Collection type
+    const dbCollections: Collection[] = (results || [])
       .filter((row: any) => row && row.id)
       .map((row: any) => {
         // Calculate field count from schema
@@ -157,6 +176,21 @@ adminCollectionsRoutes.get('/', async (c) => {
           managed: false
         }
       })
+
+    // Merge: code collections + database collections (db overrides code if same name)
+    const mergedMap = new Map(codeCollectionsMap)
+    dbCollections.forEach(c => mergedMap.set(c.name, c))
+
+    // Apply search filter if present
+    let collections = Array.from(mergedMap.values())
+    if (search) {
+      const searchLower = search.toLowerCase()
+      collections = collections.filter(c =>
+        c.name.toLowerCase().includes(searchLower) ||
+        c.display_name.toLowerCase().includes(searchLower) ||
+        (c.description && c.description.toLowerCase().includes(searchLower))
+      )
+    }
 
     const pageData: CollectionsListPageData = {
       collections,
