@@ -593,8 +593,12 @@ export function renderDynamicField(field: FieldDefinition, options: FieldRenderO
                 
                 const response = await fetch(url);
                 const data = await response.json();
-                
-                if (data.available) {
+
+                if (!response.ok || data.error) {
+                  // Server error (e.g. collection not found) — don't block the form
+                  statusDiv.innerHTML = '<span class="text-yellow-500 dark:text-yellow-400">⚠ Could not verify</span>';
+                  slugField.setCustomValidity('');
+                } else if (data.available) {
                   statusDiv.innerHTML = '<span class="text-green-500 dark:text-green-400">✓ Available</span>';
                   slugField.setCustomValidity('');
                 } else {

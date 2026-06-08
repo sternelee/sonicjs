@@ -1,6 +1,5 @@
 /**
- * Migration Service Tests - Auto-detection for migration 029
- * Tests the fix for issue #762: Migration ID 029 reused across versions
+ * Migration Service Tests
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
@@ -109,95 +108,17 @@ function createMockDb(options: {
 }
 
 describe('MigrationService', () => {
-  describe('autoDetectAppliedMigrations - migration 029 (forms)', () => {
-    it('should mark 029 as applied when forms tables exist but migration is not recorded', async () => {
+  describe('consolidated greenfield migrations', () => {
+    it('exposes only 0001 core and 0002 document-only migrations', async () => {
       const db = createMockDb({
-        appliedMigrations: [],
-        existingTables: ['forms', 'form_submissions', 'form_files'],
-        existingColumns: []
+        appliedMigrations: []
       })
 
       const service = new MigrationService(db as any)
       const migrations = await service.getAvailableMigrations()
 
-      const migration029 = migrations.find(m => m.id === '029')
-      expect(migration029?.applied).toBe(true)
-
-      // Verify markMigrationApplied was called for 029
-      const insertCalls = db._mocks.prepare.mock.calls.filter(
-        (call: any[]) => call[0].includes('INSERT OR REPLACE')
-      )
-      const marked029 = insertCalls.some((call: any[]) => {
-        // The bind call after INSERT would contain '029'
-        return true // We just verify the INSERT was called
-      })
-      expect(insertCalls.length).toBeGreaterThan(0)
-    })
-
-    it('should remove 029 from applied when marked as applied but forms tables are missing', async () => {
-      const db = createMockDb({
-        appliedMigrations: [
-          { id: '029', name: 'Ai Search Plugin', filename: '029_ai_search_plugin.sql', applied_at: '2024-01-01' }
-        ],
-        existingTables: [], // No forms tables
-        existingColumns: []
-      })
-
-      const service = new MigrationService(db as any)
-      const migrations = await service.getAvailableMigrations()
-
-      const migration029 = migrations.find(m => m.id === '029')
-      expect(migration029?.applied).toBe(false)
-
-      // Verify removeMigrationApplied was called (DELETE query)
-      const deleteCalls = db._mocks.prepare.mock.calls.filter(
-        (call: any[]) => call[0].includes('DELETE FROM migrations')
-      )
-      expect(deleteCalls.length).toBeGreaterThan(0)
-    })
-
-    it('should keep 029 as applied when marked as applied and forms tables exist', async () => {
-      const db = createMockDb({
-        appliedMigrations: [
-          { id: '029', name: 'Add Forms System', filename: '029_add_forms_system.sql', applied_at: '2024-01-01' }
-        ],
-        existingTables: ['forms', 'form_submissions', 'form_files'],
-        existingColumns: []
-      })
-
-      const service = new MigrationService(db as any)
-      const migrations = await service.getAvailableMigrations()
-
-      const migration029 = migrations.find(m => m.id === '029')
-      expect(migration029?.applied).toBe(true)
-    })
-
-    it('should leave 029 as pending when not applied and forms tables do not exist', async () => {
-      const db = createMockDb({
-        appliedMigrations: [],
-        existingTables: [], // No forms tables
-        existingColumns: []
-      })
-
-      const service = new MigrationService(db as any)
-      const migrations = await service.getAvailableMigrations()
-
-      const migration029 = migrations.find(m => m.id === '029')
-      expect(migration029?.applied).toBe(false)
-    })
-
-    it('should not mark 029 as applied when only some forms tables exist', async () => {
-      const db = createMockDb({
-        appliedMigrations: [],
-        existingTables: ['forms'], // Missing form_submissions and form_files
-        existingColumns: []
-      })
-
-      const service = new MigrationService(db as any)
-      const migrations = await service.getAvailableMigrations()
-
-      const migration029 = migrations.find(m => m.id === '029')
-      expect(migration029?.applied).toBe(false)
+      expect(migrations.map(m => m.id)).toEqual(['0001', '0002'])
+      expect(migrations.find(m => m.id === '029')).toBeUndefined()
     })
   })
 
@@ -205,7 +126,7 @@ describe('MigrationService', () => {
     it('should include errors array in response', async () => {
       const db = createMockDb({
         appliedMigrations: [],
-        existingTables: ['users', 'content', 'collections', 'media'],
+        existingTables: ['users', 'documents', 'document_types'],
         existingColumns: []
       })
 
@@ -220,7 +141,7 @@ describe('MigrationService', () => {
       // Create a db where all bundled migrations are already applied
       const db = createMockDb({
         appliedMigrations: [],
-        existingTables: ['users', 'content', 'collections', 'media'],
+        existingTables: ['users', 'documents', 'document_types'],
         existingColumns: []
       })
 
