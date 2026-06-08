@@ -194,7 +194,7 @@ async function getCollectionFields(db: D1Database, collectionId: string) {
   return cache.getOrSet(
     cache.generateKey('fields', collectionId),
     async () => {
-      // First, check if document type has a schema
+      // First, check if document type has a schema in database
       const collectionStmt = db.prepare('SELECT schema FROM document_types WHERE id = ?')
       const collectionRow = await collectionStmt.bind(collectionId).first() as any
 
@@ -224,7 +224,36 @@ async function getCollectionFields(db: D1Database, collectionId: string) {
         }
       }
 
-      // New model uses schema as source of truth
+      // Check code-defined collections
+      const codeCollections = await loadCollectionConfigs()
+      const codeCollection = codeCollections.find((c: any) => c.name === collectionId)
+
+      if (codeCollection && codeCollection.schema) {
+        try {
+          const schema = codeCollection.schema
+          if (schema && schema.properties) {
+            // Convert schema properties to field format
+            let fieldOrder = 0
+            return Object.entries(schema.properties).map(([fieldName, fieldConfig]: [string, any]) => {
+              const fieldOptions = buildSchemaFieldOptions(fieldConfig)
+
+              return {
+                id: `schema-${fieldName}`,
+                field_name: fieldName,
+                field_type: resolveSchemaFieldType(fieldConfig),
+                field_label: fieldConfig.title || fieldName,
+                field_options: fieldOptions,
+                field_order: fieldOrder++,
+                is_required: fieldConfig.required === true || (schema.required && schema.required.includes(fieldName)),
+                is_searchable: false
+              }
+            })
+          }
+        } catch (e) {
+          console.error('Error parsing code collection schema:', e)
+        }
+      }
+
       return []
     }
   )
@@ -240,15 +269,31 @@ async function getCollection(db: D1Database, collectionId: string) {
       const stmt = db.prepare('SELECT * FROM document_types WHERE id = ? AND is_active = 1')
       const collection = await stmt.bind(collectionId).first() as any
 
-      if (!collection) return null
-
-      return {
-        id: collection.id,
-        name: collection.name,
-        display_name: collection.display_name,
-        description: collection.description,
-        schema: collection.schema ? JSON.parse(collection.schema) : {}
+      if (collection) {
+        return {
+          id: collection.id,
+          name: collection.name,
+          display_name: collection.display_name,
+          description: collection.description,
+          schema: collection.schema ? JSON.parse(collection.schema) : {}
+        }
       }
+
+      // Check code-defined collections
+      const codeCollections = await loadCollectionConfigs()
+      const codeCollection = codeCollections.find((c: any) => c.name === collectionId)
+
+      if (codeCollection) {
+        return {
+          id: codeCollection.name,
+          name: codeCollection.name,
+          display_name: codeCollection.displayName,
+          description: codeCollection.description,
+          schema: codeCollection.schema || {}
+        }
+      }
+
+      return null
     }
   )
 }
@@ -265,11 +310,28 @@ async function getDocBackingType(db: D1Database, collectionName?: string | null)
 
 async function getCollectionByName(db: D1Database, name: string) {
   const row = await db.prepare('SELECT * FROM document_types WHERE name = ? AND is_active = 1').bind(name).first() as any
-  if (!row) return null
-  return {
-    id: row.id, name: row.name, display_name: row.display_name,
-    description: row.description, schema: row.schema ? JSON.parse(row.schema) : {},
+  if (row) {
+    return {
+      id: row.id, name: row.name, display_name: row.display_name,
+      description: row.description, schema: row.schema ? JSON.parse(row.schema) : {},
+    }
   }
+
+  // Check code-defined collections
+  const codeCollections = await loadCollectionConfigs()
+  const codeCollection = codeCollections.find((c: any) => c.name === name)
+
+  if (codeCollection) {
+    return {
+      id: codeCollection.name,
+      name: codeCollection.name,
+      display_name: codeCollection.displayName,
+      description: codeCollection.description,
+      schema: codeCollection.schema || {}
+    }
+  }
+
+  return null
 }
 
 // Rich-editor plugin flags/settings the content form needs (Quill/TinyMCE/MDX/workflow), so a
