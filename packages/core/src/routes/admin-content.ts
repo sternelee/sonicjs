@@ -360,7 +360,15 @@ adminContentRoutes.get('/', async (c) => {
       const docType = docTypes.find(dt => dt.id === typeId)
 
       const docParams: (string | number)[] = ['default', typeId]
-      let docSql = `SELECT * FROM documents WHERE tenant_id = ? AND type_id = ? AND is_current_draft = 1 AND deleted_at IS NULL`
+      let docSql = `SELECT * FROM documents WHERE tenant_id = ? AND type_id = ? AND is_current_draft = 1`
+      // D32: honor the ?status= filter (mirror the all-view union's doc-half mapping). 'deleted' shows
+      // soft-deleted roots; published/draft refine by the published flag; 'all' shows the working set.
+      if (status === 'deleted') docSql += ' AND deleted_at IS NOT NULL'
+      else {
+        docSql += ' AND deleted_at IS NULL'
+        if (status === 'published') docSql += ' AND is_published = 1'
+        else if (status === 'draft') docSql += ' AND is_published = 0'
+      }
       if (search) {
         docSql += ` AND (title LIKE ? OR json_extract(data,'$.question') LIKE ? OR json_extract(data,'$.authorName') LIKE ? OR json_extract(data,'$.name') LIKE ?)`
         const term = `%${search}%`
@@ -1572,40 +1580,73 @@ adminContentRoutes.post('/bulk-action', async (c) => {
     if (!action || !ids || ids.length === 0) {
       return c.json({ success: false, error: 'Action and IDs required' })
     }
+    if (!['delete', 'publish', 'draft'].includes(action)) {
+      return c.json({ success: false, error: 'Invalid action' })
+    }
 
     const db = c.env.DB
     const now = Date.now()
 
-    if (action === 'delete') {
-      // Soft delete by setting status to 'deleted'
-      const placeholders = ids.map(() => '?').join(',')
-      const stmt = db.prepare(`
-        UPDATE content
-        SET status = 'deleted', updated_at = ?
-        WHERE id IN (${placeholders})
-      `)
-      await stmt.bind(now, ...ids).run()
-    } else if (action === 'publish' || action === 'draft') {
-      // Update status
-      const placeholders = ids.map(() => '?').join(',')
-      const publishedAt = action === 'publish' ? now : null
-      const stmt = db.prepare(`
-        UPDATE content
-        SET status = ?, published_at = ?, updated_at = ?
-        WHERE id IN (${placeholders})
-      `)
-      await stmt.bind(action, publishedAt, now, ...ids).run()
-    } else {
-      return c.json({ success: false, error: 'Invalid action' })
+    // D33: bulk ids can be document root ids (doc-backed collections) OR legacy content ids. The old
+    // handler only ran `UPDATE content … WHERE id IN (…)`, which silently no-ops on doc rows while still
+    // reporting success. Partition the ids and route each set to the correct store.
+    const idPlaceholders = ids.map(() => '?').join(',')
+    const { results: docRootRows } = await db
+      .prepare(`SELECT DISTINCT root_id, type_id FROM documents WHERE tenant_id = 'default' AND root_id IN (${idPlaceholders})`)
+      .bind(...ids)
+      .all()
+    const docRoots = (docRootRows || []) as Array<{ root_id: string; type_id: string }>
+    const docRootIds = new Set(docRoots.map(r => r.root_id))
+    const contentIds = (ids as string[]).filter(id => !docRootIds.has(id))
+
+    // ── Document-backed rows ──────────────────────────────────────────────────
+    if (docRoots.length > 0) {
+      if (action === 'delete') {
+        // Soft-delete every version row of each root (mirror the single-row DELETE). Seconds (D29).
+        const nowSec = Math.floor(now / 1000)
+        const dph = docRoots.map(() => '?').join(',')
+        await db
+          .prepare(`UPDATE documents SET deleted_at = ?, updated_at = ? WHERE tenant_id = 'default' AND root_id IN (${dph})`)
+          .bind(nowSec, nowSec, ...docRoots.map(r => r.root_id))
+          .run()
+      } else {
+        // publish / draft → run through DocumentsService so the published flag, prev-published
+        // demotion and derived rows stay consistent (one row per root).
+        for (const root of docRoots) {
+          const docType = await getDocBackingType(db, root.type_id)
+          if (!docType) continue
+          const svc = makeDocService(db, docType)
+          if (action === 'publish') {
+            const draft = await db.prepare("SELECT id FROM documents WHERE root_id = ? AND tenant_id = 'default' AND is_current_draft = 1").bind(root.root_id).first() as any
+            if (draft) await svc.publish(draft.id, user?.userId)
+          } else {
+            const pub = await db.prepare("SELECT id FROM documents WHERE root_id = ? AND tenant_id = 'default' AND is_published = 1").bind(root.root_id).first() as any
+            if (pub) await svc.unpublish(pub.id)
+          }
+        }
+      }
     }
 
-    // Invalidate cache for all affected content items
+    // ── Legacy content rows ───────────────────────────────────────────────────
+    if (contentIds.length > 0) {
+      const cph = contentIds.map(() => '?').join(',')
+      if (action === 'delete') {
+        await db.prepare(`UPDATE content SET status = 'deleted', updated_at = ? WHERE id IN (${cph})`).bind(now, ...contentIds).run()
+      } else {
+        const publishedAt = action === 'publish' ? now : null
+        await db.prepare(`UPDATE content SET status = ?, published_at = ?, updated_at = ? WHERE id IN (${cph})`).bind(action, publishedAt, now, ...contentIds).run()
+      }
+    }
+
+    // Invalidate content caches and the public-API filtered caches so both surfaces reflect the change.
     const cache = getCacheService(CACHE_CONFIGS.content!)
     for (const contentId of ids) {
       await cache.delete(cache.generateKey('content', contentId))
     }
-    // Also invalidate list caches (they contain content from potentially multiple collections)
     await cache.invalidate('content:list:*')
+    const apiCache = getCacheService(CACHE_CONFIGS.api!)
+    await apiCache.invalidate('content-filtered:*')
+    await apiCache.invalidate('collection-content-filtered:*')
 
     return c.json({ success: true, count: ids.length })
   } catch (error) {

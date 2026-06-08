@@ -11,6 +11,8 @@ import { autoRegisterCollectionDocumentTypes } from '../../services/document-typ
 vi.mock('../../middleware', () => ({
   requireAuth: () => async (c: any, next: any) => { c.set('user', { userId: 'u1', email: 'a@b.c', role: 'admin' }); await next() },
   requireRole: () => async (_c: any, next: any) => next(),
+  // GET /:id is public (optionalAuth). Leave the caller anonymous so it resolves the published row.
+  optionalAuth: () => async (_c: any, next: any) => next(),
 }))
 
 import apiContentCrudRoutes from '../../routes/api-content-crud'

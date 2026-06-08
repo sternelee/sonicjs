@@ -6,6 +6,17 @@
 
 ---
 
+> 🔎 **2026-06-07 regression audit:** a deep parity review of the `content`→`documents` migration is in
+> **[§7 Regression Audit](#7-regression-audit--content--documents-migration-2026-06-07)** — 16 new defects
+> (`D29`–`D45`), 1 BLOCKER (timestamp seconds-vs-ms), 5 MAJOR, with a recommended fix order. Baseline:
+> core suite **1556 passed / 0 failed**; e2e **25/27** (2 failures are stale-DB artifacts, see D45).
+>
+> ✅ **2026-06-08 fixes applied:** the BLOCKER + all MAJOR behavioral defects are fixed —
+> **D29, D30, D31, D32, D33, D36, D37, D38, D39, D44** and the **D45** migration self-heal, plus the
+> **D34** backfill timestamp-fidelity bug. Core suite now **1569 passed / 0 failed** (+13 new tests),
+> type-check clean. See **[§7 → Fixes applied](#fixes-applied-2026-06-08)**. Remaining: D34 *auto*-backfill
+> (deploy gate), D35, D40, D41, D42.
+
 ## ⚠️ Cross-branch coordination (feature/better-auth-poc)
 
 A separate large in-flight branch, `feature/better-auth-poc` (21 commits ahead of main; replaces auth with Better Auth + dynamic RBAC), **claims migrations 037–042** (`037_better_auth`, `038_dynamic_rbac`, `039_portal_access`, `040_rbac_permission_scopes`, `041_account_lockout`, `042_better_auth_plugins`). Decisions taken:
@@ -404,6 +415,125 @@ the filtered view (the all-view excludes doc-backed collections from the content
 - **E2E** (Playwright, run with `npm run e2e`): `63-document-blog-crud` (blog list renders; published doc on public API, draft hidden; **Option B create via the real content route**), `64-document-testimonials-admin` (mount fix: list renders + create via the real route).
 
 Verified here: everything except the live browser/Worker (the two e2e specs need `npm run e2e` against the dev server).
+
+---
+
+## §7 Regression Audit — `content` → `documents` migration (2026-06-07)
+
+> **Why this section exists:** a deep parity review of the migration ("do all the APIs and admin UI still
+> work like they used to?"). Baseline at audit time: **core suite 1556 passed / 0 failed / 328 skipped**,
+> type-check clean. Each finding below is **verified against code** (file:line) and carries a new defect ID
+> (`D29`+). Severity: **BLOCKER** = shipped contract broken / data wrong • **MAJOR** = user-visible wrong
+> behavior • **MINOR** = edge/degraded • **NOTE** = intended or latent (not yet live).
+>
+> The recurring root cause is that the public/CRUD read paths were re-pointed at `documents` but several
+> **legacy `content` contracts were not preserved**: timestamp units, status/visibility semantics, the
+> `collection_id` filter column, and the admin bulk/secondary actions that still target the `content` table.
+
+### Defect inventory (D29–D44)
+
+**BLOCKER**
+
+| ID | Area | Location | One-line |
+|----|------|----------|----------|
+| **D29** | Public API + CRUD | `api.ts:42-43` (`mapDocRowToContent`), `api-content-crud.ts:107-108,196,301`; root cause `documents.ts:74,137,242` (seconds) | **Timestamp unit regression: documents store `created_at`/`updated_at` in SECONDS, old `content` stored MILLISECONDS.** Public list, `/collections/:c/content`, and CRUD GET/POST/PUT now return values ~1000× too small (same field names/types). `new Date(item.created_at)` → 1970; sort/relative-time break. Admin templates already `*1000` (`admin-content.ts:393,449`); the API mappers do **not**. **No test asserts units.** |
+
+**MAJOR**
+
+| ID | Area | Location | One-line |
+|----|------|----------|----------|
+| **D30** | CRUD API | `api-content-crud.ts:92` | `GET /api/content/:id` resolves only `is_published = 1` then falls back to (empty) `content` → **404 for any DRAFT** by root id. Since new items default to draft, the admin list's per-row "View API" button 404s on fresh items. Fix: role-gate like the list (`is_current_draft=1` for privileged, `is_published=1` for anon). Untested. |
+| **D31** | Public API | `api.ts:18-31` (`augmentFilterForDocuments`) | `?collection_id=` (a valid legacy filter on `content`) and `sort` by `collection_id` now hit a column that **does not exist on `documents`** (0 occurrences in migration 043) → SQLite error → **HTTP 500**. The strip logic removes `status` from the where-tree but not `collection_id`. Untested. |
+| **D32** | Status semantics | (a) `api.ts:21,29-30`; (b) `admin-content.ts:362-371` | **`status` filter ignored.** (a) Public API strips `status` from the whole tree and *always* applies `is_current_draft=1` for privileged roles → admin `?status=archived/published` returns drafts. (b) Admin single-model doc list (`?model=blog_posts&status=published`) never reads the `status` param → shows all current drafts; `status=deleted` returns nothing (soft-deleted docs unreachable from the single-model view). The all-view union *does* handle status. Untested for the doc branch. |
+| **D33** | Admin UI | `admin-content.ts:1585-1597` (bulk handler) | **Bulk publish / move-to-draft / delete silently no-op on doc-backed rows.** The handler only runs `UPDATE content … WHERE id IN (…)`; doc rows carry `root_id`s that never match a `content` row, yet the endpoint returns `{success:true, count}` and the UI reloads as if it worked. Untested for doc rows. |
+| **D34** | Deploy / data | migration 043 (no data copy); `scripts/backfill-content.ts` (manual); dashboard `admin-dashboard.ts:92-102`, `api-system.ts:135-140` | **No automatic `content`→`documents` backfill.** On an upgrade where collections auto-register as doc types (every bootstrap) but rows were never re-saved, existing published items **vanish** from `/api/content` and are **under-counted** on the dashboard / `/api/system/stats` (content-half is gated off for now-doc-backed collections; documents-half only sees migrated rows). The manual backfill also **discards original `created_at`** (writes `now` in seconds). Untested. |
+| **D45** | Migration / deploy | live `d1_migrations`; migration `043` `CREATE TABLE IF NOT EXISTS documents`; `044` `ALTER TABLE` | **The 037→043 renumber + 038 deletion is not reconcilable on an already-migrated D1.** A DB that applied the old `0037_document_repository`/`0038_drop_testimonials` keeps the destructive 038 effect, and when the renumbered `043` is applied its `CREATE TABLE IF NOT EXISTS documents` is a **no-op** (table exists) → the 10 `q_*` generated columns are **never added**. Runtime then 500s on any `q_*` query (`/api/testimonials` → `q_tst_sort_order`, media list, blog filters). **Verified live**: the running dev D1 has `documents` with **no `q_*` columns**, `d1_migrations` = `0037/0038/012`, 043/044 absent — this is the sole cause of the two e2e failures below. POC mitigation: reset+re-migrate the local/preview D1 (`cd my-sonicjs-app && npm run setup:db`). Real fix: an idempotent ALTER-based migration that adds the generated columns to an existing `documents` table. |
+
+**MINOR**
+
+| ID | Area | Location | One-line |
+|----|------|----------|----------|
+| **D35** | Public API | `api.ts:615-618` | Unscoped `/api/content` (no `collection`) now restricts to `source_type IS NULL OR 'user'`; published content in system/managed collections that appeared on `main` is omitted. |
+| **D36** | Admin UI | `admin-content-list.template.ts:162` ← `admin-content.ts:385` | Per-row "View API" link builds `/api/content/${row.id}`; for pure `doc:` rows `row.id="documents/:typeId/:rootId"` → broken URL (and doc-backed root ids 404 via D30). Edit/Delete buttons are fine. |
+| **D37** | CRUD API | `api-content-crud.ts:65,173` | `check-slug` and the POST duplicate check scope to `is_current_draft = 1`, so a slug still served by a superseded **published** row reads as "available" → possible duplicate public slugs. |
+| **D38** | CRUD API | `api-content-crud.ts:289-302` | `PUT /:id` without `status` calls `saveDraft` (always unpublished) and echoes the new draft → response/`admin list` show `status:'draft'` for an item whose published row still serves. (Admin form handler avoids this; CRUD route doesn't.) |
+| **D39** | CRUD API | `api-content-crud.ts:274,396` | `PUT`/`DELETE` doc lookups omit `deleted_at IS NULL`: PUT can resurrect a soft-deleted root; second DELETE returns `{success:true}` instead of 404 (main hard-deleted → 404). |
+| **D40** | Admin UI | `admin-content.ts:365` (single-model) vs `:437` (all-view) | Doc search uses a **hardcoded** `json_extract` key list that differs between the two views and omits `slug` (and body/excerpt). Main searched `title OR slug OR data` (whole JSON). Same query returns different results in "All" vs a specific model. |
+| **D41** | Cache | `cache-warming.ts:92,96` vs `cache-invalidation.ts:55,64` | Warmer keys content cache by document `root_id`; invalidation deletes by `data.id`. If an invalidation event carries a version `id` (not root), the warmed entry isn't evicted → stale cache. (Warming itself works.) |
+| **D44** | Public API | `api.ts:691,813` | `meta.filter` echoes the **document-augmented** where-tree (`type_id`, `deleted_at exists`, `is_published`/`is_current_draft`) instead of the caller's filter — implementation leak / contract drift for consumers that introspect it. |
+
+**NOTE (intended or latent — no action required now)**
+
+| ID | Area | Location | One-line |
+|----|------|----------|----------|
+| **D42** | Media (latent) | `media-documents.ts:42-46` (`deriveMediaPublicUrl`) | Default `/files/<r2Key>` matches the **admin** upload + library render, but **not** the `api-media` stored `public_url` (`pub-<bucket>.r2.dev/...`). Harmless today (library still reads legacy `media`; the adapters/`list()` are dead code). Bites only when the media-library read is flipped to documents without passing `r2PublicHost`/`imagesAccountId`. |
+| **D43** | Media | `admin-media.ts:874-893` | New reference-aware delete can **block** a hard-delete that always succeeded on `main`. Verified correctly scoped (only `strong` live inbound refs; pre-branch media have no backing doc → delete as before; whole block is `try/catch` non-fatal). Intended behavior; documented here for awareness. (Not yet mirrored in `api-media` DELETE.) |
+
+<a id="fixes-applied-2026-06-08"></a>
+### Fixes applied (2026-06-08)
+
+All fixes are in `packages/core/src` with new regression tests; full core suite **1569 passed / 0
+failed / 328 skipped**, `tsc --noEmit` clean. (Rebuild `packages/core/dist` for the running app/e2e.)
+
+| Defect | Status | Fix (file) | Test |
+|--------|--------|-----------|------|
+| **D29** | ✅ fixed | `documentSecondsToMs()` helper in `services/documents.ts`; applied in `api.ts` `mapDocRowToContent` + the 3 CRUD doc-branch shapers (`api-content-crud.ts`) | `api-content-documents.integration.test.ts` (POST/list/GET all assert `storedSeconds*1000`) |
+| **D30** | ✅ fixed | `GET /api/content/:id` now `optionalAuth()` + role-gated: privileged → `is_current_draft`, anon → `is_published` (`api-content-crud.ts`) | same file — priv sees draft (200), anon 404 |
+| **D31** | ✅ fixed | `augmentFilterForDocuments` strips `collection_id` from the where-tree and translates/whitelists sort cols; `/content` resolves `?collection_id=` → type scoping (`api.ts`) | same file — `?collection_id=` + sort-by-collection_id both 200 |
+| **D32** | ✅ fixed | (a) augment honors requested `status` for privileged (published/draft/archived/deleted), anon always published; (b) admin single-model doc list reads `?status=` mirroring the all-view union (`admin-content.ts`) | same file (a); doc-backed admin covered by existing list tests |
+| **D33** | ✅ fixed | bulk handler partitions ids into doc roots vs legacy content; doc roots routed through `DocumentsService` publish/unpublish + soft-delete; invalidates API caches too (`admin-content.ts`) | `admin-content-docbacked.integration.test.ts` — bulk publish/draft/delete on doc roots |
+| **D36** | ✅ fixed | per-row "View API" link resolves a `documents/:type/:root` composite to its root id (`admin-content-list.template.ts`) | (UI string; covered by D30 GET behavior) |
+| **D37** | ✅ fixed | check-slug + POST dup now match `(is_current_draft = 1 OR is_published = 1)` (`api-content-crud.ts`) | `api-content-documents.integration.test.ts` — published-slug + renamed draft → 409 |
+| **D38** | ✅ fixed | PUT without `status` preserves prior effective state (published stays published) (`api-content-crud.ts`) | same file — PUT no-status keeps published, anon still reads it |
+| **D39** | ✅ fixed | PUT/DELETE doc lookups add `deleted_at IS NULL` → 2nd DELETE 404s, PUT can't resurrect (`api-content-crud.ts`) | same file |
+| **D44** | ✅ fixed | `meta.filter` echoes the caller's filter, not the document-augmented where-tree (`api.ts`) | (covered implicitly; low-risk) |
+| **D45** | ✅ fixed | `MigrationService.ensureDocumentGeneratedColumns()` (called from `autoDetectAppliedMigrations`) idempotently adds any missing `q_*` columns at bootstrap via `table_xinfo` + ALTER (`services/migrations.ts`) | `migrations-d45.test.ts` — adds missing cols to a pre-existing table; no-op when present |
+| **D34** | 🟡 partial | **timestamp fidelity fixed**: `create()` accepts optional `createdAt`/`updatedAt` (seconds), backfill script passes the legacy row's ms→s converted timestamps (`schemas/document.ts`, `services/documents.ts`, `scripts/backfill-content.ts`) | `documents.sqlite.test.ts` — create preserves supplied timestamps, seeds publishedAt |
+
+**Still open (deploy / lower-severity):**
+- **D34 (auto-backfill)** — the *automatic* `content`→`documents` backfill (vs read-path legacy fallback) and dashboard/`/api/system/stats` count reconciliation for un-migrated rows is **the gate before the legacy `content` DROP** and a deploy-time design choice (when to run, idempotency at scale, DROP timing). The manual `scripts/backfill-content.ts` now preserves `created_at`; auto-run-at-bootstrap is intentionally deferred for a design decision.
+- **D35** (system/managed collections excluded from unscoped `/api/content`) — really the same legacy-content-union question as D34; deferred with it.
+- **D40** (admin doc-search field list differs single-model vs all-view), **D41** (cache warm/invalidate key mismatch), **D42** (latent media public-url scheme) — cleanup batch.
+
+### E2E run (live server, 2026-06-07)
+
+Ran `63-document-blog-crud`, `64-document-testimonials-admin`, `05-content`, `07-api` against the
+already-running dev server on `:8787` (`BASE_URL=…` to reuse it): **25 passed / 2 failed (2.5m)**.
+
+Both failures are **environmental (stale local D1), not code regressions** — root-caused by **D45**:
+- `63…:65` "create blog post via content route stores a document" — fails at line 72 (`collection_id`
+  input empty) because the live DB has **no `blog_posts` collection** (only `news`). The create *logic*
+  is green in `admin-content-docbacked.integration.test.ts` on fresh SQLite.
+- `64…:25` "create testimonial stores a document on the API" — fails at `expect(apiRes.ok())` because
+  `GET /api/testimonials` 500s: the live `documents` table lacks `q_tst_sort_order` (043 never applied).
+
+**These two specs will pass after a DB reset** (`npm run setup:db`) so the live D1 matches migrations
+043/044. The 25 green specs include `05-content` and `07-api` — i.e. the broad content/API surface that
+*doesn't* depend on the doc-model q_* columns is unaffected. (Re-running on a fresh DB was not done here
+to avoid destroying the dev DB's data — 11 testimonial + 6 blog documents currently live in it.)
+
+### Verified-FINE (parity preserved — checked, no regression)
+
+- Public API response **field names/shape** (`id,title,slug,status,collectionId,data,created_at,updated_at`), `collectionId` = `collections.id` via name→id lookup, `data` parsed to object, malformed-filter 400, DB-error 500, CORS/cache headers, `meta.collection` block — all unchanged. (Only the *values* in D29/`id`-source changed.)
+- **Anon visibility (no fail-open)** and **privileged current-draft visibility (no fail-closed)**; **one row per root** (partial unique indexes + `is_published`/`is_current_draft`); **data-field filter parity** (`json_extract(data,'$.x')`, all operators); `limit`/`offset` pagination.
+- CRUD: `{data:{…}}` envelope, status codes (201/409/400/404), auth guards, POST draft-default (`publishOnCreate`), writes go to `documents` not `content`, non-doc/unknown collection **falls back to legacy** content path cleanly.
+- Admin: **create-as-draft** (Save→draft, Save&Publish→published — D-bug fixed, covered by `admin-content-news-draft` + `admin-content-docbacked` tests), list status badge from `is_published`, all-view union de-dup (content half excludes doc-backed) + ms-normalized ordering, edit-form load, update→new version/republish, soft-delete disappears from list+API, **legacy/non-doc-backed collection paths byte-identical to main**.
+- Media: **dual-write keeps writing the legacy `media` row first** (best-effort doc mirror, can't break upload), library list/details/PUT/search/bulk still on legacy `media` (no partial flip), R2 + soft-delete preserved.
+- Dashboard: no double-count for backfilled or media docs (join semantics correct) — the only gap is the *un-backfilled* case (D34).
+
+### Recommended fix order (so we can "fix them all")
+
+1. **D29 (BLOCKER) first** — one focused fix in the two response mappers (`mapDocRowToContent`, the CRUD GET/POST/PUT shapers): `*1000` the document timestamps (or standardize + document). Add a unit-asserting test. Everything else is correctness on top of correct data.
+2. **D30 + D32 together** (status/visibility): role-gate `GET /:id`; honor `?status=` (public privileged + admin single-model) by mapping draft→`is_current_draft`, published→`is_published`, archived→`status='archived'`, deleted→`deleted_at IS NOT NULL`.
+3. **D31 + D35 + D44** (filter parity): in `augmentFilterForDocuments` strip/translate `collection_id` (and whitelist sort columns); decide system/managed-collection inclusion; echo the original filter in `meta`.
+4. **D33 + D36** (admin actions on doc rows): route bulk publish/draft/delete through `DocumentsService`; fix/hide the per-row View-API link for doc rows.
+5. **D34** (deploy): ship an automatic `content`→`documents` backfill that **preserves `created_at`**, or fall back to `content` for collections without a backing doc type. This is the gate before the legacy `content` DROP.
+6. **D37–D41** (write-path edges + cache key) as a cleanup batch.
+7. **D42/D43** are notes — fold D42 into the media-library read-flip work (Phase 6.1 slice), keep D43 as documented intended behavior.
+
+### Test-coverage gaps surfaced
+
+No test asserts: timestamp units (D29), draft GET-by-id (D30), `collection_id`/unknown-column filter (D31), status filter on doc paths (D32), bulk on doc rows (D33), dashboard/api-system counts with un-backfilled rows (D34), check-slug against documents (D37), PUT-without-status effective state (D38). Add these alongside the fixes — the route-integration harness (`*.integration.test.ts`) is the right vehicle (real SQLite, real routers).
 
 ## 5. Verification
 

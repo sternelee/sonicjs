@@ -298,6 +298,59 @@ export class MigrationService {
         await this.markMigrationApplied('035', 'User Profiles Data Column', '035_user_profiles_data_column.sql')
       }
     }
+
+    // D45: the document repository migration was renumbered (037 -> 043). A database that applied the
+    // OLD 037 (or created `documents` before the generated-column set was finalized) keeps the table,
+    // so the renumbered `CREATE TABLE IF NOT EXISTS documents` is a no-op and never adds the q_* VIRTUAL
+    // generated columns. Any q_* query (testimonials/media/blog list) then 500s at runtime. ALTER ADD
+    // ... VIRTUAL needs no backfill, so self-heal here by adding any missing columns (idempotent).
+    const hasDocumentsTable = await this.checkTablesExist(['documents'])
+    if (hasDocumentsTable) {
+      await this.ensureDocumentGeneratedColumns()
+    }
+  }
+
+  /**
+   * Ensure the `documents` table exposes every queryable VIRTUAL generated column (D45). Safe to run on
+   * every bootstrap: existing columns are skipped, missing ones are added, and the unavoidable race of a
+   * concurrent add surfaces as a swallowed "duplicate column name" error.
+   */
+  private async ensureDocumentGeneratedColumns(): Promise<void> {
+    // (column name, full ADD COLUMN body) — kept in sync with migrations 043 + 044.
+    const columns: Array<[string, string]> = [
+      ['q_faq_category',    "q_faq_category TEXT AS (json_extract(data, '$.category')) VIRTUAL"],
+      ['q_faq_sort_order',  "q_faq_sort_order INTEGER AS (json_extract(data, '$.sortOrder')) VIRTUAL"],
+      ['q_tst_rating',      "q_tst_rating INTEGER AS (json_extract(data, '$.rating')) VIRTUAL"],
+      ['q_tst_company',     "q_tst_company TEXT AS (json_extract(data, '$.authorCompany')) VIRTUAL"],
+      ['q_tst_sort_order',  "q_tst_sort_order INTEGER AS (json_extract(data, '$.sortOrder')) VIRTUAL"],
+      ['q_msg_review',      "q_msg_review TEXT AS (json_extract(data, '$.reviewStatus')) VIRTUAL"],
+      ['q_msg_email',       "q_msg_email TEXT AS (json_extract(data, '$.email')) VIRTUAL"],
+      ['q_media_mime',      "q_media_mime TEXT AS (json_extract(data, '$.mimeType')) VIRTUAL"],
+      ['q_media_folder',    "q_media_folder TEXT AS (json_extract(data, '$.folder')) VIRTUAL"],
+      ['q_media_size',      "q_media_size INTEGER AS (json_extract(data, '$.size')) VIRTUAL"],
+      ['q_blog_difficulty', "q_blog_difficulty TEXT AS (json_extract(data, '$.difficulty')) VIRTUAL"],
+      ['q_blog_author',     "q_blog_author TEXT AS (json_extract(data, '$.author')) VIRTUAL"],
+    ]
+    // Note: pragma_table_info does NOT list VIRTUAL generated columns — use table_xinfo, which does.
+    let existing = new Set<string>()
+    try {
+      const info = await this.db.prepare("SELECT name FROM pragma_table_xinfo('documents')").all()
+      existing = new Set((info?.results ?? []).map((r: any) => r.name))
+    } catch {
+      // table_xinfo unavailable — fall back to attempting every ALTER (duplicate errors are swallowed).
+    }
+    for (const [name, body] of columns) {
+      if (existing.has(name)) continue
+      try {
+        await this.db.prepare(`ALTER TABLE documents ADD COLUMN ${body}`).run()
+        console.log(`[Migration] D45: added missing documents.${name}`)
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error)
+        if (!msg.includes('duplicate column name')) {
+          console.error(`[Migration] D45: failed to add documents.${name}:`, msg)
+        }
+      }
+    }
   }
 
   /**

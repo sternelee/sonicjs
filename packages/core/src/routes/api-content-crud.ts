@@ -1,9 +1,10 @@
 import { Hono } from 'hono'
-import { requireAuth, requireRole } from '../middleware'
+import { requireAuth, requireRole, optionalAuth } from '../middleware'
+import { canReadNonPublicContent } from './api-content-access-policy'
 import { getCacheService, CACHE_CONFIGS } from '../services'
 import type { Bindings, Variables } from '../app'
 import { resolveContentVariables } from '../plugins/core-plugins/global-variables-plugin/variable-resolver'
-import { DocumentsService } from '../services/documents'
+import { DocumentsService, documentSecondsToMs } from '../services/documents'
 import { DocumentTypeRegistry } from '../services/document-type-registry'
 import { createDocumentSchema } from '../schemas/document'
 import type { D1Database } from '@cloudflare/workers-types'
@@ -62,7 +63,9 @@ apiContentCrudRoutes.get('/check-slug', async (c) => {
     // Also check document-backed content (slug uniqueness per type == collection name).
     const coll = await db.prepare('SELECT name FROM collections WHERE id = ?').bind(collectionId).first() as any
     if (coll?.name) {
-      let docQuery = "SELECT root_id FROM documents WHERE type_id = ? AND tenant_id = 'default' AND is_current_draft = 1 AND deleted_at IS NULL AND slug = ?"
+      // D37: a slug is taken if ANY live revision uses it — the current draft OR a still-served
+      // published row (a superseded published row keeps its slug until replaced).
+      let docQuery = "SELECT root_id FROM documents WHERE type_id = ? AND tenant_id = 'default' AND (is_current_draft = 1 OR is_published = 1) AND deleted_at IS NULL AND slug = ?"
       const docParams: string[] = [coll.name, slug]
       if (excludeId) { docQuery += ' AND root_id != ?'; docParams.push(excludeId) }
       const docExisting = await db.prepare(docQuery).bind(...docParams).first()
@@ -82,15 +85,22 @@ apiContentCrudRoutes.get('/check-slug', async (c) => {
 })
 
 // GET /api/content/:id - Get single content item by ID
-apiContentCrudRoutes.get('/:id', async (c) => {
+apiContentCrudRoutes.get('/:id', optionalAuth(), async (c) => {
   try {
     const id = c.req.param('id')
     const db = c.env.DB
 
-    // Document-backed: /api/content now returns document root ids, so resolve by root id (published
-    // revision) first; fall back to a legacy content row by id.
+    // Document-backed: /api/content returns document root ids, so resolve by root id, falling back to a
+    // legacy content row. D30: role-gate visibility like the list — privileged callers (admin/editor)
+    // see the current-draft revision (so a brand-new DRAFT resolves, not 404); anon sees the published
+    // revision only.
+    const privileged = canReadNonPublicContent(c.get('user')?.role)
     const docRow = await db
-      .prepare("SELECT * FROM documents WHERE root_id = ? AND tenant_id = 'default' AND is_published = 1 AND deleted_at IS NULL")
+      .prepare(
+        privileged
+          ? "SELECT * FROM documents WHERE root_id = ? AND tenant_id = 'default' AND is_current_draft = 1 AND deleted_at IS NULL"
+          : "SELECT * FROM documents WHERE root_id = ? AND tenant_id = 'default' AND is_published = 1 AND deleted_at IS NULL",
+      )
       .bind(id)
       .first() as any
 
@@ -104,8 +114,9 @@ apiContentCrudRoutes.get('/:id', async (c) => {
         status: docRow.status,
         collectionId: coll?.id ?? docRow.type_id,
         data: docRow.data ? JSON.parse(docRow.data) : {},
-        created_at: docRow.created_at,
-        updated_at: docRow.updated_at,
+        // D29: document timestamps are SECONDS; legacy `content` API contract is MILLISECONDS.
+        created_at: documentSecondsToMs(docRow.created_at),
+        updated_at: documentSecondsToMs(docRow.updated_at),
       }
     } else {
       const content = await db.prepare('SELECT * FROM content WHERE id = ?').bind(id).first() as any
@@ -170,7 +181,8 @@ apiContentCrudRoutes.post('/', requireAuth(), requireRole(['admin', 'editor', 'a
     const backing = await resolveDocBacking(db, collectionId)
     if (backing) {
       const dup = await db
-        .prepare("SELECT root_id FROM documents WHERE type_id = ? AND tenant_id = 'default' AND is_current_draft = 1 AND deleted_at IS NULL AND slug = ?")
+        // D37: reject if the slug is used by any live revision (current draft OR served published row).
+        .prepare("SELECT root_id FROM documents WHERE type_id = ? AND tenant_id = 'default' AND (is_current_draft = 1 OR is_published = 1) AND deleted_at IS NULL AND slug = ?")
         .bind(backing.coll.name, finalSlug)
         .first()
       if (dup) {
@@ -193,7 +205,7 @@ apiContentCrudRoutes.post('/', requireAuth(), requireRole(['admin', 'editor', 'a
       await cache.invalidate('content-filtered:*')
       await cache.invalidate('collection-content-filtered:*')
       return c.json({
-        data: { id: doc.rootId, title: doc.title, slug: doc.slug, status: doc.status, collectionId: backing.coll.id, data: doc.data, created_at: doc.createdAt, updated_at: doc.updatedAt },
+        data: { id: doc.rootId, title: doc.title, slug: doc.slug, status: doc.status, collectionId: backing.coll.id, data: doc.data, created_at: documentSecondsToMs(doc.createdAt), updated_at: documentSecondsToMs(doc.updatedAt) },
       }, 201)
     }
 
@@ -269,9 +281,10 @@ apiContentCrudRoutes.put('/:id', requireAuth(), requireRole(['admin', 'editor', 
     const body = await c.req.json()
     const user = c.get('user')
 
-    // Document-backed: :id is a document root id → save a new draft and sync publish state.
+    // Document-backed: :id is a document root id → save a new draft and sync publish state. D39: skip
+    // soft-deleted roots (so PUT can't resurrect one) → falls through to the legacy path → 404.
     const docRow = await db
-      .prepare("SELECT root_id, type_id FROM documents WHERE root_id = ? AND tenant_id = 'default' AND is_current_draft = 1")
+      .prepare("SELECT root_id, type_id FROM documents WHERE root_id = ? AND tenant_id = 'default' AND is_current_draft = 1 AND deleted_at IS NULL")
       .bind(id)
       .first() as any
     if (docRow) {
@@ -287,10 +300,13 @@ apiContentCrudRoutes.put('/:id', requireAuth(), requireRole(['admin', 'editor', 
       if (body.slug !== undefined) input.slug = slugify(body.slug)
       if (body.data !== undefined) input.data = body.data
       const newDraft = await svc.saveDraft(id!, input, user?.userId)
-      if (body.status !== undefined) {
-        const pub = await db.prepare("SELECT id FROM documents WHERE root_id = ? AND is_published = 1 AND tenant_id = 'default'").bind(id).first() as any
-        if (body.status === 'published') await svc.publish(newDraft.id, user?.userId)
-        else if (pub) await svc.unpublish(pub.id)
+      const pub = await db.prepare("SELECT id FROM documents WHERE root_id = ? AND is_published = 1 AND tenant_id = 'default'").bind(id).first() as any
+      // D38: an explicit status wins; with NO status, preserve the prior effective state — editing a
+      // published item keeps it published (legacy parity), a draft stays a draft.
+      if (body.status === 'published' || (body.status === undefined && pub)) {
+        await svc.publish(newDraft.id, user?.userId)
+      } else if (body.status === 'draft' && pub) {
+        await svc.unpublish(pub.id)
       }
       const cache = getCacheService(CACHE_CONFIGS.api!)
       await cache.invalidate('content-filtered:*')
@@ -298,7 +314,7 @@ apiContentCrudRoutes.put('/:id', requireAuth(), requireRole(['admin', 'editor', 
       const coll = await db.prepare('SELECT id FROM collections WHERE name = ?').bind(docRow.type_id).first() as any
       const saved = await db.prepare('SELECT * FROM documents WHERE id = ?').bind(newDraft.id).first() as any
       return c.json({
-        data: { id: saved.root_id, title: saved.title, slug: saved.slug, status: saved.status, collectionId: coll?.id ?? docRow.type_id, data: saved.data ? JSON.parse(saved.data) : {}, created_at: saved.created_at, updated_at: saved.updated_at },
+        data: { id: saved.root_id, title: saved.title, slug: saved.slug, status: saved.status, collectionId: coll?.id ?? docRow.type_id, data: saved.data ? JSON.parse(saved.data) : {}, created_at: documentSecondsToMs(saved.created_at), updated_at: documentSecondsToMs(saved.updated_at) },
       })
     }
 
@@ -392,8 +408,10 @@ apiContentCrudRoutes.delete('/:id', requireAuth(), requireRole(['admin', 'editor
     const id = c.req.param('id')
     const db = c.env.DB
 
-    // Document-backed: :id is a document root id → soft-delete every version row of the root.
-    const docRow = await db.prepare("SELECT type_id FROM documents WHERE root_id = ? AND tenant_id = 'default' LIMIT 1").bind(id).first() as any
+    // Document-backed: :id is a document root id → soft-delete every version row of the root. D39:
+    // ignore an already soft-deleted root so a second DELETE falls through to the legacy path → 404
+    // (matching main, which hard-deleted and 404'd on re-delete) instead of a misleading {success:true}.
+    const docRow = await db.prepare("SELECT type_id FROM documents WHERE root_id = ? AND tenant_id = 'default' AND deleted_at IS NULL LIMIT 1").bind(id).first() as any
     if (docRow) {
       const now = Math.floor(Date.now() / 1000)
       await db.prepare("UPDATE documents SET deleted_at = ?, updated_at = ? WHERE root_id = ? AND tenant_id = 'default'").bind(now, now, id).run()

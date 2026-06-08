@@ -55,6 +55,25 @@ describe('DocumentsService — real SQLite (migration 037)', () => {
     expect(facets.map((f) => f.value_text)).toEqual(['vip'])
   })
 
+  it('D34: create preserves supplied createdAt/updatedAt (backfill fidelity) and seeds publishedAt', async () => {
+    const s = svc(db)
+    const createdAt = 1_600_000_000 // a fixed past timestamp (seconds)
+    const updatedAt = 1_600_500_000
+    const doc = await s.create(
+      { typeId: 'testimonial', tenantId: 'default', title: 'Old', data: { rating: 5 }, publishOnCreate: true, createdAt, updatedAt },
+      'u1',
+    )
+    const row = db.raw.prepare('SELECT created_at, updated_at, published_at FROM documents WHERE id=?').get(doc.id)
+    expect(row.created_at).toBe(createdAt)
+    expect(row.updated_at).toBe(updatedAt)
+    expect(row.published_at).toBe(createdAt) // published backfill seeds publishedAt from createdAt
+
+    // Omitting the overrides still defaults to "now" (normal create path unchanged).
+    const fresh = await s.create({ typeId: 'testimonial', tenantId: 'default', title: 'New', data: {} })
+    const freshRow = db.raw.prepare('SELECT created_at FROM documents WHERE id=?').get(fresh.id)
+    expect(freshRow.created_at).toBeGreaterThan(createdAt)
+  })
+
   it('D1 regression: saveDraft inserts v2 with all columns, merges data, demotes prev draft', async () => {
     const s = svc(db)
     const doc = await s.create({ typeId: 'testimonial', tenantId: 'default', title: 'Jane', data: { rating: 5, authorCompany: 'Acme', sortOrder: 1 } })

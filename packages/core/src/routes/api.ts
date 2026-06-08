@@ -4,32 +4,101 @@ import { schemaDefinitions } from '../schemas'
 import { getCacheService, CACHE_CONFIGS } from '../services'
 import { QueryFilterBuilder, QueryFilter } from '../utils'
 import { isPluginActive, optionalAuth } from '../middleware'
-import { normalizePublicContentFilter, canReadNonPublicContent, stripStatusConditions } from './api-content-access-policy'
+import { canReadNonPublicContent } from './api-content-access-policy'
+import { documentSecondsToMs } from '../services/documents'
+
+// Document columns the public list is allowed to ORDER BY. The legacy `content` table exposed
+// collection_id; on documents that maps to type_id. Anything else (incl. nonexistent columns like a
+// raw `collection_id`) would make SQLite throw → HTTP 500 (D31), so unknown plain columns are dropped.
+// Dotted/JSON paths (e.g. `data.foo`) are always allowed — they compile to json_extract.
+const DOC_SORTABLE_COLUMNS = new Set([
+  'created_at', 'updated_at', 'published_at', 'scheduled_at', 'expires_at',
+  'title', 'slug', 'status', 'sort_order', 'version_number', 'type_id',
+])
+
+// D32: read the caller's requested `status` (added by parseFromQuery, or via where-JSON / filter[]) so
+// privileged callers can ask for published/draft/archived/deleted explicitly.
+function extractRequestedStatus(group?: { and?: any[]; or?: any[] }): string | undefined {
+  if (!group) return undefined
+  const find = (arr?: any[]) => arr?.find(c => c?.field === 'status' && c?.operator === 'equals')?.value
+  const v = find(group.and) ?? find(group.or)
+  return typeof v === 'string' ? v : undefined
+}
+
+// Strip the given fields from a flat (and/or) where group so they never reach the documents SQL. Used
+// for `status` (visibility is enforced below) and `collection_id` (no such column on documents — D31).
+function stripFields(group: { and?: any[]; or?: any[] } | undefined, fields: Set<string>) {
+  if (!group) return { and: [] as any[] }
+  const filterArr = (arr?: any[]) => (arr ?? []).filter(c => !fields.has(c?.field))
+  const out: any = {}
+  const and = filterArr(group.and)
+  const or = filterArr(group.or)
+  if (and.length) out.and = and
+  if (or.length) out.or = or
+  return out
+}
+
+// D31/D44: translate `collection_id` sort → `type_id` and drop sort fields that aren't real document
+// columns (a raw `collection_id` sort 500s). JSON-path sorts pass through unchanged.
+function sanitizeDocSort(sort?: QueryFilter['sort']): QueryFilter['sort'] | undefined {
+  if (!sort) return undefined
+  const out = sort
+    .map(s => ({ field: s.field === 'collection_id' ? 'type_id' : s.field, order: s.order }))
+    .filter(s => s.field.includes('.') || DOC_SORTABLE_COLUMNS.has(s.field))
+  return out.length ? out : undefined
+}
 
 // ─── Public content reads are document-backed (legacy `content` decommission, step 2) ────────────
 // Re-target the QueryFilterBuilder at the `documents` table while preserving full filter parity:
 // user data-field filters already compile to json_extract(data,'$.x') and carry over unchanged. We
-// strip any user/policy `status` condition and instead control visibility + de-dupe to ONE row per
-// root via is_published / is_current_draft (a superseded published row keeps status='published' but
+// strip `status`/`collection_id` and instead control visibility + de-dupe to ONE row per root via
+// is_published / is_current_draft (a superseded published row keeps status='published' but
 // is_published=0, so status is not a safe key). type scoping uses type_id (== collection name).
 function augmentFilterForDocuments(
   filter: QueryFilter,
   opts: { typeId?: string; typeIds?: string[]; role?: string },
 ): QueryFilter {
-  // Strip any user/policy `status` condition from the WHOLE where tree (and/or/nested) — visibility is
-  // controlled by is_published/is_current_draft below, and documents.status isn't a safe dedupe key.
-  const stripped = stripStatusConditions(filter.where) ?? ({ and: [] } as any)
-  const where: any = { ...stripped }
+  const requestedStatus = extractRequestedStatus(filter.where)
+  // Strip `status` (visibility is controlled below) and `collection_id` (D31: not a documents column).
+  const where: any = stripFields(filter.where, new Set(['status', 'collection_id']))
   const and = where.and ? [...where.and] : []
 
   if (opts.typeId) and.push({ field: 'type_id', operator: 'equals', value: opts.typeId })
   else if (opts.typeIds && opts.typeIds.length) and.push({ field: 'type_id', operator: 'in', value: opts.typeIds })
 
-  and.push({ field: 'deleted_at', operator: 'exists', value: false }) // not soft-deleted
-  if (canReadNonPublicContent(opts.role)) and.push({ field: 'is_current_draft', operator: 'equals', value: 1 })
-  else and.push({ field: 'is_published', operator: 'equals', value: 1 })
+  // Visibility + one-row-per-root. Anon can ONLY ever see the published revision (no fail-open),
+  // regardless of any requested status. Privileged callers (admin/editor) may request a specific
+  // status; the default (no status) is the current-draft working set (D32).
+  if (!canReadNonPublicContent(opts.role)) {
+    and.push({ field: 'deleted_at', operator: 'exists', value: false })
+    and.push({ field: 'is_published', operator: 'equals', value: 1 })
+  } else {
+    switch (requestedStatus) {
+      case 'published':
+        and.push({ field: 'deleted_at', operator: 'exists', value: false })
+        and.push({ field: 'is_published', operator: 'equals', value: 1 })
+        break
+      case 'draft':
+        and.push({ field: 'deleted_at', operator: 'exists', value: false })
+        and.push({ field: 'is_current_draft', operator: 'equals', value: 1 })
+        and.push({ field: 'is_published', operator: 'equals', value: 0 })
+        break
+      case 'archived':
+        and.push({ field: 'deleted_at', operator: 'exists', value: false })
+        and.push({ field: 'is_current_draft', operator: 'equals', value: 1 })
+        and.push({ field: 'status', operator: 'equals', value: 'archived' })
+        break
+      case 'deleted':
+        and.push({ field: 'deleted_at', operator: 'exists', value: true })
+        and.push({ field: 'is_current_draft', operator: 'equals', value: 1 })
+        break
+      default:
+        and.push({ field: 'deleted_at', operator: 'exists', value: false })
+        and.push({ field: 'is_current_draft', operator: 'equals', value: 1 })
+    }
+  }
 
-  return { ...filter, where: { ...where, and } }
+  return { ...filter, where: { ...where, and }, sort: sanitizeDocSort(filter.sort) }
 }
 
 function mapDocRowToContent(row: any, collectionId: string | null) {
@@ -40,8 +109,9 @@ function mapDocRowToContent(row: any, collectionId: string | null) {
     status: row.status,
     collectionId,
     data: row.data ? JSON.parse(row.data) : {},
-    created_at: row.created_at,
-    updated_at: row.updated_at,
+    // D29: document timestamps are SECONDS; the legacy `content` API contract is MILLISECONDS.
+    created_at: documentSecondsToMs(row.created_at),
+    updated_at: documentSecondsToMs(row.updated_at),
   }
 }
 import apiContentCrudRoutes from './api-content-crud'
@@ -612,6 +682,18 @@ apiRoutes.get('/content', optionalAuth(), async (c) => {
       typeId = collectionName
       collIdByName.set(collectionName, collectionResult.id)
       delete queryParams.collection
+    } else if (queryParams.collection_id) {
+      // D31: legacy `?collection_id=<id>` — resolve the collection name (== document type id) and scope
+      // to it. `collection_id` is stripped from the documents where-tree (no such column) by augment.
+      const collectionResult = await db.prepare('SELECT id, name FROM collections WHERE id = ? AND is_active = 1').bind(queryParams.collection_id).first() as any
+      if (!collectionResult) {
+        return c.json({
+          data: [],
+          meta: addTimingMeta(c, { count: 0, timestamp: new Date().toISOString(), message: `Collection '${queryParams.collection_id}' not found` }, executionStart)
+        })
+      }
+      typeId = collectionResult.name
+      collIdByName.set(collectionResult.name, collectionResult.id)
     } else {
       const { results: cols } = await db.prepare("SELECT id, name FROM collections WHERE is_active = 1 AND (source_type IS NULL OR source_type = 'user')").all()
       typeIds = (cols ?? []).map((r: any) => { collIdByName.set(r.name, r.id); return r.name })
@@ -688,7 +770,7 @@ apiRoutes.get('/content', optionalAuth(), async (c) => {
       meta: addTimingMeta(c, {
         count: results.length,
         timestamp: new Date().toISOString(),
-        filter: normalizedFilter,
+        filter, // D44: echo the caller's filter, not the internal document-augmented where-tree
         cache: {
           hit: false,
           source: 'database'
@@ -810,7 +892,7 @@ apiRoutes.get('/collections/:collection/content', optionalAuth(), async (c) => {
         },
         count: results.length,
         timestamp: new Date().toISOString(),
-        filter: normalizedFilter,
+        filter, // D44: echo the caller's filter, not the internal document-augmented where-tree
         cache: {
           hit: false,
           source: 'database'

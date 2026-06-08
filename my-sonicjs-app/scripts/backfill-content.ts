@@ -69,6 +69,9 @@ async function backfill() {
         maxVersionsPerRoot: docType.settings?.maxVersionsPerRoot ?? 50,
         tenantId: 'default',
       })
+      // Preserve the legacy row's original timestamps (D34). Legacy `content` stores MILLISECONDS;
+      // documents store SECONDS — convert. Fall back to undefined (→ now) when a timestamp is absent.
+      const toSec = (ms: any) => (typeof ms === 'number' && ms > 0 ? Math.floor(ms / 1000) : undefined)
       const doc = await svc.create(
         createDocumentSchema.parse({
           typeId: row.collection_name,
@@ -78,6 +81,8 @@ async function backfill() {
           slug: slug || undefined,
           data,
           publishOnCreate: row.status === 'published',
+          createdAt: toSec(row.created_at),
+          updatedAt: toSec(row.updated_at),
         }),
         row.author_id || undefined,
       )

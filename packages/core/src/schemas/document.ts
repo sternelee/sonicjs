@@ -194,6 +194,10 @@ export const createDocumentSchema = z.object({
   metadata: z.record(z.string(), z.unknown()).default({}),
   ownerId: z.string().nullable().optional(),
   publishOnCreate: z.boolean().default(false),
+  // Backfill only (D34): preserve the source row's original timestamps (SECONDS). Omitted on normal
+  // creates → defaults to "now". `createdAt` also seeds publishedAt for items backfilled as published.
+  createdAt: z.number().int().nullable().optional(),
+  updatedAt: z.number().int().nullable().optional(),
 })
 
 export const updateDocumentSchema = z.object({

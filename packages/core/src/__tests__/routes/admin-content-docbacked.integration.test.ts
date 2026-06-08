@@ -152,4 +152,41 @@ describe('admin-content Option B (document-backed blog_posts) — integration', 
     expect(htmlText).toContain('Post inall') // blog document
     expect(htmlText).toContain('A Page')     // legacy content
   })
+
+  // ── D33: bulk actions must operate on document-backed root ids, not silently no-op ──────────
+  const rootOf = (slug: string) => db.raw.prepare("SELECT root_id r FROM documents WHERE slug=?").get(slug).r
+  const bulk = (action: string, ids: string[]) =>
+    app.request('/admin/content/bulk-action', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action, ids }) })
+
+  it('D33: bulk publish publishes document-backed roots', async () => {
+    await createPost('bp-a', 'draft')
+    await createPost('bp-b', 'draft')
+    const ids = ['bp-a', 'bp-b'].map(rootOf)
+    const res = await bulk('publish', ids)
+    expect(res.status).toBe(200)
+    expect((await res.json()).success).toBe(true)
+    for (const id of ids) {
+      expect(db.raw.prepare("SELECT COUNT(*) n FROM documents WHERE root_id=? AND is_published=1").get(id).n).toBe(1)
+    }
+  })
+
+  it('D33: bulk move-to-draft unpublishes document-backed roots', async () => {
+    await createPost('bd-a') // published
+    await createPost('bd-b')
+    const ids = ['bd-a', 'bd-b'].map(rootOf)
+    expect((await bulk('draft', ids)).status).toBe(200)
+    for (const id of ids) {
+      expect(db.raw.prepare("SELECT COUNT(*) n FROM documents WHERE root_id=? AND is_published=1").get(id).n).toBe(0)
+    }
+  })
+
+  it('D33: bulk delete soft-deletes document-backed roots', async () => {
+    await createPost('del-a')
+    await createPost('del-b')
+    const ids = ['del-a', 'del-b'].map(rootOf)
+    expect((await bulk('delete', ids)).status).toBe(200)
+    for (const id of ids) {
+      expect(db.raw.prepare("SELECT COUNT(*) n FROM documents WHERE root_id=? AND deleted_at IS NOT NULL").get(id).n).toBeGreaterThan(0)
+    }
+  })
 })

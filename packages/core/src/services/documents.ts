@@ -11,6 +11,16 @@ import { DocumentProjection } from './document-projection'
 
 const DEFAULT_MAX_VERSIONS = 50
 
+/**
+ * D29: documents store `created_at`/`updated_at` in SECONDS (see `create`/`saveDraft`), but the legacy
+ * `content` table — and therefore the public/CRUD `/api/content` contract — used MILLISECONDS. Any code
+ * that shapes a document row into the content response must convert so `new Date(item.created_at)` keeps
+ * working for API consumers. Null/undefined pass through unchanged.
+ */
+export function documentSecondsToMs(ts: number | null | undefined): number | null {
+  return ts == null ? null : ts * 1000
+}
+
 function rowToDocument(row: DocumentRow): Document {
   return {
     id: row.id,
@@ -74,6 +84,9 @@ export class DocumentsService {
     const now = Math.floor(Date.now() / 1000)
     const id = nanoid()
     const publish = input.publishOnCreate ?? false
+    // D34: backfill may carry the source row's original timestamps; normal creates default to now.
+    const createdAt = input.createdAt ?? now
+    const updatedAt = input.updatedAt ?? now
 
     const doc: Document = {
       id,
@@ -92,7 +105,7 @@ export class DocumentsService {
       zone: input.zone ?? null,
       sortOrder: input.sortOrder ?? 0,
       visible: input.visible ?? true,
-      publishedAt: publish ? now : null,
+      publishedAt: publish ? createdAt : null,
       scheduledAt: input.scheduledAt ?? null,
       expiresAt: input.expiresAt ?? null,
       deletedAt: null,
@@ -104,8 +117,8 @@ export class DocumentsService {
       ownerId: input.ownerId ?? null,
       createdBy: createdBy ?? null,
       updatedBy: createdBy ?? null,
-      createdAt: now,
-      updatedAt: now,
+      createdAt,
+      updatedAt,
     }
 
     const insertDoc = this.db.prepare(
@@ -120,7 +133,7 @@ export class DocumentsService {
       1, publish ? 1 : 0, doc.status, doc.parentRootId, doc.slug, null, doc.title, doc.zone,
       doc.sortOrder, doc.visible ? 1 : 0, doc.publishedAt, doc.scheduledAt, doc.expiresAt, null,
       doc.tenantId, doc.locale, '', JSON.stringify(doc.data), JSON.stringify(doc.metadata),
-      doc.ownerId, doc.createdBy, doc.updatedBy, now, now,
+      doc.ownerId, doc.createdBy, doc.updatedBy, createdAt, updatedAt,
     )
 
     const derivedInserts = this.projection.buildDerivedInsertStatements(doc, this.opts.queryableFields ?? [], now)
