@@ -269,15 +269,18 @@ async function getCollectionFields(db: D1Database, collectionId: string) {
 
 // Get collection by ID
 async function getCollection(db: D1Database, collectionId: string) {
+  console.log(`[getCollection] Loading collection by ID: ${collectionId}`)
   const cache = getCacheService(CACHE_CONFIGS.collection!)
 
   return cache.getOrSet(
     cache.generateKey('collection', collectionId),
     async () => {
+      console.log(`[getCollection] Cache miss, querying database`)
       const stmt = db.prepare('SELECT * FROM document_types WHERE id = ? AND is_active = 1')
       const collection = await stmt.bind(collectionId).first() as any
 
       if (collection) {
+        console.log(`[getCollection] Found in database`)
         return {
           id: collection.id,
           name: collection.name,
@@ -287,11 +290,13 @@ async function getCollection(db: D1Database, collectionId: string) {
         }
       }
 
+      console.log(`[getCollection] Not in database, checking code collections`)
       // Check code-defined collections
       const codeCollections = await loadCollectionConfigs()
       const codeCollection = codeCollections.find((c: any) => c.name === collectionId)
 
       if (codeCollection) {
+        console.log(`[getCollection] Found code collection: ${collectionId}`)
         return {
           id: codeCollection.name,
           name: codeCollection.name,
@@ -301,6 +306,7 @@ async function getCollection(db: D1Database, collectionId: string) {
         }
       }
 
+      console.log(`[getCollection] Not found: ${collectionId}`)
       return null
     }
   )
@@ -317,19 +323,23 @@ async function getDocBackingType(db: D1Database, collectionName?: string | null)
 }
 
 async function getCollectionByName(db: D1Database, name: string) {
+  console.log(`[getCollectionByName] Loading collection by name: ${name}`)
   const row = await db.prepare('SELECT * FROM document_types WHERE name = ? AND is_active = 1').bind(name).first() as any
   if (row) {
+    console.log(`[getCollectionByName] Found in database`)
     return {
       id: row.id, name: row.name, display_name: row.display_name,
       description: row.description, schema: row.schema ? JSON.parse(row.schema) : {},
     }
   }
 
+  console.log(`[getCollectionByName] Not in database, checking code collections`)
   // Check code-defined collections
   const codeCollections = await loadCollectionConfigs()
   const codeCollection = codeCollections.find((c: any) => c.name === name)
 
   if (codeCollection) {
+    console.log(`[getCollectionByName] Found code collection: ${name}`)
     return {
       id: codeCollection.name,
       name: codeCollection.name,
@@ -339,6 +349,7 @@ async function getCollectionByName(db: D1Database, name: string) {
     }
   }
 
+  console.log(`[getCollectionByName] Not found: ${name}`)
   return null
 }
 
