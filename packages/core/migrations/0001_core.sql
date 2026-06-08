@@ -354,15 +354,3 @@ CREATE TABLE IF NOT EXISTS oauth_accounts (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS idx_oauth_accounts_provider_account ON oauth_accounts(provider, provider_account_id);
 CREATE INDEX IF NOT EXISTS idx_oauth_accounts_user_id ON oauth_accounts(user_id);
-
--- Default collections seed
-INSERT OR IGNORE INTO collections (id, name, display_name, description, schema, is_active, managed, created_at, updated_at) VALUES
-  ('blog-posts-collection', 'blog_posts', 'Blog Posts', 'Blog post content collection',
-   '{"type":"object","properties":{"title":{"type":"string","title":"Title","required":true},"content":{"type":"string","title":"Content","format":"richtext"},"excerpt":{"type":"string","title":"Excerpt"},"featured_image":{"type":"string","title":"Featured Image","format":"media"},"tags":{"type":"array","title":"Tags","items":{"type":"string"}},"status":{"type":"string","title":"Status","enum":["draft","published","archived"],"default":"draft"}},"required":["title"]}',
-   1, 0, strftime('%s', 'now') * 1000, strftime('%s', 'now') * 1000),
-  ('pages-collection', 'pages', 'Pages', 'Static page content collection',
-   '{"type":"object","properties":{"title":{"type":"string","title":"Title","required":true},"content":{"type":"string","title":"Content","format":"richtext"},"slug":{"type":"string","title":"Slug"},"meta_description":{"type":"string","title":"Meta Description"},"featured_image":{"type":"string","title":"Featured Image","format":"media"}},"required":["title"]}',
-   1, 0, strftime('%s', 'now') * 1000, strftime('%s', 'now') * 1000),
-  ('news-collection', 'news', 'News', 'News article content collection',
-   '{"type":"object","properties":{"title":{"type":"string","title":"Title","required":true},"content":{"type":"string","title":"Content","format":"richtext"},"publish_date":{"type":"string","title":"Publish Date","format":"date"},"author":{"type":"string","title":"Author"},"category":{"type":"string","title":"Category","enum":["technology","business","general"]}},"required":["title"]}',
-   1, 0, strftime('%s', 'now') * 1000, strftime('%s', 'now') * 1000);

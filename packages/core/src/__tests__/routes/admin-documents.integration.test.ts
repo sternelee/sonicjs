@@ -43,18 +43,18 @@ describe('admin-documents routes — integration (real SQLite)', () => {
   })
   afterEach(() => db.close())
 
-  async function createFaq(extra: any = {}) {
-    const res = await app.request('/admin/documents', post({ typeId: 'faq', title: 'Q', data: { category: 'general', sortOrder: 1 }, ...extra }))
+  async function createBlogPost(extra: any = {}) {
+    const res = await app.request('/admin/documents', post({ typeId: 'blog_post', title: 'Q', data: { author: 'Ada', difficulty: 'beginner' }, ...extra }))
     return { res, body: await res.json() }
   }
 
-  it('creates a faq, lists it, and reads it by id', async () => {
-    const { res, body } = await createFaq({ title: 'Q1' })
+  it('creates a blog_post, lists it, and reads it by id', async () => {
+    const { res, body } = await createBlogPost({ title: 'Q1' })
     expect(res.status).toBe(201)
-    expect(body.data.typeId).toBe('faq')
+    expect(body.data.typeId).toBe('blog_post')
     expect(body.data.versionNumber).toBe(1)
 
-    const list = await (await app.request('/admin/documents?type=faq')).json()
+    const list = await (await app.request('/admin/documents?type=blog_post')).json()
     expect(list.data.some((d: any) => d.id === body.data.id)).toBe(true)
 
     const getRes = await app.request(`/admin/documents/${body.data.id}`)
@@ -68,39 +68,39 @@ describe('admin-documents routes — integration (real SQLite)', () => {
   })
 
   it('save-draft creates v2 and keeps the published revision live', async () => {
-    const { body } = await createFaq({ title: 'V1', publishOnCreate: true })
+    const { body } = await createBlogPost({ title: 'V1', publishOnCreate: true })
     const rootId = body.data.rootId
-    const r = await app.request(`/admin/documents/${rootId}`, put({ data: { category: 'changed' } }))
+    const r = await app.request(`/admin/documents/${rootId}`, put({ data: { author: 'Ada', difficulty: 'advanced' } }))
     expect(r.status).toBe(200)
     expect((await r.json()).data.versionNumber).toBe(2)
     expect(db.raw.prepare('SELECT version_number FROM documents WHERE root_id=? AND is_published=1').get(rootId).version_number).toBe(1)
   })
 
   it('publish flips is_published on the target row', async () => {
-    const { body } = await createFaq()
+    const { body } = await createBlogPost()
     const r = await app.request(`/admin/documents/${body.data.id}/publish`, { method: 'POST' })
     expect(r.status).toBe(200)
     expect(db.raw.prepare('SELECT is_published FROM documents WHERE id=?').get(body.data.id).is_published).toBe(1)
   })
 
   it('soft-deletes a non-PII document', async () => {
-    const { body } = await createFaq()
+    const { body } = await createBlogPost()
     const r = await app.request(`/admin/documents/${body.data.id}`, { method: 'DELETE' })
     expect(r.status).toBe(200)
     expect(db.raw.prepare('SELECT deleted_at FROM documents WHERE id=?').get(body.data.id).deleted_at).not.toBeNull()
   })
 
-  // ── Phase 2b ACL: faq base grants give viewer only 'read' ───────────────────
+  // ── Phase 2b ACL: blog_post base grants give viewer only 'read' ─────────────
   it('viewer is denied create (403)', async () => {
     h.role = 'viewer'
-    const res = await app.request('/admin/documents', post({ typeId: 'faq', data: { category: 'x' } }))
+    const res = await app.request('/admin/documents', post({ typeId: 'blog_post', data: { author: 'Ada', difficulty: 'beginner' } }))
     expect(res.status).toBe(403)
   })
 
   it('viewer is denied update and publish (403)', async () => {
-    const { body } = await createFaq() // as admin
+    const { body } = await createBlogPost() // as admin
     h.role = 'viewer'
-    const upd = await app.request(`/admin/documents/${body.data.rootId}`, put({ data: { category: 'y' } }))
+    const upd = await app.request(`/admin/documents/${body.data.rootId}`, put({ data: { author: 'Ada', difficulty: 'advanced' } }))
     expect(upd.status).toBe(403)
     const pub = await app.request(`/admin/documents/${body.data.id}/publish`, { method: 'POST' })
     expect(pub.status).toBe(403)
@@ -108,7 +108,7 @@ describe('admin-documents routes — integration (real SQLite)', () => {
 
   it('editor is allowed to create and publish', async () => {
     h.role = 'editor'
-    const { res, body } = await createFaq()
+    const { res, body } = await createBlogPost()
     expect(res.status).toBe(201)
     const pub = await app.request(`/admin/documents/${body.data.id}/publish`, { method: 'POST' })
     expect(pub.status).toBe(200)

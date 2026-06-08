@@ -75,8 +75,8 @@ describe('document-backed content API — regression-audit fixes (§7)', () => {
   beforeEach(async () => {
     db = createTestD1()
     db.raw.prepare("INSERT INTO collections (id,name,display_name,description,schema,is_active,source_type,managed,created_at,updated_at) VALUES (?,?,?,?,?,1,'user',1,1,1)")
-      .run(COLL, 'blog_posts', 'Blog Posts', 'Blog', BLOG_SCHEMA)
-    await bootstrapDocumentTypes(db) // registers the blog_posts document type → collection is doc-backed
+      .run(COLL, 'blog_post', 'Blog Posts', 'Blog', BLOG_SCHEMA)
+    await bootstrapDocumentTypes(db) // registers the blog_post document type → collection is doc-backed
     app = buildApp(db)
   })
   afterEach(() => db.close())
@@ -91,7 +91,7 @@ describe('document-backed content API — regression-audit fixes (§7)', () => {
     expect(created.created_at).toBe(storedSec * 1000) // milliseconds in the API response
     expect(created.created_at).toBeGreaterThan(1e12)
 
-    const listRes = await app.request('/api/content?collection=blog_posts')
+    const listRes = await app.request('/api/content?collection=blog_post')
     const item = (await listRes.json()).data.find((d: any) => d.slug === 'ts-post')
     expect(item.created_at).toBe(storedSec * 1000)
 
@@ -131,12 +131,12 @@ describe('document-backed content API — regression-audit fixes (§7)', () => {
     await post({ collectionId: COLL, title: 'Pub', slug: 'pub-1', status: 'published', data: {} })
     await post({ collectionId: COLL, title: 'Dft', slug: 'dft-1', status: 'draft', data: {} })
 
-    const pub = await app.request('/api/content?collection=blog_posts&status=published', { headers: json('admin') })
+    const pub = await app.request('/api/content?collection=blog_post&status=published', { headers: json('admin') })
     const pubSlugs = (await pub.json()).data.map((d: any) => d.slug)
     expect(pubSlugs).toContain('pub-1')
     expect(pubSlugs).not.toContain('dft-1')
 
-    const dft = await app.request('/api/content?collection=blog_posts&status=draft', { headers: json('admin') })
+    const dft = await app.request('/api/content?collection=blog_post&status=draft', { headers: json('admin') })
     const dftSlugs = (await dft.json()).data.map((d: any) => d.slug)
     expect(dftSlugs).toContain('dft-1')
     expect(dftSlugs).not.toContain('pub-1')

@@ -1,9 +1,9 @@
 /**
  * Document-model blog posts (Option B) — E2E regression guard.
  *
- * Verifies the blog_posts collection is document-backed end to end:
+ * Verifies the blog_post collection is document-backed end to end:
  *  - the admin "Blog Posts" content list renders (doc-backed list branch is wired + mounted),
- *  - the authenticated admin document API creates a blog_posts document,
+ *  - the authenticated admin document API creates a blog_post document,
  *  - the public document API returns it once published, and hides drafts.
  *
  * The reliable assertions use the JSON API contracts (stable); the admin list check guards the
@@ -18,9 +18,9 @@ test.describe('Blog posts on the document model (Option B)', () => {
   })
 
   test('admin Blog Posts list renders (doc-backed list branch)', async ({ page }) => {
-    await page.goto('/admin/content?model=blog_posts')
+    await page.goto('/admin/content?model=blog_post')
     await waitForHTMX(page)
-    await expect(page).toHaveURL(/model=blog_posts/)
+    await expect(page).toHaveURL(/model=blog_post/)
     // Should not 404 / error — the content list shell is present.
     await expect(page.locator('body')).toContainText(/Blog Posts|Content|New/i)
   })
@@ -30,11 +30,11 @@ test.describe('Blog posts on the document model (Option B)', () => {
     const title = `E2E Doc Blog ${unique}`
     const slug = `e2e-doc-blog-${unique}`
 
-    // Create a published blog_posts document through the authenticated admin API (same store the UI uses).
+    // Create a published blog_post document through the authenticated admin API (same store the UI uses).
     const createRes = await page.request.post('/admin/documents', {
       headers: { 'Content-Type': 'application/json' },
       data: {
-        typeId: 'blog_posts',
+        typeId: 'blog_post',
         title,
         slug,
         data: { author: 'E2E', difficulty: 'advanced', content: '<p>hello</p>', excerpt: 'x' },
@@ -44,7 +44,7 @@ test.describe('Blog posts on the document model (Option B)', () => {
     expect(createRes.ok()).toBeTruthy()
 
     // Public document API returns the published post.
-    const pubRes = await page.request.get('/api/documents?type=blog_posts&limit=100')
+    const pubRes = await page.request.get('/api/documents?type=blog_post&limit=100')
     expect(pubRes.ok()).toBeTruthy()
     const pub = await pubRes.json()
     const found = (pub.data ?? []).find((d: any) => d.slug === slug)
@@ -54,19 +54,19 @@ test.describe('Blog posts on the document model (Option B)', () => {
     const draftSlug = `${slug}-draft`
     const draftRes = await page.request.post('/admin/documents', {
       headers: { 'Content-Type': 'application/json' },
-      data: { typeId: 'blog_posts', title: `${title} Draft`, slug: draftSlug, data: { author: 'E2E', difficulty: 'beginner', content: '<p>draft</p>' } },
+      data: { typeId: 'blog_post', title: `${title} Draft`, slug: draftSlug, data: { author: 'E2E', difficulty: 'beginner', content: '<p>draft</p>' } },
     })
     expect(draftRes.ok()).toBeTruthy()
-    const pub2 = await (await page.request.get('/api/documents?type=blog_posts&limit=100')).json()
+    const pub2 = await (await page.request.get('/api/documents?type=blog_post&limit=100')).json()
     const draftFound = (pub2.data ?? []).find((d: any) => d.slug === draftSlug)
     expect(draftFound, 'unpublished draft must be hidden from the public API').toBeFalsy()
   })
 
   test('Option B: creating a blog post through the content collection route stores a document', async ({ page }) => {
-    // The blog editor posts to /admin/content with the collection_id; for the doc-backed blog_posts
+    // The blog editor posts to /admin/content with the collection_id; for the doc-backed blog_post
     // collection that create handler routes to the document model. Drive it via an authenticated form
     // POST to the REAL route (no fragile field selectors / Quill interaction).
-    await page.goto('/admin/content/new?collection=blog_posts')
+    await page.goto('/admin/content/new?collection=blog_post')
     await waitForHTMX(page)
     const collectionId = await page.locator('input[name="collection_id"]').first().inputValue()
     expect(collectionId, 'blog editor should carry a collection_id').toBeTruthy()
@@ -88,8 +88,8 @@ test.describe('Blog posts on the document model (Option B)', () => {
     })
     expect([200, 302]).toContain(res.status())
 
-    // It must now be a published blog_posts DOCUMENT on the public API.
-    const pub = await (await page.request.get('/api/documents?type=blog_posts&limit=200')).json()
+    // It must now be a published blog_post DOCUMENT on the public API.
+    const pub = await (await page.request.get('/api/documents?type=blog_post&limit=200')).json()
     expect((pub.data ?? []).some((d: any) => d.slug === slug), 'form-created blog post should be a published document').toBeTruthy()
   })
 })

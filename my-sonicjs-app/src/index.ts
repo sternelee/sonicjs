@@ -18,22 +18,15 @@ import type { SonicJSConfig } from '@sonicjs-cms/core'
 
 // Import code-defined collections
 import blogPostsCollection from './collections/blog-posts.collection'
-import contactMessagesCollection from './collections/contact-messages.collection'
-import pageBlocksCollection from './collections/page-blocks.collection'
-
-// Import plugins
-import contactFormPlugin from './plugins/contact-form/index'
 
 // Register collections so they appear in admin UI
 registerCollections([
-  blogPostsCollection,
-  contactMessagesCollection,
-  pageBlocksCollection
+  blogPostsCollection
 ])
 
 const config: SonicJSConfig = {
   plugins: {
-    register: [contactFormPlugin],
+    register: [],
     disableAll: false,
   }
 }

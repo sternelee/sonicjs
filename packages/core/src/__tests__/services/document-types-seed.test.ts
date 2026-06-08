@@ -1,6 +1,5 @@
 // @ts-nocheck
-// Real-SQLite tests for autoRegisterCollectionDocumentTypes — the step that makes EVERY content
-// collection document-backed (so all content created via /admin/content is stored in `documents`).
+// Real-SQLite tests for document-type bootstrap defaults.
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { createTestD1 } from '../utils/d1-sqlite'
 import { bootstrapDocumentTypes, autoRegisterCollectionDocumentTypes } from '../../services/document-types-seed'
@@ -17,31 +16,26 @@ describe('autoRegisterCollectionDocumentTypes', () => {
   })
   afterEach(() => db.close())
 
-  it('registers a document type for each active user collection (news, pages); excludes form-sourced + inactive', async () => {
+  it('does not auto-register DB-driven collections as document types', async () => {
     const registered = await autoRegisterCollectionDocumentTypes(db)
-    expect(registered.sort()).toEqual(['news', 'pages'])
+    expect(registered).toEqual([])
 
     const registry = new DocumentTypeRegistry(db)
-    expect(await registry.findById('news')).toBeTruthy()
-    expect(await registry.findById('pages')).toBeTruthy()
-    expect(await registry.findById('contact_form')).toBeNull() // form-sourced excluded
-    expect(await registry.findById('archived_coll')).toBeNull() // inactive excluded
-
-    // news/pages get public:[read] base grants and no generated columns (CRUD-only).
-    const news = await registry.findById('news')
-    expect(news.settings.baseGrants.public).toContain('read')
-    expect(news.queryableFields).toEqual([])
+    expect(await registry.findById('news')).toBeNull()
+    expect(await registry.findById('pages')).toBeNull()
+    expect(await registry.findById('contact_form')).toBeNull()
+    expect(await registry.findById('archived_coll')).toBeNull()
   })
 
-  it('does not duplicate or overwrite an already-registered (hand-tuned) type', async () => {
-    db.raw.prepare("INSERT INTO collections (id,name,display_name,is_active,source_type,created_at,updated_at) VALUES ('b','blog_posts','Blog Posts',1,NULL,1,1)").run()
-    await bootstrapDocumentTypes(db) // registers blog_posts with q_blog_* queryable fields
+  it('keeps the code-defined blog_post type hand-tuned', async () => {
+    db.raw.prepare("INSERT INTO collections (id,name,display_name,is_active,source_type,created_at,updated_at) VALUES ('b','blog_post','Blog Posts',1,NULL,1,1)").run()
+    await bootstrapDocumentTypes(db) // registers blog_post with q_blog_* queryable fields
 
     const registered = await autoRegisterCollectionDocumentTypes(db)
-    expect(registered).not.toContain('blog_posts') // already registered → skipped
+    expect(registered).toEqual([])
 
-    // blog_posts keeps its hand-tuned queryable fields (not flattened to []).
-    const blog = await new DocumentTypeRegistry(db).findById('blog_posts')
+    // blog_post keeps its hand-tuned queryable fields (not flattened to []).
+    const blog = await new DocumentTypeRegistry(db).findById('blog_post')
     expect(blog.queryableFields.some(f => f.name === 'difficulty')).toBe(true)
   })
 
