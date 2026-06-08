@@ -30,7 +30,7 @@ describe('media-as-document (Phase 6)', () => {
   let db
   beforeEach(async () => {
     db = createTestD1()
-    await bootstrapDocumentTypes(db) // registers media_asset
+    await bootstrapDocumentTypes(db)
   })
   afterEach(() => db.close())
 

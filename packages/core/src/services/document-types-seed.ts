@@ -1,7 +1,6 @@
 import { D1Database } from '@cloudflare/workers-types'
 import { z } from 'zod'
 import { DocumentTypeRegistry } from './document-type-registry'
-import { EMAIL_LOG_DOCUMENT_TYPE } from '../plugins/core-plugins/email-reconciliation'
 
 // Passthrough schema: accepts any JSON object for POC types.
 // Individual fields are validated at the queryable-field level; the full
@@ -33,26 +32,6 @@ export async function bootstrapDocumentTypes(db: D1Database): Promise<void> {
     ],
   })
 
-  await registry.register({
-    id: 'media_asset',
-    name: 'media_asset',
-    displayName: 'Media Asset',
-    description: 'Uploaded files and images (metadata in D1, bytes in R2)',
-    source: 'system',
-    schema: anyObject,
-    settings: {
-      baseGrants: { public: ['read'], admin: ['read', 'create', 'update', 'delete', 'publish', 'manage'], editor: ['read', 'create', 'update', 'publish'], viewer: ['read'] },
-      maxVersionsPerRoot: 5,
-    },
-    queryableFields: [
-      { name: 'mimeType', kind: 'scalar', type: 'text',    column: 'q_media_mime' },
-      { name: 'folder',   kind: 'scalar', type: 'text',    column: 'q_media_folder' },
-      { name: 'size',     kind: 'scalar', type: 'integer', column: 'q_media_size' },
-      { name: 'tags',     kind: 'facet',  type: 'text' },
-    ],
-  })
-
-  await registry.register(EMAIL_LOG_DOCUMENT_TYPE)
 }
 
 /**

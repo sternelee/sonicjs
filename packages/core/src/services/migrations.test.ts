@@ -94,7 +94,7 @@ function createMockDb(options: {
 
 describe('MigrationService', () => {
   describe('consolidated greenfield migrations', () => {
-    it('exposes only consolidated core migrations and the D1 cleanup migration', async () => {
+    it('exposes only the greenfield core migrations', async () => {
       const db = createMockDb({
         appliedMigrations: []
       })
@@ -102,7 +102,7 @@ describe('MigrationService', () => {
       const service = new MigrationService(db as any)
       const migrations = await service.getAvailableMigrations()
 
-      expect(migrations.map(m => m.id)).toEqual(['0001', '0002', '0003'])
+      expect(migrations.map(m => m.id)).toEqual(['0001', '0002'])
       expect(migrations.find(m => m.id === '029')).toBeUndefined()
       expect(db._mocks.prepare).not.toHaveBeenCalledWith(expect.stringContaining('CREATE TABLE IF NOT EXISTS migrations'))
     })
@@ -130,8 +130,7 @@ describe('MigrationService', () => {
       const db = createMockDb({
         appliedMigrations: [
           { name: '0001_core.sql', applied_at: '2026-01-01T00:00:00.000Z' },
-          { name: '0002_documents.sql', applied_at: '2026-01-01T00:00:01.000Z' },
-          { name: '0003_drop_sonicjs_migrations_table.sql', applied_at: '2026-01-01T00:00:02.000Z' }
+          { name: '0002_documents.sql', applied_at: '2026-01-01T00:00:01.000Z' }
         ],
         existingTables: ['users', 'documents', 'document_types'],
         existingColumns: []
@@ -140,9 +139,9 @@ describe('MigrationService', () => {
       const service = new MigrationService(db as any)
       const status = await service.getMigrationStatus()
 
-      expect(status.appliedMigrations).toBe(3)
+      expect(status.appliedMigrations).toBe(2)
       expect(status.pendingMigrations).toBe(0)
-      expect(status.lastApplied).toBe('2026-01-01T00:00:02.000Z')
+      expect(status.lastApplied).toBe('2026-01-01T00:00:01.000Z')
     })
   })
 })

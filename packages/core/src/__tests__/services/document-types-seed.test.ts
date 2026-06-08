@@ -39,6 +39,15 @@ describe('autoRegisterCollectionDocumentTypes', () => {
     expect(blog.queryableFields.some(f => f.name === 'difficulty')).toBe(true)
   })
 
+  it('registers only the default blog_post document type', async () => {
+    await bootstrapDocumentTypes(db)
+
+    const registry = new DocumentTypeRegistry(db)
+    const types = await registry.findAll()
+
+    expect(types.map(t => t.id)).toEqual(['blog_post'])
+  })
+
   it('no-ops when the collections table is absent', async () => {
     const freshDb = createTestD1()
     freshDb.raw.exec('DROP TABLE collections')
