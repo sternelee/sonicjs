@@ -17,6 +17,7 @@ interface Collection {
   formattedDate: string
   field_count?: number
   managed?: boolean
+  source_type?: string | null
 }
 
 interface CollectionFormData {
@@ -143,7 +144,8 @@ adminCollectionsRoutes.get('/', async (c) => {
           created_at: 0,
           formattedDate: 'Code-defined',
           field_count: fieldCount,
-          managed: cfg.managed !== false
+          managed: cfg.managed !== false,
+          source_type: 'code'
         } as Collection]
       })
     )
@@ -173,13 +175,25 @@ adminCollectionsRoutes.get('/', async (c) => {
           created_at: Number(row.created_at || 0),
           formattedDate: row.created_at ? new Date(Number(row.created_at)).toLocaleDateString() : 'Unknown',
           field_count: fieldCount,
-          managed: false
+          managed: false,
+          source_type: 'user'
         }
       })
 
-    // Merge: code collections + database collections (db overrides code if same name)
+    // Merge: database collections + code collections (code ownership wins for same name)
     const mergedMap = new Map(codeCollectionsMap)
-    dbCollections.forEach(c => mergedMap.set(c.name, c))
+    dbCollections.forEach(collection => {
+      const codeCollection = codeCollectionsMap.get(collection.name)
+      mergedMap.set(collection.name, codeCollection ? {
+        ...collection,
+        display_name: codeCollection.display_name,
+        description: codeCollection.description,
+        field_count: codeCollection.field_count,
+        managed: true,
+        source_type: 'code',
+        formattedDate: 'Code-defined'
+      } : collection)
+    })
 
     // Apply search filter if present
     let collections = Array.from(mergedMap.values())
