@@ -189,74 +189,67 @@ adminContentRoutes.use('*', requireAuth())
 
 // Get collection fields
 async function getCollectionFields(db: D1Database, collectionId: string) {
-  const cache = getCacheService(CACHE_CONFIGS.collection!)
+  // First, check if document type has a schema in database
+  const collectionStmt = db.prepare('SELECT schema FROM document_types WHERE id = ?')
+  const collectionRow = await collectionStmt.bind(collectionId).first() as any
 
-  return cache.getOrSet(
-    cache.generateKey('fields', collectionId),
-    async () => {
-      // First, check if document type has a schema in database
-      const collectionStmt = db.prepare('SELECT schema FROM document_types WHERE id = ?')
-      const collectionRow = await collectionStmt.bind(collectionId).first() as any
+  if (collectionRow && collectionRow.schema) {
+    try {
+      const schema = typeof collectionRow.schema === 'string' ? JSON.parse(collectionRow.schema) : collectionRow.schema
+      if (schema && schema.properties) {
+        // Convert schema properties to field format
+        let fieldOrder = 0
+        return Object.entries(schema.properties).map(([fieldName, fieldConfig]: [string, any]) => {
+          const fieldOptions = buildSchemaFieldOptions(fieldConfig)
 
-      if (collectionRow && collectionRow.schema) {
-        try {
-          const schema = typeof collectionRow.schema === 'string' ? JSON.parse(collectionRow.schema) : collectionRow.schema
-          if (schema && schema.properties) {
-            // Convert schema properties to field format
-            let fieldOrder = 0
-            return Object.entries(schema.properties).map(([fieldName, fieldConfig]: [string, any]) => {
-              const fieldOptions = buildSchemaFieldOptions(fieldConfig)
-
-              return {
-                id: `schema-${fieldName}`,
-                field_name: fieldName,
-                field_type: resolveSchemaFieldType(fieldConfig),
-                field_label: fieldConfig.title || fieldName,
-                field_options: fieldOptions,
-                field_order: fieldOrder++,
-                is_required: fieldConfig.required === true || (schema.required && schema.required.includes(fieldName)),
-                is_searchable: false
-              }
-            })
+          return {
+            id: `schema-${fieldName}`,
+            field_name: fieldName,
+            field_type: resolveSchemaFieldType(fieldConfig),
+            field_label: fieldConfig.title || fieldName,
+            field_options: fieldOptions,
+            field_order: fieldOrder++,
+            is_required: fieldConfig.required === true || (schema.required && schema.required.includes(fieldName)),
+            is_searchable: false
           }
-        } catch (e) {
-          console.error('Error parsing collection schema:', e)
-        }
+        })
       }
-
-      // Check code-defined collections
-      const codeCollections = await loadCollectionConfigs()
-      const codeCollection = codeCollections.find((c: any) => c.name === collectionId)
-
-      if (codeCollection && codeCollection.schema) {
-        try {
-          const schema = codeCollection.schema
-          if (schema && schema.properties) {
-            // Convert schema properties to field format
-            let fieldOrder = 0
-            return Object.entries(schema.properties).map(([fieldName, fieldConfig]: [string, any]) => {
-              const fieldOptions = buildSchemaFieldOptions(fieldConfig)
-
-              return {
-                id: `schema-${fieldName}`,
-                field_name: fieldName,
-                field_type: resolveSchemaFieldType(fieldConfig),
-                field_label: fieldConfig.title || fieldName,
-                field_options: fieldOptions,
-                field_order: fieldOrder++,
-                is_required: fieldConfig.required === true || (schema.required && schema.required.includes(fieldName)),
-                is_searchable: false
-              }
-            })
-          }
-        } catch (e) {
-          console.error('Error parsing code collection schema:', e)
-        }
-      }
-
-      return []
+    } catch (e) {
+      console.error('Error parsing collection schema:', e)
     }
-  )
+  }
+
+  // Check code-defined collections (don't cache these since they can change)
+  const codeCollections = await loadCollectionConfigs()
+  const codeCollection = codeCollections.find((c: any) => c.name === collectionId)
+
+  if (codeCollection && codeCollection.schema) {
+    try {
+      const schema = codeCollection.schema
+      if (schema && schema.properties) {
+        // Convert schema properties to field format
+        let fieldOrder = 0
+        return Object.entries(schema.properties).map(([fieldName, fieldConfig]: [string, any]) => {
+          const fieldOptions = buildSchemaFieldOptions(fieldConfig)
+
+          return {
+            id: `schema-${fieldName}`,
+            field_name: fieldName,
+            field_type: resolveSchemaFieldType(fieldConfig),
+            field_label: fieldConfig.title || fieldName,
+            field_options: fieldOptions,
+            field_order: fieldOrder++,
+            is_required: fieldConfig.required === true || (schema.required && schema.required.includes(fieldName)),
+            is_searchable: false
+          }
+        })
+      }
+    } catch (e) {
+      console.error('Error parsing code collection schema:', e)
+    }
+  }
+
+  return []
 }
 
 // Get collection by ID
