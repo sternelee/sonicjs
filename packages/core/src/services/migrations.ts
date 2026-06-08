@@ -77,225 +77,73 @@ export class MigrationService {
   }
 
   /**
-   * Auto-detect applied migrations by checking if their tables exist
+   * Auto-detect applied migrations by checking if their tables exist (v3 greenfield).
+   * Only the two consolidated migrations exist: 0001_core + 0002_documents.
    */
   private async autoDetectAppliedMigrations(appliedMigrations: Map<string, any>): Promise<void> {
-    // Check if basic schema tables exist (migration 001)
-    if (!appliedMigrations.has('001')) {
-      const hasBasicTables = await this.checkTablesExist(['users', 'content', 'collections', 'media'])
-      if (hasBasicTables) {
-        appliedMigrations.set('001', {
-          id: '001',
-          applied_at: new Date().toISOString(),
-          name: 'Initial Schema',
-          filename: '001_initial_schema.sql'
-        })
-        await this.markMigrationApplied('001', 'Initial Schema', '001_initial_schema.sql')
+    if (!appliedMigrations.has('0001')) {
+      if (await this.checkTablesExist(['users'])) {
+        appliedMigrations.set('0001', { id: '0001', applied_at: new Date().toISOString(), name: 'Core', filename: '0001_core.sql' })
+        await this.markMigrationApplied('0001', 'Core', '0001_core.sql')
+      }
+    }
+    if (!appliedMigrations.has('0002')) {
+      if (await this.checkTablesExist(['documents', 'document_types'])) {
+        appliedMigrations.set('0002', { id: '0002', applied_at: new Date().toISOString(), name: 'Documents', filename: '0002_documents.sql' })
+        await this.markMigrationApplied('0002', 'Documents', '0002_documents.sql')
       }
     }
 
-    // Check if FAQ tables exist (migration 002)
-    // Migration 002 creates only the 'faqs' table
-    if (!appliedMigrations.has('002')) {
-      const hasFaqTables = await this.checkTablesExist(['faqs'])
-      if (hasFaqTables) {
-        appliedMigrations.set('002', {
-          id: '002',
-          applied_at: new Date().toISOString(),
-          name: 'Faq Plugin',
-          filename: '002_faq_plugin.sql'
-        })
-        await this.markMigrationApplied('002', 'Faq Plugin', '002_faq_plugin.sql')
-      }
+    // Self-heal: ensure all q_* generated columns exist on documents (idempotent).
+    if (await this.checkTablesExist(['documents'])) {
+      await this.ensureDocumentGeneratedColumns()
     }
+  }
 
-    // Check if stage 5 enhancement tables exist (migration 003)
-    // Migration 003 creates content_fields, content_relationships, workflow_templates tables
-    if (!appliedMigrations.has('003')) {
-      const hasStage5Tables = await this.checkTablesExist(['content_fields', 'content_relationships', 'workflow_templates'])
-      if (hasStage5Tables) {
-        appliedMigrations.set('003', {
-          id: '003',
-          applied_at: new Date().toISOString(),
-          name: 'Stage 5 Enhancements',
-          filename: '003_stage5_enhancements.sql'
-        })
-        await this.markMigrationApplied('003', 'Stage 5 Enhancements', '003_stage5_enhancements.sql')
-      }
+  /**
+   * Ensure the `documents` table exposes every queryable VIRTUAL generated column (D45). Safe to run on
+   * every bootstrap: existing columns are skipped, missing ones are added, and the unavoidable race of a
+   * concurrent add surfaces as a swallowed "duplicate column name" error.
+   */
+  private async ensureDocumentGeneratedColumns(): Promise<void> {
+    // (column name, full ADD COLUMN body) — kept in sync with migrations 043 + 044.
+    const columns: Array<[string, string]> = [
+      ['q_faq_category',    "q_faq_category TEXT AS (json_extract(data, '$.category')) VIRTUAL"],
+      ['q_faq_sort_order',  "q_faq_sort_order INTEGER AS (json_extract(data, '$.sortOrder')) VIRTUAL"],
+      ['q_tst_rating',      "q_tst_rating INTEGER AS (json_extract(data, '$.rating')) VIRTUAL"],
+      ['q_tst_company',     "q_tst_company TEXT AS (json_extract(data, '$.authorCompany')) VIRTUAL"],
+      ['q_tst_sort_order',  "q_tst_sort_order INTEGER AS (json_extract(data, '$.sortOrder')) VIRTUAL"],
+      ['q_msg_review',      "q_msg_review TEXT AS (json_extract(data, '$.reviewStatus')) VIRTUAL"],
+      ['q_msg_email',       "q_msg_email TEXT AS (json_extract(data, '$.email')) VIRTUAL"],
+      ['q_media_mime',      "q_media_mime TEXT AS (json_extract(data, '$.mimeType')) VIRTUAL"],
+      ['q_media_folder',    "q_media_folder TEXT AS (json_extract(data, '$.folder')) VIRTUAL"],
+      ['q_media_size',      "q_media_size INTEGER AS (json_extract(data, '$.size')) VIRTUAL"],
+      ['q_blog_difficulty', "q_blog_difficulty TEXT AS (json_extract(data, '$.difficulty')) VIRTUAL"],
+      ['q_blog_author',     "q_blog_author TEXT AS (json_extract(data, '$.author')) VIRTUAL"],
+      // email_log document type (plugin-system/email-reconciliation)
+      ['q_email_status',   "q_email_status TEXT AS (json_extract(data, '$.status')) VIRTUAL"],
+      ['q_email_provider', "q_email_provider TEXT AS (json_extract(data, '$.provider')) VIRTUAL"],
+      ['q_email_flow',     "q_email_flow TEXT AS (json_extract(data, '$.flow')) VIRTUAL"],
+      ['q_email_to',       "q_email_to TEXT AS (json_extract(data, '$.toEmail')) VIRTUAL"],
+    ]
+    // Note: pragma_table_info does NOT list VIRTUAL generated columns — use table_xinfo, which does.
+    let existing = new Set<string>()
+    try {
+      const info = await this.db.prepare("SELECT name FROM pragma_table_xinfo('documents')").all()
+      existing = new Set((info?.results ?? []).map((r: any) => r.name))
+    } catch {
+      // table_xinfo unavailable — fall back to attempting every ALTER (duplicate errors are swallowed).
     }
-
-    // Check if testimonials table exists (migration 012)
-    if (!appliedMigrations.has('012')) {
-      const hasTestimonialsTables = await this.checkTablesExist(['testimonials'])
-      if (hasTestimonialsTables) {
-        appliedMigrations.set('012', {
-          id: '012',
-          applied_at: new Date().toISOString(),
-          name: 'Testimonials Plugin',
-          filename: '012_testimonials_plugin.sql'
-        })
-        await this.markMigrationApplied('012', 'Testimonials Plugin', '012_testimonials_plugin.sql')
-      }
-    }
-
-    // Check if code_examples table exists (migration 013)
-    if (!appliedMigrations.has('013')) {
-      const hasCodeExamplesTables = await this.checkTablesExist(['code_examples'])
-      if (hasCodeExamplesTables) {
-        appliedMigrations.set('013', {
-          id: '013',
-          applied_at: new Date().toISOString(),
-          name: 'Code Examples Plugin',
-          filename: '013_code_examples_plugin.sql'
-        })
-        await this.markMigrationApplied('013', 'Code Examples Plugin', '013_code_examples_plugin.sql')
-      }
-    }
-
-    // Check if user management tables exist (migration 004)
-    if (!appliedMigrations.has('004')) {
-      const hasUserTables = await this.checkTablesExist(['api_tokens', 'workflow_history'])
-      if (hasUserTables) {
-        appliedMigrations.set('004', {
-          id: '004',
-          applied_at: new Date().toISOString(),
-          name: 'User Management',
-          filename: '004_stage6_user_management.sql'
-        })
-        await this.markMigrationApplied('004', 'User Management', '004_stage6_user_management.sql')
-      }
-    }
-
-    // Check if plugin system tables exist (migration 006)
-    if (!appliedMigrations.has('006')) {
-      const hasPluginTables = await this.checkTablesExist(['plugins', 'plugin_hooks'])
-      if (hasPluginTables) {
-        appliedMigrations.set('006', {
-          id: '006',
-          applied_at: new Date().toISOString(),
-          name: 'Plugin System',
-          filename: '006_plugin_system.sql'
-        })
-        await this.markMigrationApplied('006', 'Plugin System', '006_plugin_system.sql')
-      }
-    }
-
-    // Check if managed column exists (migration 011)
-    // This handles both cases:
-    // 1. Migration not marked as applied but column exists -> mark as applied
-    // 2. Migration marked as applied but column doesn't exist -> remove from applied (will re-run)
-    const hasManagedColumn = await this.checkColumnExists('collections', 'managed')
-    if (!appliedMigrations.has('011') && hasManagedColumn) {
-      appliedMigrations.set('011', {
-        id: '011',
-        applied_at: new Date().toISOString(),
-        name: 'Config Managed Collections',
-        filename: '011_config_managed_collections.sql'
-      })
-      await this.markMigrationApplied('011', 'Config Managed Collections', '011_config_managed_collections.sql')
-    } else if (appliedMigrations.has('011') && !hasManagedColumn) {
-      // Migration was marked as applied but column doesn't exist - remove it so it will re-run
-      console.log('[Migration] Migration 011 marked as applied but managed column missing - will re-run')
-      appliedMigrations.delete('011')
-      await this.removeMigrationApplied('011')
-    }
-
-    // Check if system_logs table exists (migration 009)
-    if (!appliedMigrations.has('009')) {
-      const hasLoggingTables = await this.checkTablesExist(['system_logs', 'log_config'])
-      if (hasLoggingTables) {
-        appliedMigrations.set('009', {
-          id: '009',
-          applied_at: new Date().toISOString(),
-          name: 'System Logging',
-          filename: '009_system_logging.sql'
-        })
-        await this.markMigrationApplied('009', 'System Logging', '009_system_logging.sql')
-      }
-    }
-
-    // Check if settings table exists (migration 018)
-    if (!appliedMigrations.has('018')) {
-      const hasSettingsTable = await this.checkTablesExist(['settings'])
-      if (hasSettingsTable) {
-        appliedMigrations.set('018', {
-          id: '018',
-          applied_at: new Date().toISOString(),
-          name: 'Settings Table',
-          filename: '018_settings_table.sql'
-        })
-        await this.markMigrationApplied('018', 'Settings Table', '018_settings_table.sql')
-      }
-    }
-
-    // Check if forms tables exist (migration 029)
-    // Migration 029 was reassigned between releases: older versions used it for "Ai Search Plugin",
-    // newer versions use it for "Add Forms System". This handles the case where 029 is marked as
-    // applied (from the old AI Search migration) but the forms tables don't actually exist.
-    const hasFormsTables = await this.checkTablesExist(['forms', 'form_submissions', 'form_files'])
-    if (!appliedMigrations.has('029') && hasFormsTables) {
-      appliedMigrations.set('029', {
-        id: '029',
-        applied_at: new Date().toISOString(),
-        name: 'Add Forms System',
-        filename: '029_add_forms_system.sql'
-      })
-      await this.markMigrationApplied('029', 'Add Forms System', '029_add_forms_system.sql')
-    } else if (appliedMigrations.has('029') && !hasFormsTables) {
-      // Migration was marked as applied (possibly from old "Ai Search Plugin" migration)
-      // but forms tables don't exist - remove it so the forms migration will re-run
-      console.log('[Migration] Migration 029 marked as applied but forms tables missing - will re-run')
-      appliedMigrations.delete('029')
-      await this.removeMigrationApplied('029')
-    }
-
-    // Check if user_profiles table exists (migration 032)
-    // Table may already exist from app-level migration (my-sonicjs-app/migrations/018_user_profiles.sql)
-    if (!appliedMigrations.has('032')) {
-      const hasUserProfilesTable = await this.checkTablesExist(['user_profiles'])
-      if (hasUserProfilesTable) {
-        appliedMigrations.set('032', {
-          id: '032',
-          applied_at: new Date().toISOString(),
-          name: 'User Profiles',
-          filename: '032_user_profiles.sql'
-        })
-        await this.markMigrationApplied('032', 'User Profiles', '032_user_profiles.sql')
-      }
-    }
-
-    // Ensure user_profiles.data column exists (migration 035 is now a no-op).
-    // Databases that ran the old 032 (without data column) need the column added.
-    // Migration 035 was converted to a no-op to fix #771 (duplicate column error
-    // on fresh installs), so we add the column here if it's missing.
-    const hasUserProfilesTable = await this.checkTablesExist(['user_profiles'])
-    if (hasUserProfilesTable) {
-      const hasDataColumn = await this.checkColumnExists('user_profiles', 'data')
-      if (!hasDataColumn) {
-        try {
-          await this.db.prepare(`ALTER TABLE user_profiles ADD COLUMN data TEXT DEFAULT '{}'`).run()
-          console.log('[Migration] Added missing data column to user_profiles')
-        } catch (error) {
-          // Column may have been added concurrently; ignore duplicate column errors
-          const msg = error instanceof Error ? error.message : String(error)
-          if (!msg.includes('duplicate column name')) {
-            console.error('[Migration] Failed to add data column to user_profiles:', msg)
-          }
+    for (const [name, body] of columns) {
+      if (existing.has(name)) continue
+      try {
+        await this.db.prepare(`ALTER TABLE documents ADD COLUMN ${body}`).run()
+        console.log(`[Migration] D45: added missing documents.${name}`)
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error)
+        if (!msg.includes('duplicate column name')) {
+          console.error(`[Migration] D45: failed to add documents.${name}:`, msg)
         }
-      }
-    }
-
-    // Mark migration 035 as applied since it's now a no-op (column handled above)
-    if (!appliedMigrations.has('035')) {
-      const hasDataCol = hasUserProfilesTable && await this.checkColumnExists('user_profiles', 'data')
-      if (hasDataCol) {
-        appliedMigrations.set('035', {
-          id: '035',
-          applied_at: new Date().toISOString(),
-          name: 'User Profiles Data Column',
-          filename: '035_user_profiles_data_column.sql'
-        })
-        await this.markMigrationApplied('035', 'User Profiles Data Column', '035_user_profiles_data_column.sql')
       }
     }
   }
@@ -564,7 +412,7 @@ export class MigrationService {
 
     // Basic table existence checks
     const requiredTables = [
-      'users', 'content', 'collections', 'media'
+      'users', 'documents', 'document_types'
     ]
 
     for (const table of requiredTables) {

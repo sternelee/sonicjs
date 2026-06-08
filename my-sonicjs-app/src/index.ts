@@ -1,5 +1,5 @@
 /**
- * My SonicJS Application
+ * My SonicJS Application — v3 greenfield
  *
  * Exports both `fetch` (HTTP) and `scheduled` (cron) so the Worker handles both
  * cold-start paths. app.boot() ensures a cron-first cold isolate still gets the
@@ -16,26 +16,22 @@ import {
 } from '@sonicjs-cms/core'
 import type { SonicJSConfig } from '@sonicjs-cms/core'
 
-// Import custom collections
+// Import code-defined collections
 import blogPostsCollection from './collections/blog-posts.collection'
-import pageBlocksCollection from './collections/page-blocks.collection'
 import contactMessagesCollection from './collections/contact-messages.collection'
+import pageBlocksCollection from './collections/page-blocks.collection'
 
 // Import plugins
 import contactFormPlugin from './plugins/contact-form/index'
 
-// Register all custom collections
+// Register collections so they appear in admin UI
 registerCollections([
   blogPostsCollection,
-  pageBlocksCollection,
-  contactMessagesCollection
+  contactMessagesCollection,
+  pageBlocksCollection
 ])
 
-// Application configuration
 const config: SonicJSConfig = {
-  collections: {
-    autoSync: true
-  },
   plugins: {
     register: [contactFormPlugin],
     disableAll: false,
@@ -47,8 +43,7 @@ const app = createSonicJSApp(config)
 
 // All plugins that declare crons, for the scheduled handler.
 // Core crons (emailReconciliationPlugin) are wired automatically by createSonicJSApp.
-// Add any custom plugins with crons to this list.
-const allCronPlugins = [emailReconciliationPlugin, ...( config.plugins?.register ?? [])]
+const allCronPlugins = [emailReconciliationPlugin, ...(config.plugins?.register ?? [])]
 
 // Log declared schedules at startup so wrangler.toml can be kept in sync.
 const schedules = collectCronSchedules(allCronPlugins)
