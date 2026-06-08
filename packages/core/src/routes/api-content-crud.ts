@@ -14,13 +14,32 @@ const apiContentCrudRoutes = new Hono<{ Bindings: Bindings; Variables: Variables
 // Resolve the document type backing a content collection (by collection db id OR name). When present
 // the write goes to the documents table (legacy `content` decommission); otherwise legacy content.
 async function resolveDocBacking(db: D1Database, collectionIdOrName: string) {
-  const coll = await db
-    .prepare('SELECT id, name FROM collections WHERE id = ? OR name = ?')
-    .bind(collectionIdOrName, collectionIdOrName)
-    .first() as { id: string; name: string } | null
-  if (!coll) return null
-  const docType = await new DocumentTypeRegistry(db).findById(coll.name)
-  return docType ? { coll, docType } : null
+  // Try collections table first (legacy path). If the table doesn't exist (greenfield v3 schema
+  // that hasn't run syncCollections yet), fall through to the document_types direct lookup.
+  let coll: { id: string; name: string } | null = null
+  try {
+    coll = await db
+      .prepare('SELECT id, name FROM collections WHERE id = ? OR name = ?')
+      .bind(collectionIdOrName, collectionIdOrName)
+      .first() as { id: string; name: string } | null
+  } catch {
+    // collections table absent — fall through to direct document_types lookup
+  }
+
+  if (coll) {
+    const docType = await new DocumentTypeRegistry(db).findById(coll.name)
+    return docType ? { coll, docType } : null
+  }
+
+  // No collections row — check if document_types has a matching entry directly.
+  // This handles code-defined collections (registered via registerCollections/bootstrapDocumentTypes)
+  // that live in document_types but never had a collections table row.
+  const docType = await new DocumentTypeRegistry(db).findById(collectionIdOrName)
+  if (docType) {
+    return { coll: { id: collectionIdOrName, name: collectionIdOrName }, docType }
+  }
+
+  return null
 }
 
 function slugify(s?: string | null): string | null {
@@ -54,7 +73,7 @@ apiContentCrudRoutes.get('/check-slug', async (c) => {
         return c.json({ available: false, message: 'This URL slug is already in use in this collection' })
       }
     } else {
-      return c.json({ available: false, message: 'Collection is not document-backed' })
+      return c.json({ error: 'Collection not found or not document-backed' }, 400)
     }
 
     return c.json({ available: true })

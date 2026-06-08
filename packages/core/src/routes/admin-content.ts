@@ -192,13 +192,15 @@ async function getCollectionFields(db: D1Database, collectionId: string) {
   console.log(`[getCollectionFields] Loading fields for collection: ${collectionId}`)
 
   // First, check if document type has a schema in database
-  const collectionStmt = db.prepare('SELECT schema FROM document_types WHERE id = ?')
+  const collectionStmt = db.prepare('SELECT schema, queryable_fields FROM document_types WHERE id = ?')
   const collectionRow = await collectionStmt.bind(collectionId).first() as any
 
-  if (collectionRow && collectionRow.schema) {
+  if (collectionRow) {
     console.log(`[getCollectionFields] Found in database`)
     try {
-      const schema = typeof collectionRow.schema === 'string' ? JSON.parse(collectionRow.schema) : collectionRow.schema
+      const schema = collectionRow.schema
+        ? (typeof collectionRow.schema === 'string' ? JSON.parse(collectionRow.schema) : collectionRow.schema)
+        : {}
       if (schema && schema.properties) {
         const fieldCount = Object.keys(schema.properties).length
         console.log(`[getCollectionFields] Database schema has ${fieldCount} fields`)
@@ -218,6 +220,43 @@ async function getCollectionFields(db: D1Database, collectionId: string) {
             is_searchable: false
           }
         })
+      }
+
+      // Schema has no properties (e.g. anyObject passthrough registered via bootstrapDocumentTypes).
+      // Check if there's a matching code collection with a full schema first.
+      const codeCollections = await loadCollectionConfigs()
+      const codeMatch = codeCollections.find((c: any) => c.name === collectionId)
+      if (codeMatch && codeMatch.schema?.properties) {
+        console.log(`[getCollectionFields] DB doc type has no properties — using code collection schema`)
+        // Fall through to the code collection path below by returning early from the try block
+        // (we'll pick it up in the code-collections block after this if/try)
+      } else {
+        // No code collection either — generate default fields: title + slug always; plus queryable scalars.
+        console.log(`[getCollectionFields] Generating default fields from queryable_fields`)
+        const queryableFields: Array<{ name: string; kind: string; type: string }> =
+          collectionRow.queryable_fields
+            ? JSON.parse(typeof collectionRow.queryable_fields === 'string' ? collectionRow.queryable_fields : JSON.stringify(collectionRow.queryable_fields))
+            : (schema.queryableFields ?? [])
+
+        const defaultFields: any[] = [
+          { id: 'schema-title', field_name: 'title', field_type: 'text', field_label: 'Title', field_options: null, field_order: 0, is_required: true, is_searchable: true },
+          { id: 'schema-slug', field_name: 'slug', field_type: 'slug', field_label: 'Slug', field_options: null, field_order: 1, is_required: true, is_searchable: false },
+        ]
+        let order = 2
+        for (const qf of queryableFields) {
+          if (qf.name === 'title' || qf.name === 'slug') continue
+          defaultFields.push({
+            id: `schema-${qf.name}`,
+            field_name: qf.name,
+            field_type: qf.type === 'integer' ? 'number' : 'text',
+            field_label: qf.name.charAt(0).toUpperCase() + qf.name.slice(1).replace(/([A-Z])/g, ' $1'),
+            field_options: null,
+            field_order: order++,
+            is_required: false,
+            is_searchable: false,
+          })
+        }
+        return defaultFields
       }
     } catch (e) {
       console.error('[getCollectionFields] Error parsing database collection schema:', e)
@@ -1143,10 +1182,7 @@ adminContentRoutes.post('/', async (c) => {
       }), user?.userId)
       const cache = getCacheService(CACHE_CONFIGS.content!)
       await cache.invalidate(`content:list:${collectionId}:*`)
-      const referrerParams = formData.get('referrer_params') as string
-      const redirectUrl = action === 'save_and_continue'
-        ? `/admin/content/${doc.rootId}/edit?success=Content saved successfully!`
-        : `/admin/content?model=${collection.name}&success=Content created successfully!`
+      const redirectUrl = `/admin/content/${doc.rootId}/edit?success=Content created successfully!`
       return c.req.header('HX-Request') === 'true'
         ? c.text('', 200, { 'HX-Redirect': redirectUrl })
         : c.redirect(redirectUrl)
@@ -1289,10 +1325,7 @@ adminContentRoutes.put('/:id', async (c) => {
         else if (pub) await svc.unpublish(pub.id)
 
         await getCacheService(CACHE_CONFIGS.content!).invalidate(`content:list:*`)
-        const referrerParams = formData.get('referrer_params') as string
-        const redirectUrl = action === 'save_and_continue'
-          ? `/admin/content/${id}/edit?success=Content updated successfully!`
-          : `/admin/content?model=${docType.id}&success=Content updated successfully!`
+        const redirectUrl = `/admin/content/${id}/edit?success=Content updated successfully!`
         return c.req.header('HX-Request') === 'true'
           ? c.text('', 200, { 'HX-Redirect': redirectUrl })
           : c.redirect(redirectUrl)
@@ -1439,24 +1472,14 @@ adminContentRoutes.put('/:id', async (c) => {
       ).run()
     }
 
-    // Handle different actions
-    const referrerParams = formData.get('referrer_params') as string
-    const redirectUrl = action === 'save_and_continue'
-      ? `/admin/content/${id}/edit?success=Content updated successfully!${referrerParams ? `&ref=${encodeURIComponent(referrerParams)}` : ''}`
-      : referrerParams
-        ? `/admin/content?${referrerParams}&success=Content updated successfully!`
-        : `/admin/content?collection=${existingContent.collection_id}&success=Content updated successfully!`
+    const redirectUrl = `/admin/content/${id}/edit?success=Content updated successfully!`
 
     // Check if this is an HTMX request
     const isHTMX = c.req.header('HX-Request') === 'true'
 
     if (isHTMX) {
-      // For HTMX requests, use HX-Redirect header to trigger client-side redirect
-      return c.text('', 200, {
-        'HX-Redirect': redirectUrl
-      })
+      return c.text('', 200, { 'HX-Redirect': redirectUrl })
     } else {
-      // For regular requests, use server-side redirect
       return c.redirect(redirectUrl)
     }
 

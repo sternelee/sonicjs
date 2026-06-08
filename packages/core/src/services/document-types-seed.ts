@@ -1,6 +1,7 @@
 import { D1Database } from '@cloudflare/workers-types'
 import { z } from 'zod'
 import { DocumentTypeRegistry } from './document-type-registry'
+import { loadCollectionConfigs } from './collection-loader'
 
 // Passthrough schema: accepts any JSON object for POC types.
 // Individual fields are validated at the queryable-field level; the full
@@ -128,7 +129,21 @@ export async function autoRegisterCollectionDocumentTypes(db: D1Database): Promi
       .all<{ name: string; display_name: string }>()
     collections = res.results ?? []
   } catch {
-    return [] // collections table not present — nothing to do
+    // collections table not present — fall through to code collections below
+  }
+
+  // Also register any code-defined collections (via registerCollections()) that
+  // aren't already captured by the DB collections table above.
+  try {
+    const codeCollections = await loadCollectionConfigs()
+    const dbNames = new Set(collections.map(c => c.name))
+    for (const cc of codeCollections) {
+      if (cc.name && !dbNames.has(cc.name)) {
+        collections.push({ name: cc.name, display_name: cc.displayName })
+      }
+    }
+  } catch {
+    // collection-loader failure is non-fatal
   }
 
   const registered: string[] = []
