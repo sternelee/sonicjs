@@ -189,14 +189,19 @@ adminContentRoutes.use('*', requireAuth())
 
 // Get collection fields
 async function getCollectionFields(db: D1Database, collectionId: string) {
+  console.log(`[getCollectionFields] Loading fields for collection: ${collectionId}`)
+
   // First, check if document type has a schema in database
   const collectionStmt = db.prepare('SELECT schema FROM document_types WHERE id = ?')
   const collectionRow = await collectionStmt.bind(collectionId).first() as any
 
   if (collectionRow && collectionRow.schema) {
+    console.log(`[getCollectionFields] Found in database`)
     try {
       const schema = typeof collectionRow.schema === 'string' ? JSON.parse(collectionRow.schema) : collectionRow.schema
       if (schema && schema.properties) {
+        const fieldCount = Object.keys(schema.properties).length
+        console.log(`[getCollectionFields] Database schema has ${fieldCount} fields`)
         // Convert schema properties to field format
         let fieldOrder = 0
         return Object.entries(schema.properties).map(([fieldName, fieldConfig]: [string, any]) => {
@@ -215,18 +220,25 @@ async function getCollectionFields(db: D1Database, collectionId: string) {
         })
       }
     } catch (e) {
-      console.error('Error parsing collection schema:', e)
+      console.error('[getCollectionFields] Error parsing database collection schema:', e)
     }
   }
+
+  console.log(`[getCollectionFields] Not in database, checking code collections`)
 
   // Check code-defined collections (don't cache these since they can change)
   const codeCollections = await loadCollectionConfigs()
+  console.log(`[getCollectionFields] Found ${codeCollections.length} code collections`)
+
   const codeCollection = codeCollections.find((c: any) => c.name === collectionId)
 
   if (codeCollection && codeCollection.schema) {
+    console.log(`[getCollectionFields] Found code collection: ${collectionId}`)
     try {
       const schema = codeCollection.schema
       if (schema && schema.properties) {
+        const fieldCount = Object.keys(schema.properties).length
+        console.log(`[getCollectionFields] Code collection schema has ${fieldCount} fields`)
         // Convert schema properties to field format
         let fieldOrder = 0
         return Object.entries(schema.properties).map(([fieldName, fieldConfig]: [string, any]) => {
@@ -245,10 +257,13 @@ async function getCollectionFields(db: D1Database, collectionId: string) {
         })
       }
     } catch (e) {
-      console.error('Error parsing code collection schema:', e)
+      console.error('[getCollectionFields] Error parsing code collection schema:', e)
     }
+  } else {
+    console.log(`[getCollectionFields] Code collection "${collectionId}" not found`)
   }
 
+  console.log(`[getCollectionFields] Returning 0 fields`)
   return []
 }
 
