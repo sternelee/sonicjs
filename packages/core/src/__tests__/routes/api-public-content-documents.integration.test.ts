@@ -36,8 +36,7 @@ describe('public content API → documents (decommission step 2)', () => {
   beforeEach(async () => {
     h.user = undefined
     db = createTestD1()
-    db.raw.exec('CREATE TABLE collections (id TEXT PRIMARY KEY, name TEXT, display_name TEXT, is_active INTEGER, source_type TEXT)')
-    db.raw.prepare("INSERT INTO collections VALUES ('news-id','news','News',1,NULL)").run()
+    db.raw.prepare("INSERT INTO collections (id,name,display_name,schema,is_active,source_type,created_at,updated_at) VALUES ('news-id','news','News','{}',1,NULL,1,1)").run()
     const svc = new DocumentsService(db, { tenantId: 'default', queryableFields: [] })
     await svc.create({ typeId: 'news', tenantId: 'default', title: 'Published News', slug: 'pub-news', data: { category: 'tech' }, publishOnCreate: true })
     await svc.create({ typeId: 'news', tenantId: 'default', title: 'Draft News', slug: 'draft-news', data: { category: 'tech' } }) // not published

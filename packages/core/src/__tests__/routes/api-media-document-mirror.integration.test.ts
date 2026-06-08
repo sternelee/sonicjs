@@ -33,13 +33,6 @@ describe('api-media upload → media_asset document mirror (Phase 6)', () => {
 
   beforeEach(async () => {
     db = createTestD1()
-    db.raw.exec(
-      `CREATE TABLE media (
-        id TEXT PRIMARY KEY, filename TEXT, original_name TEXT, mime_type TEXT, size INTEGER,
-        width INTEGER, height INTEGER, folder TEXT, r2_key TEXT, public_url TEXT, thumbnail_url TEXT,
-        alt TEXT, caption TEXT, tags TEXT, uploaded_by TEXT, uploaded_at INTEGER, updated_at INTEGER,
-        published_at INTEGER, scheduled_at INTEGER, archived_at INTEGER, deleted_at INTEGER)`,
-    )
     await bootstrapDocumentTypes(db)
     putKeys = []
     const bucket = { put: async (k: string) => { putKeys.push(k); return {} }, get: async () => null, delete: async () => {} }

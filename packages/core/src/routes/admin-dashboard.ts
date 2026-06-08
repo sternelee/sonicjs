@@ -84,21 +84,16 @@ router.get('/stats', async (c) => {
       console.error('Error fetching collections count:', error)
     }
 
-    // Get content count. Content is now document-backed: count current-draft documents whose type is a
-    // user collection, PLUS legacy `content` rows only for collections WITHOUT a document type (so a
-    // backfilled item — present in both tables — is counted once, via documents).
+    // Get content count. In the v3 greenfield schema content is document-backed only.
     let contentCount = 0
     try {
       const contentStmt = db.prepare(`
-        SELECT (
-          SELECT COUNT(*) FROM documents d JOIN collections col ON col.name = d.type_id
-          WHERE d.is_current_draft = 1 AND d.deleted_at IS NULL
-            AND (col.source_type IS NULL OR col.source_type = 'user')
-        ) + (
-          SELECT COUNT(*) FROM content c JOIN collections col ON c.collection_id = col.id
-          WHERE (col.source_type IS NULL OR col.source_type = 'user')
-            AND NOT EXISTS (SELECT 1 FROM document_types dt WHERE dt.id = col.name)
-        ) AS count
+        SELECT COUNT(*) AS count
+        FROM documents d
+        JOIN collections col ON col.name = d.type_id
+        WHERE d.is_current_draft = 1
+          AND d.deleted_at IS NULL
+          AND (col.source_type IS NULL OR col.source_type = 'user')
       `)
       const contentResult = await contentStmt.first()
       contentCount = (contentResult as any)?.count || 0

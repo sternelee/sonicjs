@@ -1,21 +1,23 @@
-import { getCustomData, renderConfirmationDialog, getConfirmationDialogScript, api_default, api_media_default, api_system_default, admin_api_default, router, adminCollectionsRoutes, adminFormsRoutes, adminSettingsRoutes, public_forms_default, router2, admin_content_default, adminMediaRoutes, userProfilesPlugin, adminPluginRoutes, adminLogsRoutes, userRoutes, auth_default, test_cleanup_default } from './chunk-M2PKQJ6J.js';
-export { ROUTES_INFO, admin_api_default as adminApiRoutes, adminCheckboxRoutes, admin_code_examples_default as adminCodeExamplesRoutes, adminCollectionsRoutes, admin_content_default as adminContentRoutes, router as adminDashboardRoutes, adminDesignRoutes, adminLogsRoutes, adminMediaRoutes, adminPluginRoutes, adminSettingsRoutes, admin_testimonials_default as adminTestimonialsRoutes, userRoutes as adminUsersRoutes, api_content_crud_default as apiContentCrudRoutes, api_media_default as apiMediaRoutes, api_default as apiRoutes, api_system_default as apiSystemRoutes, auth_default as authRoutes, createUserProfilesPlugin, defineUserProfile, getUserProfileConfig, userProfilesPlugin } from './chunk-M2PKQJ6J.js';
-import { SettingsService, setAppInstance, schema_exports } from './chunk-GQEIPW3L.js';
-export { Logger, apiTokens, collections, content, contentVersions, getLogger, initLogger, insertCollectionSchema, insertContentSchema, insertLogConfigSchema, insertMediaSchema, insertPluginActivityLogSchema, insertPluginAssetSchema, insertPluginHookSchema, insertPluginRouteSchema, insertPluginSchema, insertSystemLogSchema, insertUserSchema, insertWorkflowHistorySchema, logConfig, media, pluginActivityLog, pluginAssets, pluginHooks, pluginRoutes, plugins, selectCollectionSchema, selectContentSchema, selectLogConfigSchema, selectMediaSchema, selectPluginActivityLogSchema, selectPluginAssetSchema, selectPluginHookSchema, selectPluginRouteSchema, selectPluginSchema, selectSystemLogSchema, selectUserSchema, selectWorkflowHistorySchema, systemLogs, users, workflowHistory } from './chunk-GQEIPW3L.js';
-import { requireAuth, getJwtExpirySecondsFromDb, AuthManager, metricsMiddleware, bootstrapMiddleware, securityHeadersMiddleware, csrfProtection, requireRole } from './chunk-5QK3FXKX.js';
-export { AuthManager, PermissionManager, bootstrapMiddleware, cacheHeaders, compressionMiddleware, detailedLoggingMiddleware, getActivePlugins, isPluginActive, logActivity, loggingMiddleware, optionalAuth, performanceLoggingMiddleware, requireActivePlugin, requireActivePlugins, requireAnyPermission, requireAuth, requirePermission, requireRole, securityHeadersMiddleware as securityHeaders, securityLoggingMiddleware } from './chunk-5QK3FXKX.js';
-import { PluginService, PLUGIN_REGISTRY } from './chunk-CJOLOONT.js';
-export { PluginBootstrapService, PluginService as PluginServiceClass, backfillFormSubmissions, cleanupRemovedCollections, createContentFromSubmission, deriveCollectionSchemaFromFormio, deriveSubmissionTitle, fullCollectionSync, getAvailableCollectionNames, getManagedCollections, isCollectionManaged, loadCollectionConfig, loadCollectionConfigs, mapFormStatusToContentStatus, registerCollections, syncAllFormCollections, syncCollection, syncCollections, syncFormCollection, validateCollectionConfig } from './chunk-CJOLOONT.js';
-export { MigrationService } from './chunk-CSQWOYGZ.js';
+import { getCustomData, DocumentsService, renderConfirmationDialog, getConfirmationDialogScript, api_default, api_media_default, api_system_default, apiDocumentsRoutes, adminDocumentsRoutes, admin_testimonials_default, admin_api_default, router, adminCollectionsRoutes, adminFormsRoutes, adminSettingsRoutes, public_forms_default, router2, admin_content_default, adminMediaRoutes, userProfilesPlugin, adminPluginRoutes, adminLogsRoutes, userRoutes, auth_default, test_cleanup_default } from './chunk-QZBD2GG2.js';
+export { ROUTES_INFO, admin_api_default as adminApiRoutes, adminCheckboxRoutes, admin_code_examples_default as adminCodeExamplesRoutes, adminCollectionsRoutes, admin_content_default as adminContentRoutes, router as adminDashboardRoutes, adminDesignRoutes, adminLogsRoutes, adminMediaRoutes, adminPluginRoutes, adminSettingsRoutes, admin_testimonials_default as adminTestimonialsRoutes, userRoutes as adminUsersRoutes, api_content_crud_default as apiContentCrudRoutes, api_media_default as apiMediaRoutes, api_default as apiRoutes, api_system_default as apiSystemRoutes, auth_default as authRoutes, createUserProfilesPlugin, defineUserProfile, getUserProfileConfig, userProfilesPlugin } from './chunk-QZBD2GG2.js';
+import './chunk-VAECCHDA.js';
+import './chunk-IANT4JCJ.js';
+import { SettingsService, setAppInstance, schema_exports } from './chunk-QFWHAFEO.js';
+export { Logger, apiTokens, collections, content, contentVersions, getLogger, initLogger, insertCollectionSchema, insertContentSchema, insertLogConfigSchema, insertMediaSchema, insertPluginActivityLogSchema, insertPluginAssetSchema, insertPluginHookSchema, insertPluginRouteSchema, insertPluginSchema, insertSystemLogSchema, insertUserSchema, insertWorkflowHistorySchema, logConfig, media, pluginActivityLog, pluginAssets, pluginHooks, pluginRoutes, plugins, selectCollectionSchema, selectContentSchema, selectLogConfigSchema, selectMediaSchema, selectPluginActivityLogSchema, selectPluginAssetSchema, selectPluginHookSchema, selectPluginRouteSchema, selectPluginSchema, selectSystemLogSchema, selectUserSchema, selectWorkflowHistorySchema, systemLogs, users, workflowHistory } from './chunk-QFWHAFEO.js';
+import { requireAuth, getJwtExpirySecondsFromDb, AuthManager, DocumentTypeRegistry, metricsMiddleware, bootstrapMiddleware, securityHeadersMiddleware, csrfProtection, requireRole } from './chunk-RW5QC5Q2.js';
+export { AuthManager, PermissionManager, bootstrapMiddleware, cacheHeaders, compressionMiddleware, detailedLoggingMiddleware, getActivePlugins, isPluginActive, logActivity, loggingMiddleware, optionalAuth, performanceLoggingMiddleware, requireActivePlugin, requireActivePlugins, requireAnyPermission, requireAuth, requirePermission, requireRole, securityHeadersMiddleware as securityHeaders, securityLoggingMiddleware } from './chunk-RW5QC5Q2.js';
+import { PluginService, PLUGIN_REGISTRY } from './chunk-4UO3R4JF.js';
+export { PluginBootstrapService, PluginService as PluginServiceClass, backfillFormSubmissions, cleanupRemovedCollections, createContentFromSubmission, deriveCollectionSchemaFromFormio, deriveSubmissionTitle, fullCollectionSync, getAvailableCollectionNames, getManagedCollections, isCollectionManaged, loadCollectionConfig, loadCollectionConfigs, mapFormStatusToContentStatus, registerCollections, syncAllFormCollections, syncCollection, syncCollections, syncFormCollection, validateCollectionConfig } from './chunk-4UO3R4JF.js';
+export { MigrationService } from './chunk-5PINILWB.js';
 export { renderFilterBar } from './chunk-ON5ZMSU4.js';
-import { renderAdminLayout } from './chunk-XWIA3HVX.js';
-export { getConfirmationDialogScript, renderAlert, renderConfirmationDialog, renderForm, renderFormField, renderPagination, renderTable } from './chunk-XWIA3HVX.js';
+import { renderAdminLayout } from './chunk-Y3YSCKOS.js';
+export { getConfirmationDialogScript, renderAlert, renderConfirmationDialog, renderForm, renderFormField, renderPagination, renderTable } from './chunk-Y3YSCKOS.js';
 import { init_admin_layout_catalyst_template, renderAdminLayoutCatalyst } from './chunk-55RDMDOP.js';
-export { HookSystemImpl, HookUtils, PluginManager as PluginManagerClass, PluginRegistryImpl, PluginValidator as PluginValidatorClass, ScopedHookSystem as ScopedHookSystemClass } from './chunk-NGTBJJXZ.js';
+export { HookSystemImpl, HookUtils, PluginManager as PluginManagerClass, PluginRegistryImpl, PluginValidator as PluginValidatorClass, ScopedHookSystem as ScopedHookSystemClass } from './chunk-TFNTM3OA.js';
 import { PluginBuilder, PluginHelpers } from './chunk-EXNEW5US.js';
 export { PluginBuilder, PluginHelpers } from './chunk-EXNEW5US.js';
-import { package_default, getCoreVersion } from './chunk-NDS4S4AG.js';
-export { QueryFilterBuilder, SONICJS_VERSION, TemplateRenderer, buildQuery, getCoreVersion, renderTemplate, templateRenderer } from './chunk-NDS4S4AG.js';
+import { package_default, getCoreVersion } from './chunk-7G6ZJQ5W.js';
+export { QueryFilterBuilder, SONICJS_VERSION, TemplateRenderer, buildQuery, getCoreVersion, renderTemplate, templateRenderer } from './chunk-7G6ZJQ5W.js';
 import './chunk-X7ZAEI5S.js';
 export { metricsTracker } from './chunk-FICTAGD4.js';
 export { escapeHtml, sanitizeInput, sanitizeObject } from './chunk-TQABQWOP.js';
@@ -2005,7 +2007,7 @@ function createOTPLoginPlugin() {
         maxAge: tokenTtl
       });
       const customData = await getCustomData(db, user.id);
-      const { is_active, ...publicUser } = user;
+      const { is_active: _isActive, ...publicUser } = user;
       return c.json({
         success: true,
         user: {
@@ -7749,6 +7751,204 @@ function createStripePlugin() {
   return builder.build();
 }
 var stripePlugin = createStripePlugin();
+var testimonialSchema = z.object({
+  authorName: z.string().min(1, "Author name is required").max(100),
+  authorTitle: z.string().max(100).optional(),
+  authorCompany: z.string().max(100).optional(),
+  testimonialText: z.string().min(1, "Testimonial text is required").max(1e3),
+  rating: z.number().min(1).max(5).optional(),
+  isPublished: z.boolean().default(false),
+  // new testimonials default to DRAFT, not auto-published
+  sortOrder: z.number().default(0)
+});
+async function getService(db) {
+  const registry = new DocumentTypeRegistry(db);
+  const docType = await registry.findById("testimonial");
+  return new DocumentsService(db, {
+    queryableFields: docType?.queryableFields ?? [],
+    typeSchemaVersion: docType?.schemaVersion ?? 1,
+    maxVersionsPerRoot: docType?.settings.maxVersionsPerRoot ?? 50
+  });
+}
+function docToApiShape(row) {
+  const data = typeof row.data === "string" ? JSON.parse(row.data) : row.data ?? {};
+  return {
+    id: row.root_id ?? row.rootId,
+    author_name: data.authorName ?? "",
+    author_title: data.authorTitle ?? null,
+    author_company: data.authorCompany ?? null,
+    testimonial_text: data.testimonialText ?? "",
+    rating: data.rating ?? null,
+    isPublished: row.is_published === 1 || row.isPublished === true ? 1 : 0,
+    sortOrder: data.sortOrder ?? 0,
+    created_at: row.created_at ?? row.createdAt,
+    updated_at: row.updated_at ?? row.updatedAt
+  };
+}
+var testimonialAPIRoutes = new Hono();
+testimonialAPIRoutes.get("/", async (c) => {
+  try {
+    const db = c.env?.DB;
+    const { published, minRating } = c.req.query();
+    const now = Math.floor(Date.now() / 1e3);
+    const params = ["default", "testimonial", now, now];
+    let sql = `SELECT * FROM documents
+               WHERE tenant_id = ? AND type_id = ? AND is_published = 1 AND deleted_at IS NULL
+                 AND (scheduled_at IS NULL OR scheduled_at <= ?)
+                 AND (expires_at IS NULL OR expires_at > ?)`;
+    if (published === "false") {
+      sql = `SELECT * FROM documents
+             WHERE tenant_id = ? AND type_id = ? AND is_current_draft = 1 AND deleted_at IS NULL
+               AND (scheduled_at IS NULL OR scheduled_at <= ?)
+               AND (expires_at IS NULL OR expires_at > ?)`;
+    }
+    if (minRating) {
+      sql += " AND q_tst_rating >= ?";
+      params.push(parseInt(minRating, 10));
+    }
+    sql += " ORDER BY q_tst_sort_order ASC, updated_at DESC";
+    const { results } = await db.prepare(sql).bind(...params).all();
+    return c.json({ success: true, data: (results ?? []).map(docToApiShape) });
+  } catch (error) {
+    console.error("Error fetching testimonials:", error);
+    return c.json({ success: false, error: "Failed to fetch testimonials" }, 500);
+  }
+});
+testimonialAPIRoutes.get("/:id", async (c) => {
+  try {
+    const db = c.env?.DB;
+    const rootId = c.req.param("id");
+    const now = Math.floor(Date.now() / 1e3);
+    const row = await db.prepare(
+      `SELECT * FROM documents
+       WHERE root_id = ? AND tenant_id = ? AND is_published = 1 AND deleted_at IS NULL
+         AND (scheduled_at IS NULL OR scheduled_at <= ?)
+         AND (expires_at IS NULL OR expires_at > ?)`
+    ).bind(rootId, "default", now, now).first();
+    if (!row) return c.json({ error: "Testimonial not found" }, 404);
+    return c.json({ success: true, data: docToApiShape(row) });
+  } catch (error) {
+    return c.json({ success: false, error: "Failed to fetch testimonial" }, 500);
+  }
+});
+testimonialAPIRoutes.post("/", async (c) => {
+  try {
+    const db = c.env?.DB;
+    const body = await c.req.json();
+    const validated = testimonialSchema.parse(body);
+    const svc = await getService(db);
+    const doc = await svc.create({
+      typeId: "testimonial",
+      tenantId: "default",
+      locale: "default",
+      title: validated.authorName,
+      sortOrder: validated.sortOrder,
+      data: {
+        authorName: validated.authorName,
+        authorTitle: validated.authorTitle,
+        authorCompany: validated.authorCompany,
+        testimonialText: validated.testimonialText,
+        rating: validated.rating,
+        sortOrder: validated.sortOrder
+      },
+      parentRootId: "",
+      visible: true,
+      metadata: {},
+      publishOnCreate: false
+    });
+    if (validated.isPublished) await svc.publish(doc.id);
+    const saved = await db.prepare("SELECT * FROM documents WHERE id = ?").bind(doc.id).first();
+    return c.json({ success: true, data: docToApiShape(saved), message: "Testimonial created successfully" }, 201);
+  } catch (error) {
+    if (error instanceof z.ZodError) return c.json({ success: false, error: "Validation failed", details: error.issues }, 400);
+    console.error("Error creating testimonial:", error);
+    return c.json({ success: false, error: "Failed to create testimonial" }, 500);
+  }
+});
+testimonialAPIRoutes.put("/:id", async (c) => {
+  try {
+    const db = c.env?.DB;
+    const rootId = c.req.param("id");
+    const body = await c.req.json();
+    const validated = testimonialSchema.partial().parse(body);
+    const svc = await getService(db);
+    const data = {};
+    if (validated.authorName !== void 0) data.authorName = validated.authorName;
+    if (validated.authorTitle !== void 0) data.authorTitle = validated.authorTitle;
+    if (validated.authorCompany !== void 0) data.authorCompany = validated.authorCompany;
+    if (validated.testimonialText !== void 0) data.testimonialText = validated.testimonialText;
+    if (validated.rating !== void 0) data.rating = validated.rating;
+    if (validated.sortOrder !== void 0) data.sortOrder = validated.sortOrder;
+    if (Object.keys(data).length === 0 && validated.isPublished === void 0) {
+      return c.json({ error: "No fields to update" }, 400);
+    }
+    const newDraft = await svc.saveDraft(rootId, {
+      title: validated.authorName,
+      sortOrder: validated.sortOrder,
+      data
+    });
+    if (validated.isPublished !== void 0) {
+      const pubRow = await db.prepare("SELECT id FROM documents WHERE root_id = ? AND is_published = 1 AND tenant_id = ?").bind(rootId, "default").first();
+      if (validated.isPublished) await svc.publish(newDraft.id);
+      else if (pubRow) await svc.unpublish(pubRow.id);
+    }
+    const saved = await db.prepare("SELECT * FROM documents WHERE id = ?").bind(newDraft.id).first();
+    return c.json({ success: true, data: docToApiShape(saved), message: "Testimonial updated successfully" });
+  } catch (error) {
+    if (error instanceof z.ZodError) return c.json({ success: false, error: "Validation failed", details: error.issues }, 400);
+    console.error("Error updating testimonial:", error);
+    return c.json({ success: false, error: "Failed to update testimonial" }, 500);
+  }
+});
+testimonialAPIRoutes.delete("/:id", async (c) => {
+  try {
+    const db = c.env?.DB;
+    const rootId = c.req.param("id");
+    const row = await db.prepare("SELECT id FROM documents WHERE root_id = ? AND is_current_draft = 1").bind(rootId).first();
+    if (!row) return c.json({ error: "Testimonial not found" }, 404);
+    const svc = await getService(db);
+    await svc.softDelete(row.id);
+    return c.json({ success: true, message: "Testimonial deleted successfully" });
+  } catch (error) {
+    return c.json({ success: false, error: "Failed to delete testimonial" }, 500);
+  }
+});
+function createTestimonialPlugin() {
+  const builder = PluginBuilder.create({
+    name: "testimonials-plugin",
+    version: "1.0.0-beta.2",
+    description: "Customer testimonials management \u2014 backed by the document model"
+  });
+  builder.metadata({ author: { name: "SonicJS", email: "info@sonicjs.com" }, license: "MIT", compatibility: "^1.0.0" });
+  builder.addRoute("/api/testimonials", testimonialAPIRoutes, {
+    description: "Testimonials API \u2014 document-model backed",
+    requiresAuth: false
+  });
+  builder.addAdminPage("/testimonials", "Testimonials", "TestimonialsListView", {
+    description: "Manage customer testimonials",
+    icon: "star",
+    permissions: ["admin", "editor"]
+  });
+  builder.addAdminPage("/testimonials/new", "New Testimonial", "TestimonialsFormView", { permissions: ["admin", "editor"] });
+  builder.addAdminPage("/testimonials/:id", "Edit Testimonial", "TestimonialsFormView", { permissions: ["admin", "editor"] });
+  builder.addMenuItem("Testimonials", "/admin/testimonials", { icon: "star", order: 60, permissions: ["admin", "editor"] });
+  builder.lifecycle({
+    install: async () => {
+      console.log("Testimonials plugin installed (document-model backed)");
+    },
+    uninstall: async () => {
+      console.log("Testimonials plugin uninstalled");
+    },
+    activate: async () => {
+      console.log("Testimonials plugin activated");
+    },
+    deactivate: async () => {
+      console.log("Testimonials plugin deactivated");
+    }
+  });
+  return builder.build();
+}
+var testimonialsPlugin = createTestimonialPlugin();
 
 // src/middleware/plugin-menu.ts
 var REGISTRY_MENU_PLUGINS = Object.values(PLUGIN_REGISTRY).filter((p) => p.adminMenu !== null).map((p) => ({
@@ -9423,10 +9623,10 @@ async function warmRecentContent(db, limit = 50) {
   const contentCache = getCacheService(config);
   let count = 0;
   try {
-    const stmt = db.prepare(`SELECT * FROM content ORDER BY created_at DESC LIMIT ${limit}`);
+    const stmt = db.prepare(`SELECT * FROM documents WHERE is_current_draft = 1 AND deleted_at IS NULL ORDER BY created_at DESC LIMIT ${limit}`);
     const { results } = await stmt.all();
     for (const content2 of results) {
-      const key = contentCache.generateKey("item", content2.id);
+      const key = contentCache.generateKey("item", content2.root_id ?? content2.id);
       await contentCache.set(key, content2);
       count++;
     }
@@ -10387,6 +10587,14 @@ function createSonicJSApp(config = {}) {
   app2.route("/api", api_default);
   app2.route("/api/media", api_media_default);
   app2.route("/api/system", api_system_default);
+  app2.route("/api/documents", apiDocumentsRoutes);
+  app2.route("/admin/documents", adminDocumentsRoutes);
+  app2.route("/admin/testimonials", admin_testimonials_default);
+  if (testimonialsPlugin.routes && testimonialsPlugin.routes.length > 0) {
+    for (const route of testimonialsPlugin.routes) {
+      app2.route(route.path, route.handler);
+    }
+  }
   app2.route("/admin/api", admin_api_default);
   app2.route("/admin/dashboard", router);
   app2.route("/admin/collections", adminCollectionsRoutes);

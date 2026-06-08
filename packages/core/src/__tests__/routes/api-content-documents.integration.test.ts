@@ -74,11 +74,6 @@ describe('document-backed content API — regression-audit fixes (§7)', () => {
 
   beforeEach(async () => {
     db = createTestD1()
-    db.raw.exec(`
-      CREATE TABLE users (id TEXT PRIMARY KEY, email TEXT, role TEXT, created_at INTEGER, updated_at INTEGER);
-      CREATE TABLE collections (id TEXT PRIMARY KEY, name TEXT, display_name TEXT, description TEXT, schema TEXT, is_active INTEGER DEFAULT 1, source_type TEXT, managed INTEGER DEFAULT 1, created_at INTEGER, updated_at INTEGER);
-      CREATE TABLE content (id TEXT PRIMARY KEY, collection_id TEXT, slug TEXT, title TEXT, data TEXT, status TEXT, published_at INTEGER, author_id TEXT, created_at INTEGER, updated_at INTEGER);
-    `)
     db.raw.prepare("INSERT INTO collections (id,name,display_name,description,schema,is_active,source_type,managed,created_at,updated_at) VALUES (?,?,?,?,?,1,'user',1,1,1)")
       .run(COLL, 'blog_posts', 'Blog Posts', 'Blog', BLOG_SCHEMA)
     await bootstrapDocumentTypes(db) // registers the blog_posts document type → collection is doc-backed

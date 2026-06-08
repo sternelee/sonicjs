@@ -76,7 +76,7 @@ interface CheckboxPageData {
 declare function renderCheckboxPage(data: CheckboxPageData): string;
 
 interface Testimonial {
-    id: number;
+    id: string;
     author_name: string;
     author_title?: string;
     author_company?: string;

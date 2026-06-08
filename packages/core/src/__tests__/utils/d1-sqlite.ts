@@ -5,15 +5,14 @@ import { dirname, join } from 'node:path'
 
 // Real-SQLite test harness. Wraps better-sqlite3 in the subset of the D1Database
 // interface the document services use (prepare/bind/run/all/first + batch) and applies
-// migration 037 so tests exercise the actual schema: generated columns, partial unique
+// the consolidated greenfield migrations so tests exercise the actual schema: generated columns, partial unique
 // indexes, and db.batch atomicity — none of which the pure-mock suite can verify.
 //
 // Foreign keys are left OFF to mirror D1 (whose FK enforcement is not guaranteed); the
 // services delete derived rows explicitly rather than relying on cascade.
 
 const MIGRATIONS_DIR = join(dirname(fileURLToPath(import.meta.url)), '../../../migrations')
-// Document-model migrations applied to the test DB, in order. 044 ALTERs the documents table from 043.
-const DOC_MIGRATIONS = ['043_document_repository.sql', '044_blog_post_document_columns.sql']
+const DOC_MIGRATIONS = ['0001_core.sql', '0002_documents.sql']
 
 // better-sqlite3 only accepts numbers/strings/bigints/buffers/null. Coerce the values the
 // services bind (undefined, booleans) the same way D1's binder tolerates them.
@@ -78,6 +77,9 @@ export function createTestD1(): TestD1 {
   for (const m of DOC_MIGRATIONS) {
     sqlite.exec(readFileSync(join(MIGRATIONS_DIR, m), 'utf8'))
   }
+  // The production baseline seeds default collections for a fresh app. Tests build their
+  // own fixture collections, so clear seeded rows to avoid unique-name collisions.
+  sqlite.exec("DELETE FROM collections WHERE id IN ('blog_posts', 'pages', 'news')")
 
   return {
     prepare(sql: string) {

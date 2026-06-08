@@ -52,12 +52,6 @@ describe('admin-content news (auto-registered doc type) — create-as-draft regr
 
   beforeEach(async () => {
     db = createTestD1()
-    db.raw.exec(`
-      CREATE TABLE users (id TEXT PRIMARY KEY, email TEXT, username TEXT, first_name TEXT, last_name TEXT, role TEXT, is_active INTEGER, created_at INTEGER, updated_at INTEGER);
-      CREATE TABLE collections (id TEXT PRIMARY KEY, name TEXT, display_name TEXT, description TEXT, schema TEXT, is_active INTEGER DEFAULT 1, source_type TEXT, managed INTEGER DEFAULT 1, created_at INTEGER, updated_at INTEGER);
-      CREATE TABLE content (id TEXT PRIMARY KEY, collection_id TEXT, slug TEXT, title TEXT, data TEXT, status TEXT, published_at INTEGER, author_id TEXT, created_at INTEGER, updated_at INTEGER);
-      CREATE TABLE content_fields (id TEXT PRIMARY KEY, collection_id TEXT, field_name TEXT, field_type TEXT, field_label TEXT, field_options TEXT, field_order INTEGER, is_required INTEGER, is_searchable INTEGER);
-    `)
     db.raw.prepare("INSERT INTO users (id,email,username,first_name,last_name,role,is_active,created_at,updated_at) VALUES ('u1','a@b.c','admin','Ada','Lovelace','admin',1,1,1)").run()
     // A plain user collection named 'news' (source_type='user' → eligible for auto-registration).
     db.raw.prepare("INSERT INTO collections (id,name,display_name,description,schema,is_active,source_type,managed,created_at,updated_at) VALUES (?,?,?,?,?,1,'user',1,1,1)")
@@ -84,8 +78,7 @@ describe('admin-content news (auto-registered doc type) — create-as-draft regr
     expect(doc.is_published).toBe(0)
     expect(doc.is_current_draft).toBe(1)
     expect(doc.status).toBe('draft')
-    // and nothing leaked to the legacy content table
-    expect(db.raw.prepare("SELECT COUNT(*) n FROM content WHERE collection_id=?").get(COLL).n).toBe(0)
+    expect(db.raw.prepare('SELECT COUNT(*) AS count FROM content').get().count).toBe(0)
   })
 
   it('green "Save & Publish" button → published (this is the only path that should publish)', async () => {

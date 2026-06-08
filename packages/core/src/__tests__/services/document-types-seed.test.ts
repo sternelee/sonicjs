@@ -10,13 +10,10 @@ describe('autoRegisterCollectionDocumentTypes', () => {
   let db
   beforeEach(() => {
     db = createTestD1()
-    db.raw.exec(
-      `CREATE TABLE collections (id TEXT PRIMARY KEY, name TEXT, display_name TEXT, is_active INTEGER DEFAULT 1, source_type TEXT, created_at INTEGER, updated_at INTEGER)`,
-    )
-    db.raw.prepare("INSERT INTO collections (id,name,display_name,is_active,source_type) VALUES ('n','news','News',1,NULL)").run()
-    db.raw.prepare("INSERT INTO collections (id,name,display_name,is_active,source_type) VALUES ('p','pages','Pages',1,'user')").run()
-    db.raw.prepare("INSERT INTO collections (id,name,display_name,is_active,source_type) VALUES ('f','contact_form','Contact Form',1,'form')").run()
-    db.raw.prepare("INSERT INTO collections (id,name,display_name,is_active,source_type) VALUES ('x','archived_coll','Archived',0,NULL)").run()
+    db.raw.prepare("INSERT INTO collections (id,name,display_name,is_active,source_type,created_at,updated_at) VALUES ('n','news','News',1,NULL,1,1)").run()
+    db.raw.prepare("INSERT INTO collections (id,name,display_name,is_active,source_type,created_at,updated_at) VALUES ('p','pages','Pages',1,'user',1,1)").run()
+    db.raw.prepare("INSERT INTO collections (id,name,display_name,is_active,source_type,created_at,updated_at) VALUES ('f','contact_form','Contact Form',1,'form',1,1)").run()
+    db.raw.prepare("INSERT INTO collections (id,name,display_name,is_active,source_type,created_at,updated_at) VALUES ('x','archived_coll','Archived',0,NULL,1,1)").run()
   })
   afterEach(() => db.close())
 
@@ -37,7 +34,7 @@ describe('autoRegisterCollectionDocumentTypes', () => {
   })
 
   it('does not duplicate or overwrite an already-registered (hand-tuned) type', async () => {
-    db.raw.prepare("INSERT INTO collections (id,name,display_name,is_active,source_type) VALUES ('b','blog_posts','Blog Posts',1,NULL)").run()
+    db.raw.prepare("INSERT INTO collections (id,name,display_name,is_active,source_type,created_at,updated_at) VALUES ('b','blog_posts','Blog Posts',1,NULL,1,1)").run()
     await bootstrapDocumentTypes(db) // registers blog_posts with q_blog_* queryable fields
 
     const registered = await autoRegisterCollectionDocumentTypes(db)
@@ -49,7 +46,8 @@ describe('autoRegisterCollectionDocumentTypes', () => {
   })
 
   it('no-ops when the collections table is absent', async () => {
-    const freshDb = createTestD1() // no collections table
+    const freshDb = createTestD1()
+    freshDb.raw.exec('DROP TABLE collections')
     const registered = await autoRegisterCollectionDocumentTypes(freshDb)
     expect(registered).toEqual([])
     freshDb.close()

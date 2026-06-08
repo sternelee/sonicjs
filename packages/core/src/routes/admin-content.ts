@@ -415,27 +415,19 @@ adminContentRoutes.get('/', async (c) => {
       }))
     }
 
-    // ── All-view union (a) ──────────────────────────────────────────────────────
-    // /admin/content (All) must show document-backed collections too. Merge legacy `content` with
-    // doc-backed `documents` in one sorted+paginated query. Doc-backed collections are EXCLUDED from
-    // the content half so backfilled posts (which keep their legacy row) don't show twice. Timestamps
-    // are normalized — documents store SECONDS, content stores MS — so the merged ORDER BY is correct.
-    const docBackedTypeIds = docTypes.filter(dt => collectionNames.has(dt.id)).map(dt => dt.id)
-    if (modelName === 'all' && docBackedTypeIds.length > 0) {
-      const ph = docBackedTypeIds.map(() => '?').join(',')
+    // ── All-view documents list ────────────────────────────────────────────────
+    // The document-model POC keeps legacy `content` paths available, but the All view is
+    // a documents-only list over every active document type.
+    if (modelName === 'all') {
+      const allTypeIds = docTypes.map(dt => dt.id)
       const like = search ? `%${search}%` : null
-
-      const contentConds = ["(col.source_type IS NULL OR col.source_type = 'user')", `col.name NOT IN (${ph})`]
-      const contentParams: any[] = [...docBackedTypeIds]
-      if (status === 'deleted') contentConds.push("c.status = 'deleted'")
-      else {
-        contentConds.push("c.status != 'deleted'")
-        if (status !== 'all') { contentConds.push('c.status = ?'); contentParams.push(status) }
+      const docConds = ['d.is_current_draft = 1', "d.tenant_id = 'default'"]
+      const docParams: any[] = []
+      if (allTypeIds.length > 0) {
+        const ph = allTypeIds.map(() => '?').join(',')
+        docConds.push(`d.type_id IN (${ph})`)
+        docParams.push(...allTypeIds)
       }
-      if (like) { contentConds.push('(c.title LIKE ? OR c.slug LIKE ? OR c.data LIKE ?)'); contentParams.push(like, like, like) }
-
-      const docConds = ['d.is_current_draft = 1', "d.tenant_id = 'default'", `d.type_id IN (${ph})`]
-      const docParams: any[] = [...docBackedTypeIds]
       if (status === 'deleted') docConds.push('d.deleted_at IS NOT NULL')
       else {
         docConds.push('d.deleted_at IS NULL')
@@ -445,27 +437,18 @@ adminContentRoutes.get('/', async (c) => {
       if (like) { docConds.push("(d.title LIKE ? OR json_extract(d.data,'$.author') LIKE ?)"); docParams.push(like, like) }
 
       const unionSql = `
-        SELECT id, title, slug, status, updated_at, cdisplay, author_label FROM (
-          SELECT c.id AS id, c.title AS title, c.slug AS slug, c.status AS status, c.updated_at AS updated_at,
-                 col.display_name AS cdisplay,
-                 COALESCE(NULLIF(TRIM(COALESCE(u.first_name,'') || ' ' || COALESCE(u.last_name,'')), ''), u.email, 'Unknown') AS author_label
-          FROM content c JOIN collections col ON c.collection_id = col.id LEFT JOIN users u ON c.author_id = u.id
-          WHERE ${contentConds.join(' AND ')}
-          UNION ALL
-          SELECT d.root_id AS id, d.title AS title, d.slug AS slug,
-                 CASE WHEN d.is_published = 1 THEN 'published' ELSE 'draft' END AS status,
-                 d.updated_at * 1000 AS updated_at,
-                 dt.display_name AS cdisplay, COALESCE(d.created_by, 'System') AS author_label
-          FROM documents d JOIN document_types dt ON dt.id = d.type_id
-          WHERE ${docConds.join(' AND ')}
-        )
+        SELECT d.root_id AS id, d.title AS title, d.slug AS slug,
+               CASE WHEN d.is_published = 1 THEN 'published' ELSE 'draft' END AS status,
+               d.updated_at * 1000 AS updated_at,
+               dt.display_name AS cdisplay, COALESCE(d.created_by, 'System') AS author_label
+        FROM documents d JOIN document_types dt ON dt.id = d.type_id
+        WHERE ${docConds.join(' AND ')}
         ORDER BY updated_at DESC LIMIT ? OFFSET ?`
-      const { results: unionRows } = await db.prepare(unionSql).bind(...contentParams, ...docParams, limit, offset).all()
+      const { results: unionRows } = await db.prepare(unionSql).bind(...docParams, limit, offset).all()
 
       const countRow = await db.prepare(
-        `SELECT (SELECT COUNT(*) FROM content c JOIN collections col ON c.collection_id = col.id WHERE ${contentConds.join(' AND ')})
-              + (SELECT COUNT(*) FROM documents d WHERE ${docConds.join(' AND ')}) AS count`,
-      ).bind(...contentParams, ...docParams).first() as any
+        `SELECT COUNT(*) AS count FROM documents d WHERE ${docConds.join(' AND ')}`,
+      ).bind(...docParams).first() as any
 
       const badge: Record<string, string> = {
         published: 'bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-400 ring-1 ring-inset ring-green-600/20 dark:ring-green-500/20',
@@ -491,6 +474,24 @@ adminContentRoutes.get('/', async (c) => {
         version: c.get('appVersion'),
       }))
     }
+
+    const emptyPageData: ContentListPageData = {
+      modelName,
+      status,
+      page,
+      search,
+      models,
+      contentItems: [],
+      totalItems: 0,
+      itemsPerPage: limit,
+      user: user ? {
+        name: user!.email,
+        email: user!.email,
+        role: user!.role
+      } : undefined,
+      version: c.get('appVersion')
+    }
+    return c.html(renderContentListPage(emptyPageData))
 
     // ── Legacy content branch ──────────────────────────────────────────────────
     // Build where conditions
@@ -629,9 +630,9 @@ adminContentRoutes.get('/', async (c) => {
       totalItems,
       itemsPerPage: limit,
       user: user ? {
-        name: user.email,
-        email: user.email,
-        role: user.role
+        name: user?.email ?? '',
+        email: user?.email ?? '',
+        role: user?.role ?? ''
       } : undefined,
       version: c.get('appVersion')
     }
@@ -837,6 +838,18 @@ adminContentRoutes.get('/:id/edit', async (c) => {
       }
     }
 
+    const notFoundData: ContentFormData = {
+      collection: { id: '', name: '', display_name: 'Unknown', schema: {} },
+      fields: [],
+      error: 'Content not found.',
+      user: user ? {
+        name: user.email,
+        email: user.email,
+        role: user.role
+      } : undefined
+    }
+    return c.html(renderContentFormPage(notFoundData))
+
     // Get content with caching
     const cache = getCacheService(CACHE_CONFIGS.content!)
     const content = await cache.getOrSet(
@@ -860,9 +873,9 @@ adminContentRoutes.get('/:id/edit', async (c) => {
         fields: [],
         error: 'Content not found.',
         user: user ? {
-          name: user.email,
-          email: user.email,
-          role: user.role
+          name: user!.email,
+          email: user!.email,
+          role: user!.role
         } : undefined
       }
       return c.html(renderContentFormPage(formData))
@@ -935,9 +948,9 @@ adminContentRoutes.get('/:id/edit', async (c) => {
       mdxeditorSettings,
       referrerParams,
       user: user ? {
-        name: user.email,
-        email: user.email,
-        role: user.role
+        name: user!.email,
+        email: user!.email,
+        role: user!.role
       } : undefined,
       version: c.get('appVersion')
     }
@@ -1047,6 +1060,12 @@ adminContentRoutes.post('/', async (c) => {
         ? c.text('', 200, { 'HX-Redirect': redirectUrl })
         : c.redirect(redirectUrl)
     }
+
+    return c.html(html`
+      <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+        Collection is not document-backed.
+      </div>
+    `, 400)
 
     // Create content
     const contentId = crypto.randomUUID()
@@ -1189,6 +1208,12 @@ adminContentRoutes.put('/:id', async (c) => {
       }
     }
 
+    return c.html(html`
+      <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+        Content not found.
+      </div>
+    `, 404)
+
     // Get existing content
     const contentStmt = db.prepare('SELECT * FROM content WHERE id = ?')
     const existingContent = await contentStmt.bind(id).first() as any
@@ -1218,16 +1243,16 @@ adminContentRoutes.put('/:id', async (c) => {
     if (Object.keys(errors).length > 0) {
       const formDataWithErrors: ContentFormData = {
         id,
-        collection,
+        collection: collection!,
         fields,
         data,
         validationErrors: errors,
         error: 'Please fix the validation errors below.',
         isEdit: true,
         user: user ? {
-          name: user.email,
-          email: user.email,
-          role: user.role
+          name: user!.email,
+          email: user!.email,
+          role: user!.role
         } : undefined
       }
       return c.html(renderContentFormPage(formDataWithErrors))
@@ -1438,6 +1463,34 @@ adminContentRoutes.post('/duplicate', async (c) => {
 
     const db = c.env.DB
 
+    const docOriginal = await db
+      .prepare("SELECT * FROM documents WHERE root_id = ? AND is_current_draft = 1 AND tenant_id = 'default' AND deleted_at IS NULL")
+      .bind(originalId)
+      .first() as any
+    if (docOriginal) {
+      const docType = await getDocBackingType(db, docOriginal.type_id)
+      if (docType) {
+        const svc = makeDocService(db, docType)
+        const originalData = docOriginal.data ? JSON.parse(docOriginal.data) : {}
+        const copyData = {
+          ...originalData,
+          title: `${originalData.title || docOriginal.title || 'Untitled'} (Copy)`
+        }
+        const copy = await svc.create(createDocumentSchema.parse({
+          typeId: docType.id,
+          tenantId: 'default',
+          locale: 'default',
+          title: copyData.title,
+          slug: `${docOriginal.slug || 'copy'}-copy-${Date.now()}`,
+          data: copyData,
+          publishOnCreate: false,
+        }), user?.userId)
+        return c.json({ success: true, id: copy.rootId })
+      }
+    }
+
+    return c.json({ success: false, error: 'Content not found' }, 404)
+
     // Get original content
     const contentStmt = db.prepare('SELECT * FROM content WHERE id = ?')
     const original = await contentStmt.bind(originalId).first() as any
@@ -1631,16 +1684,8 @@ adminContentRoutes.post('/bulk-action', async (c) => {
       }
     }
 
-    // ── Legacy content rows ───────────────────────────────────────────────────
-    if (contentIds.length > 0) {
-      const cph = contentIds.map(() => '?').join(',')
-      if (action === 'delete') {
-        await db.prepare(`UPDATE content SET status = 'deleted', updated_at = ? WHERE id IN (${cph})`).bind(now, ...contentIds).run()
-      } else {
-        const publishedAt = action === 'publish' ? now : null
-        await db.prepare(`UPDATE content SET status = ?, published_at = ?, updated_at = ? WHERE id IN (${cph})`).bind(action, publishedAt, now, ...contentIds).run()
-      }
-    }
+    // Legacy `content` rows were removed from the v3 greenfield schema. Unknown/non-document ids are
+    // ignored here instead of probing a table that should no longer exist.
 
     // Invalidate content caches and the public-API filtered caches so both surfaces reflect the change.
     const cache = getCacheService(CACHE_CONFIGS.content!)
@@ -1680,6 +1725,8 @@ adminContentRoutes.delete('/:id', async (c) => {
         </div>
       `)
     }
+
+    return c.json({ success: false, error: 'Content not found' }, 404)
 
     // Check if content exists
     const contentStmt = db.prepare('SELECT id, title FROM content WHERE id = ?')
@@ -1727,6 +1774,8 @@ adminContentRoutes.get('/:id/versions', async (c) => {
   try {
     const id = c.req.param('id')
     const db = c.env.DB
+
+    return c.html('<p>Content not found</p>', 404)
 
     // Get current content
     const contentStmt = db.prepare('SELECT * FROM content WHERE id = ?')
@@ -1781,6 +1830,8 @@ adminContentRoutes.post('/:id/restore/:version', async (c) => {
     const version = parseInt(c.req.param('version') || '0')
     const user = c.get('user')
     const db = c.env.DB
+
+    return c.json({ success: false, error: 'Version not found' }, 404)
 
     // Get the specific version
     const versionStmt = db.prepare(`

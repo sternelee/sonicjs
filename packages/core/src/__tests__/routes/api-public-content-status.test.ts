@@ -28,8 +28,7 @@ describe('Public content API status policy (documents-backed)', () => {
   beforeEach(async () => {
     vi.restoreAllMocks()
     db = createTestD1()
-    db.raw.exec('CREATE TABLE collections (id TEXT PRIMARY KEY, name TEXT, display_name TEXT, is_active INTEGER, source_type TEXT)')
-    db.raw.prepare("INSERT INTO collections VALUES ('pages-collection','pages','Pages',1,NULL)").run()
+    db.raw.prepare("INSERT INTO collections (id,name,display_name,schema,is_active,source_type,created_at,updated_at) VALUES ('pages-collection','pages','Pages','{}',1,NULL,1,1)").run()
     const svc = new DocumentsService(db, { tenantId: 'default', queryableFields: [] })
     await svc.create({ typeId: 'pages', tenantId: 'default', title: 'Published', slug: 'published', data: {}, publishOnCreate: true })
     await svc.create({ typeId: 'pages', tenantId: 'default', title: 'Draft', slug: 'draft', data: {} })

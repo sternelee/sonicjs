@@ -584,9 +584,20 @@ adminCollectionsRoutes.delete('/:id', async (c) => {
     const id = c.req.param('id')
     const db = c.env.DB
 
-    // Check if collection has content
-    const contentStmt = db.prepare('SELECT COUNT(*) as count FROM content WHERE collection_id = ?')
-    const contentResult = await contentStmt.bind(id).first() as any
+    const collectionStmt = db.prepare('SELECT name FROM collections WHERE id = ?')
+    const collection = await collectionStmt.bind(id).first() as any
+
+    if (!collection) {
+      return c.html(html`
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          Collection not found.
+        </div>
+      `)
+    }
+
+    // Check if collection has document content.
+    const contentStmt = db.prepare("SELECT COUNT(DISTINCT root_id) as count FROM documents WHERE tenant_id = 'default' AND type_id = ?")
+    const contentResult = await contentStmt.bind(collection.name).first() as any
 
     if (contentResult && contentResult.count > 0) {
       return c.html(html`

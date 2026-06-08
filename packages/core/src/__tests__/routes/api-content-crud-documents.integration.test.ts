@@ -32,8 +32,7 @@ describe('api-content-crud → documents (decommission step)', () => {
 
   beforeEach(async () => {
     db = createTestD1()
-    db.raw.exec('CREATE TABLE collections (id TEXT PRIMARY KEY, name TEXT, display_name TEXT, is_active INTEGER, source_type TEXT)')
-    db.raw.prepare("INSERT INTO collections VALUES ('news-id','news','News',1,NULL)").run()
+    db.raw.prepare("INSERT INTO collections (id,name,display_name,schema,is_active,source_type,created_at,updated_at) VALUES ('news-id','news','News','{}',1,NULL,1,1)").run()
     await autoRegisterCollectionDocumentTypes(db) // registers the 'news' document type
     app = buildApp(db)
   })

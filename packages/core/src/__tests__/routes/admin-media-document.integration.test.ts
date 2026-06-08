@@ -33,13 +33,6 @@ describe('admin-media — document mirror + reference-aware delete (Phase 6 slic
 
   beforeEach(async () => {
     db = createTestD1()
-    db.raw.exec(
-      `CREATE TABLE media (
-        id TEXT PRIMARY KEY, filename TEXT, original_name TEXT, mime_type TEXT, size INTEGER,
-        width INTEGER, height INTEGER, folder TEXT, r2_key TEXT, public_url TEXT, thumbnail_url TEXT,
-        alt TEXT, caption TEXT, tags TEXT, uploaded_by TEXT, uploaded_at INTEGER, updated_at INTEGER,
-        published_at INTEGER, scheduled_at INTEGER, archived_at INTEGER, deleted_at INTEGER)`,
-    )
     await bootstrapDocumentTypes(db)
     const bucket = { put: async () => ({}), get: async () => null, delete: async () => {} }
     app = buildApp(db, bucket)

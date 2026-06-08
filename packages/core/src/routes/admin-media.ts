@@ -749,9 +749,8 @@ adminMediaRoutes.delete('/cleanup', requireRole('admin'), async (c) => {
     const allMediaStmt = db.prepare('SELECT id, r2_key, filename FROM media WHERE deleted_at IS NULL')
     const { results: allMedia } = await allMediaStmt.all<{ id: string; r2_key: string; filename: string }>()
 
-    // Find media files referenced in content
-    // Content can reference media in various JSON fields like data, hero_image, etc.
-    const contentStmt = db.prepare('SELECT data FROM content')
+    // Find media files referenced in document content.
+    const contentStmt = db.prepare("SELECT data FROM documents WHERE tenant_id = 'default' AND deleted_at IS NULL")
     const { results: contentRecords } = await contentStmt.all<{ data: unknown }>()
 
     // Extract all media URLs from content
