@@ -3,8 +3,29 @@ import { requireAuth, requireRole } from '../middleware'
 import { getCacheService, CACHE_CONFIGS } from '../services'
 import type { Bindings, Variables } from '../app'
 import { resolveContentVariables } from '../plugins/core-plugins/global-variables-plugin/variable-resolver'
+import { DocumentsService } from '../services/documents'
+import { DocumentTypeRegistry } from '../services/document-type-registry'
+import { createDocumentSchema } from '../schemas/document'
+import type { D1Database } from '@cloudflare/workers-types'
 
 const apiContentCrudRoutes = new Hono<{ Bindings: Bindings; Variables: Variables }>()
+
+// Resolve the document type backing a content collection (by collection db id OR name). When present
+// the write goes to the documents table (legacy `content` decommission); otherwise legacy content.
+async function resolveDocBacking(db: D1Database, collectionIdOrName: string) {
+  const coll = await db
+    .prepare('SELECT id, name FROM collections WHERE id = ? OR name = ?')
+    .bind(collectionIdOrName, collectionIdOrName)
+    .first() as { id: string; name: string } | null
+  if (!coll) return null
+  const docType = await new DocumentTypeRegistry(db).findById(coll.name)
+  return docType ? { coll, docType } : null
+}
+
+function slugify(s?: string | null): string | null {
+  if (!s) return null
+  return s.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').replace(/^-+|-+$/g, '') || null
+}
 
 // GET /api/content/check-slug - Check if slug is available in collection
 // Query params: collectionId, slug, excludeId (optional - when editing)
@@ -145,7 +166,38 @@ apiContentCrudRoutes.post('/', requireAuth(), requireRole(['admin', 'editor', 'a
       .replace(/-+/g, '-')
       .trim()
 
-    // Check for duplicate slug within the same collection
+    // Document-backed collection → create a document (legacy content decommission).
+    const backing = await resolveDocBacking(db, collectionId)
+    if (backing) {
+      const dup = await db
+        .prepare("SELECT root_id FROM documents WHERE type_id = ? AND tenant_id = 'default' AND is_current_draft = 1 AND deleted_at IS NULL AND slug = ?")
+        .bind(backing.coll.name, finalSlug)
+        .first()
+      if (dup) {
+        return c.json({ error: 'A content item with this slug already exists in this collection' }, 409)
+      }
+      const svc = new DocumentsService(db, {
+        queryableFields: backing.docType.queryableFields ?? [],
+        typeSchemaVersion: backing.docType.schemaVersion ?? 1,
+        maxVersionsPerRoot: backing.docType.settings?.maxVersionsPerRoot ?? 50,
+        tenantId: 'default',
+      })
+      const doc = await svc.create(
+        createDocumentSchema.parse({
+          typeId: backing.coll.name, tenantId: 'default', locale: 'default',
+          title, slug: finalSlug, data: data || {}, publishOnCreate: (status || 'draft') === 'published',
+        }),
+        user?.userId,
+      )
+      const cache = getCacheService(CACHE_CONFIGS.api!)
+      await cache.invalidate('content-filtered:*')
+      await cache.invalidate('collection-content-filtered:*')
+      return c.json({
+        data: { id: doc.rootId, title: doc.title, slug: doc.slug, status: doc.status, collectionId: backing.coll.id, data: doc.data, created_at: doc.createdAt, updated_at: doc.updatedAt },
+      }, 201)
+    }
+
+    // Check for duplicate slug within the same collection (legacy content path)
     const duplicateCheck = db.prepare(
       'SELECT id FROM content WHERE collection_id = ? AND slug = ?'
     )
@@ -215,8 +267,42 @@ apiContentCrudRoutes.put('/:id', requireAuth(), requireRole(['admin', 'editor', 
     const id = c.req.param('id')
     const db = c.env.DB
     const body = await c.req.json()
+    const user = c.get('user')
 
-    // Check if content exists
+    // Document-backed: :id is a document root id → save a new draft and sync publish state.
+    const docRow = await db
+      .prepare("SELECT root_id, type_id FROM documents WHERE root_id = ? AND tenant_id = 'default' AND is_current_draft = 1")
+      .bind(id)
+      .first() as any
+    if (docRow) {
+      const docType = await new DocumentTypeRegistry(db).findById(docRow.type_id)
+      const svc = new DocumentsService(db, {
+        queryableFields: docType?.queryableFields ?? [],
+        typeSchemaVersion: docType?.schemaVersion ?? 1,
+        maxVersionsPerRoot: docType?.settings?.maxVersionsPerRoot ?? 50,
+        tenantId: 'default',
+      })
+      const input: any = {}
+      if (body.title !== undefined) input.title = body.title
+      if (body.slug !== undefined) input.slug = slugify(body.slug)
+      if (body.data !== undefined) input.data = body.data
+      const newDraft = await svc.saveDraft(id!, input, user?.userId)
+      if (body.status !== undefined) {
+        const pub = await db.prepare("SELECT id FROM documents WHERE root_id = ? AND is_published = 1 AND tenant_id = 'default'").bind(id).first() as any
+        if (body.status === 'published') await svc.publish(newDraft.id, user?.userId)
+        else if (pub) await svc.unpublish(pub.id)
+      }
+      const cache = getCacheService(CACHE_CONFIGS.api!)
+      await cache.invalidate('content-filtered:*')
+      await cache.invalidate('collection-content-filtered:*')
+      const coll = await db.prepare('SELECT id FROM collections WHERE name = ?').bind(docRow.type_id).first() as any
+      const saved = await db.prepare('SELECT * FROM documents WHERE id = ?').bind(newDraft.id).first() as any
+      return c.json({
+        data: { id: saved.root_id, title: saved.title, slug: saved.slug, status: saved.status, collectionId: coll?.id ?? docRow.type_id, data: saved.data ? JSON.parse(saved.data) : {}, created_at: saved.created_at, updated_at: saved.updated_at },
+      })
+    }
+
+    // Check if content exists (legacy content path)
     const existingStmt = db.prepare('SELECT * FROM content WHERE id = ?')
     const existing = await existingStmt.bind(id).first() as any
 
@@ -306,7 +392,18 @@ apiContentCrudRoutes.delete('/:id', requireAuth(), requireRole(['admin', 'editor
     const id = c.req.param('id')
     const db = c.env.DB
 
-    // Check if content exists
+    // Document-backed: :id is a document root id → soft-delete every version row of the root.
+    const docRow = await db.prepare("SELECT type_id FROM documents WHERE root_id = ? AND tenant_id = 'default' LIMIT 1").bind(id).first() as any
+    if (docRow) {
+      const now = Math.floor(Date.now() / 1000)
+      await db.prepare("UPDATE documents SET deleted_at = ?, updated_at = ? WHERE root_id = ? AND tenant_id = 'default'").bind(now, now, id).run()
+      const cache = getCacheService(CACHE_CONFIGS.api!)
+      await cache.invalidate('content-filtered:*')
+      await cache.invalidate('collection-content-filtered:*')
+      return c.json({ success: true })
+    }
+
+    // Check if content exists (legacy content path)
     const existingStmt = db.prepare('SELECT collection_id FROM content WHERE id = ?')
     const existing = await existingStmt.bind(id).first() as any
 
