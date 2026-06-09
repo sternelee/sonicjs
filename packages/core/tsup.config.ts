@@ -40,6 +40,11 @@ export default defineConfig({
     'hono',
     'drizzle-orm',
     'zod',
+    // Better Auth + cloudflare shim — bundled by wrangler at deploy time, not here
+    'better-auth',
+    'better-auth-cloudflare',
+    '@better-auth/kysely-adapter',
+    'kysely',
   ],
 
   // Configure esbuild to drop unused imports

@@ -657,7 +657,7 @@ adminContentRoutes.get('/', async (c) => {
              u.first_name, u.last_name, u.email as author_email
       FROM content c
       JOIN collections col ON c.collection_id = col.id
-      LEFT JOIN users u ON c.author_id = u.id
+      LEFT JOIN auth_user u ON c.author_id = u.id
       ${whereClause}
       ORDER BY c.updated_at DESC
       LIMIT ? OFFSET ?
@@ -1903,7 +1903,7 @@ adminContentRoutes.get('/:id/versions', async (c) => {
     const versionsStmt = db.prepare(`
       SELECT cv.*, u.first_name, u.last_name, u.email
       FROM content_versions cv
-      LEFT JOIN users u ON cv.author_id = u.id
+      LEFT JOIN auth_user u ON cv.author_id = u.id
       WHERE cv.content_id = ?
       ORDER BY cv.version DESC
     `)

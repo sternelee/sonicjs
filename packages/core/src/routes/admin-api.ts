@@ -67,7 +67,7 @@ adminApiRoutes.get('/stats', async (c) => {
     // Get users count
     let usersCount = 0
     try {
-      const usersStmt = db.prepare('SELECT COUNT(*) as count FROM users WHERE is_active = 1')
+      const usersStmt = db.prepare('SELECT COUNT(*) as count FROM auth_user WHERE is_active = 1')
       const usersResult = await usersStmt.first()
       usersCount = (usersResult as any)?.count || 0
     } catch (error) {
@@ -149,7 +149,7 @@ adminApiRoutes.get('/activity', async (c) => {
         u.first_name,
         u.last_name
       FROM activity_logs a
-      LEFT JOIN users u ON a.user_id = u.id
+      LEFT JOIN auth_user u ON a.user_id = u.id
       WHERE a.resource_type IN ('content', 'collections', 'users', 'media')
       ORDER BY a.created_at DESC
       LIMIT ?

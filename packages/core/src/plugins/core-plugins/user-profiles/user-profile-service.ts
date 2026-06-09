@@ -112,7 +112,7 @@ export function extractCustomFieldsFromForm(
 
 export async function getCustomData(db: any, userId: string): Promise<Record<string, any>> {
   const row = await db
-    .prepare('SELECT data FROM user_profiles WHERE user_id = ?')
+    .prepare('SELECT data FROM auth_user_profiles WHERE user_id = ?')
     .bind(userId)
     .first() as any
 
@@ -135,13 +135,13 @@ export async function saveCustomData(
 
   // Check if profile row exists
   const row = await db
-    .prepare('SELECT id FROM user_profiles WHERE user_id = ?')
+    .prepare('SELECT id FROM auth_user_profiles WHERE user_id = ?')
     .bind(userId)
     .first() as any
 
   if (row) {
     await db
-      .prepare('UPDATE user_profiles SET data = ?, updated_at = ? WHERE user_id = ?')
+      .prepare('UPDATE auth_user_profiles SET data = ?, updated_at = ? WHERE user_id = ?')
       .bind(json, Date.now(), userId)
       .run()
   } else {
@@ -149,7 +149,7 @@ export async function saveCustomData(
     const now = Date.now()
     await db
       .prepare(
-        'INSERT INTO user_profiles (id, user_id, data, created_at, updated_at) VALUES (?, ?, ?, ?, ?)'
+        'INSERT INTO auth_user_profiles (id, user_id, data, created_at, updated_at) VALUES (?, ?, ?, ?, ?)'
       )
       .bind(profileId, userId, json, now, now)
       .run()

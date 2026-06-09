@@ -3,7 +3,7 @@
  *
  * Configurable custom profile fields for users.
  * Developers call defineUserProfile() at app boot to declare custom fields
- * that are stored as JSON in user_profiles.data and rendered in the admin UI.
+ * that are stored as JSON in auth_user_profiles.data and rendered in the admin UI.
  *
  * API Routes:
  *   GET  /api/user-profiles/schema     → Public field definitions

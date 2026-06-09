@@ -151,7 +151,7 @@ apiSystemRoutes.get('/stats', async (c) => {
     // Get user statistics
     const userStats = await db.prepare(`
       SELECT COUNT(*) as total_users
-      FROM users
+      FROM auth_user
     `).first() as any
 
     return c.json({

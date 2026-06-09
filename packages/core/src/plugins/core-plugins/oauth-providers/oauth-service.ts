@@ -303,7 +303,7 @@ export class OAuthService {
   async unlinkOAuthAccount(userId: string, provider: string): Promise<boolean> {
     // Check user has a password or another OAuth link before unlinking
     const user = await this.db.prepare(`
-      SELECT password_hash FROM users WHERE id = ?
+      SELECT password_hash FROM auth_user WHERE id = ?
     `).bind(userId).first() as { password_hash: string | null } | null
 
     const otherLinks = await this.db.prepare(`
@@ -338,7 +338,7 @@ export class OAuthService {
   } | null> {
     return await this.db.prepare(`
       SELECT id, email, role, is_active, first_name, last_name
-      FROM users WHERE email = ?
+      FROM auth_user WHERE email = ?
     `).bind(email.toLowerCase()).first() as any
   }
 
@@ -356,7 +356,7 @@ export class OAuthService {
 
     // Check for username collision and append random suffix if needed
     const existing = await this.db.prepare(
-      'SELECT id FROM users WHERE username = ?'
+      'SELECT id FROM auth_user WHERE username = ?'
     ).bind(username).first()
 
     const finalUsername = existing
@@ -364,7 +364,7 @@ export class OAuthService {
       : username
 
     await this.db.prepare(`
-      INSERT INTO users (
+      INSERT INTO auth_user (
         id, email, username, first_name, last_name,
         password_hash, role, avatar, is_active, created_at, updated_at
       ) VALUES (?, ?, ?, ?, ?, NULL, 'viewer', ?, 1, ?, ?)
