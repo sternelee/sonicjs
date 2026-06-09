@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS auth_user (
   username TEXT NOT NULL UNIQUE,
   first_name TEXT NOT NULL,
   last_name TEXT NOT NULL,
-  password_hash TEXT,          -- legacy; backfilled into auth_account on first BA login
+  password_hash TEXT,
   role TEXT NOT NULL DEFAULT 'viewer',
   avatar TEXT,
   is_active INTEGER NOT NULL DEFAULT 1,
@@ -283,21 +283,6 @@ CREATE TABLE IF NOT EXISTS auth_team (
   created_at      INTEGER NOT NULL,
   updated_at      INTEGER NOT NULL
 );
-
--- ── Backfills ─────────────────────────────────────────────────────────────────
--- Populate auth_account for existing users so legacy PBKDF2 hashes remain
--- verifiable on next login (auth/config.ts transparently upgrades to scrypt).
-INSERT OR IGNORE INTO auth_account (id, user_id, account_id, provider_id, password, created_at, updated_at)
-SELECT 'cred-' || u.id, u.id, u.id, 'credential', u.password_hash,
-       unixepoch() * 1000, unixepoch() * 1000
-FROM auth_user u
-WHERE u.password_hash IS NOT NULL AND u.password_hash <> '';
-
--- Backfill RBAC role membership from the legacy auth_user.role string column.
-INSERT OR IGNORE INTO auth_rbac_user_roles (user_id, role_id)
-SELECT u.id, r.id
-FROM auth_user u
-JOIN auth_rbac_roles r ON r.name = u.role;
 
 -- ── Plugin system ─────────────────────────────────────────────────────────────
 -- Kept as dedicated tables per document-model-poc-plan.md §"Keep dedicated tables"
