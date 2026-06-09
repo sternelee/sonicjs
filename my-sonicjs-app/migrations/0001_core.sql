@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS auth_user (
   last_name TEXT NOT NULL,
   role TEXT NOT NULL DEFAULT 'viewer',
   avatar TEXT,
+  password_hash TEXT,
   is_active INTEGER NOT NULL DEFAULT 1,
   last_login_at INTEGER,
   phone TEXT,
