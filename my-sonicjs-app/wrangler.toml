@@ -14,7 +14,7 @@ workers_dev = true
 [[d1_databases]]
 binding = "DB"
 database_name = "sonicjs-worktree-lane711-site-settings-save-fix"
-database_id = "1efdb7f9-68ff-4d83-b613-4b474a33988b"
+database_id = "bcb9dbc6-6498-4515-89ec-4518fd86c5d8"
 migrations_dir = "./migrations"
 
 # R2 Bucket for media storage (using CI bucket)
