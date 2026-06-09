@@ -112,12 +112,18 @@ async function seed() {
     `).bind(
       crypto.randomUUID(),
       odid,
-      'password',
+      odid,
       'credential',
       passwordHash,
       nowSec,
       nowSec
     ).run()
+
+    // Assign admin RBAC role (required for portal access)
+    await env.DB.prepare(`
+      INSERT OR IGNORE INTO auth_rbac_user_roles (user_id, role_id)
+      SELECT ?, id FROM auth_rbac_roles WHERE name = 'admin'
+    `).bind(odid).run()
 
     console.log('✓ Admin user created successfully')
     console.log(`  Email: admin@sonicjs.com`)
