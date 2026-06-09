@@ -272,8 +272,8 @@ export class RedirectService {
             updater.first_name || ' ' || updater.last_name as updated_by_name
           FROM redirects r
           LEFT JOIN redirect_analytics a ON r.id = a.redirect_id
-          LEFT JOIN users creator ON r.created_by = creator.id
-          LEFT JOIN users updater ON r.updated_by = updater.id
+          LEFT JOIN auth_user creator ON r.created_by = creator.id
+          LEFT JOIN auth_user updater ON r.updated_by = updater.id
           WHERE r.id = ? AND r.deleted_at IS NULL
         `)
         .bind(id)
@@ -529,8 +529,8 @@ export class RedirectService {
           updater.first_name || ' ' || updater.last_name as updated_by_name
         FROM redirects r
         LEFT JOIN redirect_analytics a ON r.id = a.redirect_id
-        LEFT JOIN users creator ON r.created_by = creator.id
-        LEFT JOIN users updater ON r.updated_by = updater.id
+        LEFT JOIN auth_user creator ON r.created_by = creator.id
+        LEFT JOIN auth_user updater ON r.updated_by = updater.id
         ${whereClause}
         ORDER BY r.created_at DESC
         LIMIT ? OFFSET ?

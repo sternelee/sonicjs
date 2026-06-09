@@ -113,7 +113,7 @@ export class SeedDataService {
       const createdAtTimestamp = Math.floor(createdAt.getTime() / 1000)
 
       const stmt = this.db.prepare(`
-        INSERT INTO users (id, email, username, first_name, last_name, password_hash, role, is_active, last_login_at, created_at, updated_at)
+        INSERT INTO auth_user (id, email, username, first_name, last_name, password_hash, role, is_active, last_login_at, created_at, updated_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `)
 
@@ -140,7 +140,7 @@ export class SeedDataService {
   // Create 200 content items across different types
   async createContent(): Promise<number> {
     // Get all users and collections
-    const usersStmt = this.db.prepare('SELECT * FROM users')
+    const usersStmt = this.db.prepare('SELECT * FROM auth_user')
     const { results: allUsers } = await usersStmt.all()
 
     const collectionsStmt = this.db.prepare('SELECT * FROM collections')
@@ -261,7 +261,7 @@ export class SeedDataService {
 
     // Delete users (but keep admin users)
     const deleteUsersStmt = this.db.prepare(
-      "DELETE FROM users WHERE role != 'admin'"
+      "DELETE FROM auth_user WHERE role != 'admin'"
     )
     await deleteUsersStmt.run()
   }

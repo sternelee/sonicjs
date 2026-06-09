@@ -36,17 +36,16 @@ import { createDatabaseToolsAdminRoutes } from './plugins/core-plugins/database-
 import { createSeedDataAdminRoutes } from './plugins/core-plugins/seed-data-plugin/admin-routes'
 import { emailPlugin } from './plugins/core-plugins/email-plugin'
 import { emailReconciliationPlugin } from './plugins/core-plugins/email-reconciliation'
-import { otpLoginPlugin } from './plugins/core-plugins/otp-login-plugin'
-import { oauthProvidersPlugin } from './plugins/core-plugins/oauth-providers'
 import { userProfilesPlugin } from './plugins/core-plugins/user-profiles'
 import { aiSearchPlugin } from './plugins/core-plugins/ai-search-plugin'
-import { createMagicLinkAuthPlugin } from './plugins/available/magic-link-auth'
 import { securityAuditPlugin } from './plugins/core-plugins/security-audit-plugin'
 import { securityAuditMiddleware } from './plugins/core-plugins/security-audit-plugin'
 import { stripePlugin } from './plugins/core-plugins/stripe-plugin'
 import { testimonialsPlugin } from './plugins/core-plugins/testimonials'
 import { formsPlugin } from './plugins/core-plugins/forms-plugin'
-import { requireAuth, requireRole } from './middleware/auth'
+import { requireAuth, requireRole, requireRbac } from './middleware/auth'
+import { createAuth } from './auth/config'
+import { adminRbacRoutes } from './routes/admin-rbac'
 import { pluginMenuMiddleware } from './middleware/plugin-menu'
 import { analyticsPlugin } from './plugins/core-plugins/analytics'
 import { eventsApiRoutes } from './plugins/core-plugins/analytics/routes/api'
@@ -87,6 +86,12 @@ export interface Bindings {
   JWT_REFRESH_GRACE_SECONDS?: string
   BUCKET_NAME?: string
   GOOGLE_MAPS_API_KEY?: string
+  BETTER_AUTH_SECRET?: string
+  BETTER_AUTH_URL?: string
+  GITHUB_CLIENT_ID?: string
+  GITHUB_CLIENT_SECRET?: string
+  GOOGLE_CLIENT_ID?: string
+  GOOGLE_CLIENT_SECRET?: string
 }
 
 export interface Variables {
@@ -97,6 +102,8 @@ export interface Variables {
     exp: number
     iat: number
   }
+  session?: { id: string; userId: string; token: string; expiresAt: number; createdAt: number; updatedAt: number }
+  rbacPerms?: string[]
   requestId?: string
   startTime?: number
   appVersion?: string
@@ -170,9 +177,9 @@ export interface SonicJSConfig {
     afterAuth?: Array<(c: Context, next: () => Promise<void>) => Promise<void>>
   }
 
-  // Admin access control
-  // Roles allowed to access the /admin panel. Defaults to ['admin'].
-  adminAccessRoles?: string[]
+  // Better Auth extension hook. Allows app-level customization of the BA
+  // instance (social providers, 2FA, org, etc.) without forking core config.
+  auth?: { extendBetterAuth?: import('./auth/config').ExtendBetterAuth }
 
   // App metadata
   version?: string
@@ -248,13 +255,10 @@ export function createSonicJSApp(config: SonicJSConfig = {}): SonicJSApp {
   // `dist` declarations, which TS treats as a distinct identity from the `src`
   // Plugin. Both consumers (registerPluginRoutes, createPluginWirer) accept a
   // structural subset, so inference is the right call here.
-  const magicLinkPlugin = createMagicLinkAuthPlugin()
   const corePluginsBeforeCatchAll = [
     securityAuditPlugin,
     aiSearchPlugin,
-    oauthProvidersPlugin,
     userProfilesPlugin,
-    otpLoginPlugin,
     analyticsPlugin,
     stripePlugin,
     // Previously declared via PluginBuilder.addRoute() but never mounted in
@@ -262,7 +266,7 @@ export function createSonicJSApp(config: SonicJSConfig = {}): SonicJSApp {
     globalVariablesPlugin,
     shortcodesPlugin,
   ]
-  const corePluginsAfterCatchAll = [emailPlugin, magicLinkPlugin, emailReconciliationPlugin]
+  const corePluginsAfterCatchAll = [emailPlugin, emailReconciliationPlugin]
 
   // Lazy, once-guarded plugin wiring (the async half of two-phase boot). The
   // first request subscribes every plugin's hooks and runs their onBoot; later
@@ -380,6 +384,42 @@ export function createSonicJSApp(config: SonicJSConfig = {}): SonicJSApp {
   // CSRF protection middleware
   app.use('*', csrfProtection())
 
+  // Better Auth session middleware: populate c.set('user') (and 'session') from
+  // the Better Auth session so existing requireAuth/requireRole and every
+  // c.get('user') consumer keep working unchanged.
+  app.use('*', async (c, next) => {
+    try {
+      const auth = createAuth(c.env, config.auth?.extendBetterAuth)
+      const session = await auth.api.getSession({ headers: c.req.raw.headers })
+      if (session?.user) {
+        const u = session.user as { id: string; email: string; role?: string }
+        const s = session.session as {
+          id: string; userId: string; token: string
+          expiresAt: number | Date; createdAt: number | Date; updatedAt: number | Date
+        }
+        const ms = (v: number | Date) => (typeof v === 'number' ? v : new Date(v).getTime())
+        c.set('user', {
+          userId: u.id,
+          email: u.email,
+          role: u.role ?? 'viewer',
+          exp: ms(s.expiresAt),
+          iat: ms(s.createdAt),
+        })
+        c.set('session', {
+          id: s.id,
+          userId: s.userId,
+          token: s.token,
+          expiresAt: ms(s.expiresAt),
+          createdAt: ms(s.createdAt),
+          updatedAt: ms(s.updatedAt),
+        })
+      }
+    } catch {
+      // Not signed in / no valid session — leave c.get('user') undefined.
+    }
+    await next()
+  })
+
   // Custom middleware - after auth
   if (config.middleware?.afterAuth) {
     for (const middleware of config.middleware.afterAuth) {
@@ -387,13 +427,77 @@ export function createSonicJSApp(config: SonicJSConfig = {}): SonicJSApp {
     }
   }
 
-  // Admin panel access control: require authentication and admin role by default
-  const adminRoles = config.adminAccessRoles || ['admin']
+  // Admin panel access control: require authentication and dynamic RBAC portal
+  // access. Legacy `users.role` no longer decides who can enter /admin/*.
   app.use('/admin/*', requireAuth())
-  app.use('/admin/*', requireRole(adminRoles))
+  app.use('/admin/*', requireRbac('portal', 'access'))
 
   // Plugin dynamic menu items for admin sidebar
   app.use('/admin/*', pluginMenuMiddleware())
+
+  // RBAC-aware admin shell. Computes the signed-in user's effective permission
+  // set once, then (1) redirects the dashboard landing to the first section the
+  // user can actually reach when they lack `dashboard:read`, and (2) strips nav
+  // items the user can't access from the rendered HTML *server-side* (via the
+  // <!--nav:perm--> markers in the layout) so nothing inaccessible reaches the
+  // browser. Routes remain independently gated by requireRbac.
+  const NAV_LANDING: Array<{ path: string; perm: string }> = [
+    { path: '/admin/content', perm: 'content:read' },
+    { path: '/admin/media', perm: 'media:read' },
+    { path: '/admin/collections', perm: 'collections:manage' },
+    { path: '/admin/forms', perm: 'content:read' },
+    { path: '/admin/users', perm: 'users:manage' },
+    { path: '/admin/plugins', perm: 'plugins:manage' },
+    { path: '/admin/settings', perm: 'settings:manage' },
+    { path: '/admin/rbac', perm: 'rbac:manage' },
+  ]
+  app.use('/admin/*', async (c, next) => {
+    const user = c.get('user') as { userId?: string } | undefined
+    if (!user?.userId) return next()
+
+    let perms: string[] = []
+    try {
+      const { RbacService } = await import('./services/rbac')
+      perms = await new RbacService(c.env.DB, c.env.CACHE_KV).permissionsForUser(user.userId)
+    } catch {
+      return next() // fail open to the route's own requireRbac gate
+    }
+
+    // Cache for requireRbac fast-path — avoids a DB hit per middleware call.
+    c.set('rbacPerms', perms)
+
+    // Dashboard landing: if the user can't view the dashboard, send them to the
+    // first section they do have access to (instead of an empty/forbidden page).
+    const path = new URL(c.req.url).pathname
+    if (
+      (path === '/admin' || path === '/admin/' || path === '/admin/dashboard') &&
+      !perms.includes('dashboard:read')
+    ) {
+      const dest = NAV_LANDING.find((n) => perms.includes(n.perm))
+      if (dest) return c.redirect(dest.path)
+      return c.redirect('/auth/login?error=Your account has no accessible sections')
+    }
+
+    await next()
+
+    // Strip nav items the user lacks, server-side.
+    try {
+      const contentType = c.res.headers.get('content-type') || ''
+      if (!contentType.includes('text/html')) return
+      const body = await c.res.text()
+      const filtered = body.includes('<!--nav:')
+        ? body.replace(
+            /<!--nav:([^>]+?)-->([\s\S]*?)<!--\/nav-->/g,
+            (_m, perm: string, inner: string) => (perms.includes(perm) ? inner : '')
+          )
+        : body
+      const headers = new Headers(c.res.headers)
+      headers.delete('content-length')
+      c.res = new Response(filtered, { status: c.res.status, headers })
+    } catch {
+      /* leave response as-is on any failure */
+    }
+  })
 
   // Core routes
   // Routes are being imported incrementally from routes/*
@@ -461,8 +565,18 @@ export function createSonicJSApp(config: SonicJSConfig = {}): SonicJSApp {
 
   app.route('/admin/plugins', adminPluginRoutes)
   app.route('/admin/logs', adminLogsRoutes)
+  app.route('/admin/rbac', adminRbacRoutes)
   app.route('/admin', adminUsersRoutes)
   app.route('/auth', authRoutes)
+
+  // Better Auth handler — serves /auth/sign-in/*, /auth/sign-up/*, /auth/sign-out,
+  // /auth/get-session, /auth/callback/* etc. Registered AFTER authRoutes so the
+  // page-render routes (GET /auth/login, /auth/register) take precedence; only
+  // Better Auth's own API paths fall through to this catch-all.
+  app.on(['GET', 'POST'], '/auth/*', (c) => {
+    const auth = createAuth(c.env, config.auth?.extendBetterAuth)
+    return auth.handler(c.req.raw)
+  })
 
   // Test cleanup routes (only for development/test environments)
   app.route('/', testCleanupRoutes)

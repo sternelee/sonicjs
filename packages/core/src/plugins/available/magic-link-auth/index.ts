@@ -55,7 +55,7 @@ export function createMagicLinkAuthPlugin(): Plugin {
       // Check if user exists
       const user = await db.prepare(`
         SELECT id, email, role, is_active
-        FROM users
+        FROM auth_user
         WHERE email = ?
       `).bind(normalizedEmail).first() as any
 
@@ -161,7 +161,7 @@ export function createMagicLinkAuthPlugin(): Plugin {
 
       // Get or create user
       let user = await db.prepare(`
-        SELECT * FROM users WHERE email = ? AND is_active = 1
+        SELECT * FROM auth_user WHERE email = ? AND is_active = 1
       `).bind(magicLink.user_email).first() as any
 
       const allowNewUsers = false // TODO: Get from plugin settings
@@ -173,7 +173,7 @@ export function createMagicLinkAuthPlugin(): Plugin {
         const now = Date.now()
 
         await db.prepare(`
-          INSERT INTO users (
+          INSERT INTO auth_user (
             id, email, username, first_name, last_name,
             password_hash, role, is_active, created_at, updated_at
           ) VALUES (?, ?, ?, ?, ?, NULL, 'viewer', 1, ?, ?)
@@ -219,7 +219,7 @@ export function createMagicLinkAuthPlugin(): Plugin {
 
       // Update last login
       await db.prepare(`
-        UPDATE users SET last_login_at = ? WHERE id = ?
+        UPDATE auth_user SET last_login_at = ? WHERE id = ?
       `).bind(Date.now(), user.id).run()
 
       // Fire auth:magic-link:consumed for audit/analytics plugins (fire-and-forget).

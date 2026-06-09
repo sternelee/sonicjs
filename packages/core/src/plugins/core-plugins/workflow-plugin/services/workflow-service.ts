@@ -245,7 +245,7 @@ export class WorkflowEngine {
         fs.name as from_state_name,
         ts.name as to_state_name
       FROM workflow_history wh
-      LEFT JOIN users u ON wh.user_id = u.id
+      LEFT JOIN auth_user u ON wh.user_id = u.id
       LEFT JOIN workflow_states fs ON wh.from_state_id = fs.id
       LEFT JOIN workflow_states ts ON wh.to_state_id = ts.id
       WHERE wh.content_id = ?
@@ -304,7 +304,7 @@ export class WorkflowEngine {
       JOIN content_workflow_status cws ON c.id = cws.content_id
       JOIN workflow_states ws ON cws.current_state_id = ws.id
       JOIN collections col ON c.collection_id = col.id
-      LEFT JOIN users u ON cws.assigned_to = u.id
+      LEFT JOIN auth_user u ON cws.assigned_to = u.id
       WHERE cws.current_state_id = ?
       ORDER BY c.updated_at DESC
       LIMIT ?

@@ -204,7 +204,7 @@ export class NotificationService {
     // Get users who should be notified (assignees, reviewers, etc.)
     const { results: usersToNotify } = await this.db.prepare(`
       SELECT DISTINCT u.id
-      FROM users u
+      FROM auth_user u
       JOIN content_workflow_status cws ON u.id = cws.assigned_to
       WHERE cws.content_id = ?
       AND u.id != ?
@@ -267,7 +267,7 @@ export class NotificationService {
     if (!content) return
 
     const assignedBy = await this.db.prepare(`
-      SELECT username FROM users WHERE id = ?
+      SELECT username FROM auth_user WHERE id = ?
     `).bind(assignedByUserId).first()
 
     const dueDateText = dueDate ? ` (due: ${new Date(dueDate).toLocaleDateString()})` : ''
@@ -295,7 +295,7 @@ export class NotificationService {
     const { results: users } = await this.db.prepare(`
       SELECT DISTINCT np.user_id, u.email, u.username
       FROM notification_preferences np
-      JOIN users u ON np.user_id = u.id
+      JOIN auth_user u ON np.user_id = u.id
       WHERE np.digest_frequency = ? AND np.email_enabled = 1
     `).bind(frequency).all()
 

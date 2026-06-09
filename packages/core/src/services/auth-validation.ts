@@ -50,7 +50,7 @@ export async function isRegistrationEnabled(db: D1Database): Promise<boolean> {
  */
 export async function isFirstUserRegistration(db: D1Database): Promise<boolean> {
   try {
-    const result = await db.prepare('SELECT COUNT(*) as count FROM users').first() as { count: number } | null
+    const result = await db.prepare('SELECT COUNT(*) as count FROM auth_user').first() as { count: number } | null
     return result?.count === 0
   } catch {
     return false // Default to not first user on error
@@ -70,7 +70,7 @@ export async function checkAdminUserExists(db: D1Database): Promise<boolean> {
   }
 
   try {
-    const result = await db.prepare('SELECT id FROM users WHERE role = ?')
+    const result = await db.prepare('SELECT id FROM auth_user WHERE role = ?')
       .bind('admin')
       .first()
     adminExistsCache = !!result

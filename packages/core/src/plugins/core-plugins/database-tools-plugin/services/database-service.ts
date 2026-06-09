@@ -80,7 +80,7 @@ export class DatabaseToolsService {
     try {
       // First, preserve the admin user data
       const adminUser = await this.db.prepare(
-        'SELECT * FROM users WHERE email = ? AND role = ?'
+        'SELECT * FROM auth_user WHERE email = ? AND role = ?'
       ).bind(adminEmail, 'admin').first()
 
       if (!adminUser) {
@@ -102,7 +102,7 @@ export class DatabaseToolsService {
         'media',
         'sessions',
         'notifications',
-        'api_tokens',
+        'auth_api_tokens',
         'workflow_history',
         'scheduled_content',
         'faqs',
@@ -132,12 +132,12 @@ export class DatabaseToolsService {
 
       // Clear users table but preserve admin
       try {
-        await this.db.prepare('DELETE FROM users WHERE email != ? OR role != ?')
+        await this.db.prepare('DELETE FROM auth_user WHERE email != ? OR role != ?')
           .bind(adminEmail, 'admin').run()
         
         // Verify admin user still exists
         const verifyAdmin = await this.db.prepare(
-          'SELECT id FROM users WHERE email = ? AND role = ?'
+          'SELECT id FROM auth_user WHERE email = ? AND role = ?'
         ).bind(adminEmail, 'admin').first()
 
         adminUserPreserved = !!verifyAdmin
@@ -272,7 +272,7 @@ export class DatabaseToolsService {
 
       // Check admin user exists
       const adminCount = await this.db.prepare(
-        'SELECT COUNT(*) as count FROM users WHERE role = ?'
+        'SELECT COUNT(*) as count FROM auth_user WHERE role = ?'
       ).bind('admin').first()
 
       if ((adminCount?.count as number) === 0) {

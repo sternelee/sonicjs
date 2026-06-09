@@ -211,7 +211,7 @@ export function createOAuthProvidersPlugin(): Plugin {
 
         // Fetch user to generate JWT
         const user = await db.prepare(
-          'SELECT id, email, role, is_active FROM users WHERE id = ?'
+          'SELECT id, email, role, is_active FROM auth_user WHERE id = ?'
         ).bind(existingOAuth.user_id).first() as any
 
         if (!user || !user.is_active) {

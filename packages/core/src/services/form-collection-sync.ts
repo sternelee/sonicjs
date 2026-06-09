@@ -392,12 +392,12 @@ export async function createContentFromSubmission(
 
     // Ensure the system user exists (D1 enforces foreign keys)
     if (authorId === SYSTEM_FORM_USER_ID) {
-      const systemUser = await db.prepare('SELECT id FROM users WHERE id = ?').bind(SYSTEM_FORM_USER_ID).first()
+      const systemUser = await db.prepare('SELECT id FROM auth_user WHERE id = ?').bind(SYSTEM_FORM_USER_ID).first()
       if (!systemUser) {
         console.log('[FormSync] System form user missing, creating...')
         const sysNow = Date.now()
         await db.prepare(`
-          INSERT OR IGNORE INTO users (id, email, username, first_name, last_name, password_hash, role, is_active, created_at, updated_at)
+          INSERT OR IGNORE INTO auth_user (id, email, username, first_name, last_name, password_hash, role, is_active, created_at, updated_at)
           VALUES (?, ?, ?, ?, ?, NULL, 'viewer', 0, ?, ?)
         `).bind(SYSTEM_FORM_USER_ID, 'system-forms@sonicjs.internal', 'system-forms', 'Form', 'Submission', sysNow, sysNow).run()
       }

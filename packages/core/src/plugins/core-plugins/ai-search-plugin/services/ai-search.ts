@@ -398,7 +398,7 @@ export class AISearchService {
           u.email as author_email
         FROM content c
         JOIN collections col ON c.collection_id = col.id
-        LEFT JOIN users u ON c.author_id = u.id
+        LEFT JOIN auth_user u ON c.author_id = u.id
         ${whereClause}
         ORDER BY c.updated_at DESC
         LIMIT ? OFFSET ?

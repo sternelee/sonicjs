@@ -86,9 +86,9 @@ app.post('/test-cleanup', async (c: Context) => {
 
     // Step 3: Delete child data for test users
     await db.prepare(`
-      DELETE FROM api_tokens
+      DELETE FROM auth_api_tokens
       WHERE user_id IN (
-        SELECT id FROM users
+        SELECT id FROM auth_user
         WHERE email != 'admin@sonicjs.com' AND (email LIKE '%test%' OR email LIKE '%example.com%')
       )
     `).run()
@@ -96,14 +96,14 @@ app.post('/test-cleanup', async (c: Context) => {
     await db.prepare(`
       DELETE FROM media
       WHERE uploaded_by IN (
-        SELECT id FROM users
+        SELECT id FROM auth_user
         WHERE email != 'admin@sonicjs.com' AND (email LIKE '%test%' OR email LIKE '%example.com%')
       )
     `).run()
 
     // Step 4: Delete test users
     const usersResult = await db.prepare(`
-      DELETE FROM users
+      DELETE FROM auth_user
       WHERE email != 'admin@sonicjs.com' AND (email LIKE '%test%' OR email LIKE '%example.com%')
     `).run()
     deletedCount += usersResult.meta?.changes || 0
@@ -228,7 +228,7 @@ app.post('/test-cleanup/users', async (c: Context) => {
   try {
     // Delete test users (preserve admin)
     const result = await db.prepare(`
-      DELETE FROM users
+      DELETE FROM auth_user
       WHERE email != 'admin@sonicjs.com'
       AND (
         email LIKE '%test%'

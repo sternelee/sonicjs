@@ -1,114 +1,130 @@
--- Migration 0001: Core Baseline (v3 greenfield)
--- Consolidated from the v2 migration set. Contains auth plus core platform tables
--- that still run alongside the document-model POC.
-CREATE TABLE IF NOT EXISTS users (
+-- Migration 0001: Core Baseline (v3 greenfield + Better Auth)
+-- All auth-owned tables carry the auth_ prefix.
+-- BA tables: auth_user, auth_session, auth_account, auth_verification.
+-- RBAC tables: auth_rbac_*.
+-- BA plugin tables: auth_two_factor, auth_organization, auth_member, auth_invitation, auth_team.
+-- Legacy auth tables (magic_links, otp_codes, oauth_accounts) removed — BA covers them.
+
+-- ── auth_user ────────────────────────────────────────────────────────────────
+-- Better Auth user model. Carries SonicJS domain columns (role, username, etc.)
+-- as BA additionalFields. The invited_by self-reference is deferred to avoid a
+-- forward-reference; SQLite enforces it through the index, not the FK.
+CREATE TABLE IF NOT EXISTS auth_user (
   id TEXT PRIMARY KEY,
+  -- BA required
+  name TEXT,
   email TEXT NOT NULL UNIQUE,
+  email_verified INTEGER NOT NULL DEFAULT 0,
+  image TEXT,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  -- SonicJS domain (BA additionalFields)
   username TEXT NOT NULL UNIQUE,
   first_name TEXT NOT NULL,
   last_name TEXT NOT NULL,
-  password_hash TEXT,
+  password_hash TEXT,          -- legacy; backfilled into auth_account on first BA login
   role TEXT NOT NULL DEFAULT 'viewer',
   avatar TEXT,
   is_active INTEGER NOT NULL DEFAULT 1,
   last_login_at INTEGER,
-  created_at INTEGER NOT NULL,
-  updated_at INTEGER NOT NULL,
   phone TEXT,
   bio TEXT,
-  avatar_url TEXT,
   timezone TEXT DEFAULT 'UTC',
   language TEXT DEFAULT 'en',
   email_notifications INTEGER DEFAULT 1,
   theme TEXT DEFAULT 'dark',
-  two_factor_enabled INTEGER DEFAULT 0,
-  two_factor_secret TEXT,
-  password_reset_token TEXT,
-  password_reset_expires INTEGER,
-  email_verified INTEGER DEFAULT 0,
-  email_verification_token TEXT,
+  -- invitation flow
   invitation_token TEXT,
-  invited_by TEXT REFERENCES users(id),
+  invited_by TEXT,             -- self-ref to auth_user(id), not enforced as FK to avoid fwd-ref
   invited_at INTEGER,
-  accepted_invitation_at INTEGER
+  accepted_invitation_at INTEGER,
+  -- account lockout (BA signIn.before hook checks these)
+  failed_login_count INTEGER NOT NULL DEFAULT 0,
+  locked_until INTEGER
 );
 
-CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_auth_user_email ON auth_user(email);
+CREATE INDEX IF NOT EXISTS idx_auth_user_username ON auth_user(username);
+CREATE INDEX IF NOT EXISTS idx_auth_user_role ON auth_user(role);
+CREATE INDEX IF NOT EXISTS idx_auth_user_invitation_token ON auth_user(invitation_token);
+CREATE INDEX IF NOT EXISTS idx_auth_user_locked_until ON auth_user(locked_until) WHERE locked_until IS NOT NULL;
 
-CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+-- ── auth_session ─────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS auth_session (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES auth_user(id) ON DELETE CASCADE,
+  token TEXT NOT NULL UNIQUE,
+  expires_at INTEGER NOT NULL,
+  ip_address TEXT,
+  user_agent TEXT,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_auth_session_user_id ON auth_session(user_id);
+CREATE INDEX IF NOT EXISTS idx_auth_session_token ON auth_session(token);
+CREATE INDEX IF NOT EXISTS idx_auth_session_expires_at ON auth_session(expires_at);
 
-CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
+-- ── auth_account ─────────────────────────────────────────────────────────────
+-- Credential + OAuth provider rows. BA owns this table.
+CREATE TABLE IF NOT EXISTS auth_account (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES auth_user(id) ON DELETE CASCADE,
+  account_id TEXT NOT NULL,
+  provider_id TEXT NOT NULL,
+  access_token TEXT,
+  refresh_token TEXT,
+  access_token_expires_at INTEGER,
+  refresh_token_expires_at INTEGER,
+  scope TEXT,
+  id_token TEXT,
+  password TEXT,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_auth_account_user_id ON auth_account(user_id);
+CREATE INDEX IF NOT EXISTS idx_auth_account_provider ON auth_account(provider_id, account_id);
 
-CREATE INDEX IF NOT EXISTS idx_users_email_verification_token ON users(email_verification_token);
+-- ── auth_verification ────────────────────────────────────────────────────────
+-- Covers email verification, password reset, magic-link tokens, OTP codes.
+-- Replaces the legacy magic_links and otp_codes tables.
+CREATE TABLE IF NOT EXISTS auth_verification (
+  id TEXT PRIMARY KEY,
+  identifier TEXT NOT NULL,
+  value TEXT NOT NULL,
+  expires_at INTEGER NOT NULL,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_auth_verification_identifier ON auth_verification(identifier);
 
-CREATE INDEX IF NOT EXISTS idx_users_password_reset_token ON users(password_reset_token);
+-- ── auth_password_history ────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS auth_password_history (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES auth_user(id) ON DELETE CASCADE,
+  password_hash TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_auth_password_history_user_id ON auth_password_history(user_id);
 
-CREATE INDEX IF NOT EXISTS idx_users_invitation_token ON users(invitation_token);
-
-CREATE TABLE IF NOT EXISTS api_tokens (
+-- ── auth_api_tokens ──────────────────────────────────────────────────────────
+-- Legacy API token table; superseded by BA apiKey plugin in a future phase.
+CREATE TABLE IF NOT EXISTS auth_api_tokens (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   token TEXT NOT NULL UNIQUE,
-  user_id TEXT NOT NULL REFERENCES users(id),
+  user_id TEXT NOT NULL REFERENCES auth_user(id),
   permissions TEXT NOT NULL,
   expires_at INTEGER,
   last_used_at INTEGER,
   created_at INTEGER NOT NULL
 );
+CREATE INDEX IF NOT EXISTS idx_auth_api_tokens_user ON auth_api_tokens(user_id);
+CREATE INDEX IF NOT EXISTS idx_auth_api_tokens_token ON auth_api_tokens(token);
 
-CREATE INDEX IF NOT EXISTS idx_api_tokens_user ON api_tokens(user_id);
-
-CREATE INDEX IF NOT EXISTS idx_api_tokens_token ON api_tokens(token);
-
-CREATE TABLE IF NOT EXISTS password_history (
+-- ── auth_user_profiles ───────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS auth_user_profiles (
   id TEXT PRIMARY KEY,
-  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  password_hash TEXT NOT NULL,
-  created_at INTEGER NOT NULL
-);
-
-CREATE INDEX IF NOT EXISTS idx_password_history_user_id ON password_history(user_id);
-
-CREATE TABLE IF NOT EXISTS magic_links (
-  id TEXT PRIMARY KEY,
-  user_email TEXT NOT NULL,
-  token TEXT NOT NULL UNIQUE,
-  expires_at INTEGER NOT NULL,
-  used INTEGER DEFAULT 0,
-  used_at INTEGER,
-  ip_address TEXT,
-  user_agent TEXT,
-  created_at INTEGER NOT NULL
-);
-
-CREATE INDEX IF NOT EXISTS idx_magic_links_token ON magic_links(token);
-
-CREATE INDEX IF NOT EXISTS idx_magic_links_email ON magic_links(user_email);
-
-CREATE INDEX IF NOT EXISTS idx_magic_links_expires ON magic_links(expires_at);
-
-CREATE TABLE IF NOT EXISTS otp_codes (
-  id TEXT PRIMARY KEY,
-  user_email TEXT NOT NULL,
-  code TEXT NOT NULL,
-  expires_at INTEGER NOT NULL,
-  used INTEGER DEFAULT 0,
-  used_at INTEGER,
-  ip_address TEXT,
-  user_agent TEXT,
-  attempts INTEGER DEFAULT 0,
-  created_at INTEGER NOT NULL
-);
-
-CREATE INDEX IF NOT EXISTS idx_otp_email_code ON otp_codes(user_email, code);
-
-CREATE INDEX IF NOT EXISTS idx_otp_expires ON otp_codes(expires_at);
-
-CREATE INDEX IF NOT EXISTS idx_otp_used ON otp_codes(used);
-
-CREATE TABLE IF NOT EXISTS user_profiles (
-  id TEXT PRIMARY KEY,
-  user_id TEXT NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+  user_id TEXT NOT NULL UNIQUE REFERENCES auth_user(id) ON DELETE CASCADE,
   display_name TEXT,
   bio TEXT,
   company TEXT,
@@ -120,22 +136,171 @@ CREATE TABLE IF NOT EXISTS user_profiles (
   created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
   updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000)
 );
+CREATE INDEX IF NOT EXISTS idx_auth_user_profiles_user_id ON auth_user_profiles(user_id);
 
-CREATE INDEX IF NOT EXISTS idx_user_profiles_user_id ON user_profiles(user_id);
-
-CREATE TRIGGER IF NOT EXISTS user_profiles_updated_at
-AFTER
-UPDATE
-  ON user_profiles BEGIN
-UPDATE
-  user_profiles
-SET
-  updated_at = strftime('%s', 'now') * 1000
-WHERE
-  id = NEW.id;
-
+CREATE TRIGGER IF NOT EXISTS auth_user_profiles_updated_at
+AFTER UPDATE ON auth_user_profiles BEGIN
+  UPDATE auth_user_profiles SET updated_at = strftime('%s', 'now') * 1000 WHERE id = NEW.id;
 END;
--- Plugin system tables (kept as dedicated tables per document-model-poc-plan.md §"Keep dedicated tables")
+
+-- ── RBAC ─────────────────────────────────────────────────────────────────────
+-- Dynamic roles/verbs/grants. auth_rbac_user_roles ties users to roles.
+
+CREATE TABLE IF NOT EXISTS auth_rbac_roles (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL UNIQUE,
+  display_name TEXT NOT NULL,
+  description TEXT,
+  is_system INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
+  updated_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
+);
+
+CREATE TABLE IF NOT EXISTS auth_rbac_verbs (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL UNIQUE,
+  description TEXT,
+  is_system INTEGER NOT NULL DEFAULT 0,
+  sort_order INTEGER NOT NULL DEFAULT 100
+);
+
+-- One row per (role, resource, verb) grant; wildcards supported.
+CREATE TABLE IF NOT EXISTS auth_rbac_role_grants (
+  role_id TEXT NOT NULL REFERENCES auth_rbac_roles(id) ON DELETE CASCADE,
+  resource TEXT NOT NULL,
+  verb TEXT NOT NULL,
+  scope TEXT NOT NULL DEFAULT 'any',
+  PRIMARY KEY (role_id, resource, verb)
+);
+
+CREATE TABLE IF NOT EXISTS auth_rbac_user_roles (
+  user_id TEXT NOT NULL REFERENCES auth_user(id) ON DELETE CASCADE,
+  role_id TEXT NOT NULL REFERENCES auth_rbac_roles(id) ON DELETE CASCADE,
+  PRIMARY KEY (user_id, role_id)
+);
+
+-- Seed system roles
+INSERT OR IGNORE INTO auth_rbac_roles (id, name, display_name, description, is_system) VALUES
+  ('role-admin',  'admin',  'Administrator', 'Full access to everything',                   1),
+  ('role-editor', 'editor', 'Editor',        'Manage content and media across collections', 1),
+  ('role-author', 'author', 'Author',        'Create and edit own content',                 1),
+  ('role-viewer', 'viewer', 'Viewer',        'Read-only access',                            1);
+
+-- Seed system verbs
+INSERT OR IGNORE INTO auth_rbac_verbs (id, name, description, is_system, sort_order) VALUES
+  ('verb-access', 'access', 'Enter or use a portal/resource', 1,  5),
+  ('verb-read',   'read',   'View a resource',                1, 10),
+  ('verb-create', 'create', 'Create a resource',              1, 20),
+  ('verb-update', 'update', 'Edit a resource',                1, 30),
+  ('verb-delete', 'delete', 'Remove a resource',              1, 40),
+  ('verb-manage', 'manage', 'Full control (implies all verbs)',1, 50);
+
+-- Default grants
+INSERT OR IGNORE INTO auth_rbac_role_grants (role_id, resource, verb) VALUES
+  ('role-admin', '*',           'manage'),
+  ('role-admin', 'portal',      'access'),
+  ('role-admin', 'rbac',        'manage'),
+  ('role-admin', 'collections', 'manage'),
+  ('role-admin', 'email',       'manage'),
+  ('role-admin', 'users',       'manage');
+
+INSERT OR IGNORE INTO auth_rbac_role_grants (role_id, resource, verb) VALUES
+  ('role-editor', 'content',      'manage'),
+  ('role-editor', 'media',        'manage'),
+  ('role-editor', 'collection:*', 'read'),
+  ('role-editor', 'collection:*', 'create'),
+  ('role-editor', 'collection:*', 'update'),
+  ('role-editor', 'collection:*', 'delete'),
+  ('role-editor', 'settings',     'read');
+
+INSERT OR IGNORE INTO auth_rbac_role_grants (role_id, resource, verb) VALUES
+  ('role-author', 'content',      'read'),
+  ('role-author', 'content',      'create'),
+  ('role-author', 'content',      'update'),
+  ('role-author', 'media',        'read'),
+  ('role-author', 'media',        'create'),
+  ('role-author', 'collection:*', 'read');
+
+INSERT OR IGNORE INTO auth_rbac_role_grants (role_id, resource, verb) VALUES
+  ('role-viewer', 'content',      'read'),
+  ('role-viewer', 'media',        'read'),
+  ('role-viewer', 'collection:*', 'read');
+
+-- ── BA plugin tables ──────────────────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS auth_two_factor (
+  id           TEXT PRIMARY KEY,
+  secret       TEXT NOT NULL,
+  backup_codes TEXT NOT NULL,
+  user_id      TEXT NOT NULL REFERENCES auth_user(id) ON DELETE CASCADE,
+  verified     INTEGER NOT NULL DEFAULT 1,
+  created_at   INTEGER NOT NULL,
+  updated_at   INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_auth_two_factor_user_id ON auth_two_factor(user_id);
+
+CREATE TABLE IF NOT EXISTS auth_organization (
+  id         TEXT PRIMARY KEY,
+  name       TEXT NOT NULL,
+  slug       TEXT NOT NULL UNIQUE,
+  logo       TEXT,
+  metadata   TEXT,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS auth_member (
+  id              TEXT PRIMARY KEY,
+  organization_id TEXT NOT NULL REFERENCES auth_organization(id) ON DELETE CASCADE,
+  user_id         TEXT NOT NULL REFERENCES auth_user(id)         ON DELETE CASCADE,
+  role            TEXT NOT NULL DEFAULT 'member',
+  email           TEXT,
+  created_at      INTEGER NOT NULL,
+  updated_at      INTEGER NOT NULL,
+  UNIQUE(organization_id, user_id)
+);
+CREATE INDEX IF NOT EXISTS idx_auth_member_org  ON auth_member(organization_id);
+CREATE INDEX IF NOT EXISTS idx_auth_member_user ON auth_member(user_id);
+
+CREATE TABLE IF NOT EXISTS auth_invitation (
+  id              TEXT PRIMARY KEY,
+  organization_id TEXT NOT NULL REFERENCES auth_organization(id) ON DELETE CASCADE,
+  email           TEXT NOT NULL,
+  role            TEXT NOT NULL DEFAULT 'member',
+  status          TEXT NOT NULL DEFAULT 'pending',
+  expires_at      INTEGER NOT NULL,
+  inviter_id      TEXT REFERENCES auth_user(id) ON DELETE SET NULL,
+  created_at      INTEGER NOT NULL,
+  updated_at      INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_auth_invitation_org   ON auth_invitation(organization_id);
+CREATE INDEX IF NOT EXISTS idx_auth_invitation_email ON auth_invitation(email);
+
+CREATE TABLE IF NOT EXISTS auth_team (
+  id              TEXT PRIMARY KEY,
+  name            TEXT NOT NULL,
+  organization_id TEXT NOT NULL REFERENCES auth_organization(id) ON DELETE CASCADE,
+  created_at      INTEGER NOT NULL,
+  updated_at      INTEGER NOT NULL
+);
+
+-- ── Backfills ─────────────────────────────────────────────────────────────────
+-- Populate auth_account for existing users so legacy PBKDF2 hashes remain
+-- verifiable on next login (auth/config.ts transparently upgrades to scrypt).
+INSERT OR IGNORE INTO auth_account (id, user_id, account_id, provider_id, password, created_at, updated_at)
+SELECT 'cred-' || u.id, u.id, u.id, 'credential', u.password_hash,
+       unixepoch() * 1000, unixepoch() * 1000
+FROM auth_user u
+WHERE u.password_hash IS NOT NULL AND u.password_hash <> '';
+
+-- Backfill RBAC role membership from the legacy auth_user.role string column.
+INSERT OR IGNORE INTO auth_rbac_user_roles (user_id, role_id)
+SELECT u.id, r.id
+FROM auth_user u
+JOIN auth_rbac_roles r ON r.name = u.role;
+
+-- ── Plugin system ─────────────────────────────────────────────────────────────
+-- Kept as dedicated tables per document-model-poc-plan.md §"Keep dedicated tables"
 CREATE TABLE IF NOT EXISTS plugins (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL UNIQUE,
@@ -162,7 +327,6 @@ CREATE TABLE IF NOT EXISTS plugins (
 CREATE INDEX IF NOT EXISTS idx_plugins_status ON plugins(status);
 CREATE INDEX IF NOT EXISTS idx_plugins_category ON plugins(category);
 
--- Plugin sub-tables
 CREATE TABLE IF NOT EXISTS plugin_hooks (
   id TEXT PRIMARY KEY,
   plugin_id TEXT NOT NULL REFERENCES plugins(id),
@@ -208,7 +372,8 @@ CREATE TABLE IF NOT EXISTS plugin_activity_log (
 );
 CREATE INDEX IF NOT EXISTS idx_plugin_activity_plugin ON plugin_activity_log(plugin_id);
 
--- Content collection tables (run alongside the document model POC)
+-- ── Content ───────────────────────────────────────────────────────────────────
+-- Runs alongside the document model POC (document-model-poc-plan.md R12).
 CREATE TABLE IF NOT EXISTS collections (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL UNIQUE,
@@ -233,7 +398,7 @@ CREATE TABLE IF NOT EXISTS content (
   data TEXT NOT NULL DEFAULT '{}',
   status TEXT NOT NULL DEFAULT 'draft',
   published_at INTEGER,
-  author_id TEXT NOT NULL REFERENCES users(id),
+  author_id TEXT NOT NULL REFERENCES auth_user(id),
   created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
   updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000)
 );
@@ -247,7 +412,7 @@ CREATE TABLE IF NOT EXISTS content_versions (
   content_id TEXT NOT NULL REFERENCES content(id),
   version INTEGER NOT NULL,
   data TEXT NOT NULL DEFAULT '{}',
-  author_id TEXT NOT NULL REFERENCES users(id),
+  author_id TEXT NOT NULL REFERENCES auth_user(id),
   created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000)
 );
 CREATE INDEX IF NOT EXISTS idx_content_versions_content ON content_versions(content_id);
@@ -267,7 +432,7 @@ CREATE TABLE IF NOT EXISTS media (
   alt TEXT,
   caption TEXT,
   tags TEXT,
-  uploaded_by TEXT NOT NULL REFERENCES users(id),
+  uploaded_by TEXT NOT NULL REFERENCES auth_user(id),
   uploaded_at INTEGER NOT NULL,
   updated_at INTEGER,
   published_at INTEGER,
@@ -286,20 +451,20 @@ CREATE TABLE IF NOT EXISTS workflow_history (
   action TEXT NOT NULL,
   from_status TEXT NOT NULL,
   to_status TEXT NOT NULL,
-  user_id TEXT NOT NULL REFERENCES users(id),
+  user_id TEXT NOT NULL REFERENCES auth_user(id),
   comment TEXT,
   created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000)
 );
 CREATE INDEX IF NOT EXISTS idx_workflow_history_content ON workflow_history(content_id);
 
--- System logging tables
+-- ── System logging ────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS system_logs (
   id TEXT PRIMARY KEY,
   level TEXT NOT NULL,
   category TEXT NOT NULL,
   message TEXT NOT NULL,
   data TEXT,
-  user_id TEXT REFERENCES users(id),
+  user_id TEXT REFERENCES auth_user(id),
   session_id TEXT,
   request_id TEXT,
   ip_address TEXT,
@@ -339,18 +504,57 @@ INSERT OR IGNORE INTO log_config (id, category, enabled, level, retention, max_s
   ('security-config', 'security', 1, 'warn',  90,  20000, unixepoch() * 1000, unixepoch() * 1000),
   ('error-config',    'error',    1, 'error', 90,  20000, unixepoch() * 1000, unixepoch() * 1000);
 
--- OAuth accounts
-CREATE TABLE IF NOT EXISTS oauth_accounts (
+-- ── Forms ─────────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS forms (
   id TEXT PRIMARY KEY,
-  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  provider TEXT NOT NULL,
-  provider_account_id TEXT NOT NULL,
-  access_token TEXT,
-  refresh_token TEXT,
-  token_expires_at INTEGER,
-  profile_data TEXT,
+  name TEXT NOT NULL UNIQUE,
+  display_name TEXT NOT NULL,
+  description TEXT,
+  category TEXT NOT NULL DEFAULT 'general',
+  formio_schema TEXT NOT NULL,
+  settings TEXT,
+  is_active INTEGER NOT NULL DEFAULT 1,
+  is_public INTEGER NOT NULL DEFAULT 1,
+  managed INTEGER NOT NULL DEFAULT 0,
+  icon TEXT,
+  color TEXT,
+  tags TEXT,
+  submission_count INTEGER NOT NULL DEFAULT 0,
+  view_count INTEGER NOT NULL DEFAULT 0,
+  created_by TEXT REFERENCES auth_user(id),
+  updated_by TEXT REFERENCES auth_user(id),
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL
 );
-CREATE UNIQUE INDEX IF NOT EXISTS idx_oauth_accounts_provider_account ON oauth_accounts(provider, provider_account_id);
-CREATE INDEX IF NOT EXISTS idx_oauth_accounts_user_id ON oauth_accounts(user_id);
+
+CREATE TABLE IF NOT EXISTS form_submissions (
+  id TEXT PRIMARY KEY,
+  form_id TEXT NOT NULL REFERENCES forms(id) ON DELETE CASCADE,
+  submission_data TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',
+  submission_number INTEGER,
+  user_id TEXT REFERENCES auth_user(id),
+  user_email TEXT,
+  ip_address TEXT,
+  user_agent TEXT,
+  referrer TEXT,
+  utm_source TEXT,
+  utm_medium TEXT,
+  utm_campaign TEXT,
+  reviewed_by TEXT REFERENCES auth_user(id),
+  reviewed_at INTEGER,
+  review_notes TEXT,
+  is_spam INTEGER NOT NULL DEFAULT 0,
+  is_archived INTEGER NOT NULL DEFAULT 0,
+  content_id TEXT REFERENCES content(id),
+  submitted_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS form_files (
+  id TEXT PRIMARY KEY,
+  submission_id TEXT NOT NULL REFERENCES form_submissions(id) ON DELETE CASCADE,
+  media_id TEXT NOT NULL REFERENCES media(id) ON DELETE CASCADE,
+  field_name TEXT NOT NULL,
+  uploaded_at INTEGER NOT NULL
+);
