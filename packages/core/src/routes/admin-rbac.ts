@@ -60,7 +60,7 @@ adminRbacRoutes.get('/', async (c) => {
     const resourceOk =
       grantResource === '*' ||
       grantResource === resource ||
-      (grantResource === 'collection:*' && resource.startsWith('collection:'))
+      (grantResource === 'document_type:*' && resource.startsWith('document_type:'))
     return resourceOk && (grantVerb === '*' || grantVerb === verb || grantVerb === 'manage')
   }
   const roleHasPortalAccess = (role: { id: string; name: string }): boolean => {
@@ -76,7 +76,7 @@ adminRbacRoutes.get('/', async (c) => {
   const roleHasExplicitPortalAccess = (role: { id: string; name: string }): boolean =>
     isAdmin(role) || grantsByRole.get(role.id)?.has('portal|access') || false
   const supportsOwnScope = (res: string, verb: string) =>
-    (res === 'content' || res.startsWith('collection:')) && ['read', 'update', 'delete'].includes(verb)
+    (res === 'documents' || res.startsWith('document_type:')) && ['read', 'update', 'delete'].includes(verb)
 
   // System roles keep predictable colors. Custom roles get generated colors by
   // their current role order so they do not collide with each other.
@@ -191,10 +191,10 @@ adminRbacRoutes.get('/', async (c) => {
             .join('')
         )
         .join('')
-      const isWild = res.key === '*' || res.key === 'collection:*'
+      const isWild = res.key === '*' || res.key === 'document_type:*'
       const resColor = isWild
         ? 'text-amber-600 dark:text-amber-400 font-medium'
-        : res.group === 'collection'
+        : res.group === 'document_type'
           ? 'text-lime-600 dark:text-lime-400'
           : 'text-zinc-800 dark:text-zinc-200'
       return `<tr class="border-t border-zinc-950/5 dark:border-white/5">
@@ -372,7 +372,7 @@ adminRbacRoutes.get('/', async (c) => {
   <div class="${card}">
     <h3 class="text-base font-semibold text-zinc-950 dark:text-white mb-3">Live permission check</h3>
     <div class="flex flex-wrap items-center gap-2">
-      <span class="text-sm text-zinc-500">resource</span><input class="${inp}" type="text" id="ck_res" value="collection:blog_posts">
+      <span class="text-sm text-zinc-500">resource</span><input class="${inp}" type="text" id="ck_res" value="document_type:blog-post">
       <span class="text-sm text-zinc-500">verb</span><input class="${inp}" type="text" id="ck_verb" value="update">
       <button type="button" class="${btn}" onclick="ckme()">Can I?</button>
       ${
@@ -529,7 +529,7 @@ adminRbacRoutes.get('/check', async (c) => {
       .filter((g) =>
         (g.resource === '*' ||
           g.resource === resource ||
-          (g.resource === 'collection:*' && resource.startsWith('collection:'))) &&
+          (g.resource === 'document_type:*' && resource.startsWith('document_type:'))) &&
         (g.verb === '*' || g.verb === verb || g.verb === 'manage')
       )
       .map((g) => g.scope || 'any')

@@ -6,7 +6,7 @@
  * so new collections automatically get permissions. Grants are (role, resource,
  * verb, scope) rows with wildcard support:
  *   resource '*'            → all resources
- *   resource 'collection:*' → all collections
+ *   resource 'document_type:*' → all document types
  *   verb '*'                → all verbs
  *   verb 'manage'           → implies every verb on that resource
  *   scope 'any'             → any matching object
@@ -30,7 +30,7 @@ export interface RbacVerb {
 export interface RbacResource {
   key: string // e.g. 'content' or 'collection:blog_posts'
   label: string
-  group: 'system' | 'collection'
+  group: 'system' | 'document_type'
 }
 export type PermissionScope = 'none' | 'own' | 'any'
 export interface Grant {
@@ -45,13 +45,11 @@ const SYSTEM_RESOURCES: RbacResource[] = [
   { key: 'portal', label: 'Admin Portal', group: 'system' },
   { key: 'dashboard', label: 'Dashboard', group: 'system' },
   { key: 'rbac', label: 'Roles & Permissions', group: 'system' },
-  { key: 'content', label: 'Content', group: 'system' },
-  { key: 'collections', label: 'Collection Schemas', group: 'system' },
-  { key: 'media', label: 'Media', group: 'system' },
+  { key: 'documents', label: 'Documents', group: 'system' as const },
+  { key: 'document_types', label: 'Document Types', group: 'system' as const },
   { key: 'email', label: 'Email Management', group: 'system' },
   { key: 'users', label: 'Users', group: 'system' },
   { key: 'settings', label: 'Settings', group: 'system' },
-  { key: 'plugins', label: 'Plugins', group: 'system' },
   { key: 'logs', label: 'Logs', group: 'system' },
 ]
 
@@ -76,21 +74,21 @@ export class RbacService {
     return this.all<RbacVerb>('SELECT * FROM auth_rbac_verbs ORDER BY sort_order, name')
   }
 
-  /** System resources + one `collection:<name>` per active collection, plus a
-   *  `collection:*` row representing "all collections". */
+  /** System resources + one `document_type:<name>` per active document type, plus a
+   *  `document_type:*` row representing "all document types". */
   async getResources(): Promise<RbacResource[]> {
-    const cols = await this.all<{ name: string; display_name: string }>(
-      'SELECT name, display_name FROM collections WHERE is_active = 1 ORDER BY name'
+    const types = await this.all<{ name: string; display_name: string }>(
+      'SELECT name, display_name FROM document_types WHERE is_active = 1 ORDER BY name'
     )
-    const collectionResources: RbacResource[] = [
-      { key: 'collection:*', label: 'All collections', group: 'collection' },
-      ...cols.map((c) => ({
-        key: `collection:${c.name}`,
-        label: c.display_name || c.name,
-        group: 'collection' as const,
+    const documentTypeResources: RbacResource[] = [
+      { key: 'document_type:*', label: 'All document types', group: 'document_type' },
+      ...types.map((t) => ({
+        key: `document_type:${t.name}`,
+        label: t.display_name || t.name,
+        group: 'document_type' as const,
       })),
     ]
-    return [...SYSTEM_RESOURCES, ...collectionResources]
+    return [...SYSTEM_RESOURCES, ...documentTypeResources]
   }
 
   async getGrants(): Promise<Grant[]> {
@@ -109,7 +107,7 @@ export class RbacService {
     const resourceOk =
       g.resource === '*' ||
       g.resource === resource ||
-      (g.resource === 'collection:*' && resource.startsWith('collection:'))
+      (g.resource === 'document_type:*' && resource.startsWith('document_type:'))
     if (!resourceOk) return false
     return g.verb === '*' || g.verb === verb || g.verb === 'manage'
   }

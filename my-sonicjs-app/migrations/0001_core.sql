@@ -1,6 +1,6 @@
--- Migration 0001: Better Auth tables (bare minimum for BA to function)
--- auth_user, auth_session, auth_account, auth_verification + BA plugin tables.
--- SonicJS platform tables are in 0003_platform.sql.
+-- Migration 0001: Auth tables
+-- auth_user, auth_session, auth_account, auth_verification + BA plugin tables + RBAC + auth support.
+-- Only auth_* prefixed tables live here. All content lives in document_* tables (0002_documents.sql).
 
 -- ── auth_user ────────────────────────────────────────────────────────────────
 -- BA user model + SonicJS domain columns as BA additionalFields.
@@ -144,3 +144,120 @@ CREATE TABLE IF NOT EXISTS auth_team (
   created_at      INTEGER NOT NULL,
   updated_at      INTEGER NOT NULL
 );
+
+-- ── RBAC ─────────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS auth_rbac_roles (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL UNIQUE,
+  display_name TEXT NOT NULL,
+  description TEXT,
+  is_system INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
+  updated_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
+);
+
+CREATE TABLE IF NOT EXISTS auth_rbac_verbs (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL UNIQUE,
+  description TEXT,
+  is_system INTEGER NOT NULL DEFAULT 0,
+  sort_order INTEGER NOT NULL DEFAULT 100
+);
+
+CREATE TABLE IF NOT EXISTS auth_rbac_role_grants (
+  role_id TEXT NOT NULL REFERENCES auth_rbac_roles(id) ON DELETE CASCADE,
+  resource TEXT NOT NULL,
+  verb TEXT NOT NULL,
+  scope TEXT NOT NULL DEFAULT 'any',
+  PRIMARY KEY (role_id, resource, verb)
+);
+
+CREATE TABLE IF NOT EXISTS auth_rbac_user_roles (
+  user_id TEXT NOT NULL REFERENCES auth_user(id) ON DELETE CASCADE,
+  role_id TEXT NOT NULL REFERENCES auth_rbac_roles(id) ON DELETE CASCADE,
+  PRIMARY KEY (user_id, role_id)
+);
+
+-- Seed system roles
+INSERT OR IGNORE INTO auth_rbac_roles (id, name, display_name, description, is_system) VALUES
+  ('role-admin',  'admin',  'Administrator', 'Full access to everything',             1),
+  ('role-editor', 'editor', 'Editor',        'Manage documents across all types',     1),
+  ('role-author', 'author', 'Author',        'Create and edit own documents',         1),
+  ('role-viewer', 'viewer', 'Viewer',        'Read-only access',                      1);
+
+INSERT OR IGNORE INTO auth_rbac_verbs (id, name, description, is_system, sort_order) VALUES
+  ('verb-access', 'access', 'Enter or use a portal/resource', 1,  5),
+  ('verb-read',   'read',   'View a resource',                1, 10),
+  ('verb-create', 'create', 'Create a resource',              1, 20),
+  ('verb-update', 'update', 'Edit a resource',                1, 30),
+  ('verb-delete', 'delete', 'Remove a resource',              1, 40),
+  ('verb-manage', 'manage', 'Full control (implies all verbs)',1, 50);
+
+INSERT OR IGNORE INTO auth_rbac_role_grants (role_id, resource, verb) VALUES
+  ('role-admin', '*',              'manage'),
+  ('role-admin', 'portal',         'access'),
+  ('role-admin', 'rbac',           'manage'),
+  ('role-admin', 'document_types', 'manage'),
+  ('role-admin', 'email',          'manage'),
+  ('role-admin', 'users',          'manage');
+
+INSERT OR IGNORE INTO auth_rbac_role_grants (role_id, resource, verb) VALUES
+  ('role-editor', 'documents',          'manage'),
+  ('role-editor', 'document_type:*',    'read'),
+  ('role-editor', 'document_type:*',    'create'),
+  ('role-editor', 'document_type:*',    'update'),
+  ('role-editor', 'document_type:*',    'delete'),
+  ('role-editor', 'settings',           'read');
+
+INSERT OR IGNORE INTO auth_rbac_role_grants (role_id, resource, verb) VALUES
+  ('role-author', 'documents',       'read'),
+  ('role-author', 'documents',       'create'),
+  ('role-author', 'documents',       'update'),
+  ('role-author', 'document_type:*', 'read');
+
+INSERT OR IGNORE INTO auth_rbac_role_grants (role_id, resource, verb) VALUES
+  ('role-viewer', 'documents',       'read'),
+  ('role-viewer', 'document_type:*', 'read');
+
+-- ── Auth support tables ───────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS auth_password_history (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES auth_user(id) ON DELETE CASCADE,
+  password_hash TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_auth_password_history_user_id ON auth_password_history(user_id);
+
+CREATE TABLE IF NOT EXISTS auth_api_tokens (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  token TEXT NOT NULL UNIQUE,
+  user_id TEXT NOT NULL REFERENCES auth_user(id),
+  permissions TEXT NOT NULL,
+  expires_at INTEGER,
+  last_used_at INTEGER,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_auth_api_tokens_user ON auth_api_tokens(user_id);
+CREATE INDEX IF NOT EXISTS idx_auth_api_tokens_token ON auth_api_tokens(token);
+
+CREATE TABLE IF NOT EXISTS auth_user_profiles (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL UNIQUE REFERENCES auth_user(id) ON DELETE CASCADE,
+  display_name TEXT,
+  bio TEXT,
+  company TEXT,
+  job_title TEXT,
+  website TEXT,
+  location TEXT,
+  date_of_birth INTEGER,
+  data TEXT DEFAULT '{}',
+  created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
+  updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000)
+);
+CREATE INDEX IF NOT EXISTS idx_auth_user_profiles_user_id ON auth_user_profiles(user_id);
+
+CREATE TRIGGER IF NOT EXISTS auth_user_profiles_updated_at
+AFTER UPDATE ON auth_user_profiles BEGIN
+  UPDATE auth_user_profiles SET updated_at = strftime('%s', 'now') * 1000 WHERE id = NEW.id;
+END;

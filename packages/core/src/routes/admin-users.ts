@@ -75,8 +75,8 @@ userRoutes.get('/profile', async (c) => {
   try {
     // Get user profile data
     const userStmt = db.prepare(`
-      SELECT id, email, username, first_name, last_name, phone, bio, avatar_url,
-             timezone, language, theme, email_notifications, two_factor_enabled,
+      SELECT id, email, username, first_name, last_name, phone, bio, avatar,
+             timezone, language, theme, email_notifications, 0 as two_factor_enabled,
              role, created_at, last_login_at
       FROM auth_user 
       WHERE id = ? AND is_active = 1
@@ -97,7 +97,7 @@ userRoutes.get('/profile', async (c) => {
       last_name: userProfile.last_name || '',
       phone: userProfile.phone,
       bio: userProfile.bio,
-      avatar_url: userProfile.avatar_url,
+      avatar_url: userProfile.avatar,
       timezone: userProfile.timezone || 'UTC',
       language: userProfile.language || 'en',
       theme: userProfile.theme || 'dark',
@@ -298,7 +298,7 @@ userRoutes.post('/profile/avatar', async (c) => {
 
     // Update user avatar URL in database
     const updateStmt = db.prepare(`
-      UPDATE auth_user SET avatar_url = ?, updated_at = ?
+      UPDATE auth_user SET avatar = ?, updated_at = ?
       WHERE id = ?
     `)
 
@@ -502,8 +502,8 @@ userRoutes.get('/users', async (c) => {
     // Get users
     const usersStmt = db.prepare(`
       SELECT u.id, u.email, u.username, u.first_name, u.last_name,
-             u.role, u.avatar_url, u.created_at, u.last_login_at, u.updated_at,
-             u.email_verified, u.two_factor_enabled, u.is_active
+             u.role, u.avatar, u.created_at, u.last_login_at, u.updated_at,
+             u.email_verified, 0 as two_factor_enabled, u.is_active
       FROM auth_user u
       ${whereClause}
       ORDER BY u.created_at DESC
@@ -552,7 +552,7 @@ userRoutes.get('/users', async (c) => {
       firstName: u.first_name || '',
       lastName: u.last_name || '',
       role: u.role,
-      avatar: u.avatar_url,
+      avatar: u.avatar,
       isActive: Boolean(u.is_active),
       lastLoginAt: u.last_login_at,
       createdAt: u.created_at,
@@ -769,8 +769,8 @@ userRoutes.get('/users/:id', async (c) => {
   try {
     // Get user data (including inactive users for admin access)
     const userStmt = db.prepare(`
-      SELECT id, email, username, first_name, last_name, phone, bio, avatar_url,
-             role, is_active, email_verified, two_factor_enabled, created_at, last_login_at
+      SELECT id, email, username, first_name, last_name, phone, bio, avatar,
+             role, is_active, email_verified, 0 as two_factor_enabled, created_at, last_login_at
       FROM auth_user
       WHERE id = ?
     `)
@@ -798,7 +798,7 @@ userRoutes.get('/users/:id', async (c) => {
         last_name: userRecord.last_name,
         phone: userRecord.phone,
         bio: userRecord.bio,
-        avatar_url: userRecord.avatar_url,
+        avatar_url: userRecord.avatar,
         role: userRecord.role,
         is_active: userRecord.is_active,
         email_verified: userRecord.email_verified,
@@ -825,8 +825,8 @@ userRoutes.get('/users/:id/edit', async (c) => {
   try {
     // Get user data (removed bio - now in profile)
     const userStmt = db.prepare(`
-      SELECT id, email, username, first_name, last_name, phone, avatar_url,
-             role, is_active, email_verified, two_factor_enabled, created_at, last_login_at
+      SELECT id, email, username, first_name, last_name, phone, avatar,
+             role, is_active, email_verified, 0 as two_factor_enabled, created_at, last_login_at
       FROM auth_user
       WHERE id = ?
     `)
@@ -876,7 +876,7 @@ userRoutes.get('/users/:id/edit', async (c) => {
       firstName: userToEdit.first_name || '',
       lastName: userToEdit.last_name || '',
       phone: userToEdit.phone,
-      avatarUrl: userToEdit.avatar_url,
+      avatarUrl: userToEdit.avatar,
       role: userToEdit.role,
       isActive: Boolean(userToEdit.is_active),
       emailVerified: Boolean(userToEdit.email_verified),
