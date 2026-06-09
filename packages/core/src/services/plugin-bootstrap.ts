@@ -66,10 +66,11 @@ export class PluginBootstrapService {
 
   /**
    * Core plugins derived from the auto-generated plugin registry.
-   * Only plugins listed in BOOTSTRAP_PLUGIN_IDS are included.
+   * Only plugins listed in BOOTSTRAP_PLUGIN_IDS AND marked is_core=true are auto-installed.
+   * Non-core plugins are available in the registry but not bootstrapped.
    */
   private readonly CORE_PLUGINS: CorePlugin[] = BOOTSTRAP_PLUGIN_IDS
-    .filter((id) => PLUGIN_REGISTRY[id] !== undefined)
+    .filter((id) => PLUGIN_REGISTRY[id] !== undefined && PLUGIN_REGISTRY[id]!.is_core === true)
     .map((id) => registryToCorePlugin(PLUGIN_REGISTRY[id]!));
 
   /**
@@ -149,32 +150,15 @@ export class PluginBootstrapService {
   }
 
   /**
-   * Update an existing plugin
+   * Update an existing plugin's version/description/permissions/settings
    */
   private async updatePlugin(plugin: CorePlugin): Promise<void> {
-    const now = Math.floor(Date.now() / 1000);
-
-    const stmt = this.db.prepare(`
-      UPDATE plugins
-      SET
-        version = ?,
-        description = ?,
-        permissions = ?,
-        settings = ?,
-        last_updated = ?
-      WHERE id = ?
-    `);
-
-    await stmt
-      .bind(
-        plugin.version,
-        plugin.description,
-        JSON.stringify(plugin.permissions),
-        JSON.stringify(plugin.settings || {}),
-        now,
-        plugin.id
-      )
-      .run();
+    await this.pluginService.updatePluginVersion(plugin.id, {
+      version: plugin.version,
+      description: plugin.description,
+      permissions: plugin.permissions,
+      settings: plugin.settings || {},
+    });
   }
 
   /**
