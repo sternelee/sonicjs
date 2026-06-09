@@ -87,6 +87,9 @@ export {
 
 export type { Migration, MigrationStatus, LogLevel, LogCategory, LogEntry, LogFilter, CorePlugin } from './services'
 
+// Collections - Code-defined managed collections
+export { default as siteSettingsCollection } from './collections/site-settings.collection'
+
 // Middleware - Week 2 (COMPLETED)
 export {
   // Authentication

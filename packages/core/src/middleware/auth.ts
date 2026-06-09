@@ -71,12 +71,11 @@ export async function getJwtExpirySecondsFromDb(
   if (db) {
     try {
       const row = await db
-        .prepare("SELECT value FROM settings WHERE category = 'security' AND key = 'jwtExpiresIn'")
-        .first() as { value: string } | null
-      if (row?.value) {
-        let stored: any = row.value
-        try { stored = JSON.parse(row.value) } catch { /* value may already be a bare string */ }
-        const parsed = parseDuration(stored)
+        .prepare("SELECT data FROM documents WHERE type_id = 'site_settings' AND slug = 'security' AND tenant_id = 'default' AND is_current_draft = 1 AND deleted_at IS NULL")
+        .first() as { data: string } | null
+      if (row?.data) {
+        const data = JSON.parse(row.data)
+        const parsed = parseDuration(data.jwtExpiresIn)
         if (parsed) return parsed
       }
     } catch (err) {
@@ -102,12 +101,11 @@ export async function getJwtRefreshGraceSecondsFromDb(
   if (db) {
     try {
       const row = await db
-        .prepare("SELECT value FROM settings WHERE category = 'security' AND key = 'jwtRefreshGraceSeconds'")
-        .first() as { value: string } | null
-      if (row?.value) {
-        let stored: any = row.value
-        try { stored = JSON.parse(row.value) } catch { /* may be bare */ }
-        const parsed = parseDuration(stored)
+        .prepare("SELECT data FROM documents WHERE type_id = 'site_settings' AND slug = 'security' AND tenant_id = 'default' AND is_current_draft = 1 AND deleted_at IS NULL")
+        .first() as { data: string } | null
+      if (row?.data) {
+        const data = JSON.parse(row.data)
+        const parsed = parseDuration(data.jwtRefreshGraceSeconds?.toString())
         if (parsed) return parsed
       }
     } catch (err) {

@@ -34,6 +34,29 @@ Anti-patterns: `grep -r` across repo when codegraph answers; reading 5+ files to
 6. **Simplicity Focus**: Make minimal, targeted changes. Avoid complex refactoring.
 7. **Documentation**: Add a review section to project-plan.md summarizing changes
 
+## Database Schema Rules (STRICT — greenfield v3)
+
+**Only two table prefixes are allowed:**
+- `auth_` — BetterAuth core, RBAC, API tokens, user profiles, password history
+- `document_` — document model (document_types, documents, document_references, document_facets, document_permissions)
+
+**Never create custom feature tables.** No `collections`, `content`, `media`, `plugins`, `forms`, `system_logs`, or any other unprefixed tables. Every new data type must be a `document_type` with records in `documents`.
+
+**Plugin storage** — plugins are registered as `document_type='plugin'` rows in `documents`. No separate plugin tables.
+
+**Media storage** — media assets are `document_type='media_asset'` rows. No separate `media` table.
+
+**Migrations** — after editing any `.sql` file in `packages/core/migrations/`, always:
+1. Regenerate the bundle:
+   ```bash
+   cd packages/core && npx tsx scripts/generate-migrations.ts
+   ```
+2. Copy all `.sql` files to the app migrations folder:
+   ```bash
+   cp packages/core/migrations/*.sql my-sonicjs-app/migrations/
+   ```
+   Then remove any `.sql` files from `my-sonicjs-app/migrations/` that no longer exist in `packages/core/migrations/`.
+
 ## Key Principles
 - **Edge-First**: Leverage Cloudflare's global edge network
 - **TypeScript-First**: Strong typing throughout the application
