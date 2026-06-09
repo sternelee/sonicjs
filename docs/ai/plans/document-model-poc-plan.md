@@ -359,6 +359,94 @@ The `INSERT INTO documents (… 30 columns …) SELECT …` supplies only **29**
 
 ---
 
+## Email Log as Document Type (plugin-system / v3 merge decision)
+
+> **Decision (2026-06-08):** The email log is stored as a **document type** (`email_log`) in the
+> `documents` table, not in a dedicated `email_log` table. This eliminates migrations `037_email_log`
+> and `038_email_log_observability` from the plugin-system branch — they are dropped and not merged.
+
+### Rationale
+The plugin system branch added `email_log` as a standalone table (migrations 037 + 038). The v3 branch
+replaces standalone tables with the document model. Rather than carrying two overlapping storage systems,
+the email log is expressed as a document type: the schema lives in the plugin, data lives in `documents`,
+and the admin browser reads it like any other document type.
+
+### Feasibility — confirmed ✅
+
+**No new migration file required.** Queryable generated columns for email_log are added via the D45
+self-healing mechanism already present in `MigrationService.ensureDocumentGeneratedColumns()`
+(`services/migrations.ts:108`). This method runs at every bootstrap and idempotently ALTERs the
+`documents` table for any missing `q_*` column. Adding 3–4 `q_email_*` entries to that list (a pure
+code change, no `.sql` file) is enough.
+
+**100-column budget:** current q_* columns = 12. Adding 4 email columns → 16 total. Well within D1's
+100-column limit.
+
+**Draft/publish overhead:** email log entries are immutable records (not editable content). Each log
+entry is created as `is_current_draft=1, is_published=1` in one batch insert — one row, one version,
+no lifecycle transitions. The document model supports this pattern (it is the initial state before any
+saveDraft is called).
+
+### Implementation spec
+
+**Document type id:** `email_log`  
+**Source:** `'system'` (registered by the email plugin in `onBoot`)  
+**Queryable fields + generated columns** (added to `ensureDocumentGeneratedColumns`):
+
+| Field | Column | Type | json_extract path |
+|---|---|---|---|
+| `status` | `q_email_status` | `TEXT` | `$.status` |
+| `provider` | `q_email_provider` | `TEXT` | `$.provider` |
+| `flow` | `q_email_flow` | `TEXT` | `$.flow` |
+| `toEmail` | `q_email_to` | `TEXT` | `$.toEmail` |
+
+**`data` payload** (stored in `documents.data` JSON — no dedicated columns needed):
+
+```
+{ toEmail, fromEmail, subject, status, provider, providerId, error,
+  flow, metadata, deliveryState, deliverySyncedAt, failedAtSend }
+```
+
+**Base grants:** `admin: ['read', 'delete', 'manage']`. No public read (PII). No publish/draft semantics
+— entries are created fully published and never edited.
+
+**Write path:** `EmailService.writeLog()` → `DocumentsService.create()` (batch insert: one
+`document_types` lookup, one `documents` INSERT as published draft in a single `db.batch`). The
+`DocumentsService` tenant is hardcoded `'default'` for the POC.
+
+**Admin browser:** reads `documents WHERE type_id = 'email_log' AND tenant_id = 'default'` ordered by
+`created_at DESC`, filtered by `q_email_status` / `q_email_provider` / `q_email_flow` via `repo.list()`.
+Replaces the standalone `/admin/settings/email-log` route (which targeted the now-removed table).
+
+**Reconciliation:** `emailReconciliationPlugin.onCronTick` queries `documents WHERE type_id='email_log'
+AND q_email_status='sent' AND q_email_provider IS NOT NULL AND data->'$.deliveryState' IS NULL`, calls
+`provider.reconcile?()`, then updates `data` JSON + `q_email_status` (via `svc.saveDraft`). No delivery
+columns in a separate table — delivery state lives inside `documents.data`.
+
+### Files changed (from plugin-system branch — to be undone/replaced in merge)
+
+| File | Action |
+|---|---|
+| `packages/core/migrations/037_email_log.sql` | **DROP** — not merged |
+| `packages/core/migrations/038_email_log_observability.sql` | **DROP** — not merged |
+| `packages/core/src/services/email/email-service.ts` `writeLog()` | Change target from `email_log` table to `DocumentsService.create()` |
+| `packages/core/src/services/email/types.ts` `EmailLogRow` | Re-derive from `documents` row shape |
+| `packages/core/src/routes/admin-settings.ts` (email-log browser) | Repoint to `documents` query via `repo.list()` |
+| `packages/core/src/services/migrations.ts` `ensureDocumentGeneratedColumns` | Add 4 `q_email_*` entries (no migration file) |
+| `packages/core/src/plugins/core-plugins/email-reconciliation/index.ts` | Register `email_log` document type in `onBoot`; update cron query to use documents |
+| `packages/core/src/db/migrations-bundle.ts` | Regenerated (no 037/038 entries) |
+
+### Open questions (resolve before coding)
+
+- **Email log publishing semantics:** create with `is_published=1` directly, or keep `is_current_draft=1`
+  only (since it's never "published content")? Recommend `is_current_draft=1, is_published=0` — log
+  entries are internal records, not publishable. Admin browser uses the current-draft query path.
+- **Erase (PII):** email logs contain `toEmail`. Does the right-to-erasure flow need to find and erase
+  email_log documents by recipient address? If yes, contact_message erase path should be extended.
+  (Defer for now — same pattern as D28/D29 PII handling for contact_message.)
+
+---
+
 ## Decommissioning the legacy `content` / `media` tables (readiness + plan)
 
 **Status: NOT ready to drop `content`.** New writes go to `documents` and existing rows can be

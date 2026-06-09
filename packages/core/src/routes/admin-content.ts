@@ -353,7 +353,7 @@ async function getCollection(db: D1Database, collectionId: string) {
 
 // ─── Document-backing (Option B) ────────────────────────────────────────────────
 // A collection is "document-backed" when a document type with the SAME id as the collection name is
-// registered + active (e.g. the `blog_posts` collection ↔ the `blog_posts` document type). Such
+// registered + active (e.g. the `blog_post` collection ↔ the `blog_post` document type). Such
 // collections keep the rich /admin/content editor UI but store data in the `documents` table.
 async function getDocBackingType(db: D1Database, collectionName?: string | null) {
   if (!collectionName) return null
@@ -833,7 +833,7 @@ adminContentRoutes.get('/new', async (c) => {
 
     const db = c.env.DB
     // Resolve ?collection= by id OR name. The content-list "New" button passes the collection id, but
-    // a collection name (== document type id for doc-backed collections, e.g. ?collection=blog_posts)
+    // a collection name (== document type id for doc-backed collections, e.g. ?collection=blog_post)
     // is the stable identifier callers/links use — accept both so the form always carries a collection_id.
     const collection = (await getCollection(db, collectionId)) ?? (await getCollectionByName(db, collectionId))
 

@@ -109,7 +109,7 @@ app.post('/test-cleanup', async (c: Context) => {
     deletedCount += usersResult.meta?.changes || 0
 
     // Step 5: Delete child data for test collections.
-    // NOTE: `blog_posts` is intentionally NOT in this list — it is a SEEDED collection (migration 001)
+    // NOTE: `blog_post` is intentionally NOT in this list — it is a SEEDED collection (migration 001)
     // that backs the document-model blog feature, not disposable test data. Deleting it here broke the
     // doc-backed blog e2e (the new-content form had no collection to resolve). Only genuine test
     // artifacts are removed.

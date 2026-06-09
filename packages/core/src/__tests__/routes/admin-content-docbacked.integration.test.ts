@@ -1,6 +1,6 @@
 // @ts-nocheck
 // Route-level integration tests for the Option B branches in admin-content: a collection whose name
-// matches a registered document type (blog_posts) is document-backed — the rich /admin/content editor
+// matches a registered document type (blog_post) is document-backed — the rich /admin/content editor
 // stays, but create/list/edit/update route to the documents table. Mounts the real adminContentRoutes
 // on a Hono app over real SQLite (consolidated greenfield schema).
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
@@ -46,17 +46,19 @@ function form(obj: Record<string, string>) {
   return fd
 }
 
-describe('admin-content Option B (document-backed blog_posts) — integration', () => {
+describe('admin-content Option B (document-backed blog_post) — integration', () => {
   let db: any
   let app: any
-  const COLL = 'bp'
+  // collection_id in the form maps to a document_types.id in the v3 architecture.
+  // Use the document type id ('blog_post') — not the legacy collections.id ('bp').
+  const COLL = 'blog_post'
 
   beforeEach(async () => {
     db = createTestD1()
     db.raw.prepare("INSERT INTO users (id,email,username,first_name,last_name,role,is_active,created_at,updated_at) VALUES ('u1','a@b.c','admin','Ada','Lovelace','admin',1,1,1)").run()
     db.raw.prepare("INSERT INTO collections (id,name,display_name,description,schema,is_active,managed,created_at,updated_at) VALUES (?,?,?,?,?,1,1,1,1)")
-      .run(COLL, 'blog_posts', 'Blog Posts', 'Blog', BLOG_SCHEMA)
-    await bootstrapDocumentTypes(db) // registers the blog_posts document type
+      .run(COLL, 'blog_post', 'Blog Posts', 'Blog', BLOG_SCHEMA)
+    await bootstrapDocumentTypes(db) // registers the blog_post document type
     app = buildApp(db)
   })
   afterEach(() => db.close())
@@ -85,7 +87,7 @@ describe('admin-content Option B (document-backed blog_posts) — integration', 
     const res = await createPost('hello')
     expect([200, 302]).toContain(res.status)
 
-    const doc = db.raw.prepare("SELECT title, slug, is_published, q_blog_difficulty d, q_blog_author a FROM documents WHERE type_id='blog_posts' AND slug='hello'").get()
+    const doc = db.raw.prepare("SELECT title, slug, is_published, q_blog_difficulty d, q_blog_author a FROM documents WHERE type_id='blog_post' AND slug='hello'").get()
     expect(doc).toBeTruthy()
     expect(doc.is_published).toBe(1)
     expect(doc.d).toBe('advanced')
@@ -93,9 +95,9 @@ describe('admin-content Option B (document-backed blog_posts) — integration', 
     expect(db.raw.prepare('SELECT COUNT(*) AS count FROM content').get().count).toBe(0)
   })
 
-  it('list (model=blog_posts) reads from documents and shows the post', async () => {
+  it('list (model=blog_post) reads from documents and shows the post', async () => {
     await createPost('listed')
-    const res = await app.request('/admin/content?model=blog_posts')
+    const res = await app.request('/admin/content?model=blog_post')
     expect(res.status).toBe(200)
     const htmlText = await res.text()
     expect(htmlText).toContain('Post listed')

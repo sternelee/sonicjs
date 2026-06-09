@@ -5,7 +5,7 @@
  * already exists as a document is skipped, so re-running is safe.
  *
  * Use this to move content created before its collection became document-backed (e.g. a news item
- * added while only blog_posts was converted).
+ * added while only blog_post was converted).
  *
  * Run from my-sonicjs-app/:
  *   npx tsx scripts/backfill-content.ts

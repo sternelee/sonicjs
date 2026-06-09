@@ -7,7 +7,7 @@ import { MigrationService } from './migrations'
 
 // Mock D1Database with configurable responses
 function createMockDb(options: {
-  appliedMigrations?: Array<{ id: string; name: string; filename: string; applied_at: string }>;
+  appliedMigrations?: Array<{ name: string; applied_at: string }>;
   existingTables?: string[];
   existingColumns?: Array<{ table: string; column: string }>;
 } = {}) {
@@ -51,22 +51,11 @@ function createMockDb(options: {
           bind: chainable.bind
         }
       }
-      // For migration table queries
-      if (lastQuery.includes('SELECT id, name, filename, applied_at FROM migrations')) {
+      // For D1 migration table queries
+      if (lastQuery.includes('SELECT name, applied_at FROM d1_migrations')) {
         return {
           first: mockFirst,
           all: vi.fn().mockResolvedValue({ results: appliedMigrations }),
-          run: mockRun,
-          bind: chainable.bind
-        }
-      }
-      // For migration applied check (SELECT COUNT)
-      if (lastQuery.includes('SELECT COUNT')) {
-        const migrationId = args[0]
-        const exists = appliedMigrations.some(m => m.id === migrationId)
-        return {
-          first: vi.fn().mockResolvedValue({ count: exists ? 1 : 0 }),
-          all: mockAll,
           run: mockRun,
           bind: chainable.bind
         }
@@ -85,12 +74,8 @@ function createMockDb(options: {
 
   const mockPrepare = vi.fn((query: string) => {
     lastQuery = query
-    // For CREATE TABLE (init migrations table)
-    if (query.includes('CREATE TABLE IF NOT EXISTS migrations')) {
-      return { run: mockRun, bind: chainable.bind, first: mockFirst, all: mockAll }
-    }
-    // For SELECT from migrations (applied migrations list)
-    if (query.includes('SELECT id, name, filename, applied_at FROM migrations')) {
+    // For SELECT from D1 migrations (applied migrations list)
+    if (query.includes('SELECT name, applied_at FROM d1_migrations')) {
       return {
         all: vi.fn().mockResolvedValue({ results: appliedMigrations }),
         bind: chainable.bind,
@@ -109,7 +94,7 @@ function createMockDb(options: {
 
 describe('MigrationService', () => {
   describe('consolidated greenfield migrations', () => {
-    it('exposes only 0001 core and 0002 document-only migrations', async () => {
+    it('exposes only the greenfield core migrations', async () => {
       const db = createMockDb({
         appliedMigrations: []
       })
@@ -119,11 +104,12 @@ describe('MigrationService', () => {
 
       expect(migrations.map(m => m.id)).toEqual(['0001', '0002'])
       expect(migrations.find(m => m.id === '029')).toBeUndefined()
+      expect(db._mocks.prepare).not.toHaveBeenCalledWith(expect.stringContaining('CREATE TABLE IF NOT EXISTS migrations'))
     })
   })
 
   describe('runPendingMigrations', () => {
-    it('should include errors array in response', async () => {
+    it('should direct callers to Wrangler instead of running migrations in-app', async () => {
       const db = createMockDb({
         appliedMigrations: [],
         existingTables: ['users', 'documents', 'document_types'],
@@ -135,28 +121,27 @@ describe('MigrationService', () => {
 
       expect(result).toHaveProperty('errors')
       expect(Array.isArray(result.errors)).toBe(true)
+      expect(result.success).toBe(false)
+      expect(result.message).toContain('wrangler d1 migrations apply')
+      expect(db._mocks.prepare).not.toHaveBeenCalledWith(expect.stringContaining('CREATE TABLE IF NOT EXISTS migrations'))
     })
 
-    it('should return empty errors when all migrations are up to date', async () => {
-      // Create a db where all bundled migrations are already applied
+    it('should read applied migrations from d1_migrations', async () => {
       const db = createMockDb({
-        appliedMigrations: [],
+        appliedMigrations: [
+          { name: '0001_core.sql', applied_at: '2026-01-01T00:00:00.000Z' },
+          { name: '0002_documents.sql', applied_at: '2026-01-01T00:00:01.000Z' }
+        ],
         existingTables: ['users', 'documents', 'document_types'],
         existingColumns: []
       })
 
       const service = new MigrationService(db as any)
-      // Mock getMigrationStatus to return no pending
-      vi.spyOn(service, 'getMigrationStatus').mockResolvedValue({
-        totalMigrations: 0,
-        appliedMigrations: 0,
-        pendingMigrations: 0,
-        migrations: []
-      })
+      const status = await service.getMigrationStatus()
 
-      const result = await service.runPendingMigrations()
-      expect(result.errors).toEqual([])
-      expect(result.success).toBe(true)
+      expect(status.appliedMigrations).toBe(2)
+      expect(status.pendingMigrations).toBe(0)
+      expect(status.lastApplied).toBe('2026-01-01T00:00:01.000Z')
     })
   })
 })

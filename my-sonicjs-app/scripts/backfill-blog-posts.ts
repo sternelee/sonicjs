@@ -1,8 +1,8 @@
 /**
- * Backfill: migrate existing `blog_posts` collection content (the `content` table) into the
+ * Backfill: migrate existing `blog_post` collection content (the `content` table) into the
  * document model (Option B). Non-destructive — the legacy content rows are LEFT IN PLACE for
  * rollback (per the plan's "keep the table-backed path" rule). Idempotent: a post whose slug already
- * exists as a blog_posts document is skipped, so re-running is safe.
+ * exists as a blog_post document is skipped, so re-running is safe.
  *
  * Run from my-sonicjs-app/:
  *   npx tsx scripts/backfill-blog-posts.ts
@@ -24,9 +24,9 @@ async function backfill() {
   try {
     await bootstrapDocumentTypes(db)
     const registry = new DocumentTypeRegistry(db)
-    const docType = await registry.findById('blog_posts')
+    const docType = await registry.findById('blog_post')
     if (!docType) {
-      console.error('❌ blog_posts document type not registered.')
+      console.error('❌ blog_post document type not registered.')
       process.exit(1)
     }
 
@@ -40,11 +40,11 @@ async function backfill() {
     const { results: rows } = await db
       .prepare(
         `SELECT c.* FROM content c JOIN collections col ON c.collection_id = col.id
-         WHERE col.name = 'blog_posts' AND c.status != 'deleted'`,
+         WHERE col.name = 'blog_post' AND c.status != 'deleted'`,
       )
       .all<any>()
 
-    console.log(`Found ${rows?.length ?? 0} blog_posts content rows to consider.`)
+    console.log(`Found ${rows?.length ?? 0} blog_post content rows to consider.`)
     let created = 0
     let skipped = 0
 
@@ -52,10 +52,10 @@ async function backfill() {
       const data = row.data ? JSON.parse(row.data) : {}
       const slug = row.slug || data.slug || null
 
-      // Idempotency: skip if a blog_posts document with this slug already exists.
+      // Idempotency: skip if a blog_post document with this slug already exists.
       if (slug) {
         const existing = await db
-          .prepare("SELECT id FROM documents WHERE type_id = 'blog_posts' AND tenant_id = 'default' AND slug = ? AND is_current_draft = 1")
+          .prepare("SELECT id FROM documents WHERE type_id = 'blog_post' AND tenant_id = 'default' AND slug = ? AND is_current_draft = 1")
           .bind(slug)
           .first()
         if (existing) {
@@ -66,7 +66,7 @@ async function backfill() {
 
       const doc = await svc.create(
         createDocumentSchema.parse({
-          typeId: 'blog_posts',
+          typeId: 'blog_post',
           tenantId: 'default',
           locale: 'default',
           title: row.title || data.title || slug || 'Untitled',

@@ -1,32 +1,54 @@
 /**
  * My SonicJS Application — v3 greenfield
  *
- * Schema is now documents + auth only. All non-critical plugins are disabled
- * until the code is re-wired to the document model. Auth (password/magic-link/otp)
- * still works; plugin bootstrap is skipped (no plugins table).
+ * Exports both `fetch` (HTTP) and `scheduled` (cron) so the Worker handles both
+ * cold-start paths. app.boot() ensures a cron-first cold isolate still gets the
+ * hook bus wired before dispatching.
  */
 
-import { createSonicJSApp, registerCollections } from '@sonicjs-cms/core'
+import {
+  createSonicJSApp,
+  registerCollections,
+  createScheduledHandler,
+  getHookSystem,
+  emailReconciliationPlugin,
+  collectCronSchedules,
+} from '@sonicjs-cms/core'
 import type { SonicJSConfig } from '@sonicjs-cms/core'
 
 // Import code-defined collections
 import blogPostsCollection from './collections/blog-posts.collection'
-import contactMessagesCollection from './collections/contact-messages.collection'
-import pageBlocksCollection from './collections/page-blocks.collection'
 
 // Register collections so they appear in admin UI
 registerCollections([
-  blogPostsCollection,
-  contactMessagesCollection,
-  pageBlocksCollection
+  blogPostsCollection
 ])
 
 const config: SonicJSConfig = {
   plugins: {
-    disableAll: true,  // v3: plugins table dropped; re-enable per plugin as code is rewired
+    register: [],
+    disableAll: false,
   }
 }
 
+// Create the core application (includes boot() for cron cold-start wiring)
 const app = createSonicJSApp(config)
 
-export default app
+// All plugins that declare crons, for the scheduled handler.
+// Core crons (emailReconciliationPlugin) are wired automatically by createSonicJSApp.
+const allCronPlugins = [emailReconciliationPlugin, ...(config.plugins?.register ?? [])]
+
+// Log declared schedules at startup so wrangler.toml can be kept in sync.
+const schedules = collectCronSchedules(allCronPlugins)
+if (schedules.length > 0) {
+  console.log('[cron] Declared schedules:', schedules.join(', '))
+}
+
+export default {
+  fetch: app.fetch,
+  scheduled: createScheduledHandler({
+    plugins: allCronPlugins,
+    getHooks: getHookSystem,
+    boot: app.boot,
+  }),
+}

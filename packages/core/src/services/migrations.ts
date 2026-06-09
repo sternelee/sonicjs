@@ -1,5 +1,5 @@
 import { D1Database } from '@cloudflare/workers-types'
-import { bundledMigrations, getMigrationSQLById, type BundledMigration } from '../db/migrations-bundle'
+import { bundledMigrations } from '../db/migrations-bundle'
 
 export interface Migration {
   id: string
@@ -23,20 +23,11 @@ export class MigrationService {
   constructor(private db: D1Database) {}
 
   /**
-   * Initialize the migrations tracking table
+   * Cloudflare D1 owns migration bookkeeping through `d1_migrations`.
+   * SonicJS intentionally does not create its own tracking table.
    */
   async initializeMigrationsTable(): Promise<void> {
-    const createTableQuery = `
-      CREATE TABLE IF NOT EXISTS migrations (
-        id TEXT PRIMARY KEY,
-        name TEXT NOT NULL,
-        filename TEXT NOT NULL,
-        applied_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        checksum TEXT
-      )
-    `
-
-    await this.db.prepare(createTableQuery).run()
+    // Kept as a no-op for compatibility with older callers.
   }
 
   /**
@@ -44,18 +35,8 @@ export class MigrationService {
    */
   async getAvailableMigrations(): Promise<Migration[]> {
     const migrations: Migration[] = []
-
-    // Get applied migrations from database
-    const appliedResult = await this.db.prepare(
-      'SELECT id, name, filename, applied_at FROM migrations ORDER BY applied_at ASC'
-    ).all()
-
-    const appliedMigrations = new Map(
-      appliedResult.results?.map((row: any) => [row.id, row]) || []
-    )
-
-    // Auto-detect applied migrations by checking if their tables exist
-    await this.autoDetectAppliedMigrations(appliedMigrations)
+    const appliedMigrations = await this.getD1AppliedMigrations()
+    await this.ensureSchemaCompatibility()
 
     // Use bundled migrations as the source of truth
     for (const bundled of bundledMigrations) {
@@ -77,24 +58,39 @@ export class MigrationService {
   }
 
   /**
-   * Auto-detect applied migrations by checking if their tables exist (v3 greenfield).
-   * Only the two consolidated migrations exist: 0001_core + 0002_documents.
+   * Read Wrangler/D1's canonical migration table. If the table is absent, no
+   * migrations have been applied by the supported migration runner yet.
    */
-  private async autoDetectAppliedMigrations(appliedMigrations: Map<string, any>): Promise<void> {
-    if (!appliedMigrations.has('0001')) {
-      if (await this.checkTablesExist(['users'])) {
-        appliedMigrations.set('0001', { id: '0001', applied_at: new Date().toISOString(), name: 'Core', filename: '0001_core.sql' })
-        await this.markMigrationApplied('0001', 'Core', '0001_core.sql')
-      }
-    }
-    if (!appliedMigrations.has('0002')) {
-      if (await this.checkTablesExist(['documents', 'document_types'])) {
-        appliedMigrations.set('0002', { id: '0002', applied_at: new Date().toISOString(), name: 'Documents', filename: '0002_documents.sql' })
-        await this.markMigrationApplied('0002', 'Documents', '0002_documents.sql')
-      }
-    }
+  private async getD1AppliedMigrations(): Promise<Map<string, any>> {
+    try {
+      const appliedResult = await this.db.prepare(
+        'SELECT name, applied_at FROM d1_migrations ORDER BY applied_at ASC'
+      ).all()
 
-    // Self-heal: ensure all q_* generated columns exist on documents (idempotent).
+      return new Map(
+        (appliedResult.results ?? [])
+          .map((row: any) => {
+            const filename = String(row.name ?? '')
+            const id = filename.match(/^(\d+)/)?.[1]
+            if (!id) return null
+            return [id, {
+              id,
+              name: filename,
+              filename,
+              applied_at: row.applied_at
+            }]
+          })
+          .filter((entry): entry is [string, any] => entry !== null)
+      )
+    } catch (error) {
+      return new Map()
+    }
+  }
+
+  /**
+   * Run idempotent compatibility repairs that are safe outside migration state.
+   */
+  async ensureSchemaCompatibility(): Promise<void> {
     if (await this.checkTablesExist(['documents'])) {
       await this.ensureDocumentGeneratedColumns()
     }
@@ -120,6 +116,11 @@ export class MigrationService {
       ['q_media_size',      "q_media_size INTEGER AS (json_extract(data, '$.size')) VIRTUAL"],
       ['q_blog_difficulty', "q_blog_difficulty TEXT AS (json_extract(data, '$.difficulty')) VIRTUAL"],
       ['q_blog_author',     "q_blog_author TEXT AS (json_extract(data, '$.author')) VIRTUAL"],
+      // email_log document type (plugin-system/email-reconciliation)
+      ['q_email_status',   "q_email_status TEXT AS (json_extract(data, '$.status')) VIRTUAL"],
+      ['q_email_provider', "q_email_provider TEXT AS (json_extract(data, '$.provider')) VIRTUAL"],
+      ['q_email_flow',     "q_email_flow TEXT AS (json_extract(data, '$.flow')) VIRTUAL"],
+      ['q_email_to',       "q_email_to TEXT AS (json_extract(data, '$.toEmail')) VIRTUAL"],
     ]
     // Note: pragma_table_info does NOT list VIRTUAL generated columns — use table_xinfo, which does.
     let existing = new Set<string>()
@@ -182,8 +183,6 @@ export class MigrationService {
    * Get migration status summary
    */
   async getMigrationStatus(): Promise<MigrationStatus> {
-    await this.initializeMigrationsTable()
-
     const migrations = await this.getAvailableMigrations()
     const appliedMigrations = migrations.filter(m => m.applied)
     const pendingMigrations = migrations.filter(m => !m.applied)
@@ -202,201 +201,47 @@ export class MigrationService {
   }
 
   /**
-   * Mark a migration as applied
+   * D1 migration state is managed by Wrangler.
    */
   async markMigrationApplied(migrationId: string, name: string, filename: string): Promise<void> {
-    await this.initializeMigrationsTable()
-
-    await this.db.prepare(
-      'INSERT OR REPLACE INTO migrations (id, name, filename, applied_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)'
-    ).bind(migrationId, name, filename).run()
+    void migrationId
+    void name
+    void filename
   }
 
   /**
-   * Remove a migration from the applied list (so it can be re-run)
+   * D1 migration state is managed by Wrangler.
    */
   async removeMigrationApplied(migrationId: string): Promise<void> {
-    await this.initializeMigrationsTable()
-
-    await this.db.prepare(
-      'DELETE FROM migrations WHERE id = ?'
-    ).bind(migrationId).run()
+    void migrationId
   }
 
   /**
    * Check if a specific migration has been applied
    */
   async isMigrationApplied(migrationId: string): Promise<boolean> {
-    await this.initializeMigrationsTable()
-
-    const result = await this.db.prepare(
-      'SELECT COUNT(*) as count FROM migrations WHERE id = ?'
-    ).bind(migrationId).first()
-
-    return (result?.count as number) > 0
+    const appliedMigrations = await this.getD1AppliedMigrations()
+    return appliedMigrations.has(migrationId)
   }
 
   /**
    * Get the last applied migration
    */
   async getLastAppliedMigration(): Promise<Migration | null> {
-    await this.initializeMigrationsTable()
-
-    const result = await this.db.prepare(
-      'SELECT id, name, filename, applied_at FROM migrations ORDER BY applied_at DESC LIMIT 1'
-    ).first()
-
-    if (!result) return null
-
-    return {
-      id: result.id as string,
-      name: result.name as string,
-      filename: result.filename as string,
-      applied: true,
-      appliedAt: result.applied_at as string
-    }
+    const migrations = await this.getAvailableMigrations()
+    return migrations.filter(m => m.applied).at(-1) ?? null
   }
 
   /**
    * Run pending migrations
    */
   async runPendingMigrations(): Promise<{ success: boolean; message: string; applied: string[]; errors: string[] }> {
-    await this.initializeMigrationsTable()
-
-    const status = await this.getMigrationStatus()
-    const pendingMigrations = status.migrations.filter(m => !m.applied)
-
-    if (pendingMigrations.length === 0) {
-      return {
-        success: true,
-        message: 'All migrations are up to date',
-        applied: [],
-        errors: []
-      }
-    }
-
-    // Actually execute the migration files
-    const applied: string[] = []
-    const errors: string[] = []
-
-    for (const migration of pendingMigrations) {
-      try {
-        console.log(`[Migration] Applying ${migration.id}: ${migration.name}`)
-        await this.applyMigration(migration)
-        await this.markMigrationApplied(migration.id, migration.name, migration.filename)
-        applied.push(migration.id)
-        console.log(`[Migration] Successfully applied ${migration.id}`)
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error)
-        console.error(`[Migration] Failed to apply migration ${migration.id}:`, errorMessage)
-        errors.push(`${migration.id}: ${errorMessage}`)
-        // Continue with other migrations instead of stopping on first failure
-        // This allows independent migrations to still be applied
-      }
-    }
-
-    if (errors.length > 0 && applied.length === 0) {
-      return {
-        success: false,
-        message: `Failed to apply migrations: ${errors.join('; ')}`,
-        applied,
-        errors
-      }
-    }
-
     return {
-      success: true,
-      message: applied.length > 0
-        ? `Applied ${applied.length} migration(s)${errors.length > 0 ? ` (${errors.length} failed)` : ''}`
-        : 'No migrations applied',
-      applied,
-      errors
+      success: false,
+      message: 'Migrations are managed by Cloudflare D1. Run `wrangler d1 migrations apply DB --local` or `wrangler d1 migrations apply DB --remote`.',
+      applied: [],
+      errors: []
     }
-  }
-
-  /**
-   * Apply a specific migration
-   */
-  private async applyMigration(migration: Migration): Promise<void> {
-    // Get the actual migration SQL from the bundle
-    const migrationSQL = getMigrationSQLById(migration.id)
-
-    if (migrationSQL === null) {
-      throw new Error(`Migration SQL not found for ${migration.id}`)
-    }
-
-    if (migrationSQL.trim() === '') {
-      console.log(`[Migration] Skipping empty migration ${migration.id}`)
-      return
-    }
-
-    // Split SQL into individual statements, handling triggers properly
-    const statements = this.splitSQLStatements(migrationSQL)
-
-    for (const statement of statements) {
-      if (statement.trim()) {
-        try {
-          await this.db.prepare(statement).run()
-        } catch (error) {
-          // Check if it's a "already exists" type error and skip it
-          const errorMessage = error instanceof Error ? error.message : String(error)
-          if (errorMessage.includes('already exists') ||
-              errorMessage.includes('duplicate column name') ||
-              errorMessage.includes('UNIQUE constraint failed')) {
-            console.log(`[Migration] Skipping (already exists): ${statement.substring(0, 50)}...`)
-            continue
-          }
-          console.error(`[Migration] Error executing statement: ${statement.substring(0, 100)}...`)
-          throw error
-        }
-      }
-    }
-  }
-
-  /**
-   * Split SQL into statements, handling CREATE TRIGGER properly
-   */
-  private splitSQLStatements(sql: string): string[] {
-    const statements: string[] = []
-    let current = ''
-    let inTrigger = false
-
-    const lines = sql.split('\n')
-
-    for (const line of lines) {
-      const trimmed = line.trim()
-
-      // Skip comments and empty lines
-      if (trimmed.startsWith('--') || trimmed.length === 0) {
-        continue
-      }
-
-      // Check if we're entering a trigger
-      if (trimmed.toUpperCase().includes('CREATE TRIGGER')) {
-        inTrigger = true
-      }
-
-      current += line + '\n'
-
-      // Check if we're exiting a trigger
-      if (inTrigger && trimmed.toUpperCase() === 'END;') {
-        statements.push(current.trim())
-        current = ''
-        inTrigger = false
-      }
-      // Check for regular statement end (not in trigger)
-      else if (!inTrigger && trimmed.endsWith(';')) {
-        statements.push(current.trim())
-        current = ''
-      }
-    }
-
-    // Add any remaining statement
-    if (current.trim()) {
-      statements.push(current.trim())
-    }
-
-    return statements.filter(s => s.length > 0)
   }
 
   /**

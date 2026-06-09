@@ -8,6 +8,8 @@ import { DocumentsService, documentSecondsToMs } from '../services/documents'
 import { DocumentTypeRegistry } from '../services/document-type-registry'
 import { createDocumentSchema } from '../schemas/document'
 import type { D1Database } from '@cloudflare/workers-types'
+import { dispatchHookEvent } from '../plugins/hooks/dispatch-event'
+import type { HookActor } from '../plugins/hooks/catalog'
 
 const apiContentCrudRoutes = new Hono<{ Bindings: Bindings; Variables: Variables }>()
 
@@ -56,11 +58,11 @@ apiContentCrudRoutes.get('/check-slug', async (c) => {
     const collectionId = c.req.query('collectionId')
     const slug = c.req.query('slug')
     const excludeId = c.req.query('excludeId') // When editing, exclude current item
-    
+
     if (!collectionId || !slug) {
       return c.json({ error: 'collectionId and slug are required' }, 400)
     }
-    
+
     const backing = await resolveDocBacking(db, collectionId)
     if (backing) {
       // D37: a slug is taken if ANY live revision uses it — the current draft OR a still-served
@@ -79,7 +81,7 @@ apiContentCrudRoutes.get('/check-slug', async (c) => {
     return c.json({ available: true })
   } catch (error: unknown) {
     console.error('Error checking slug:', error)
-    return c.json({ 
+    return c.json({
       error: 'Failed to check slug availability',
       details: error instanceof Error ? error.message : String(error)
     }, 500)
@@ -92,10 +94,8 @@ apiContentCrudRoutes.get('/:id', optionalAuth(), async (c) => {
     const id = c.req.param('id')
     const db = c.env.DB
 
-    // Document-backed: /api/content returns document root ids, so resolve by root id, falling back to a
-    // legacy content row. D30: role-gate visibility like the list — privileged callers (admin/editor)
-    // see the current-draft revision (so a brand-new DRAFT resolves, not 404); anon sees the published
-    // revision only.
+    // Document-backed: /api/content returns document root ids, so resolve by root id.
+    // D30: role-gate visibility — privileged callers see current-draft; anon sees published only.
     const privileged = canReadNonPublicContent(c.get('user')?.role)
     const docRow = await db
       .prepare(
@@ -129,6 +129,14 @@ apiContentCrudRoutes.get('/:id', optionalAuth(), async (c) => {
     if (resolveVars) {
       transformedContent.data = await resolveContentVariables(transformedContent.data, db)
     }
+
+    // Fire content:read for observability plugins (fire-and-forget).
+    dispatchHookEvent(
+      c,
+      'content:read',
+      { collection: docRow.type_id, id: docRow.root_id, data: transformedContent.data },
+      'fire-and-forget'
+    )
 
     return c.json({ data: transformedContent })
   } catch (error) {
@@ -177,6 +185,25 @@ apiContentCrudRoutes.post('/', requireAuth(), requireRole(['admin', 'editor', 'a
       if (dup) {
         return c.json({ error: 'A content item with this slug already exists in this collection' }, 409)
       }
+
+      const actor: HookActor | undefined = user
+        ? { id: user.userId, email: user.email ?? '', role: user.role }
+        : undefined
+
+      // Fire content:before:create (in-band) — handlers may mutate payload.data or throw to cancel.
+      let hookData = data || {}
+      try {
+        const beforePayload = await dispatchHookEvent(
+          c,
+          'content:before:create',
+          { collection: backing.coll.name, data: { title, slug: finalSlug, status: status || 'draft', ...hookData }, user: actor },
+          'in-band'
+        )
+        hookData = typeof beforePayload?.data === 'object' ? beforePayload.data : hookData
+      } catch (err) {
+        return c.json({ error: 'Write cancelled by plugin', details: String(err) }, 400)
+      }
+
       const svc = new DocumentsService(db, {
         queryableFields: backing.docType.queryableFields ?? [],
         typeSchemaVersion: backing.docType.schemaVersion ?? 1,
@@ -186,13 +213,22 @@ apiContentCrudRoutes.post('/', requireAuth(), requireRole(['admin', 'editor', 'a
       const doc = await svc.create(
         createDocumentSchema.parse({
           typeId: backing.coll.name, tenantId: 'default', locale: 'default',
-          title, slug: finalSlug, data: data || {}, publishOnCreate: (status || 'draft') === 'published',
+          title, slug: finalSlug, data: hookData, publishOnCreate: (status || 'draft') === 'published',
         }),
         user?.userId,
       )
       const cache = getCacheService(CACHE_CONFIGS.api!)
       await cache.invalidate('content-filtered:*')
       await cache.invalidate('collection-content-filtered:*')
+
+      // Fire content:after:create for side-effect plugins (fire-and-forget).
+      dispatchHookEvent(
+        c,
+        'content:after:create',
+        { collection: backing.coll.name, id: doc.rootId, data: doc.data ?? {}, user: actor },
+        'fire-and-forget'
+      )
+
       return c.json({
         data: { id: doc.rootId, title: doc.title, slug: doc.slug, status: doc.status, collectionId: backing.coll.id, data: doc.data, created_at: documentSecondsToMs(doc.createdAt), updated_at: documentSecondsToMs(doc.updatedAt) },
       }, 201)
@@ -213,16 +249,34 @@ apiContentCrudRoutes.put('/:id', requireAuth(), requireRole(['admin', 'editor', 
   try {
     const id = c.req.param('id')
     const db = c.env.DB
-    const body = await c.req.json()
     const user = c.get('user')
+    const body = await c.req.json()
 
     // Document-backed: :id is a document root id → save a new draft and sync publish state. D39: skip
-    // soft-deleted roots (so PUT can't resurrect one) → falls through to the legacy path → 404.
+    // soft-deleted roots (so PUT can't resurrect one) → falls through → 404.
     const docRow = await db
       .prepare("SELECT root_id, type_id FROM documents WHERE root_id = ? AND tenant_id = 'default' AND is_current_draft = 1 AND deleted_at IS NULL")
       .bind(id)
       .first() as any
     if (docRow) {
+      const actor: HookActor | undefined = user
+        ? { id: user.userId, email: user.email ?? '', role: user.role }
+        : undefined
+
+      // Fire content:before:update (in-band) — handlers may mutate payload.data or throw to cancel.
+      let hookData = body.data
+      try {
+        const beforePayload = await dispatchHookEvent(
+          c,
+          'content:before:update',
+          { collection: docRow.type_id, id, data: { title: body.title, slug: body.slug, status: body.status, ...(body.data || {}) }, user: actor },
+          'in-band'
+        )
+        if (typeof beforePayload?.data === 'object') hookData = beforePayload.data
+      } catch (err) {
+        return c.json({ error: 'Write cancelled by plugin', details: String(err) }, 400)
+      }
+
       const docType = await new DocumentTypeRegistry(db).findById(docRow.type_id)
       const svc = new DocumentsService(db, {
         queryableFields: docType?.queryableFields ?? [],
@@ -233,11 +287,11 @@ apiContentCrudRoutes.put('/:id', requireAuth(), requireRole(['admin', 'editor', 
       const input: any = {}
       if (body.title !== undefined) input.title = body.title
       if (body.slug !== undefined) input.slug = slugify(body.slug)
-      if (body.data !== undefined) input.data = body.data
+      if (hookData !== undefined) input.data = hookData
       const newDraft = await svc.saveDraft(id!, input, user?.userId)
       const pub = await db.prepare("SELECT id FROM documents WHERE root_id = ? AND is_published = 1 AND tenant_id = 'default'").bind(id).first() as any
-      // D38: an explicit status wins; with NO status, preserve the prior effective state — editing a
-      // published item keeps it published (legacy parity), a draft stays a draft.
+      // D38: an explicit status wins; with NO status, preserve the prior effective state.
+      const wasPublished = !!pub
       if (body.status === 'published' || (body.status === undefined && pub)) {
         await svc.publish(newDraft.id, user?.userId)
       } else if (body.status === 'draft' && pub) {
@@ -248,8 +302,19 @@ apiContentCrudRoutes.put('/:id', requireAuth(), requireRole(['admin', 'editor', 
       await cache.invalidate('collection-content-filtered:*')
       const coll = await db.prepare('SELECT id FROM collections WHERE name = ?').bind(docRow.type_id).first() as any
       const saved = await db.prepare('SELECT * FROM documents WHERE id = ?').bind(newDraft.id).first() as any
+      const savedData = saved?.data ? JSON.parse(saved.data) : {}
+
+      // Fire content:after:update (fire-and-forget).
+      dispatchHookEvent(c, 'content:after:update', { collection: docRow.type_id, id, data: savedData, user: actor }, 'fire-and-forget')
+
+      // Fire content:after:publish when status transitions to published.
+      const nowPublished = body.status === 'published' || (body.status === undefined && wasPublished)
+      if (nowPublished && !wasPublished) {
+        dispatchHookEvent(c, 'content:after:publish', { collection: docRow.type_id, id, data: savedData, user: actor }, 'fire-and-forget')
+      }
+
       return c.json({
-        data: { id: saved.root_id, title: saved.title, slug: saved.slug, status: saved.status, collectionId: coll?.id ?? docRow.type_id, data: saved.data ? JSON.parse(saved.data) : {}, created_at: documentSecondsToMs(saved.created_at), updated_at: documentSecondsToMs(saved.updated_at) },
+        data: { id: saved.root_id, title: saved.title, slug: saved.slug, status: saved.status, collectionId: coll?.id ?? docRow.type_id, data: savedData, created_at: documentSecondsToMs(saved.created_at), updated_at: documentSecondsToMs(saved.updated_at) },
       })
     }
 
@@ -268,17 +333,32 @@ apiContentCrudRoutes.delete('/:id', requireAuth(), requireRole(['admin', 'editor
   try {
     const id = c.req.param('id')
     const db = c.env.DB
+    const user = c.get('user')
 
     // Document-backed: :id is a document root id → soft-delete every version row of the root. D39:
-    // ignore an already soft-deleted root so a second DELETE falls through to the legacy path → 404
-    // (matching main, which hard-deleted and 404'd on re-delete) instead of a misleading {success:true}.
+    // ignore an already soft-deleted root so a second DELETE falls through → 404.
     const docRow = await db.prepare("SELECT type_id FROM documents WHERE root_id = ? AND tenant_id = 'default' AND deleted_at IS NULL LIMIT 1").bind(id).first() as any
     if (docRow) {
+      const actor: HookActor | undefined = user
+        ? { id: user.userId, email: user.email ?? '', role: user.role }
+        : undefined
+
+      // Fire content:before:delete (in-band) — handlers may throw to cancel.
+      try {
+        await dispatchHookEvent(c, 'content:before:delete', { collection: docRow.type_id, id, data: {}, user: actor }, 'in-band')
+      } catch (err) {
+        return c.json({ error: 'Delete cancelled by plugin', details: String(err) }, 400)
+      }
+
       const now = Math.floor(Date.now() / 1000)
       await db.prepare("UPDATE documents SET deleted_at = ?, updated_at = ? WHERE root_id = ? AND tenant_id = 'default'").bind(now, now, id).run()
       const cache = getCacheService(CACHE_CONFIGS.api!)
       await cache.invalidate('content-filtered:*')
       await cache.invalidate('collection-content-filtered:*')
+
+      // Fire content:after:delete (fire-and-forget).
+      dispatchHookEvent(c, 'content:after:delete', { collection: docRow.type_id, id, data: {}, user: actor }, 'fire-and-forget')
+
       return c.json({ success: true })
     }
 

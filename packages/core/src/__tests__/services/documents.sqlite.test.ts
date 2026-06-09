@@ -214,7 +214,7 @@ describe('Blog posts document-backed (Option B, migration 044)', () => {
     db.raw
       .prepare(
         `INSERT INTO document_types (id,name,display_name,schema,queryable_fields,settings,source,schema_version,is_system,is_active,created_at,updated_at)
-         VALUES ('blog_posts','blog_posts','Blog Posts','{}','[]','{}','system',1,1,1,1,1)`,
+         VALUES ('blog_post','blog_post','Blog Posts','{}','[]','{}','system',1,1,1,1,1)`,
       )
       .run()
   })
@@ -227,20 +227,20 @@ describe('Blog posts document-backed (Option B, migration 044)', () => {
 
   it('create populates q_blog_* generated columns and filters via repo.list', async () => {
     const s = new DocumentsService(db, { queryableFields: BLOG_FIELDS, tenantId: 'default' })
-    await s.create({ typeId: 'blog_posts', tenantId: 'default', title: 'Hello', slug: 'hello', data: { difficulty: 'advanced', author: 'Lane', content: '<p>hi</p>', excerpt: 'x' }, publishOnCreate: true })
-    await s.create({ typeId: 'blog_posts', tenantId: 'default', title: 'Easy One', slug: 'easy', data: { difficulty: 'beginner', author: 'Sam', content: '<p>yo</p>' }, publishOnCreate: true })
+    await s.create({ typeId: 'blog_post', tenantId: 'default', title: 'Hello', slug: 'hello', data: { difficulty: 'advanced', author: 'Lane', content: '<p>hi</p>', excerpt: 'x' }, publishOnCreate: true })
+    await s.create({ typeId: 'blog_post', tenantId: 'default', title: 'Easy One', slug: 'easy', data: { difficulty: 'beginner', author: 'Sam', content: '<p>yo</p>' }, publishOnCreate: true })
 
     const row = db.raw.prepare("SELECT q_blog_difficulty d, q_blog_author a FROM documents WHERE slug='hello'").get()
     expect(row.d).toBe('advanced')
     expect(row.a).toBe('Lane')
 
-    const filtered = await new DocumentRepository(db, 'default').list({ typeId: 'blog_posts', status: 'published', scalarFilters: [{ column: 'q_blog_difficulty', value: 'advanced' }] })
+    const filtered = await new DocumentRepository(db, 'default').list({ typeId: 'blog_post', status: 'published', scalarFilters: [{ column: 'q_blog_difficulty', value: 'advanced' }] })
     expect(filtered.map(d => d.title)).toEqual(['Hello'])
   })
 
   it('edit-while-published: saveDraft keeps the published post live, publish swaps it', async () => {
     const s = new DocumentsService(db, { queryableFields: BLOG_FIELDS, tenantId: 'default' })
-    const post = await s.create({ typeId: 'blog_posts', tenantId: 'default', title: 'V1', slug: 'p', data: { difficulty: 'beginner', author: 'Lane', content: 'v1' }, publishOnCreate: true })
+    const post = await s.create({ typeId: 'blog_post', tenantId: 'default', title: 'V1', slug: 'p', data: { difficulty: 'beginner', author: 'Lane', content: 'v1' }, publishOnCreate: true })
     const draft = await s.saveDraft(post.rootId, { title: 'V2', data: { content: 'v2' } })
     // published row is still v1
     expect(db.raw.prepare('SELECT title FROM documents WHERE root_id=? AND is_published=1').get(post.rootId).title).toBe('V1')
