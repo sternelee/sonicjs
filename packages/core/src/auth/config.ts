@@ -51,8 +51,7 @@ import { hashPassword as baHashPassword, verifyPassword as baVerifyPassword } fr
 import { APIError } from 'better-auth/api'
 import { magicLink } from 'better-auth/plugins/magic-link'
 import { emailOTP } from 'better-auth/plugins/email-otp'
-import { twoFactor } from 'better-auth/plugins/two-factor'
-import { organization } from 'better-auth/plugins/organization'
+// twoFactor and organization imports deferred until Drizzle schema entries added
 import { drizzle } from 'drizzle-orm/d1'
 import { authUser, authSession, authAccount, authVerification } from '../db/schema'
 import { isRegistrationEnabled, isFirstUserRegistration } from '../services/auth-validation'
