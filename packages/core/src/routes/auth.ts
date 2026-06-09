@@ -761,56 +761,50 @@ authRoutes.post('/seed-admin',
       .first()
 
     if (existingAdmin) {
-      // Update the password to ensure it's correct for testing
       const passwordHash = await AuthManager.hashPassword('sonicjs!')
-      await db.prepare('UPDATE auth_user SET password_hash = ?, updated_at = ? WHERE id = ?')
-        .bind(passwordHash, Date.now(), existingAdmin.id)
-        .run()
-
+      const nowMs = Date.now()
+      const nowSec = Math.floor(nowMs / 1000)
+      await db.batch([
+        // auth_user has no password_hash column (BA stores it in auth_account)
+        db.prepare('UPDATE auth_user SET updated_at = ? WHERE id = ?')
+          .bind(nowMs, existingAdmin.id),
+        // Upsert BA credential account so sign-in/email works
+        db.prepare(`INSERT OR REPLACE INTO auth_account (id, user_id, account_id, provider_id, password, created_at, updated_at)
+          VALUES (?, ?, ?, 'credential', ?, ?, ?)`)
+          .bind(`cred-${existingAdmin.id}`, existingAdmin.id, existingAdmin.id, passwordHash, nowSec, nowSec),
+        // Ensure RBAC admin role is assigned
+        db.prepare(`INSERT OR IGNORE INTO auth_rbac_user_roles (user_id, role_id) SELECT ?, id FROM auth_rbac_roles WHERE name = 'admin'`)
+          .bind(existingAdmin.id),
+      ])
       return c.json({
-        message: 'Admin user already exists (password updated)',
-        user: {
-          id: existingAdmin.id,
-          email: 'admin@sonicjs.com',
-          username: 'admin',
-          role: 'admin'
-        }
+        message: 'Admin user already exists (account updated)',
+        user: { id: existingAdmin.id, email: 'admin@sonicjs.com', username: 'admin', role: 'admin' }
       })
     }
 
-    // Hash password
     const passwordHash = await AuthManager.hashPassword('sonicjs!')
-    
-    // Create admin user
     const userId = 'admin-user-id'
-    const now = Date.now()
-    const adminEmail = 'admin@sonicjs.com'.toLowerCase()
-    
-    await db.prepare(`
-      INSERT INTO auth_user (id, email, username, first_name, last_name, password_hash, role, is_active, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).bind(
-      userId,
-      adminEmail,
-      'admin',
-      'Admin',
-      'User',
-      passwordHash,
-      'admin',
-      1, // is_active
-      now,
-      now
-    ).run()
-    
-    return c.json({ 
+    const nowMs = Date.now()
+    const nowSec = Math.floor(nowMs / 1000)
+    const adminEmail = 'admin@sonicjs.com'
+
+    await db.batch([
+      // auth_user row — no password_hash column; BA stores password in auth_account
+      db.prepare(`INSERT INTO auth_user (id, name, email, email_verified, username, first_name, last_name, role, is_active, created_at, updated_at)
+        VALUES (?, ?, ?, 1, ?, ?, ?, 'admin', 1, ?, ?)`)
+        .bind(userId, 'Admin User', adminEmail, 'admin', 'Admin', 'User', nowMs, nowMs),
+      // BA credential account — PBKDF2 hash; BA's custom verify hook in auth/config.ts handles it
+      db.prepare(`INSERT INTO auth_account (id, user_id, account_id, provider_id, password, created_at, updated_at)
+        VALUES (?, ?, ?, 'credential', ?, ?, ?)`)
+        .bind(`cred-${userId}`, userId, userId, passwordHash, nowSec, nowSec),
+      // RBAC admin role assignment
+      db.prepare(`INSERT OR IGNORE INTO auth_rbac_user_roles (user_id, role_id) SELECT ?, id FROM auth_rbac_roles WHERE name = 'admin'`)
+        .bind(userId),
+    ])
+
+    return c.json({
       message: 'Admin user created successfully',
-      user: {
-        id: userId,
-        email: adminEmail,
-        username: 'admin',
-        role: 'admin'
-      },
-      passwordHash: passwordHash // For debugging
+      user: { id: userId, email: adminEmail, username: 'admin', role: 'admin' }
     })
   } catch (error) {
     console.error('Seed admin error:', error)

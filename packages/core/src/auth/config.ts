@@ -99,9 +99,8 @@ export function getDefaultAuthOptions(env: Bindings) {
         d1: {
           db,
           options: {
-            // Map Better Auth models to the v3 auth_* tables. Keys must match
-            // each model's resolved table name (modelName below).
-            schema: { user: authUser, session: authSession, account: authAccount, verification: authVerification },
+            // Keys MUST match modelName values — BA resolves by modelName, not by JS variable name.
+            schema: { auth_user: authUser, auth_session: authSession, auth_account: authAccount, auth_verification: authVerification },
           },
         },
         kv: env.CACHE_KV, // session secondary storage → getSession skips D1
@@ -253,21 +252,9 @@ export function getDefaultAuthOptions(env: Bindings) {
         expiresIn: 10 * 60,
       }),
 
-      // ── Phase 6: 2FA / TOTP ────────────────────────────────────────────────
-      // twoFactor adds /auth/two-factor/* endpoints for TOTP enrollment +
-      // verification. Requires migration 042 to create the `twoFactor` table.
-      twoFactor({
-        issuer: 'SonicJS',
-        totpOptions: {
-          digits: 6,
-          period: 30,
-        },
-      }),
-
-      // ── Phase 6: Multi-tenant organizations ───────────────────────────────
-      // organization adds /auth/organization/* endpoints for team management.
-      // Requires migration 042 (organization tables).
-      organization(),
+      // twoFactor and organization disabled until Drizzle schema entries for
+      // auth_two_factor / auth_organization / auth_member / auth_invitation / auth_team
+      // are wired into the adapter. Enable in a follow-up.
     ],
 
     // ── Phase 4: Social providers ─────────────────────────────────────────
