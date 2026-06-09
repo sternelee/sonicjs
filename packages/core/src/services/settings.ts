@@ -47,6 +47,16 @@ export class SettingsService {
       const now = Math.floor(Date.now() / 1000)
       const jsonData = JSON.stringify(data)
 
+      // Ensure document_types row exists (FK constraint on documents.type_id)
+      await this.db.prepare(`
+        INSERT OR IGNORE INTO document_types (id, name, display_name, description, schema, source, is_system, is_active, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).bind(
+        TYPE_ID, TYPE_ID, 'Site Settings',
+        'Global site configuration settings',
+        '{}', 'system', 1, 1, now, now
+      ).run()
+
       // Check if document already exists
       const existing = await this.db.prepare(`
         SELECT id FROM documents
