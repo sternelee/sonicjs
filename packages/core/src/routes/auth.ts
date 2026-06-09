@@ -360,29 +360,39 @@ authRoutes.post('/login',
 })
 
 // Logout user (both GET and POST for convenience)
-authRoutes.post('/logout', (c) => {
-  // Clear the auth cookie
-  setCookie(c, 'auth_token', '', {
-    httpOnly: true,
-    secure: false, // Set to true in production with HTTPS
-    sameSite: 'Strict',
-    maxAge: 0 // Expire immediately
-  })
-  clearCsrfCookie(c)
+authRoutes.post('/logout', async (c) => {
+  // Delegate to BA to invalidate the session server-side, then clear cookies.
+  try {
+    const { createAuth } = await import('../auth/config')
+    const auth = createAuth(c.env)
+    const baReq = new Request(new URL('/auth/sign-out', c.req.url).href, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Origin': new URL(c.req.url).origin, 'Cookie': c.req.header('Cookie') || '' },
+      body: JSON.stringify({}),
+    })
+    await auth.handler(baReq)
+  } catch { /* non-fatal — clear cookie regardless */ }
 
+  setCookie(c, 'better-auth.session_token', '', { httpOnly: true, sameSite: 'Lax', path: '/', maxAge: 0 })
+  clearCsrfCookie(c)
   return c.json({ message: 'Logged out successfully' })
 })
 
-authRoutes.get('/logout', (c) => {
-  // Clear the auth cookie
-  setCookie(c, 'auth_token', '', {
-    httpOnly: true,
-    secure: false, // Set to true in production with HTTPS
-    sameSite: 'Strict',
-    maxAge: 0 // Expire immediately
-  })
-  clearCsrfCookie(c)
+authRoutes.get('/logout', async (c) => {
+  // Delegate to BA to invalidate the session server-side, then clear cookies.
+  try {
+    const { createAuth } = await import('../auth/config')
+    const auth = createAuth(c.env)
+    const baReq = new Request(new URL('/auth/sign-out', c.req.url).href, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Origin': new URL(c.req.url).origin, 'Cookie': c.req.header('Cookie') || '' },
+      body: JSON.stringify({}),
+    })
+    await auth.handler(baReq)
+  } catch { /* non-fatal */ }
 
+  setCookie(c, 'better-auth.session_token', '', { httpOnly: true, sameSite: 'Lax', path: '/', maxAge: 0 })
+  clearCsrfCookie(c)
   return c.redirect('/auth/login?message=You have been logged out successfully')
 })
 
@@ -643,15 +653,10 @@ authRoutes.post('/login/form',
   async (c) => {
   try {
     const formData = await c.req.formData()
-    const email = formData.get('email') as string
+    const email = (formData.get('email') as string || '').toLowerCase()
     const password = formData.get('password') as string
 
-    // Normalize email to lowercase
-    const normalizedEmail = email.toLowerCase()
-
-    // Validate the data
-    const validation = loginSchema.safeParse({ email: normalizedEmail, password })
-
+    const validation = loginSchema.safeParse({ email, password })
     if (!validation.success) {
       return c.html(html`
         <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
@@ -660,24 +665,18 @@ authRoutes.post('/login/form',
       `)
     }
 
-    const db = c.env.DB
-    
-    // Find user
-    const user = await db.prepare('SELECT * FROM auth_user WHERE email = ? AND is_active = 1')
-      .bind(normalizedEmail)
-      .first() as any
-    
-    if (!user) {
-      return c.html(html`
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-          Invalid email or password
-        </div>
-      `)
-    }
-    
-    // Verify password
-    const isValidPassword = await AuthManager.verifyPassword(password, user.password_hash)
-    if (!isValidPassword) {
+    // Delegate to Better Auth — call sign-in/email, get session token, set BA cookie.
+    const { createAuth } = await import('../auth/config')
+    const auth = createAuth(c.env)
+
+    const baReq = new Request(new URL('/auth/sign-in/email', c.req.url).href, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Origin': new URL(c.req.url).origin },
+      body: JSON.stringify({ email, password }),
+    })
+    const baRes = await auth.handler(baReq)
+
+    if (!baRes.ok) {
       return c.html(html`
         <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
           Invalid email or password
@@ -685,37 +684,21 @@ authRoutes.post('/login/form',
       `)
     }
 
-    // Transparent password hash migration: re-hash legacy SHA-256 to PBKDF2
-    if (AuthManager.isLegacyHash(user.password_hash)) {
-      try {
-        const newHash = await AuthManager.hashPassword(password)
-        await db.prepare('UPDATE auth_user SET password_hash = ?, updated_at = ? WHERE id = ?')
-          .bind(newHash, Date.now(), user.id)
-          .run()
-      } catch (rehashError) {
-        console.error('Password rehash failed (non-fatal):', rehashError)
+    // Forward BA's Set-Cookie header(s) to the browser.
+    // BA sets better-auth.session_token as token.signature (signed). Using the
+    // raw JSON .token field would break session lookup — must use the full cookie value.
+    const rawSetCookie = baRes.headers.get('set-cookie')
+    if (rawSetCookie) {
+      // Workers may join multiple Set-Cookie values; for BA there is normally one.
+      // Append each cookie directive as-is.
+      c.res.headers.append('Set-Cookie', rawSetCookie)
+    } else if ((baRes.headers as any).getSetCookie) {
+      for (const sc of (baRes.headers as any).getSetCookie()) {
+        c.res.headers.append('Set-Cookie', sc)
       }
     }
 
-    // Generate JWT token
-    const tokenTtl = await getJwtExpirySecondsFromDb(c.env.DB, c.env)
-    const token = await AuthManager.generateToken(user.id, user.email, user.role, c.env.JWT_SECRET, tokenTtl)
-
-    // Set HTTP-only cookie
-    setCookie(c, 'auth_token', token, {
-      httpOnly: true,
-      secure: false, // Set to true in production with HTTPS
-      sameSite: 'Strict',
-      maxAge: tokenTtl
-    })
-
-    // Set CSRF cookie for browser sessions
     await setCsrfCookie(c)
-
-    // Update last login
-    await db.prepare('UPDATE auth_user SET last_login_at = ? WHERE id = ?')
-      .bind(new Date().getTime(), user.id)
-      .run()
 
     return c.html(html`
       <div id="form-response">
@@ -729,9 +712,7 @@ authRoutes.post('/login/form',
             </div>
           </div>
           <script>
-            setTimeout(() => {
-              window.location.href = '/admin/dashboard';
-            }, 2000);
+            setTimeout(() => { window.location.href = '/admin'; }, 500);
           </script>
         </div>
       </div>
