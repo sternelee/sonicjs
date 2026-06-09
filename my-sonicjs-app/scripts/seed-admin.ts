@@ -83,8 +83,8 @@ async function seed() {
 
     // Hash password using Web Crypto API (same as SonicJS AuthManager)
     const passwordHash = await hashPassword('sonicjs!')
-    const now = Date.now()
-    const odid = `admin-${now}-${Math.random().toString(36).substr(2, 9)}`
+    const now = new Date()
+    const odid = `admin-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
     // Create admin user
     await db

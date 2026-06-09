@@ -52,7 +52,7 @@ export type { CacheConfig } from './cache'
 
 // Settings Service
 export { SettingsService } from './settings'
-export type { Setting, GeneralSettings } from './settings'
+export type { GeneralSettings, SecuritySettings } from './settings'
 
 // Telemetry Service
 export {
