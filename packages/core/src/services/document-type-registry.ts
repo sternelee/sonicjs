@@ -5,6 +5,7 @@ import type {
   DocumentType,
   DocumentTypeRow,
 } from '../schemas/document'
+import { ensureScalarSchema } from './document-scalar-schema'
 
 function rowToDocumentType(row: DocumentTypeRow): DocumentType {
   return {
@@ -73,6 +74,9 @@ export class DocumentTypeRegistry {
         )
         .run()
 
+      // Auto-DDL: ensure VIRTUAL generated columns + indexes for scalar fields.
+      await ensureScalarSchema(this.db, def.id, def.queryableFields ?? [])
+
       const updated = await this.findById(def.id)
       this.cache.set(def.id, updated!)
       return updated!
@@ -97,6 +101,9 @@ export class DocumentTypeRegistry {
         now,
       )
       .run()
+
+    // Auto-DDL: ensure VIRTUAL generated columns + indexes for scalar fields.
+    await ensureScalarSchema(this.db, def.id, def.queryableFields ?? [])
 
     const created = await this.findById(def.id)
     this.cache.set(def.id, created!)
