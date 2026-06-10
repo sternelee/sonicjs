@@ -184,7 +184,7 @@ describe.skip('Collections Integration Tests', () => {
           slug: c.slug,
           status: c.status,
           published_at: c.publishedAt?.toISOString() || null,
-          author: author.username,
+          author: author.email,
           created_at: c.createdAt.toISOString()
         }))
       })
@@ -197,7 +197,7 @@ describe.skip('Collections Integration Tests', () => {
           slug: c.slug,
           status: c.status,
           publishedAt: c.publishedAt?.toISOString() || null,
-          author: author.username,
+          author: author.email,
           createdAt: c.createdAt.toISOString()
         })),
         total: content.length

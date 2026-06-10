@@ -169,19 +169,18 @@ export function createMagicLinkAuthPlugin(): Plugin {
       if (!user && allowNewUsers) {
         // Create new user
         const userId = crypto.randomUUID()
-        const username = magicLink.user_email.split('@')[0]
+        const emailLocalPart = magicLink.user_email.split('@')[0]
         const now = Date.now()
 
         await db.prepare(`
           INSERT INTO auth_user (
-            id, email, username, first_name, last_name,
+            id, email, first_name, last_name,
             password_hash, role, is_active, created_at, updated_at
-          ) VALUES (?, ?, ?, ?, ?, NULL, 'viewer', 1, ?, ?)
+          ) VALUES (?, ?, ?, ?, NULL, 'viewer', 1, ?, ?)
         `).bind(
           userId,
           magicLink.user_email,
-          username,
-          username,
+          emailLocalPart,
           '',
           now,
           now
@@ -190,7 +189,6 @@ export function createMagicLinkAuthPlugin(): Plugin {
         user = {
           id: userId,
           email: magicLink.user_email,
-          username,
           role: 'viewer'
         }
       } else if (!user) {

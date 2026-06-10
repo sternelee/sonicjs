@@ -270,56 +270,9 @@ describe('authValidationService', () => {
       expect(result.success).toBe(false)
     })
 
-    it('should accept optional username', async () => {
-      const { authValidationService } = await import('./auth-validation')
-      const db = createMockDb()
-
-      const schema = await authValidationService.buildRegistrationSchema(db)
-
-      const validData = {
-        email: 'test@example.com',
-        password: 'password123',
-        username: 'testuser'
-      }
-      const result = schema.safeParse(validData)
-      expect(result.success).toBe(true)
-    })
-
-    it('should reject short username', async () => {
-      const { authValidationService } = await import('./auth-validation')
-      const db = createMockDb()
-
-      const schema = await authValidationService.buildRegistrationSchema(db)
-
-      const invalidData = {
-        email: 'test@example.com',
-        password: 'password123',
-        username: 'ab' // Too short, min 3
-      }
-      const result = schema.safeParse(invalidData)
-      expect(result.success).toBe(false)
-    })
   })
 
   describe('generateDefaultValue', () => {
-    it('should generate username from email', async () => {
-      const { authValidationService } = await import('./auth-validation')
-
-      const result = authValidationService.generateDefaultValue('username', {
-        email: 'john.doe@example.com'
-      })
-
-      expect(result).toBe('john.doe')
-    })
-
-    it('should generate fallback username when no email', async () => {
-      const { authValidationService } = await import('./auth-validation')
-
-      const result = authValidationService.generateDefaultValue('username', {})
-
-      expect(result).toMatch(/^user\d+$/)
-    })
-
     it('should generate default firstName', async () => {
       const { authValidationService } = await import('./auth-validation')
 

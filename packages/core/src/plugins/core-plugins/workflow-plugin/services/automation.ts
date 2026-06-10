@@ -430,7 +430,7 @@ export class AutomationEngine {
     const { results } = await this.db.prepare(`
       SELECT 
         cv.*,
-        u.username as user_name
+        u.email as user_name
       FROM content_versions cv
       LEFT JOIN auth_user u ON cv.user_id = u.id
       WHERE cv.content_id = ?

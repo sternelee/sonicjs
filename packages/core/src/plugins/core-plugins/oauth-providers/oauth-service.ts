@@ -352,24 +352,13 @@ export class OAuthService {
     const nameParts = (profile.name || email.split('@')[0] || 'User').split(' ')
     const firstName = nameParts[0] || 'User'
     const lastName = nameParts.slice(1).join(' ') || ''
-    const username = email.split('@')[0] || id.substring(0, 8)
-
-    // Check for username collision and append random suffix if needed
-    const existing = await this.db.prepare(
-      'SELECT id FROM auth_user WHERE username = ?'
-    ).bind(username).first()
-
-    const finalUsername = existing
-      ? `${username}-${id.substring(0, 6)}`
-      : username
-
     await this.db.prepare(`
       INSERT INTO auth_user (
-        id, email, username, first_name, last_name,
+        id, email, first_name, last_name,
         password_hash, role, avatar, is_active, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, NULL, 'viewer', ?, 1, ?, ?)
+      ) VALUES (?, ?, ?, ?, NULL, 'viewer', ?, 1, ?, ?)
     `).bind(
-      id, email, finalUsername, firstName, lastName,
+      id, email, firstName, lastName,
       profile.avatar || null, now, now
     ).run()
 

@@ -40,6 +40,10 @@ export { getHookSystem, hasHookSystem, setHookSystem, resetHookSystem, getTypedH
 export { topoSort, PluginDependencyCycleError } from './plugins/topo-sort'
 export type { SortablePlugin, TopoSortOptions } from './plugins/topo-sort'
 
+// RBAC (document-backed) + document type bootstrap — used by app seed scripts
+export { RbacService } from './services/rbac'
+export { bootstrapDocumentTypes } from './services/document-types-seed'
+
 // Cloudflare email provider
 export { CloudflareEmailProvider } from './services/email/providers/cloudflare'
 export type { CloudflareEmailProviderOptions, CFSendEmailBinding } from './services/email/providers/cloudflare'

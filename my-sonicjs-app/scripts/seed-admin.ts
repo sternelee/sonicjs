@@ -1,4 +1,4 @@
-import { createDb, users } from '@sonicjs-cms/core'
+import { createDb, users, RbacService, bootstrapDocumentTypes } from '@sonicjs-cms/core'
 import { eq } from 'drizzle-orm'
 import { getPlatformProxy } from 'wrangler'
 
@@ -90,12 +90,11 @@ async function seed() {
     const nowSec = Math.floor(now.getTime() / 1000)
     await env.DB.prepare(`
       INSERT INTO auth_user (
-        id, email, username, first_name, last_name, role, is_active, created_at, updated_at, name
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        id, email, first_name, last_name, role, is_active, created_at, updated_at, name
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
       odid,
       'admin@sonicjs.com',
-      'admin',
       'Admin',
       'User',
       'admin',
@@ -119,11 +118,13 @@ async function seed() {
       nowSec
     ).run()
 
-    // Assign admin RBAC role (required for portal access)
-    await env.DB.prepare(`
-      INSERT OR IGNORE INTO auth_rbac_user_roles (user_id, role_id)
-      SELECT ?, id FROM auth_rbac_roles WHERE name = 'admin'
-    `).bind(odid).run()
+    // Assign admin RBAC role (required for portal access). RBAC is document-backed
+    // (services/rbac.ts): register the rbac doc types, seed system roles/verbs, then
+    // assign. Idempotent and self-sufficient (works on a fresh DB before app bootstrap).
+    await bootstrapDocumentTypes(env.DB)
+    const rbac = new RbacService(env.DB)
+    await rbac.ensureSystemRbacSeed()
+    await rbac.addUserRoleByName(odid, 'admin')
 
     console.log('✓ Admin user created successfully')
     console.log(`  Email: admin@sonicjs.com`)

@@ -74,26 +74,33 @@ router.get('/stats', async (c) => {
   try {
     const db = c.env.DB
 
-    // Get collections count
+    // Get collections count (user-facing only: exclude auth-owned and internal types)
     let collectionsCount = 0
     try {
-      const collectionsStmt = db.prepare("SELECT COUNT(*) as count FROM collections WHERE is_active = 1 AND (source_type IS NULL OR source_type = 'user')")
+      const collectionsStmt = db.prepare(`
+        SELECT COUNT(*) as count FROM document_types
+        WHERE is_active = 1
+          AND is_auth = 0
+          AND (json_extract(settings, '$.internal') IS NULL OR json_extract(settings, '$.internal') != 1)
+      `)
       const collectionsResult = await collectionsStmt.first()
       collectionsCount = (collectionsResult as any)?.count || 0
     } catch (error) {
       console.error('Error fetching collections count:', error)
     }
 
-    // Get content count. In the v3 greenfield schema content is document-backed only.
+    // Get content count (user-facing types only)
     let contentCount = 0
     try {
       const contentStmt = db.prepare(`
         SELECT COUNT(*) AS count
         FROM documents d
-        JOIN collections col ON col.name = d.type_id
+        JOIN document_types dt ON dt.id = d.type_id
         WHERE d.is_current_draft = 1
           AND d.deleted_at IS NULL
-          AND (col.source_type IS NULL OR col.source_type = 'user')
+          AND dt.is_active = 1
+          AND dt.is_auth = 0
+          AND (json_extract(dt.settings, '$.internal') IS NULL OR json_extract(dt.settings, '$.internal') != 1)
       `)
       const contentResult = await contentStmt.first()
       contentCount = (contentResult as any)?.count || 0

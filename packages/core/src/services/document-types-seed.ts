@@ -72,6 +72,32 @@ export async function bootstrapDocumentTypes(db: D1Database): Promise<void> {
     queryableFields: [],
   })
 
+  // ── RBAC (auth-owned). 3 document types replace 4 relational tables: ──────────
+  //   rbac_role        slug = roleId,  data.grants[] embedded (replaces role_grants)
+  //   rbac_verb        slug = verbId
+  //   rbac_user_roles  slug = userId,  data.roleIds[] embedded (replaces user_roles)
+  // All internal + is_auth so they never surface in content. See services/rbac.ts.
+  for (const [id, displayName, description] of [
+    ['rbac_role', 'RBAC Role', 'Role record with embedded grants (auth-owned)'],
+    ['rbac_verb', 'RBAC Verb', 'Permission verb (auth-owned)'],
+    ['rbac_user_roles', 'RBAC User Roles', "Per-user role assignments (auth-owned; slug = userId)"],
+  ] as const) {
+    await registry.register({
+      id,
+      name: id,
+      displayName,
+      description,
+      source: 'system',
+      isAuth: true,
+      schema: anyObject,
+      settings: {
+        internal: true,
+        maxVersionsPerRoot: 1,
+        baseGrants: { admin: ['read', 'create', 'update', 'delete', 'manage'] },
+      },
+      queryableFields: [],
+    })
+  }
 }
 
 /**

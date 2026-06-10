@@ -267,12 +267,12 @@ export class NotificationService {
     if (!content) return
 
     const assignedBy = await this.db.prepare(`
-      SELECT username FROM auth_user WHERE id = ?
-    `).bind(assignedByUserId).first()
+      SELECT email FROM auth_user WHERE id = ?
+    `).bind(assignedByUserId).first() as { email?: string } | null
 
     const dueDateText = dueDate ? ` (due: ${new Date(dueDate).toLocaleDateString()})` : ''
     const title = `You've been assigned content: "${content.title}"`
-    const message = `${assignedBy?.username || 'Someone'} has assigned you the content "${content.title}" for review${dueDateText}.`
+    const message = `${assignedBy?.email || 'Someone'} has assigned you the content "${content.title}" for review${dueDateText}.`
 
     await this.createNotification(
       assignedToUserId,
@@ -293,7 +293,7 @@ export class NotificationService {
 
     // Get users who want digest notifications for this frequency
     const { results: users } = await this.db.prepare(`
-      SELECT DISTINCT np.user_id, u.email, u.username
+      SELECT DISTINCT np.user_id, u.email
       FROM notification_preferences np
       JOIN auth_user u ON np.user_id = u.id
       WHERE np.digest_frequency = ? AND np.email_enabled = 1

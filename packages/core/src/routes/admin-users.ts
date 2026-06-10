@@ -75,10 +75,10 @@ userRoutes.get('/profile', async (c) => {
   try {
     // Get user profile data
     const userStmt = db.prepare(`
-      SELECT id, email, username, first_name, last_name, phone, bio, avatar,
+      SELECT id, email, first_name, last_name, phone, bio, avatar,
              timezone, language, theme, email_notifications, 0 as two_factor_enabled,
              role, created_at, last_login_at
-      FROM auth_user 
+      FROM auth_user
       WHERE id = ? AND is_active = 1
     `)
     
@@ -92,7 +92,6 @@ userRoutes.get('/profile', async (c) => {
     const profile: UserProfile = {
       id: userProfile.id,
       email: userProfile.email,
-      username: userProfile.username || '',
       first_name: userProfile.first_name || '',
       last_name: userProfile.last_name || '',
       phone: userProfile.phone,
@@ -119,7 +118,7 @@ userRoutes.get('/profile', async (c) => {
       languages: LANGUAGES,
       customProfileFieldsHtml,
       user: {
-        name: `${profile.first_name} ${profile.last_name}`.trim() || profile.username || user!.email,
+        name: `${profile.first_name} ${profile.last_name}`.trim() || user!.email,
         email: user!.email,
         role: user!.role
       }
@@ -158,7 +157,6 @@ userRoutes.put('/profile', async (c) => {
     // Sanitize all user inputs to prevent XSS attacks
     const firstName = sanitizeInput(formData.get('first_name')?.toString())
     const lastName = sanitizeInput(formData.get('last_name')?.toString())
-    const username = sanitizeInput(formData.get('username')?.toString())
     const email = formData.get('email')?.toString()?.trim().toLowerCase() || ''
     const phone = sanitizeInput(formData.get('phone')?.toString()) || null
     const bio = sanitizeInput(formData.get('bio')?.toString()) || null
@@ -167,10 +165,10 @@ userRoutes.put('/profile', async (c) => {
     const emailNotifications = formData.get('email_notifications') === '1'
 
     // Validate required fields
-    if (!firstName || !lastName || !username || !email) {
+    if (!firstName || !lastName || !email) {
       return c.html(renderAlert({
         type: 'error',
-        message: 'First name, last name, username, and email are required.',
+        message: 'First name, last name, and email are required.',
         dismissible: true
       }))
     }
@@ -185,32 +183,32 @@ userRoutes.put('/profile', async (c) => {
       }))
     }
 
-    // Check if username/email are taken by another user
+    // Check if email is taken by another user
     const checkStmt = db.prepare(`
-      SELECT id FROM auth_user 
-      WHERE (username = ? OR email = ?) AND id != ? AND is_active = 1
+      SELECT id FROM auth_user
+      WHERE email = ? AND id != ? AND is_active = 1
     `)
-    const existingUser = await checkStmt.bind(username, email, user!.userId).first()
+    const existingUser = await checkStmt.bind(email, user!.userId).first()
 
     if (existingUser) {
-      return c.html(renderAlert({ 
-        type: 'error', 
-        message: 'Username or email is already taken by another user!.',
-        dismissible: true 
+      return c.html(renderAlert({
+        type: 'error',
+        message: 'Email is already taken by another user.',
+        dismissible: true
       }))
     }
 
     // Update user profile
     const updateStmt = db.prepare(`
-      UPDATE auth_user SET 
-        first_name = ?, last_name = ?, username = ?, email = ?,
+      UPDATE auth_user SET
+        first_name = ?, last_name = ?, email = ?,
         phone = ?, bio = ?, timezone = ?, language = ?,
         email_notifications = ?, updated_at = ?
       WHERE id = ?
     `)
 
     await updateStmt.bind(
-      firstName, lastName, username, email,
+      firstName, lastName, email,
       phone, bio, timezone, language,
       emailNotifications ? 1 : 0, Date.now(),
       user!.userId
@@ -232,7 +230,7 @@ userRoutes.put('/profile', async (c) => {
     // Log the activity
     await logActivity(
       db, user!.userId, 'profile.update', 'users', user!.userId,
-      { fields: ['first_name', 'last_name', 'username', 'email', 'phone', 'bio', 'timezone', 'language', 'email_notifications'] },
+      { fields: ['first_name', 'last_name', 'email', 'phone', 'bio', 'timezone', 'language', 'email_notifications'] },
       c.req.header('x-forwarded-for') || c.req.header('cf-connecting-ip'),
       c.req.header('user-agent')
     )
@@ -489,9 +487,9 @@ userRoutes.get('/users', async (c) => {
     }
 
     if (search) {
-      whereClause += ' AND (u.first_name LIKE ? OR u.last_name LIKE ? OR u.email LIKE ? OR u.username LIKE ?)'
+      whereClause += ' AND (u.first_name LIKE ? OR u.last_name LIKE ? OR u.email LIKE ?)'
       const searchParam = `%${search}%`
-      params.push(searchParam, searchParam, searchParam, searchParam)
+      params.push(searchParam, searchParam, searchParam)
     }
 
     if (roleFilter) {
@@ -501,7 +499,7 @@ userRoutes.get('/users', async (c) => {
 
     // Get users
     const usersStmt = db.prepare(`
-      SELECT u.id, u.email, u.username, u.first_name, u.last_name,
+      SELECT u.id, u.email, u.first_name, u.last_name,
              u.role, u.avatar, u.created_at, u.last_login_at, u.updated_at,
              u.email_verified, 0 as two_factor_enabled, u.is_active
       FROM auth_user u
@@ -548,7 +546,6 @@ userRoutes.get('/users', async (c) => {
     const users: User[] = (usersData || []).map((u: any) => ({
       id: u.id,
       email: u.email,
-      username: u.username || '',
       firstName: u.first_name || '',
       lastName: u.last_name || '',
       role: u.role,
@@ -649,7 +646,6 @@ userRoutes.post('/users/new', async (c) => {
     // Sanitize all user inputs to prevent XSS attacks
     const firstName = sanitizeInput(formData.get('first_name')?.toString())
     const lastName = sanitizeInput(formData.get('last_name')?.toString())
-    const username = sanitizeInput(formData.get('username')?.toString())
     const email = formData.get('email')?.toString()?.trim().toLowerCase() || ''
     const phone = sanitizeInput(formData.get('phone')?.toString()) || null
     const bio = sanitizeInput(formData.get('bio')?.toString()) || null
@@ -662,10 +658,10 @@ userRoutes.post('/users/new', async (c) => {
     const emailVerified = formData.get('email_verified') === '1'
 
     // Validate required fields
-    if (!firstName || !lastName || !username || !email || !password) {
+    if (!firstName || !lastName || !email || !password) {
       return c.html(renderAlert({
         type: 'error',
-        message: 'First name, last name, username, email, and password are required.',
+        message: 'First name, last name, email, and password are required.',
         dismissible: true
       }))
     }
@@ -697,17 +693,17 @@ userRoutes.post('/users/new', async (c) => {
       }))
     }
 
-    // Check if username/email are already taken
+    // Check if email is already taken
     const checkStmt = db.prepare(`
       SELECT id FROM auth_user
-      WHERE username = ? OR email = ?
+      WHERE email = ?
     `)
-    const existingUser = await checkStmt.bind(username, email).first()
+    const existingUser = await checkStmt.bind(email).first()
 
     if (existingUser) {
       return c.html(renderAlert({
         type: 'error',
-        message: 'Username or email is already taken.',
+        message: 'Email is already taken.',
         dismissible: true
       }))
     }
@@ -719,13 +715,13 @@ userRoutes.post('/users/new', async (c) => {
     const userId = crypto.randomUUID()
     const createStmt = db.prepare(`
       INSERT INTO auth_user (
-        id, email, username, first_name, last_name, phone, bio,
+        id, email, first_name, last_name, phone, bio,
         password_hash, role, is_active, email_verified, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `)
 
     await createStmt.bind(
-      userId, email, username, firstName, lastName, phone, bio,
+      userId, email, firstName, lastName, phone, bio,
       passwordHash, role, isActive ? 1 : 0, emailVerified ? 1 : 0,
       Date.now(), Date.now()
     ).run()
@@ -733,7 +729,7 @@ userRoutes.post('/users/new', async (c) => {
     // Log the activity
     await logActivity(
       db, user!.userId, 'user!.create', 'users', userId,
-      { email, username, role },
+      { email, role },
       c.req.header('x-forwarded-for') || c.req.header('cf-connecting-ip'),
       c.req.header('user-agent')
     )
@@ -769,7 +765,7 @@ userRoutes.get('/users/:id', async (c) => {
   try {
     // Get user data (including inactive users for admin access)
     const userStmt = db.prepare(`
-      SELECT id, email, username, first_name, last_name, phone, bio, avatar,
+      SELECT id, email, first_name, last_name, phone, bio, avatar,
              role, is_active, email_verified, 0 as two_factor_enabled, created_at, last_login_at
       FROM auth_user
       WHERE id = ?
@@ -793,7 +789,6 @@ userRoutes.get('/users/:id', async (c) => {
       user: {
         id: userRecord.id,
         email: userRecord.email,
-        username: userRecord.username,
         first_name: userRecord.first_name,
         last_name: userRecord.last_name,
         phone: userRecord.phone,
@@ -825,7 +820,7 @@ userRoutes.get('/users/:id/edit', async (c) => {
   try {
     // Get user data (removed bio - now in profile)
     const userStmt = db.prepare(`
-      SELECT id, email, username, first_name, last_name, phone, avatar,
+      SELECT id, email, first_name, last_name, phone, avatar,
              role, is_active, email_verified, 0 as two_factor_enabled, created_at, last_login_at
       FROM auth_user
       WHERE id = ?
@@ -868,7 +863,6 @@ userRoutes.get('/users/:id/edit', async (c) => {
     const editData: UserEditData = {
       id: userToEdit.id,
       email: userToEdit.email,
-      username: userToEdit.username || '',
       firstName: userToEdit.first_name || '',
       lastName: userToEdit.last_name || '',
       phone: userToEdit.phone,
@@ -919,7 +913,6 @@ userRoutes.put('/users/:id', async (c) => {
     // Sanitize all user inputs to prevent XSS attacks
     const firstName = sanitizeInput(formData.get('first_name')?.toString())
     const lastName = sanitizeInput(formData.get('last_name')?.toString())
-    const username = sanitizeInput(formData.get('username')?.toString())
     const email = formData.get('email')?.toString()?.trim().toLowerCase() || ''
     const phone = sanitizeInput(formData.get('phone')?.toString()) || null
     const roleInput = formData.get('role')?.toString() || 'viewer'
@@ -957,10 +950,10 @@ userRoutes.put('/users/:id', async (c) => {
     }
 
     // Validate required fields
-    if (!username || !email) {
+    if (!email) {
       return c.html(renderAlert({
         type: 'error',
-        message: 'Username and email are required.',
+        message: 'Email is required.',
         dismissible: true
       }))
     }
@@ -1006,17 +999,17 @@ userRoutes.put('/users/:id', async (c) => {
       }
     }
 
-    // Check if username/email are taken by another user
+    // Check if email is taken by another user
     const checkStmt = db.prepare(`
       SELECT id FROM auth_user
-      WHERE (username = ? OR email = ?) AND id != ?
+      WHERE email = ? AND id != ?
     `)
-    const existingUser = await checkStmt.bind(username, email, userId).first()
+    const existingUser = await checkStmt.bind(email, userId).first()
 
     if (existingUser) {
       return c.html(renderAlert({
         type: 'error',
-        message: 'Username or email is already taken by another user.',
+        message: 'Email is already taken by another user.',
         dismissible: true
       }))
     }
@@ -1024,14 +1017,14 @@ userRoutes.put('/users/:id', async (c) => {
     // Update user (removed bio - now in profile)
     const updateStmt = db.prepare(`
       UPDATE auth_user SET
-        first_name = ?, last_name = ?, username = ?, email = ?,
+        first_name = ?, last_name = ?, email = ?,
         phone = ?, role = ?, is_active = ?, email_verified = ?,
         updated_at = ?
       WHERE id = ?
     `)
 
     await updateStmt.bind(
-      firstName, lastName, username, email,
+      firstName, lastName, email,
       phone, role, isActive ? 1 : 0, emailVerified ? 1 : 0,
       Date.now(), userId
     ).run()
@@ -1066,7 +1059,7 @@ userRoutes.put('/users/:id', async (c) => {
     // Log the activity
     await logActivity(
       db, user!.userId, 'user.update', 'users', userId,
-      { fields: ['first_name', 'last_name', 'username', 'email', 'phone', 'role', 'is_active', 'email_verified', 'profile', ...(newPassword ? ['password'] : [])] },
+      { fields: ['first_name', 'last_name', 'email', 'phone', 'role', 'is_active', 'email_verified', 'profile', ...(newPassword ? ['password'] : [])] },
       c.req.header('x-forwarded-for') || c.req.header('cf-connecting-ip'),
       c.req.header('user-agent')
     )
@@ -1467,7 +1460,7 @@ userRoutes.get('/activity-logs', async (c) => {
         al.id, al.user_id, al.action, al.resource_type, al.resource_id,
         al.details, al.ip_address, al.user_agent, al.created_at,
         u.email as user_email,
-        COALESCE(u.first_name || ' ' || u.last_name, u.username, u.email) as user_name
+        COALESCE(u.first_name || ' ' || u.last_name, u.email) as user_name
       FROM activity_logs al
       LEFT JOIN auth_user u ON al.user_id = u.id
       ${whereClause}
@@ -1593,7 +1586,7 @@ userRoutes.get('/activity-logs/export', async (c) => {
         al.id, al.user_id, al.action, al.resource_type, al.resource_id,
         al.details, al.ip_address, al.user_agent, al.created_at,
         u.email as user_email,
-        COALESCE(u.first_name || ' ' || u.last_name, u.username, u.email) as user_name
+        COALESCE(u.first_name || ' ' || u.last_name, u.email) as user_name
       FROM activity_logs al
       LEFT JOIN auth_user u ON al.user_id = u.id
       ${whereClause}

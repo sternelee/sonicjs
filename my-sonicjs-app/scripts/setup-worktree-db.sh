@@ -52,7 +52,7 @@ fi
 
 # Check if database already exists
 echo "Checking for existing database..."
-EXISTING_DB=$(npx wrangler d1 list --json 2>/dev/null | jq -r ".[] | select(.name == \"$DB_NAME\") | .uuid" || echo "")
+EXISTING_DB=$(npx wrangler d1 list --json 2>/dev/null | awk '/^\[/{found=1} found{print}' | jq -r ".[] | select(.name == \"$DB_NAME\") | .uuid" || echo "")
 
 if [ -n "$EXISTING_DB" ]; then
   echo "Database $DB_NAME already exists with ID: $EXISTING_DB"
@@ -79,7 +79,7 @@ if [ -z "$EXISTING_DB" ]; then
 
   if [ -z "$DB_ID" ]; then
     # Try alternative extraction method
-    DB_ID=$(npx wrangler d1 list --json | jq -r ".[] | select(.name == \"$DB_NAME\") | .uuid")
+    DB_ID=$(npx wrangler d1 list --json 2>/dev/null | awk '/^\[/{found=1} found{print}' | jq -r ".[] | select(.name == \"$DB_NAME\") | .uuid")
   fi
 fi
 
