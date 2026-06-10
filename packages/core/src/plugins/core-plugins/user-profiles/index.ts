@@ -141,3 +141,11 @@ export {
 } from './user-profile-service'
 
 export { renderCustomProfileSection } from './user-profile-renderer'
+
+export {
+  readProfileData,
+  writeProfileData,
+  USER_PROFILE_TYPE_ID,
+  type ProfileDocumentData,
+  type ProfileTypedFields,
+} from './user-profile-document'

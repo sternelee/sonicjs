@@ -1,5 +1,7 @@
 import { D1Database } from '@cloudflare/workers-types'
 import { bundledMigrations } from '../db/migrations-bundle'
+import { ensureScalarSchema } from './document-scalar-schema'
+import type { QueryableField } from '../schemas/document'
 
 export interface Migration {
   id: string
@@ -97,54 +99,25 @@ export class MigrationService {
   }
 
   /**
-   * Ensure the `documents` table exposes every queryable VIRTUAL generated column (D45). Safe to run on
-   * every bootstrap: existing columns are skipped, missing ones are added, and the unavoidable race of a
-   * concurrent add surfaces as a swallowed "duplicate column name" error.
+   * Ensure the `documents` table exposes every queryable VIRTUAL generated column + index (D45).
+   * Data-driven repair: reconciles from each active type's `queryable_fields` rather than a hardcoded
+   * list, so it stays in sync with whatever types are registered. Generation of these columns is owned
+   * by DocumentTypeRegistry.register() (via ensureScalarSchema); this pass is a bootstrap safety net for
+   * a DB that has document_types rows but lost columns (e.g. table rebuilt). Idempotent.
    */
   private async ensureDocumentGeneratedColumns(): Promise<void> {
-    // (column name, full ADD COLUMN body) — kept in sync with migrations 043 + 044.
-    const columns: Array<[string, string]> = [
-      ['q_faq_category',    "q_faq_category TEXT AS (json_extract(data, '$.category')) VIRTUAL"],
-      ['q_faq_sort_order',  "q_faq_sort_order INTEGER AS (json_extract(data, '$.sortOrder')) VIRTUAL"],
-      ['q_tst_rating',      "q_tst_rating INTEGER AS (json_extract(data, '$.rating')) VIRTUAL"],
-      ['q_tst_company',     "q_tst_company TEXT AS (json_extract(data, '$.authorCompany')) VIRTUAL"],
-      ['q_tst_sort_order',  "q_tst_sort_order INTEGER AS (json_extract(data, '$.sortOrder')) VIRTUAL"],
-      ['q_msg_review',      "q_msg_review TEXT AS (json_extract(data, '$.reviewStatus')) VIRTUAL"],
-      ['q_msg_email',       "q_msg_email TEXT AS (json_extract(data, '$.email')) VIRTUAL"],
-      ['q_media_mime',      "q_media_mime TEXT AS (json_extract(data, '$.mimeType')) VIRTUAL"],
-      ['q_media_folder',    "q_media_folder TEXT AS (json_extract(data, '$.folder')) VIRTUAL"],
-      ['q_media_size',      "q_media_size INTEGER AS (json_extract(data, '$.size')) VIRTUAL"],
-      ['q_blog_difficulty', "q_blog_difficulty TEXT AS (json_extract(data, '$.difficulty')) VIRTUAL"],
-      ['q_blog_author',     "q_blog_author TEXT AS (json_extract(data, '$.author')) VIRTUAL"],
-      // email_log document type (plugin-system/email-reconciliation)
-      ['q_email_status',   "q_email_status TEXT AS (json_extract(data, '$.status')) VIRTUAL"],
-      ['q_email_provider', "q_email_provider TEXT AS (json_extract(data, '$.provider')) VIRTUAL"],
-      ['q_email_flow',     "q_email_flow TEXT AS (json_extract(data, '$.flow')) VIRTUAL"],
-      ['q_email_to',       "q_email_to TEXT AS (json_extract(data, '$.toEmail')) VIRTUAL"],
-      // plugin document type
-      ['q_plugin_status',   "q_plugin_status TEXT AS (json_extract(data, '$.status')) VIRTUAL"],
-      ['q_plugin_category', "q_plugin_category TEXT AS (json_extract(data, '$.category')) VIRTUAL"],
-      ['q_plugin_is_core',  "q_plugin_is_core INTEGER AS (json_extract(data, '$.isCore')) VIRTUAL"],
-    ]
-    // Note: pragma_table_info does NOT list VIRTUAL generated columns — use table_xinfo, which does.
-    let existing = new Set<string>()
-    try {
-      const info = await this.db.prepare("SELECT name FROM pragma_table_xinfo('documents')").all()
-      existing = new Set((info?.results ?? []).map((r: any) => r.name))
-    } catch {
-      // table_xinfo unavailable — fall back to attempting every ALTER (duplicate errors are swallowed).
-    }
-    for (const [name, body] of columns) {
-      if (existing.has(name)) continue
+    if (!(await this.checkTablesExist(['document_types']))) return
+    const rows = await this.db
+      .prepare('SELECT id, queryable_fields FROM document_types WHERE is_active = 1')
+      .all<{ id: string; queryable_fields: string }>()
+    for (const row of rows.results ?? []) {
+      let fields: QueryableField[]
       try {
-        await this.db.prepare(`ALTER TABLE documents ADD COLUMN ${body}`).run()
-        console.log(`[Migration] D45: added missing documents.${name}`)
-      } catch (error) {
-        const msg = error instanceof Error ? error.message : String(error)
-        if (!msg.includes('duplicate column name')) {
-          console.error(`[Migration] D45: failed to add documents.${name}:`, msg)
-        }
+        fields = JSON.parse(row.queryable_fields)
+      } catch {
+        continue
       }
+      await ensureScalarSchema(this.db, row.id, fields)
     }
   }
 
