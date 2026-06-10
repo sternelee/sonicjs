@@ -154,7 +154,6 @@ export const mockUsers = {
   admin: {
     id: 'admin-user-id',
     email: 'admin@sonicjs.com',
-    username: 'admin',
     firstName: 'Admin',
     lastName: 'User',
     role: 'admin',
@@ -166,7 +165,6 @@ export const mockUsers = {
   editor: {
     id: 'editor-user-id',
     email: 'editor@sonicjs.com',
-    username: 'editor',
     firstName: 'Editor',
     lastName: 'User',
     role: 'editor',
@@ -226,7 +224,7 @@ export const createContentResponse = (content: any, author?: any) => ({
   publishedAt: content.publishedAt,
   author: author ? {
     id: author.id,
-    username: author.username,
+    email: author.email,
     firstName: author.firstName,
     lastName: author.lastName
   } : null,

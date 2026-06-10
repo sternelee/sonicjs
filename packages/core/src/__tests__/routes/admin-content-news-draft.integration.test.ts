@@ -54,7 +54,7 @@ describe('admin-content blog_post (code-defined doc type) — create-as-draft re
 
   beforeEach(async () => {
     db = createTestD1()
-    db.raw.prepare("INSERT INTO users (id,email,username,first_name,last_name,role,is_active,created_at,updated_at) VALUES ('u1','a@b.c','admin','Ada','Lovelace','admin',1,1,1)").run()
+    db.raw.prepare("INSERT INTO users (id,email,first_name,last_name,role,is_active,created_at,updated_at) VALUES ('u1','a@b.c','Ada','Lovelace','admin',1,1,1)").run()
     db.raw.prepare("INSERT INTO collections (id,name,display_name,description,schema,is_active,source_type,managed,created_at,updated_at) VALUES (?,?,?,?,?,1,'user',1,1,1)")
       .run(COLL, COLL, 'Blog Post', 'Blog posts', BLOG_SCHEMA)
     await bootstrapDocumentTypes(db)

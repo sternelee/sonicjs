@@ -51,6 +51,7 @@ import { analyticsPlugin } from './plugins/core-plugins/analytics'
 import { eventsApiRoutes } from './plugins/core-plugins/analytics/routes/api'
 import { globalVariablesPlugin } from './plugins/core-plugins/global-variables-plugin'
 import { shortcodesPlugin } from './plugins/core-plugins/shortcodes-plugin'
+import { helloWorldPlugin } from './plugins/core-plugins/hello-world-plugin'
 import cachePlugin from './plugins/cache'
 import type { Plugin } from './plugins/types'
 import { registerPluginRoutes } from './plugins/mount'
@@ -265,6 +266,7 @@ export function createSonicJSApp(config: SonicJSConfig = {}): SonicJSApp {
     // app.ts, so their routes 404'd in production. Fixes #758.
     globalVariablesPlugin,
     shortcodesPlugin,
+    helloWorldPlugin,
   ]
   const corePluginsAfterCatchAll = [emailPlugin, emailReconciliationPlugin]
 

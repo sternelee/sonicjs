@@ -107,7 +107,6 @@ const createOrderedMockDb = (results: Array<{ first?: any; run?: any; all?: any 
 const mockUserRecord = {
   id: 'user-123',
   email: 'test@example.com',
-  username: 'testuser',
   first_name: 'Test',
   last_name: 'User',
   phone: null,
@@ -264,7 +263,6 @@ describe('Admin Users - Profile on Edit Page', () => {
     const baseUserFields = {
       first_name: 'Test',
       last_name: 'User',
-      username: 'testuser',
       email: 'test@example.com',
       role: 'viewer',
       is_active: '1'

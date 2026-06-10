@@ -50,10 +50,10 @@ function renderMenuItem(item: { label: string; path: string; icon?: string }, cu
       ${isActive ? '<span class="absolute inset-y-2 -left-4 w-0.5 rounded-full bg-cyan-500 dark:bg-cyan-400"></span>' : ''}
       <a
         href="${item.path}"
-        class="flex w-full items-center gap-3 rounded-lg px-2 py-2.5 text-left text-sm/5 font-medium ${
+        class="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left text-sm/5 font-medium ${
           isActive
             ? 'text-zinc-950 dark:text-white'
-            : 'text-zinc-950 hover:bg-zinc-950/5 dark:text-white dark:hover:bg-white/5'
+            : 'text-zinc-600 hover:bg-zinc-950/5 dark:text-zinc-400 dark:hover:bg-white/5'
         }"
         ${isActive ? 'data-current="true"' : ''}
       >
@@ -80,10 +80,10 @@ export function pluginMenuMiddleware() {
       if (pluginCodeNames.length > 0) {
         const placeholders = pluginCodeNames.map(() => '?').join(',')
         const result = await db.prepare(
-          `SELECT name FROM plugins WHERE name IN (${placeholders}) AND status = 'active'`
+          `SELECT slug FROM documents WHERE type_id = 'plugin' AND tenant_id = 'default' AND slug IN (${placeholders}) AND q_plugin_status = 'active' AND is_current_draft = 1 AND deleted_at IS NULL`
         ).bind(...pluginCodeNames).all()
 
-        const activeNames = new Set((result.results || []).map((r: any) => r.name))
+        const activeNames = new Set((result.results || []).map((r: any) => r.slug))
 
         for (const plugin of REGISTRY_MENU_PLUGINS) {
           if (activeNames.has(plugin.codeName)) {

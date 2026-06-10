@@ -16,7 +16,6 @@ export interface UserProfileData {
 export interface UserEditData {
   id: string
   email: string
-  username: string
   firstName: string
   lastName: string
   phone?: string
@@ -112,17 +111,6 @@ export function renderUserEditPage(data: UserEditPageData): string {
                       type="text"
                       name="last_name"
                       value="${escapeHtml(data.userToEdit.lastName || '')}"
-                      class="w-full rounded-lg bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-zinc-950 dark:text-white shadow-sm ring-1 ring-inset ring-zinc-950/10 dark:ring-white/10 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-950 dark:focus:ring-white transition-shadow"
-                    />
-                  </div>
-
-                  <div>
-                    <label class="block text-sm font-medium text-zinc-950 dark:text-white mb-2">Username</label>
-                    <input
-                      type="text"
-                      name="username"
-                      value="${escapeHtml(data.userToEdit.username || '')}"
-                      required
                       class="w-full rounded-lg bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-zinc-950 dark:text-white shadow-sm ring-1 ring-inset ring-zinc-950/10 dark:ring-white/10 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-950 dark:focus:ring-white transition-shadow"
                     />
                   </div>

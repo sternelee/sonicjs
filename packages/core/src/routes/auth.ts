@@ -14,6 +14,7 @@ import type { RegistrationData } from '../services/auth-validation'
 import type { Bindings, Variables } from '../app'
 import { getUserProfileConfig, getRegistrationFields, getProfileFieldDefaults, sanitizeCustomData, saveCustomData, getCustomData } from '../plugins/core-plugins/user-profiles'
 import { dispatchHookEvent } from '../plugins/hooks/dispatch-event'
+import { RbacService } from '../services/rbac'
 
 const JWT_SECRET_FALLBACK = 'your-super-secret-jwt-key-change-in-production'
 
@@ -161,36 +162,34 @@ authRoutes.post('/register',
       // Extract fields with defaults for optional ones
       const email = validatedData.email
       const password = validatedData.password
-      const username = validatedData.username || authValidationService.generateDefaultValue('username', validatedData)
       const firstName = validatedData.firstName || authValidationService.generateDefaultValue('firstName', validatedData)
       const lastName = validatedData.lastName || authValidationService.generateDefaultValue('lastName', validatedData)
 
       // Normalize email to lowercase
       const normalizedEmail = email.toLowerCase()
-      
+
       // Check if user already exists
-      const existingUser = await db.prepare('SELECT id FROM auth_user WHERE email = ? OR username = ?')
-        .bind(normalizedEmail, username)
+      const existingUser = await db.prepare('SELECT id FROM auth_user WHERE email = ?')
+        .bind(normalizedEmail)
         .first()
-      
+
       if (existingUser) {
-        return c.json({ error: 'User with this email or username already exists' }, 400)
+        return c.json({ error: 'User with this email already exists' }, 400)
       }
-      
+
       // Hash password
       const passwordHash = await AuthManager.hashPassword(password)
-      
+
       // Create user
       const userId = crypto.randomUUID()
       const now = new Date()
-      
+
       await db.prepare(`
-        INSERT INTO auth_user (id, email, username, first_name, last_name, password_hash, role, is_active, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO auth_user (id, email, first_name, last_name, password_hash, role, is_active, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).bind(
         userId,
         normalizedEmail,
-        username,
         firstName,
         lastName,
         passwordHash,
@@ -243,7 +242,6 @@ authRoutes.post('/register',
         user: {
           id: userId,
           email: normalizedEmail,
-          username,
           firstName,
           lastName,
           role: 'viewer'
@@ -346,7 +344,6 @@ authRoutes.post('/login',
         user: {
           id: user.id,
           email: user.email,
-          username: user.username,
           firstName: user.first_name,
           lastName: user.last_name,
           role: user.role
@@ -407,7 +404,7 @@ authRoutes.get('/me', requireAuth(), async (c) => {
     }
     
     const db = c.env.DB
-    const userData = await db.prepare('SELECT id, email, username, first_name, last_name, role, created_at FROM auth_user WHERE id = ?')
+    const userData = await db.prepare('SELECT id, email, first_name, last_name, role, created_at FROM auth_user WHERE id = ?')
       .bind(user.userId)
       .first() as Record<string, any> | null
 
@@ -515,7 +512,6 @@ authRoutes.post('/register/form',
     const requestData = {
       email: formData.get('email') as string,
       password: formData.get('password') as string,
-      username: formData.get('username') as string,
       firstName: formData.get('firstName') as string,
       lastName: formData.get('lastName') as string,
     }
@@ -539,25 +535,23 @@ authRoutes.post('/register/form',
       const validatedData: RegistrationData = validation.data
 
     // Extract fields with defaults for optional ones
-    // const email = validatedData.email
     const password = validatedData.password
-    const username = validatedData.username || authValidationService.generateDefaultValue('username', validatedData)
     const firstName = validatedData.firstName || authValidationService.generateDefaultValue('firstName', validatedData)
     const lastName = validatedData.lastName || authValidationService.generateDefaultValue('lastName', validatedData)
-    
+
     // Check if user already exists
-    const existingUser = await db.prepare('SELECT id FROM auth_user WHERE email = ? OR username = ?')
-      .bind(normalizedEmail, username)
+    const existingUser = await db.prepare('SELECT id FROM auth_user WHERE email = ?')
+      .bind(normalizedEmail)
       .first()
-    
+
     if (existingUser) {
       return c.html(html`
         <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-          User with this email or username already exists
+          User with this email already exists
         </div>
       `)
     }
-    
+
     // Hash password
     const passwordHash = await AuthManager.hashPassword(password)
 
@@ -569,12 +563,11 @@ authRoutes.post('/register/form',
     const now = new Date()
 
     await db.prepare(`
-      INSERT INTO auth_user (id, email, username, first_name, last_name, password_hash, role, is_active, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO auth_user (id, email, first_name, last_name, password_hash, role, is_active, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
       userId,
       normalizedEmail,
-      username,
       firstName,
       lastName,
       passwordHash,
@@ -737,8 +730,8 @@ authRoutes.post('/seed-admin',
     // auth_user table is created by migration 0001 — no inline DDL needed
     
     // Check if admin user already exists
-    const existingAdmin = await db.prepare('SELECT id FROM auth_user WHERE email = ? OR username = ?')
-      .bind('admin@sonicjs.com', 'admin')
+    const existingAdmin = await db.prepare('SELECT id FROM auth_user WHERE email = ?')
+      .bind('admin@sonicjs.com')
       .first()
 
     if (existingAdmin) {
@@ -753,13 +746,12 @@ authRoutes.post('/seed-admin',
         db.prepare(`INSERT OR REPLACE INTO auth_account (id, user_id, account_id, provider_id, password, created_at, updated_at)
           VALUES (?, ?, ?, 'credential', ?, ?, ?)`)
           .bind(`cred-${existingAdmin.id}`, existingAdmin.id, existingAdmin.id, passwordHash, nowSec, nowSec),
-        // Ensure RBAC admin role is assigned
-        db.prepare(`INSERT OR IGNORE INTO auth_rbac_user_roles (user_id, role_id) SELECT ?, id FROM auth_rbac_roles WHERE name = 'admin'`)
-          .bind(existingAdmin.id),
       ])
+      // RBAC roles are document-backed — assign outside the SQL batch.
+      await new RbacService(db).addUserRoleByName(String(existingAdmin.id), 'admin')
       return c.json({
         message: 'Admin user already exists (account updated)',
-        user: { id: existingAdmin.id, email: 'admin@sonicjs.com', username: 'admin', role: 'admin' }
+        user: { id: existingAdmin.id, email: 'admin@sonicjs.com', role: 'admin' }
       })
     }
 
@@ -771,21 +763,20 @@ authRoutes.post('/seed-admin',
 
     await db.batch([
       // auth_user row — no password_hash column; BA stores password in auth_account
-      db.prepare(`INSERT INTO auth_user (id, name, email, email_verified, username, first_name, last_name, role, is_active, created_at, updated_at)
-        VALUES (?, ?, ?, 1, ?, ?, ?, 'admin', 1, ?, ?)`)
-        .bind(userId, 'Admin User', adminEmail, 'admin', 'Admin', 'User', nowMs, nowMs),
+      db.prepare(`INSERT INTO auth_user (id, name, email, email_verified, first_name, last_name, role, is_active, created_at, updated_at)
+        VALUES (?, ?, ?, 1, ?, ?, 'admin', 1, ?, ?)`)
+        .bind(userId, 'Admin User', adminEmail, 'Admin', 'User', nowMs, nowMs),
       // BA credential account — PBKDF2 hash; BA's custom verify hook in auth/config.ts handles it
       db.prepare(`INSERT INTO auth_account (id, user_id, account_id, provider_id, password, created_at, updated_at)
         VALUES (?, ?, ?, 'credential', ?, ?, ?)`)
         .bind(`cred-${userId}`, userId, userId, passwordHash, nowSec, nowSec),
-      // RBAC admin role assignment
-      db.prepare(`INSERT OR IGNORE INTO auth_rbac_user_roles (user_id, role_id) SELECT ?, id FROM auth_rbac_roles WHERE name = 'admin'`)
-        .bind(userId),
     ])
+    // RBAC roles are document-backed — assign outside the SQL batch.
+    await new RbacService(db).addUserRoleByName(userId, 'admin')
 
     return c.json({
       message: 'Admin user created successfully',
-      user: { id: userId, email: adminEmail, username: 'admin', role: 'admin' }
+      user: { id: userId, email: adminEmail, role: 'admin' }
     })
   } catch (error) {
     console.error('Seed admin error:', error)
@@ -888,17 +879,6 @@ authRoutes.get('/accept-invitation', async (c) => {
 
             <form method="POST" action="/auth/accept-invitation" class="mt-8 space-y-6">
               <input type="hidden" name="token" value="${token}" />
-              
-              <div>
-                <label class="block text-sm font-medium text-gray-300 mb-2">Username</label>
-                <input 
-                  type="text" 
-                  name="username" 
-                  required
-                  class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition-all"
-                  placeholder="Enter your username"
-                >
-              </div>
 
               <div>
                 <label class="block text-sm font-medium text-gray-300 mb-2">Password</label>
@@ -958,11 +938,10 @@ authRoutes.post('/accept-invitation', async (c) => {
   try {
     const formData = await c.req.formData()
     const token = formData.get('token')?.toString()
-    const username = formData.get('username')?.toString()?.trim()
     const password = formData.get('password')?.toString()
     const confirmPassword = formData.get('confirm_password')?.toString()
 
-    if (!token || !username || !password || !confirmPassword) {
+    if (!token || !password || !confirmPassword) {
       return c.json({ error: 'All fields are required' }, 400)
     }
 
@@ -991,19 +970,9 @@ authRoutes.post('/accept-invitation', async (c) => {
     // Check if invitation is expired (7 days)
     const invitationAge = Date.now() - invitedUser.invited_at
     const maxAge = 7 * 24 * 60 * 60 * 1000 // 7 days
-    
+
     if (invitationAge > maxAge) {
       return c.json({ error: 'Invitation has expired' }, 400)
-    }
-
-    // Check if username is available
-    const existingUsernameStmt = db.prepare(`
-      SELECT id FROM auth_user WHERE username = ? AND id != ?
-    `)
-    const existingUsername = await existingUsernameStmt.bind(username, invitedUser.id).first()
-
-    if (existingUsername) {
-      return c.json({ error: 'Username is already taken' }, 400)
     }
 
     // Hash password
@@ -1011,8 +980,7 @@ authRoutes.post('/accept-invitation', async (c) => {
 
     // Activate user account
     const updateStmt = db.prepare(`
-      UPDATE auth_user SET 
-        username = ?,
+      UPDATE auth_user SET
         password_hash = ?,
         is_active = 1,
         email_verified = 1,
@@ -1023,7 +991,6 @@ authRoutes.post('/accept-invitation', async (c) => {
     `)
 
     await updateStmt.bind(
-      username,
       passwordHash,
       Date.now(),
       Date.now(),

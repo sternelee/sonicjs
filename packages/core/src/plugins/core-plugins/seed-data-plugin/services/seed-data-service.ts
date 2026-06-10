@@ -107,20 +107,18 @@ export class SeedDataService {
     for (let i = 0; i < 20; i++) {
       const firstName = this.firstNames[Math.floor(Math.random() * this.firstNames.length)] || 'John'
       const lastName = this.lastNames[Math.floor(Math.random() * this.lastNames.length)] || 'Doe'
-      const username = `${firstName.toLowerCase()}${lastName.toLowerCase()}${i}`
-      const email = `${username}@example.com`
+      const email = `${firstName.toLowerCase()}${lastName.toLowerCase()}${i}@example.com`
       const createdAt = this.randomDate()
       const createdAtTimestamp = Math.floor(createdAt.getTime() / 1000)
 
       const stmt = this.db.prepare(`
-        INSERT INTO auth_user (id, email, username, first_name, last_name, password_hash, role, is_active, last_login_at, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO auth_user (id, email, first_name, last_name, password_hash, role, is_active, last_login_at, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `)
 
       await stmt.bind(
         this.generateId(),
         email,
-        username,
         firstName,
         lastName,
         hashedPassword,

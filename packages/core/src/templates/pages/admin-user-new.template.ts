@@ -93,19 +93,6 @@ export function renderUserNewPage(data: UserNewPageData): string {
 
                   <div>
                     <label class="block text-sm font-medium text-zinc-950 dark:text-white mb-2">
-                      Username <span class="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="username"
-                      required
-                      placeholder="Enter username"
-                      class="w-full rounded-lg bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-zinc-950 dark:text-white shadow-sm ring-1 ring-inset ring-zinc-950/10 dark:ring-white/10 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-950 dark:focus:ring-white transition-shadow"
-                    />
-                  </div>
-
-                  <div>
-                    <label class="block text-sm font-medium text-zinc-950 dark:text-white mb-2">
                       Email <span class="text-red-500">*</span>
                     </label>
                     <input
