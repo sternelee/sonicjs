@@ -117,7 +117,7 @@ router.get('/stats', async (c) => {
       mediaCount = (mediaResult as any)?.count || 0
       mediaSize = (mediaResult as any)?.total_size || 0
     } catch (error) {
-      console.error('Error fetching media count:', error)
+      // media table lives in the media plugin — not yet available
     }
 
     // Get users count
@@ -168,7 +168,7 @@ router.get('/storage', async (c) => {
       const mediaResult = await mediaStmt.first()
       mediaSize = (mediaResult as any)?.total_size || 0
     } catch (error) {
-      console.error('Error fetching media size:', error)
+      // media table lives in the media plugin — not yet available
     }
 
     const html = renderStorageUsage(databaseSize, mediaSize)
@@ -183,65 +183,9 @@ router.get('/storage', async (c) => {
  * GET /admin/dashboard/recent-activity - Recent activity HTML fragment (HTMX endpoint)
  */
 router.get('/recent-activity', async (c) => {
-  try {
-    const db = c.env.DB
-    const limit = parseInt(c.req.query('limit') || '5')
-
-    // Get recent activities from activity_logs table
-    const activityStmt = db.prepare(`
-      SELECT
-        a.id,
-        a.action,
-        a.resource_type,
-        a.resource_id,
-        a.details,
-        a.created_at,
-        u.email,
-        u.first_name,
-        u.last_name
-      FROM activity_logs a
-      LEFT JOIN auth_user u ON a.user_id = u.id
-      WHERE a.resource_type IN ('content', 'collections', 'users', 'media')
-      ORDER BY a.created_at DESC
-      LIMIT ?
-    `)
-
-    const { results } = await activityStmt.bind(limit).all()
-
-    const activities: ActivityItem[] = (results || []).map((row: any) => {
-      const userName = row.first_name && row.last_name
-        ? `${row.first_name} ${row.last_name}`
-        : row.email || 'System'
-
-      // Format description based on action and resource type
-      let description = ''
-      if (row.action === 'create') {
-        description = `Created new ${row.resource_type}`
-      } else if (row.action === 'update') {
-        description = `Updated ${row.resource_type}`
-      } else if (row.action === 'delete') {
-        description = `Deleted ${row.resource_type}`
-      } else {
-        description = `${row.action} ${row.resource_type}`
-      }
-
-      return {
-        id: row.id,
-        type: row.resource_type,
-        action: row.action,
-        description,
-        timestamp: new Date(Number(row.created_at)).toISOString(),
-        user: userName
-      }
-    })
-
-    const html = renderRecentActivity(activities)
-    return c.html(html)
-  } catch (error) {
-    console.error('Error fetching recent activity:', error)
-    const html = renderRecentActivity([])
-    return c.html(html)
-  }
+  // activity_logs is not yet available — will be implemented as a plugin
+  const html = renderRecentActivity([])
+  return c.html(html)
 })
 
 /**
