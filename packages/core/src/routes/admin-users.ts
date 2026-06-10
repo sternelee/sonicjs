@@ -8,7 +8,7 @@ import { renderUserEditPage, type UserEditPageData, type UserEditData, type User
 import { renderUserNewPage, type UserNewPageData } from '../templates/pages/admin-user-new.template'
 import { renderUsersListPage, type UsersListPageData, type User } from '../templates/pages/admin-users-list.template'
 import type { Bindings, Variables } from '../app'
-import { getUserProfileConfig, renderCustomProfileSection, getCustomData, saveCustomData, extractCustomFieldsFromForm, sanitizeCustomData, validateCustomData } from '../plugins/core-plugins/user-profiles'
+import { getUserProfileConfig, renderCustomProfileSection, getCustomData, saveCustomData, extractCustomFieldsFromForm, sanitizeCustomData, validateCustomData, readProfileData, writeProfileData } from '../plugins/core-plugins/user-profiles'
 
 const userRoutes = new Hono<{ Bindings: Bindings; Variables: Variables }>()
 
@@ -841,30 +841,26 @@ userRoutes.get('/users/:id/edit', async (c) => {
       }), 404)
     }
 
-    // Get user profile data
-    const profileStmt = db.prepare(`
-      SELECT display_name, bio, company, job_title, website, location, date_of_birth, data
-      FROM auth_user_profiles
-      WHERE user_id = ?
-    `)
-    const profileData = await profileStmt.bind(userId).first() as any
+    // Get user profile data (backed by the user_profile document)
+    const profileData = await readProfileData(db, userId)
+    const hasProfile = profileData.displayName != null || profileData.bio != null ||
+      profileData.company != null || profileData.jobTitle != null || profileData.website != null ||
+      profileData.location != null || profileData.dateOfBirth != null ||
+      Object.keys(profileData.custom).length > 0
 
     // Convert profile to UserProfileData interface
-    const profile: UserProfileData | undefined = profileData ? {
-      displayName: profileData.display_name,
-      bio: profileData.bio,
-      company: profileData.company,
-      jobTitle: profileData.job_title,
-      website: profileData.website,
-      location: profileData.location,
-      dateOfBirth: profileData.date_of_birth
+    const profile: UserProfileData | undefined = hasProfile ? {
+      displayName: profileData.displayName ?? undefined,
+      bio: profileData.bio ?? undefined,
+      company: profileData.company ?? undefined,
+      jobTitle: profileData.jobTitle ?? undefined,
+      website: profileData.website ?? undefined,
+      location: profileData.location ?? undefined,
+      dateOfBirth: profileData.dateOfBirth ?? undefined
     } : undefined
 
-    // Parse custom profile data
-    let customData: Record<string, any> = {}
-    if (profileData?.data) {
-      try { customData = JSON.parse(profileData.data) } catch {}
-    }
+    // Custom profile data lives under data.custom
+    const customData: Record<string, any> = profileData.custom
     const profileConfig = getUserProfileConfig()
     const customProfileFieldsHtml = renderCustomProfileSection(profileConfig, customData)
 
@@ -946,9 +942,9 @@ userRoutes.put('/users/:id', async (c) => {
     const profileDateOfBirthStr = formData.get('profile_date_of_birth')?.toString()?.trim() || null
     const profileDateOfBirth = profileDateOfBirthStr ? new Date(profileDateOfBirthStr).getTime() : null
 
-    // Extract custom profile fields
+    // Extract custom profile fields (merged into the profile document below)
     const profileConfig = getUserProfileConfig()
-    let customDataJson: string | null = null
+    let sanitizedCustom: Record<string, any> | null = null
     if (profileConfig) {
       const rawCustom = extractCustomFieldsFromForm(formData, profileConfig)
       const sanitized = sanitizeCustomData(rawCustom, profileConfig)
@@ -957,10 +953,7 @@ userRoutes.put('/users/:id', async (c) => {
         const errorMessages = Object.values(validation.errors).join(', ')
         return c.html(renderAlert({ type: 'error', message: errorMessages, dismissible: true }), 400)
       }
-      // Merge with existing custom data
-      const existingCustom = await getCustomData(db, userId)
-      const merged = { ...existingCustom, ...sanitized }
-      customDataJson = JSON.stringify(merged)
+      sanitizedCustom = sanitized
     }
 
     // Validate required fields
@@ -1056,41 +1049,18 @@ userRoutes.put('/users/:id', async (c) => {
     const hasProfileData = profileDisplayName || profileBio || profileCompany ||
       profileJobTitle || profileWebsite || profileLocation || profileDateOfBirth
 
-    if (hasProfileData || customDataJson !== null) {
-      const now = Date.now()
-
-      // Check if profile exists
-      const profileCheckStmt = db.prepare(`SELECT id FROM auth_user_profiles WHERE user_id = ?`)
-      const existingProfile = await profileCheckStmt.bind(userId).first() as any
-
-      if (existingProfile) {
-        // Update existing profile
-        const updateProfileStmt = db.prepare(`
-          UPDATE auth_user_profiles SET
-            display_name = ?, bio = ?, company = ?, job_title = ?,
-            website = ?, location = ?, date_of_birth = ?, updated_at = ?
-            ${customDataJson !== null ? ', data = ?' : ''}
-          WHERE user_id = ?
-        `)
-        const updateBindings = [
-          profileDisplayName, profileBio, profileCompany, profileJobTitle,
-          profileWebsite, profileLocation, profileDateOfBirth, now,
-          ...(customDataJson !== null ? [customDataJson] : []),
-          userId
-        ]
-        await updateProfileStmt.bind(...updateBindings).run()
-      } else {
-        // Create new profile
-        const profileId = `profile_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
-        const insertProfileStmt = db.prepare(`
-          INSERT INTO auth_user_profiles (id, user_id, display_name, bio, company, job_title, website, location, date_of_birth, data, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `)
-        await insertProfileStmt.bind(
-          profileId, userId, profileDisplayName, profileBio, profileCompany, profileJobTitle,
-          profileWebsite, profileLocation, profileDateOfBirth, customDataJson || '{}', now, now
-        ).run()
-      }
+    if (hasProfileData || sanitizedCustom !== null) {
+      // Persist to the user_profile document (typed fields + custom namespace).
+      await writeProfileData(db, userId, {
+        displayName: profileDisplayName,
+        bio: profileBio,
+        company: profileCompany,
+        jobTitle: profileJobTitle,
+        website: profileWebsite,
+        location: profileLocation,
+        dateOfBirth: profileDateOfBirth,
+        ...(sanitizedCustom !== null ? { custom: sanitizedCustom } : {}),
+      }, user!.userId)
     }
 
     // Log the activity

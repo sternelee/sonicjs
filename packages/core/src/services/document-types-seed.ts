@@ -52,6 +52,26 @@ export async function bootstrapDocumentTypes(db: D1Database): Promise<void> {
     ],
   })
 
+  // User profile (auth-owned). One document per user, addressed by slug = userId.
+  // Replaces the auth_user_profiles table. Typed fields + custom fields live in `data`.
+  await registry.register({
+    id: 'user_profile',
+    name: 'user_profile',
+    displayName: 'User Profile',
+    description: 'Per-user profile record (auth-owned; one document per user, slug = userId)',
+    source: 'system',
+    isAuth: true,
+    schema: anyObject,
+    settings: {
+      // Hidden from the content admin surfaces; a single mutable record (no version history).
+      internal: true,
+      maxVersionsPerRoot: 1,
+      pii: true,
+      baseGrants: { admin: ['read', 'create', 'update', 'delete', 'manage'] },
+    },
+    queryableFields: [],
+  })
+
 }
 
 /**

@@ -241,23 +241,6 @@ CREATE TABLE IF NOT EXISTS auth_api_tokens (
 CREATE INDEX IF NOT EXISTS idx_auth_api_tokens_user ON auth_api_tokens(user_id);
 CREATE INDEX IF NOT EXISTS idx_auth_api_tokens_token ON auth_api_tokens(token);
 
-CREATE TABLE IF NOT EXISTS auth_user_profiles (
-  id TEXT PRIMARY KEY,
-  user_id TEXT NOT NULL UNIQUE REFERENCES auth_user(id) ON DELETE CASCADE,
-  display_name TEXT,
-  bio TEXT,
-  company TEXT,
-  job_title TEXT,
-  website TEXT,
-  location TEXT,
-  date_of_birth INTEGER,
-  data TEXT DEFAULT '{}',
-  created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
-  updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000)
-);
-CREATE INDEX IF NOT EXISTS idx_auth_user_profiles_user_id ON auth_user_profiles(user_id);
-
-CREATE TRIGGER IF NOT EXISTS auth_user_profiles_updated_at
-AFTER UPDATE ON auth_user_profiles BEGIN
-  UPDATE auth_user_profiles SET updated_at = strftime('%s', 'now') * 1000 WHERE id = NEW.id;
-END;
+-- User profiles moved to the document model: a `user_profile` document (is_auth type),
+-- one per user, addressed by slug = userId. See services/document-types-seed.ts and
+-- plugins/core-plugins/user-profiles/user-profile-document.ts. No auth_user_profiles table.

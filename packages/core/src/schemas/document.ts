@@ -32,6 +32,8 @@ export interface PluginDocumentType {
   schema: z.ZodSchema
   settings?: DocumentTypeSettings
   queryableFields?: QueryableField[]
+  /** Auth-owned type (users/profiles/rbac). Excluded from content surfaces and public APIs. */
+  isAuth?: boolean
 }
 
 // DB row types (raw from D1)
@@ -48,6 +50,7 @@ export interface DocumentTypeRow {
   schema_version: number
   is_system: number
   is_active: number
+  is_auth: number
   created_at: number
   updated_at: number
 }
@@ -137,6 +140,7 @@ export interface DocumentType {
   schemaVersion: number
   isSystem: boolean
   isActive: boolean
+  isAuth: boolean
   createdAt: number
   updatedAt: number
 }

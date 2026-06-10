@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS document_types (
   schema_version INTEGER NOT NULL DEFAULT 1,
   is_system INTEGER NOT NULL DEFAULT 0,
   is_active INTEGER NOT NULL DEFAULT 1,
+  is_auth INTEGER NOT NULL DEFAULT 0,
   created_at INTEGER NOT NULL DEFAULT (unixepoch()),
   updated_at INTEGER NOT NULL DEFAULT (unixepoch())
 );
