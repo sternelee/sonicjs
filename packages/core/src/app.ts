@@ -19,7 +19,6 @@ import {
   adminMediaRoutes,
   adminPluginRoutes,
   adminLogsRoutes,
-  adminDashboardRoutes,
   adminCollectionsRoutes,
   adminSettingsRoutes,
   adminApiReferenceRoutes,
@@ -536,7 +535,6 @@ export function createSonicJSApp(config: SonicJSConfig = {}): SonicJSApp {
   }
 
   app.route('/admin/api', adminApiRoutes)
-  app.route('/admin/dashboard', adminDashboardRoutes)
   app.route('/admin/collections', adminCollectionsRoutes)
   app.route('/admin/settings', adminSettingsRoutes)
   app.route('/admin/api-reference', adminApiReferenceRoutes)
