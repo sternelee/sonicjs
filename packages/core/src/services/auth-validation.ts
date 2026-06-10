@@ -103,7 +103,6 @@ export function resetAdminExistsCache(): void {
 const baseRegistrationSchema = z.object({
   email: z.string().email('Valid email is required'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
-  username: z.string().min(3, 'Username must be at least 3 characters').optional(),
   firstName: z.string().min(1, 'First name is required').optional(),
   lastName: z.string().min(1, 'Last name is required').optional()
 })
@@ -127,9 +126,6 @@ export const authValidationService = {
    */
   generateDefaultValue(field: string, data: any): string {
     switch (field) {
-      case 'username':
-        // Generate username from email (part before @)
-        return data.email ? data.email.split('@')[0] : `user${Date.now()}`
       case 'firstName':
         return 'User'
       case 'lastName':

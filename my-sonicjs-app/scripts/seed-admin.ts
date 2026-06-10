@@ -90,12 +90,11 @@ async function seed() {
     const nowSec = Math.floor(now.getTime() / 1000)
     await env.DB.prepare(`
       INSERT INTO auth_user (
-        id, email, username, first_name, last_name, role, is_active, created_at, updated_at, name
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        id, email, first_name, last_name, role, is_active, created_at, updated_at, name
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
       odid,
       'admin@sonicjs.com',
-      'admin',
       'Admin',
       'User',
       'admin',

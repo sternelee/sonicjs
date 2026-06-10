@@ -13,7 +13,6 @@ CREATE TABLE IF NOT EXISTS auth_user (
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL,
   -- SonicJS additionalFields
-  username TEXT NOT NULL UNIQUE,
   first_name TEXT NOT NULL,
   last_name TEXT NOT NULL,
   role TEXT NOT NULL DEFAULT 'viewer',
@@ -36,7 +35,6 @@ CREATE TABLE IF NOT EXISTS auth_user (
 );
 
 CREATE INDEX IF NOT EXISTS idx_auth_user_email ON auth_user(email);
-CREATE INDEX IF NOT EXISTS idx_auth_user_username ON auth_user(username);
 CREATE INDEX IF NOT EXISTS idx_auth_user_role ON auth_user(role);
 CREATE INDEX IF NOT EXISTS idx_auth_user_invitation_token ON auth_user(invitation_token);
 CREATE INDEX IF NOT EXISTS idx_auth_user_locked_until ON auth_user(locked_until) WHERE locked_until IS NOT NULL;

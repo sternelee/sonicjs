@@ -5,7 +5,6 @@ import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 export const authUser = sqliteTable('auth_user', {
   id: text('id').primaryKey(),
   email: text('email').notNull().unique(),
-  username: text('username').notNull().unique(),
   firstName: text('first_name').notNull(),
   lastName: text('last_name').notNull(),
   passwordHash: text('password_hash'), // Hashed password, nullable for OAuth users
@@ -244,7 +243,6 @@ export const insertUserSchema = createInsertSchema(authUser, {
   email: (schema: any) => schema.email(),
   firstName: (schema: any) => schema.min(1),
   lastName: (schema: any) => schema.min(1),
-  username: (schema: any) => schema.min(3),
 });
 
 export const selectUserSchema = createSelectSchema(authUser);

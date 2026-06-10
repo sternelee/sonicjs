@@ -140,12 +140,6 @@ export const PLUGIN_REGISTRY: Record<string, PluginRegistryEntry> = {
           "label": "Password",
           "type": "password"
         },
-        "username": {
-          "required": true,
-          "minLength": 3,
-          "label": "Username",
-          "type": "text"
-        },
         "firstName": {
           "required": true,
           "minLength": 1,

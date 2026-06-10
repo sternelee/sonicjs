@@ -262,7 +262,7 @@ export function createOTPLoginPlugin(): Plugin {
 
       // Code is valid - get user
       let user = await db.prepare(`
-        SELECT id, email, username, first_name, last_name, role, is_active, created_at
+        SELECT id, email, first_name, last_name, role, is_active, created_at
         FROM auth_user
         WHERE email = ?
       `).bind(normalizedEmail).first() as any
@@ -271,19 +271,17 @@ export function createOTPLoginPlugin(): Plugin {
         // Auto-create new user on first OTP verification
         const userId = crypto.randomUUID()
         const now = Date.now()
-        const username = normalizedEmail.split('@')[0] + '_' + userId.slice(0, 6)
 
         await db.prepare(`
           INSERT INTO auth_user (
-            id, email, username, first_name, last_name,
+            id, email, first_name, last_name,
             password_hash, role, is_active, email_verified, created_at, updated_at
-          ) VALUES (?, ?, ?, '', '', NULL, 'viewer', 1, 1, ?, ?)
-        `).bind(userId, normalizedEmail, username, now, now).run()
+          ) VALUES (?, ?, '', '', NULL, 'viewer', 1, 1, ?, ?)
+        `).bind(userId, normalizedEmail, now, now).run()
 
         user = {
           id: userId,
           email: normalizedEmail,
-          username,
           first_name: '',
           last_name: '',
           role: 'viewer',

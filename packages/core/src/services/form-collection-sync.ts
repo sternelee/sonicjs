@@ -397,9 +397,9 @@ export async function createContentFromSubmission(
         console.log('[FormSync] System form user missing, creating...')
         const sysNow = Date.now()
         await db.prepare(`
-          INSERT OR IGNORE INTO auth_user (id, email, username, first_name, last_name, password_hash, role, is_active, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, NULL, 'viewer', 0, ?, ?)
-        `).bind(SYSTEM_FORM_USER_ID, 'system-forms@sonicjs.internal', 'system-forms', 'Form', 'Submission', sysNow, sysNow).run()
+          INSERT OR IGNORE INTO auth_user (id, email, first_name, last_name, password_hash, role, is_active, created_at, updated_at)
+          VALUES (?, ?, ?, ?, NULL, 'viewer', 0, ?, ?)
+        `).bind(SYSTEM_FORM_USER_ID, 'system-forms@sonicjs.internal', 'Form', 'Submission', sysNow, sysNow).run()
       }
     }
 

@@ -140,7 +140,6 @@ export function getDefaultAuthOptions(env: Bindings) {
           },
           additionalFields: {
             role: { type: 'string', required: false, defaultValue: 'viewer', input: false },
-            username: { type: 'string', required: false, defaultValue: '', input: true },
             firstName: { type: 'string', required: false, defaultValue: '', input: true },
             lastName: { type: 'string', required: false, defaultValue: '', input: true },
           },
@@ -166,17 +165,15 @@ export function getDefaultAuthOptions(env: Bindings) {
                   }
                 }
                 const d = userData as {
-                  name?: string; email?: string; firstName?: string; lastName?: string; username?: string
+                  name?: string; email?: string; firstName?: string; lastName?: string
                 }
                 const name = (d.name ?? 'User').toString()
                 const parts = name.trim().split(/\s+/)
-                const email = d.email ?? ''
                 // Prefer explicitly-provided fields (registration form); fall back
                 // to values derived from name/email.
                 const firstName = d.firstName || parts[0] || 'User'
                 const lastName = d.lastName || parts.slice(1).join(' ') || firstName
-                const username = d.username || (email ? email.split('@')[0]! : `user${Math.floor(Date.now() / 1000)}`)
-                return { data: { ...userData, name, firstName, lastName, username, role: 'viewer' } }
+                return { data: { ...userData, name, firstName, lastName, role: 'viewer' } }
               },
               after: async (user: { id: string }) => {
                 // Assign dynamic RBAC membership. The first real user receives

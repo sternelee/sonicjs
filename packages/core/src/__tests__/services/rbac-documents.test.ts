@@ -48,9 +48,9 @@ function makeDb() {
 function addUser(db, id, active = 1) {
   const now = Date.now()
   db.raw.prepare(
-    `INSERT INTO auth_user (id, email, email_verified, created_at, updated_at, username, first_name, last_name, role, is_active)
-     VALUES (?, ?, 1, ?, ?, ?, 'f', 'l', 'viewer', ?)`,
-  ).run(id, `${id}@t.co`, now, now, id, active)
+    `INSERT INTO auth_user (id, email, email_verified, created_at, updated_at, first_name, last_name, role, is_active)
+     VALUES (?, ?, 1, ?, ?, 'f', 'l', 'viewer', ?)`,
+  ).run(id, `${id}@t.co`, now, now, active)
 }
 
 describe('RbacService — document-backed', () => {

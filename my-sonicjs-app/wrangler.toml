@@ -13,8 +13,8 @@ workers_dev = true
 # Note: database_name and database_id are automatically updated by GitHub Actions
 [[d1_databases]]
 binding = "DB"
-database_name = "sonicjs-worktree-lane711-audit-settings-tabs"
-database_id = "2e989447-df45-47b6-bbf1-14b8c3d4142d"
+database_name = "sonicjs-worktree-lane711-migrate-auth-to-documents"
+database_id = "4a16b45c-8428-4118-b964-2298933f127b"
 migrations_dir = "./migrations"
 
 # R2 Bucket for media storage (using CI bucket)

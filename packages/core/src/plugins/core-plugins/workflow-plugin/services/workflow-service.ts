@@ -241,7 +241,7 @@ export class WorkflowEngine {
     const { results } = await this.db.prepare(`
       SELECT 
         wh.*,
-        u.username as user_name,
+        u.email as user_name,
         fs.name as from_state_name,
         ts.name as to_state_name
       FROM workflow_history wh
@@ -299,7 +299,7 @@ export class WorkflowEngine {
         ws.name as state_name,
         ws.color as state_color,
         col.name as collection_name,
-        u.username as assigned_to_name
+        u.email as assigned_to_name
       FROM content c
       JOIN content_workflow_status cws ON c.id = cws.content_id
       JOIN workflow_states ws ON cws.current_state_id = ws.id

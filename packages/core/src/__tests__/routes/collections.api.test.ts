@@ -64,7 +64,7 @@ const collectionsAPI = {
       // Get content for this collection
       const content = await db.prepare(`
         SELECT c.id, c.title, c.slug, c.status, c.published_at as publishedAt,
-               u.username as author, c.created_at as createdAt
+               u.email as author, c.created_at as createdAt
         FROM content c
         LEFT JOIN users u ON c.author_id = u.id
         WHERE c.collection_id = ?
