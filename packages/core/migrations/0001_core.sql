@@ -146,78 +146,10 @@ CREATE TABLE IF NOT EXISTS auth_team (
 );
 
 -- ── RBAC ─────────────────────────────────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS auth_rbac_roles (
-  id TEXT PRIMARY KEY,
-  name TEXT NOT NULL UNIQUE,
-  display_name TEXT NOT NULL,
-  description TEXT,
-  is_system INTEGER NOT NULL DEFAULT 0,
-  created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
-  updated_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
-);
-
-CREATE TABLE IF NOT EXISTS auth_rbac_verbs (
-  id TEXT PRIMARY KEY,
-  name TEXT NOT NULL UNIQUE,
-  description TEXT,
-  is_system INTEGER NOT NULL DEFAULT 0,
-  sort_order INTEGER NOT NULL DEFAULT 100
-);
-
-CREATE TABLE IF NOT EXISTS auth_rbac_role_grants (
-  role_id TEXT NOT NULL REFERENCES auth_rbac_roles(id) ON DELETE CASCADE,
-  resource TEXT NOT NULL,
-  verb TEXT NOT NULL,
-  scope TEXT NOT NULL DEFAULT 'any',
-  PRIMARY KEY (role_id, resource, verb)
-);
-
-CREATE TABLE IF NOT EXISTS auth_rbac_user_roles (
-  user_id TEXT NOT NULL REFERENCES auth_user(id) ON DELETE CASCADE,
-  role_id TEXT NOT NULL REFERENCES auth_rbac_roles(id) ON DELETE CASCADE,
-  PRIMARY KEY (user_id, role_id)
-);
-
--- Seed system roles
-INSERT OR IGNORE INTO auth_rbac_roles (id, name, display_name, description, is_system) VALUES
-  ('role-admin',  'admin',  'Administrator', 'Full access to everything',             1),
-  ('role-editor', 'editor', 'Editor',        'Manage documents across all types',     1),
-  ('role-author', 'author', 'Author',        'Create and edit own documents',         1),
-  ('role-viewer', 'viewer', 'Viewer',        'Read-only access',                      1);
-
-INSERT OR IGNORE INTO auth_rbac_verbs (id, name, description, is_system, sort_order) VALUES
-  ('verb-access', 'access', 'Enter or use a portal/resource', 1,  5),
-  ('verb-read',   'read',   'View a resource',                1, 10),
-  ('verb-create', 'create', 'Create a resource',              1, 20),
-  ('verb-update', 'update', 'Edit a resource',                1, 30),
-  ('verb-delete', 'delete', 'Remove a resource',              1, 40),
-  ('verb-manage', 'manage', 'Full control (implies all verbs)',1, 50);
-
-INSERT OR IGNORE INTO auth_rbac_role_grants (role_id, resource, verb) VALUES
-  ('role-admin', '*',              'manage'),
-  ('role-admin', 'portal',         'access'),
-  ('role-admin', 'rbac',           'manage'),
-  ('role-admin', 'document_types', 'manage'),
-  ('role-admin', 'email',          'manage'),
-  ('role-admin', 'users',          'manage');
-
-INSERT OR IGNORE INTO auth_rbac_role_grants (role_id, resource, verb) VALUES
-  ('role-editor', 'documents',          'manage'),
-  ('role-editor', 'document_type:*',    'read'),
-  ('role-editor', 'document_type:*',    'create'),
-  ('role-editor', 'document_type:*',    'update'),
-  ('role-editor', 'document_type:*',    'delete'),
-  ('role-editor', 'settings',           'read');
-
-INSERT OR IGNORE INTO auth_rbac_role_grants (role_id, resource, verb) VALUES
-  ('role-author', 'documents',       'read'),
-  ('role-author', 'documents',       'create'),
-  ('role-author', 'documents',       'update'),
-  ('role-author', 'document_type:*', 'read');
-
-INSERT OR IGNORE INTO auth_rbac_role_grants (role_id, resource, verb) VALUES
-  ('role-viewer', 'documents',       'read'),
-  ('role-viewer', 'document_type:*', 'read');
+-- RBAC roles, verbs, and user-role assignments are document-backed (is_auth doc
+-- types rbac_role / rbac_verb / rbac_user_roles — see services/rbac.ts). The
+-- system roles/verbs/grants are seeded at bootstrap by RbacService.ensureSystemRbacSeed().
+-- No auth_rbac_* tables.
 
 -- ── Auth support tables ───────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS auth_password_history (

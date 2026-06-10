@@ -14,6 +14,7 @@ import type { RegistrationData } from '../services/auth-validation'
 import type { Bindings, Variables } from '../app'
 import { getUserProfileConfig, getRegistrationFields, getProfileFieldDefaults, sanitizeCustomData, saveCustomData, getCustomData } from '../plugins/core-plugins/user-profiles'
 import { dispatchHookEvent } from '../plugins/hooks/dispatch-event'
+import { RbacService } from '../services/rbac'
 
 const JWT_SECRET_FALLBACK = 'your-super-secret-jwt-key-change-in-production'
 
@@ -753,10 +754,9 @@ authRoutes.post('/seed-admin',
         db.prepare(`INSERT OR REPLACE INTO auth_account (id, user_id, account_id, provider_id, password, created_at, updated_at)
           VALUES (?, ?, ?, 'credential', ?, ?, ?)`)
           .bind(`cred-${existingAdmin.id}`, existingAdmin.id, existingAdmin.id, passwordHash, nowSec, nowSec),
-        // Ensure RBAC admin role is assigned
-        db.prepare(`INSERT OR IGNORE INTO auth_rbac_user_roles (user_id, role_id) SELECT ?, id FROM auth_rbac_roles WHERE name = 'admin'`)
-          .bind(existingAdmin.id),
       ])
+      // RBAC roles are document-backed — assign outside the SQL batch.
+      await new RbacService(db).addUserRoleByName(String(existingAdmin.id), 'admin')
       return c.json({
         message: 'Admin user already exists (account updated)',
         user: { id: existingAdmin.id, email: 'admin@sonicjs.com', username: 'admin', role: 'admin' }
@@ -778,10 +778,9 @@ authRoutes.post('/seed-admin',
       db.prepare(`INSERT INTO auth_account (id, user_id, account_id, provider_id, password, created_at, updated_at)
         VALUES (?, ?, ?, 'credential', ?, ?, ?)`)
         .bind(`cred-${userId}`, userId, userId, passwordHash, nowSec, nowSec),
-      // RBAC admin role assignment
-      db.prepare(`INSERT OR IGNORE INTO auth_rbac_user_roles (user_id, role_id) SELECT ?, id FROM auth_rbac_roles WHERE name = 'admin'`)
-        .bind(userId),
     ])
+    // RBAC roles are document-backed — assign outside the SQL batch.
+    await new RbacService(db).addUserRoleByName(userId, 'admin')
 
     return c.json({
       message: 'Admin user created successfully',

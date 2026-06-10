@@ -183,24 +183,15 @@ export function getDefaultAuthOptions(env: Bindings) {
                 // Administrator so fresh installs can enter the portal; later
                 // self-registered users receive Viewer.
                 try {
-                  const result = (await env.DB.prepare(
-                    `SELECT COUNT(*) as count FROM auth_rbac_user_roles ur
-                     JOIN auth_rbac_roles r ON r.id = ur.role_id
-                     WHERE r.name = 'admin' AND ur.user_id != ?`
-                  )
-                    .bind(user.id)
-                    .first()) as { count: number } | null
-                  const roleName = (result?.count ?? 0) === 0 ? 'admin' : 'viewer'
-                  // Keep the legacy column populated for older code paths, but
-                  // portal access is now decided by auth_rbac_user_roles.
-                  await env.DB.prepare('UPDATE auth_user SET role = ? WHERE id = ?').bind(roleName, user.id).run()
-                  await env.DB.prepare(
-                    'INSERT OR IGNORE INTO auth_rbac_user_roles (user_id, role_id) SELECT ?, id FROM auth_rbac_roles WHERE name = ?'
-                  )
-                    .bind(user.id, roleName)
-                    .run()
+                  // RBAC roles/assignments are document-backed (services/rbac.ts).
+                  // First real portal admin → Administrator; later users → Viewer.
+                  // setUserRoles (via addUserRoleByName) also projects auth_user.role.
+                  const { RbacService } = await import('../services/rbac')
+                  const rbac = new RbacService(env.DB)
+                  const roleName = (await rbac.countPortalAdmins(user.id)) === 0 ? 'admin' : 'viewer'
+                  await rbac.addUserRoleByName(user.id, roleName)
                 } catch {
-                  /* rbac tables may not exist on older schemas — non-fatal */
+                  /* rbac docs may not be seeded yet on older schemas — non-fatal */
                 }
               },
             },

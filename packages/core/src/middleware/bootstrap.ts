@@ -134,6 +134,14 @@ export function bootstrapMiddleware(config: SonicJSConfig = {}) {
         console.error("[Bootstrap] Error registering document types:", error);
       }
 
+      // 3a. Seed system RBAC roles/verbs/grants as documents (idempotent).
+      try {
+        const { RbacService } = await import("../services/rbac");
+        await new RbacService(c.env.DB, (c.env as any).CACHE_KV).ensureSystemRbacSeed();
+      } catch (error) {
+        console.error("[Bootstrap] Error seeding RBAC documents:", error);
+      }
+
       // 3b. Make every content collection document-backed (so all new content goes to `documents`).
       try {
         const auto = await autoRegisterCollectionDocumentTypes(c.env.DB);
