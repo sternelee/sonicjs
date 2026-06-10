@@ -8,7 +8,7 @@ import { renderUserEditPage, type UserEditPageData, type UserEditData, type User
 import { renderUserNewPage, type UserNewPageData } from '../templates/pages/admin-user-new.template'
 import { renderUsersListPage, type UsersListPageData, type User } from '../templates/pages/admin-users-list.template'
 import type { Bindings, Variables } from '../app'
-import { getUserProfileConfig, renderCustomProfileSection, getCustomData, saveCustomData, extractCustomFieldsFromForm, sanitizeCustomData, validateCustomData } from '../plugins/core-plugins/user-profiles'
+import { getUserProfileConfig, renderCustomProfileSection, getCustomData, saveCustomData, extractCustomFieldsFromForm, sanitizeCustomData, validateCustomData, readProfileData, writeProfileData } from '../plugins/core-plugins/user-profiles'
 
 const userRoutes = new Hono<{ Bindings: Bindings; Variables: Variables }>()
 
@@ -75,10 +75,10 @@ userRoutes.get('/profile', async (c) => {
   try {
     // Get user profile data
     const userStmt = db.prepare(`
-      SELECT id, email, username, first_name, last_name, phone, bio, avatar_url,
-             timezone, language, theme, email_notifications, two_factor_enabled,
+      SELECT id, email, username, first_name, last_name, phone, bio, avatar,
+             timezone, language, theme, email_notifications, 0 as two_factor_enabled,
              role, created_at, last_login_at
-      FROM users 
+      FROM auth_user 
       WHERE id = ? AND is_active = 1
     `)
     
@@ -97,7 +97,7 @@ userRoutes.get('/profile', async (c) => {
       last_name: userProfile.last_name || '',
       phone: userProfile.phone,
       bio: userProfile.bio,
-      avatar_url: userProfile.avatar_url,
+      avatar_url: userProfile.avatar,
       timezone: userProfile.timezone || 'UTC',
       language: userProfile.language || 'en',
       theme: userProfile.theme || 'dark',
@@ -187,7 +187,7 @@ userRoutes.put('/profile', async (c) => {
 
     // Check if username/email are taken by another user
     const checkStmt = db.prepare(`
-      SELECT id FROM users 
+      SELECT id FROM auth_user 
       WHERE (username = ? OR email = ?) AND id != ? AND is_active = 1
     `)
     const existingUser = await checkStmt.bind(username, email, user!.userId).first()
@@ -202,7 +202,7 @@ userRoutes.put('/profile', async (c) => {
 
     // Update user profile
     const updateStmt = db.prepare(`
-      UPDATE users SET 
+      UPDATE auth_user SET 
         first_name = ?, last_name = ?, username = ?, email = ?,
         phone = ?, bio = ?, timezone = ?, language = ?,
         email_notifications = ?, updated_at = ?
@@ -298,7 +298,7 @@ userRoutes.post('/profile/avatar', async (c) => {
 
     // Update user avatar URL in database
     const updateStmt = db.prepare(`
-      UPDATE users SET avatar_url = ?, updated_at = ?
+      UPDATE auth_user SET avatar = ?, updated_at = ?
       WHERE id = ?
     `)
 
@@ -306,7 +306,7 @@ userRoutes.post('/profile/avatar', async (c) => {
 
     // Get updated user data to render the avatar
     const userStmt = db.prepare(`
-      SELECT first_name, last_name FROM users WHERE id = ?
+      SELECT first_name, last_name FROM auth_user WHERE id = ?
     `)
     const userData = await userStmt.bind(user!.userId).first() as any
 
@@ -388,7 +388,7 @@ userRoutes.post('/profile/password', async (c) => {
 
     // Get current user data
     const userStmt = db.prepare(`
-      SELECT password_hash FROM users WHERE id = ? AND is_active = 1
+      SELECT password_hash FROM auth_user WHERE id = ? AND is_active = 1
     `)
     const userData = await userStmt.bind(user!.userId).first() as any
 
@@ -415,7 +415,7 @@ userRoutes.post('/profile/password', async (c) => {
 
     // Store old password in history
     const historyStmt = db.prepare(`
-      INSERT INTO password_history (id, user_id, password_hash, created_at)
+      INSERT INTO auth_password_history (id, user_id, password_hash, created_at)
       VALUES (?, ?, ?, ?)
     `)
     await historyStmt.bind(
@@ -427,7 +427,7 @@ userRoutes.post('/profile/password', async (c) => {
 
     // Update user password
     const updateStmt = db.prepare(`
-      UPDATE users SET password_hash = ?, updated_at = ?
+      UPDATE auth_user SET password_hash = ?, updated_at = ?
       WHERE id = ?
     `)
     await updateStmt.bind(newPasswordHash, Date.now(), user!.userId).run()
@@ -502,9 +502,9 @@ userRoutes.get('/users', async (c) => {
     // Get users
     const usersStmt = db.prepare(`
       SELECT u.id, u.email, u.username, u.first_name, u.last_name,
-             u.role, u.avatar_url, u.created_at, u.last_login_at, u.updated_at,
-             u.email_verified, u.two_factor_enabled, u.is_active
-      FROM users u
+             u.role, u.avatar, u.created_at, u.last_login_at, u.updated_at,
+             u.email_verified, 0 as two_factor_enabled, u.is_active
+      FROM auth_user u
       ${whereClause}
       ORDER BY u.created_at DESC
       LIMIT ? OFFSET ?
@@ -514,7 +514,7 @@ userRoutes.get('/users', async (c) => {
 
     // Get total count
     const countStmt = db.prepare(`
-      SELECT COUNT(*) as total FROM users u ${whereClause}
+      SELECT COUNT(*) as total FROM auth_user u ${whereClause}
     `)
     const countResult = await countStmt.bind(...params).first() as any
     const totalUsers = countResult?.total || 0
@@ -552,7 +552,7 @@ userRoutes.get('/users', async (c) => {
       firstName: u.first_name || '',
       lastName: u.last_name || '',
       role: u.role,
-      avatar: u.avatar_url,
+      avatar: u.avatar,
       isActive: Boolean(u.is_active),
       lastLoginAt: u.last_login_at,
       createdAt: u.created_at,
@@ -699,7 +699,7 @@ userRoutes.post('/users/new', async (c) => {
 
     // Check if username/email are already taken
     const checkStmt = db.prepare(`
-      SELECT id FROM users
+      SELECT id FROM auth_user
       WHERE username = ? OR email = ?
     `)
     const existingUser = await checkStmt.bind(username, email).first()
@@ -718,7 +718,7 @@ userRoutes.post('/users/new', async (c) => {
     // Create user
     const userId = crypto.randomUUID()
     const createStmt = db.prepare(`
-      INSERT INTO users (
+      INSERT INTO auth_user (
         id, email, username, first_name, last_name, phone, bio,
         password_hash, role, is_active, email_verified, created_at, updated_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -769,9 +769,9 @@ userRoutes.get('/users/:id', async (c) => {
   try {
     // Get user data (including inactive users for admin access)
     const userStmt = db.prepare(`
-      SELECT id, email, username, first_name, last_name, phone, bio, avatar_url,
-             role, is_active, email_verified, two_factor_enabled, created_at, last_login_at
-      FROM users
+      SELECT id, email, username, first_name, last_name, phone, bio, avatar,
+             role, is_active, email_verified, 0 as two_factor_enabled, created_at, last_login_at
+      FROM auth_user
       WHERE id = ?
     `)
 
@@ -798,7 +798,7 @@ userRoutes.get('/users/:id', async (c) => {
         last_name: userRecord.last_name,
         phone: userRecord.phone,
         bio: userRecord.bio,
-        avatar_url: userRecord.avatar_url,
+        avatar_url: userRecord.avatar,
         role: userRecord.role,
         is_active: userRecord.is_active,
         email_verified: userRecord.email_verified,
@@ -825,9 +825,9 @@ userRoutes.get('/users/:id/edit', async (c) => {
   try {
     // Get user data (removed bio - now in profile)
     const userStmt = db.prepare(`
-      SELECT id, email, username, first_name, last_name, phone, avatar_url,
-             role, is_active, email_verified, two_factor_enabled, created_at, last_login_at
-      FROM users
+      SELECT id, email, username, first_name, last_name, phone, avatar,
+             role, is_active, email_verified, 0 as two_factor_enabled, created_at, last_login_at
+      FROM auth_user
       WHERE id = ?
     `)
 
@@ -841,30 +841,26 @@ userRoutes.get('/users/:id/edit', async (c) => {
       }), 404)
     }
 
-    // Get user profile data
-    const profileStmt = db.prepare(`
-      SELECT display_name, bio, company, job_title, website, location, date_of_birth, data
-      FROM user_profiles
-      WHERE user_id = ?
-    `)
-    const profileData = await profileStmt.bind(userId).first() as any
+    // Get user profile data (backed by the user_profile document)
+    const profileData = await readProfileData(db, userId)
+    const hasProfile = profileData.displayName != null || profileData.bio != null ||
+      profileData.company != null || profileData.jobTitle != null || profileData.website != null ||
+      profileData.location != null || profileData.dateOfBirth != null ||
+      Object.keys(profileData.custom).length > 0
 
     // Convert profile to UserProfileData interface
-    const profile: UserProfileData | undefined = profileData ? {
-      displayName: profileData.display_name,
-      bio: profileData.bio,
-      company: profileData.company,
-      jobTitle: profileData.job_title,
-      website: profileData.website,
-      location: profileData.location,
-      dateOfBirth: profileData.date_of_birth
+    const profile: UserProfileData | undefined = hasProfile ? {
+      displayName: profileData.displayName ?? undefined,
+      bio: profileData.bio ?? undefined,
+      company: profileData.company ?? undefined,
+      jobTitle: profileData.jobTitle ?? undefined,
+      website: profileData.website ?? undefined,
+      location: profileData.location ?? undefined,
+      dateOfBirth: profileData.dateOfBirth ?? undefined
     } : undefined
 
-    // Parse custom profile data
-    let customData: Record<string, any> = {}
-    if (profileData?.data) {
-      try { customData = JSON.parse(profileData.data) } catch {}
-    }
+    // Custom profile data lives under data.custom
+    const customData: Record<string, any> = profileData.custom
     const profileConfig = getUserProfileConfig()
     const customProfileFieldsHtml = renderCustomProfileSection(profileConfig, customData)
 
@@ -876,7 +872,7 @@ userRoutes.get('/users/:id/edit', async (c) => {
       firstName: userToEdit.first_name || '',
       lastName: userToEdit.last_name || '',
       phone: userToEdit.phone,
-      avatarUrl: userToEdit.avatar_url,
+      avatarUrl: userToEdit.avatar,
       role: userToEdit.role,
       isActive: Boolean(userToEdit.is_active),
       emailVerified: Boolean(userToEdit.email_verified),
@@ -946,9 +942,9 @@ userRoutes.put('/users/:id', async (c) => {
     const profileDateOfBirthStr = formData.get('profile_date_of_birth')?.toString()?.trim() || null
     const profileDateOfBirth = profileDateOfBirthStr ? new Date(profileDateOfBirthStr).getTime() : null
 
-    // Extract custom profile fields
+    // Extract custom profile fields (merged into the profile document below)
     const profileConfig = getUserProfileConfig()
-    let customDataJson: string | null = null
+    let sanitizedCustom: Record<string, any> | null = null
     if (profileConfig) {
       const rawCustom = extractCustomFieldsFromForm(formData, profileConfig)
       const sanitized = sanitizeCustomData(rawCustom, profileConfig)
@@ -957,10 +953,7 @@ userRoutes.put('/users/:id', async (c) => {
         const errorMessages = Object.values(validation.errors).join(', ')
         return c.html(renderAlert({ type: 'error', message: errorMessages, dismissible: true }), 400)
       }
-      // Merge with existing custom data
-      const existingCustom = await getCustomData(db, userId)
-      const merged = { ...existingCustom, ...sanitized }
-      customDataJson = JSON.stringify(merged)
+      sanitizedCustom = sanitized
     }
 
     // Validate required fields
@@ -1015,7 +1008,7 @@ userRoutes.put('/users/:id', async (c) => {
 
     // Check if username/email are taken by another user
     const checkStmt = db.prepare(`
-      SELECT id FROM users
+      SELECT id FROM auth_user
       WHERE (username = ? OR email = ?) AND id != ?
     `)
     const existingUser = await checkStmt.bind(username, email, userId).first()
@@ -1030,7 +1023,7 @@ userRoutes.put('/users/:id', async (c) => {
 
     // Update user (removed bio - now in profile)
     const updateStmt = db.prepare(`
-      UPDATE users SET
+      UPDATE auth_user SET
         first_name = ?, last_name = ?, username = ?, email = ?,
         phone = ?, role = ?, is_active = ?, email_verified = ?,
         updated_at = ?
@@ -1047,7 +1040,7 @@ userRoutes.put('/users/:id', async (c) => {
     if (newPassword) {
       const passwordHash = await AuthManager.hashPassword(newPassword)
       const updatePasswordStmt = db.prepare(`
-        UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?
+        UPDATE auth_user SET password_hash = ?, updated_at = ? WHERE id = ?
       `)
       await updatePasswordStmt.bind(passwordHash, Date.now(), userId).run()
     }
@@ -1056,41 +1049,18 @@ userRoutes.put('/users/:id', async (c) => {
     const hasProfileData = profileDisplayName || profileBio || profileCompany ||
       profileJobTitle || profileWebsite || profileLocation || profileDateOfBirth
 
-    if (hasProfileData || customDataJson !== null) {
-      const now = Date.now()
-
-      // Check if profile exists
-      const profileCheckStmt = db.prepare(`SELECT id FROM user_profiles WHERE user_id = ?`)
-      const existingProfile = await profileCheckStmt.bind(userId).first() as any
-
-      if (existingProfile) {
-        // Update existing profile
-        const updateProfileStmt = db.prepare(`
-          UPDATE user_profiles SET
-            display_name = ?, bio = ?, company = ?, job_title = ?,
-            website = ?, location = ?, date_of_birth = ?, updated_at = ?
-            ${customDataJson !== null ? ', data = ?' : ''}
-          WHERE user_id = ?
-        `)
-        const updateBindings = [
-          profileDisplayName, profileBio, profileCompany, profileJobTitle,
-          profileWebsite, profileLocation, profileDateOfBirth, now,
-          ...(customDataJson !== null ? [customDataJson] : []),
-          userId
-        ]
-        await updateProfileStmt.bind(...updateBindings).run()
-      } else {
-        // Create new profile
-        const profileId = `profile_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
-        const insertProfileStmt = db.prepare(`
-          INSERT INTO user_profiles (id, user_id, display_name, bio, company, job_title, website, location, date_of_birth, data, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `)
-        await insertProfileStmt.bind(
-          profileId, userId, profileDisplayName, profileBio, profileCompany, profileJobTitle,
-          profileWebsite, profileLocation, profileDateOfBirth, customDataJson || '{}', now, now
-        ).run()
-      }
+    if (hasProfileData || sanitizedCustom !== null) {
+      // Persist to the user_profile document (typed fields + custom namespace).
+      await writeProfileData(db, userId, {
+        displayName: profileDisplayName,
+        bio: profileBio,
+        company: profileCompany,
+        jobTitle: profileJobTitle,
+        website: profileWebsite,
+        location: profileLocation,
+        dateOfBirth: profileDateOfBirth,
+        ...(sanitizedCustom !== null ? { custom: sanitizedCustom } : {}),
+      }, user!.userId)
     }
 
     // Log the activity
@@ -1136,7 +1106,7 @@ userRoutes.post('/users/:id/toggle', async (c) => {
 
     // Check if user exists
     const userStmt = db.prepare(`
-      SELECT id, email FROM users WHERE id = ?
+      SELECT id, email FROM auth_user WHERE id = ?
     `)
     const userToToggle = await userStmt.bind(userId).first() as any
 
@@ -1146,7 +1116,7 @@ userRoutes.post('/users/:id/toggle', async (c) => {
 
     // Toggle user status
     const toggleStmt = db.prepare(`
-      UPDATE users SET is_active = ?, updated_at = ? WHERE id = ?
+      UPDATE auth_user SET is_active = ?, updated_at = ? WHERE id = ?
     `)
     await toggleStmt.bind(active ? 1 : 0, Date.now(), userId).run()
 
@@ -1189,7 +1159,7 @@ userRoutes.delete('/users/:id', async (c) => {
 
     // Check if user exists
     const userStmt = db.prepare(`
-      SELECT id, email FROM users WHERE id = ?
+      SELECT id, email FROM auth_user WHERE id = ?
     `)
     const userToDelete = await userStmt.bind(userId).first() as any
 
@@ -1200,7 +1170,7 @@ userRoutes.delete('/users/:id', async (c) => {
     if (hardDelete) {
       // Hard delete - permanently remove from database
       const deleteStmt = db.prepare(`
-        DELETE FROM users WHERE id = ?
+        DELETE FROM auth_user WHERE id = ?
       `)
       await deleteStmt.bind(userId).run()
 
@@ -1219,7 +1189,7 @@ userRoutes.delete('/users/:id', async (c) => {
     } else {
       // Soft delete - deactivate by setting is_active = 0
       const deleteStmt = db.prepare(`
-        UPDATE users SET is_active = 0, updated_at = ? WHERE id = ?
+        UPDATE auth_user SET is_active = 0, updated_at = ? WHERE id = ?
       `)
       await deleteStmt.bind(Date.now(), userId).run()
 
@@ -1272,7 +1242,7 @@ userRoutes.post('/invite-user', async (c) => {
 
     // Check if user already exists
     const existingUserStmt = db.prepare(`
-      SELECT id FROM users WHERE email = ?
+      SELECT id FROM auth_user WHERE email = ?
     `)
     const existingUser = await existingUserStmt.bind(email).first()
 
@@ -1287,7 +1257,7 @@ userRoutes.post('/invite-user', async (c) => {
     // Create user record with invitation
     const userId = crypto.randomUUID()
     const createUserStmt = db.prepare(`
-      INSERT INTO users (
+      INSERT INTO auth_user (
         id, email, first_name, last_name, role, 
         invitation_token, invited_by, invited_at,
         is_active, email_verified, created_at, updated_at
@@ -1343,7 +1313,7 @@ userRoutes.post('/resend-invitation/:id', async (c) => {
     // Check if user exists and is invited but not active
     const userStmt = db.prepare(`
       SELECT id, email, first_name, last_name, role, invitation_token
-      FROM users 
+      FROM auth_user 
       WHERE id = ? AND is_active = 0 AND invitation_token IS NOT NULL
     `)
     const invitedUser = await userStmt.bind(userId).first() as any
@@ -1357,7 +1327,7 @@ userRoutes.post('/resend-invitation/:id', async (c) => {
 
     // Update invitation token and date
     const updateStmt = db.prepare(`
-      UPDATE users SET 
+      UPDATE auth_user SET 
         invitation_token = ?, 
         invited_at = ?, 
         updated_at = ?
@@ -1405,7 +1375,7 @@ userRoutes.delete('/cancel-invitation/:id', async (c) => {
   try {
     // Check if user exists and is invited but not active
     const userStmt = db.prepare(`
-      SELECT id, email FROM users 
+      SELECT id, email FROM auth_user 
       WHERE id = ? AND is_active = 0 AND invitation_token IS NOT NULL
     `)
     const invitedUser = await userStmt.bind(userId).first() as any
@@ -1415,7 +1385,7 @@ userRoutes.delete('/cancel-invitation/:id', async (c) => {
     }
 
     // Delete the user record (since they haven't activated yet)
-    const deleteStmt = db.prepare(`DELETE FROM users WHERE id = ?`)
+    const deleteStmt = db.prepare(`DELETE FROM auth_user WHERE id = ?`)
     await deleteStmt.bind(userId).run()
 
     // Log the activity
@@ -1499,7 +1469,7 @@ userRoutes.get('/activity-logs', async (c) => {
         u.email as user_email,
         COALESCE(u.first_name || ' ' || u.last_name, u.username, u.email) as user_name
       FROM activity_logs al
-      LEFT JOIN users u ON al.user_id = u.id
+      LEFT JOIN auth_user u ON al.user_id = u.id
       ${whereClause}
       ORDER BY al.created_at DESC
       LIMIT ? OFFSET ?
@@ -1511,7 +1481,7 @@ userRoutes.get('/activity-logs', async (c) => {
     const countStmt = db.prepare(`
       SELECT COUNT(*) as total 
       FROM activity_logs al
-      LEFT JOIN users u ON al.user_id = u.id
+      LEFT JOIN auth_user u ON al.user_id = u.id
       ${whereClause}
     `)
     const countResult = await countStmt.bind(...params).first() as any
@@ -1625,7 +1595,7 @@ userRoutes.get('/activity-logs/export', async (c) => {
         u.email as user_email,
         COALESCE(u.first_name || ' ' || u.last_name, u.username, u.email) as user_name
       FROM activity_logs al
-      LEFT JOIN users u ON al.user_id = u.id
+      LEFT JOIN auth_user u ON al.user_id = u.id
       ${whereClause}
       ORDER BY al.created_at DESC
       LIMIT 10000

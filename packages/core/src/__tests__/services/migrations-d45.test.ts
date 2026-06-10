@@ -1,9 +1,8 @@
 // @ts-nocheck
-// D45 regression: the document repository migration was renumbered (037 -> 043). A DB that applied the
-// old 037 keeps a `documents` table, so `CREATE TABLE IF NOT EXISTS documents` is a no-op and the q_*
-// VIRTUAL generated columns are never added — and every q_* query then 500s. MigrationService must
-// self-heal at bootstrap by adding the missing columns. Real SQLite (better-sqlite3) with a documents
-// table that predates the generated columns.
+// D45 regression: a DB that kept an older `documents` table (so `CREATE TABLE IF NOT EXISTS documents`
+// is a no-op) is missing the q_* VIRTUAL generated columns, and every q_* query then 500s.
+// MigrationService self-heals at bootstrap by reconciling the columns from each active document type's
+// queryableFields (data-driven — no hardcoded column list). Real SQLite (better-sqlite3).
 import { describe, it, expect } from 'vitest'
 import Database from 'better-sqlite3'
 import { MigrationService } from '../../services/migrations'
@@ -20,23 +19,41 @@ function adapter(sqlite: any) {
   return { prepare: (sql: string) => mk(sql) }
 }
 
-describe('MigrationService D45 — documents generated columns self-heal', () => {
-  it('adds the missing q_* generated columns to a pre-existing documents table', async () => {
+// Seed a documents table that predates the generated columns + a document_types row that declares them.
+function seed(sqlite: any, typeId: string, queryableFields: any[], data: string) {
+  sqlite.exec(`CREATE TABLE documents (
+    id TEXT PRIMARY KEY, root_id TEXT, type_id TEXT, tenant_id TEXT DEFAULT 'default',
+    data TEXT NOT NULL DEFAULT '{}', created_at INTEGER, updated_at INTEGER)`)
+  sqlite.exec(`CREATE TABLE document_types (
+    id TEXT PRIMARY KEY, queryable_fields TEXT NOT NULL DEFAULT '[]', is_active INTEGER NOT NULL DEFAULT 1)`)
+  sqlite.prepare('INSERT INTO document_types (id, queryable_fields) VALUES (?, ?)')
+    .run(typeId, JSON.stringify(queryableFields))
+  sqlite.prepare('INSERT INTO documents (id, root_id, type_id, data) VALUES (?,?,?,?)')
+    .run('1', '1', typeId, data)
+}
+
+describe('MigrationService D45 — documents generated columns self-heal (data-driven)', () => {
+  it('adds the q_* generated columns + indexes declared by an active document type', async () => {
     const sqlite = new Database(':memory:')
-    // A documents table from before the generated-column set was finalized (base columns + data only).
-    sqlite.exec("CREATE TABLE documents (id TEXT PRIMARY KEY, root_id TEXT, type_id TEXT, data TEXT NOT NULL DEFAULT '{}', created_at INTEGER, updated_at INTEGER)")
-    sqlite.prepare("INSERT INTO documents (id, root_id, type_id, data) VALUES ('1','1','testimonials', '{\"rating\":5,\"sortOrder\":2}')").run()
+    seed(sqlite, 'testimonial', [
+      { name: 'rating', kind: 'scalar', type: 'integer', column: 'q_tst_rating' },
+      { name: 'sortOrder', kind: 'scalar', type: 'integer', column: 'q_tst_sort_order' },
+    ], '{"rating":5,"sortOrder":2}')
 
     const colsBefore = sqlite.prepare("SELECT name FROM pragma_table_xinfo('documents')").all().map((r: any) => r.name)
     expect(colsBefore.some((n: string) => n.startsWith('q_'))).toBe(false)
 
-    // Bootstrap-time status check triggers autoDetectAppliedMigrations → ensureDocumentGeneratedColumns.
+    // Bootstrap-time status check → ensureSchemaCompatibility → ensureDocumentGeneratedColumns.
     await new MigrationService(adapter(sqlite) as any).getMigrationStatus()
 
     const colsAfter = sqlite.prepare("SELECT name FROM pragma_table_xinfo('documents')").all().map((r: any) => r.name)
-    for (const c of ['q_tst_rating', 'q_tst_sort_order', 'q_tst_company', 'q_blog_author', 'q_blog_difficulty', 'q_media_mime', 'q_faq_category', 'q_msg_email']) {
-      expect(colsAfter).toContain(c)
-    }
+    expect(colsAfter).toContain('q_tst_rating')
+    expect(colsAfter).toContain('q_tst_sort_order')
+
+    // A filter index was created for each scalar column.
+    const idx = sqlite.prepare("SELECT name FROM sqlite_master WHERE type='index'").all().map((r: any) => r.name)
+    expect(idx).toContain('idx_q_tst_rating')
+
     // Generated values are computed from the existing data JSON (no backfill needed).
     const row = sqlite.prepare("SELECT q_tst_rating r, q_tst_sort_order s FROM documents WHERE id='1'").get() as any
     expect(row.r).toBe(5)
@@ -44,15 +61,23 @@ describe('MigrationService D45 — documents generated columns self-heal', () =>
     sqlite.close()
   })
 
-  it('is a no-op when the documents table already has every generated column', async () => {
+  it('is a no-op when the columns already exist (idempotent, no throw)', async () => {
     const sqlite = new Database(':memory:')
-    sqlite.exec(`CREATE TABLE documents (id TEXT PRIMARY KEY, data TEXT NOT NULL DEFAULT '{}',
-      q_tst_rating INTEGER AS (json_extract(data,'$.rating')) VIRTUAL)`)
-    // Should not throw on the existing q_tst_rating column (duplicate-column errors are swallowed).
+    seed(sqlite, 'testimonial', [
+      { name: 'rating', kind: 'scalar', type: 'integer', column: 'q_tst_rating' },
+    ], '{"rating":5}')
+    // First pass creates the column; second must not throw on the duplicate.
+    await new MigrationService(adapter(sqlite) as any).getMigrationStatus()
     await new MigrationService(adapter(sqlite) as any).getMigrationStatus()
     const cols = sqlite.prepare("SELECT name FROM pragma_table_xinfo('documents')").all().map((r: any) => r.name)
     expect(cols).toContain('q_tst_rating')
-    expect(cols).toContain('q_blog_author') // the rest were still added
+    sqlite.close()
+  })
+
+  it('does not throw when document_types is absent', async () => {
+    const sqlite = new Database(':memory:')
+    sqlite.exec("CREATE TABLE documents (id TEXT PRIMARY KEY, data TEXT NOT NULL DEFAULT '{}')")
+    await expect(new MigrationService(adapter(sqlite) as any).getMigrationStatus()).resolves.toBeTruthy()
     sqlite.close()
   })
 })

@@ -127,7 +127,7 @@ export function createWorkflowAdminRoutes() {
       SELECT c.*, col.name as collection_name, u.username as author_name
       FROM content c
       JOIN collections col ON c.collection_id = col.id
-      JOIN users u ON c.author_id = u.id
+      JOIN auth_user u ON c.author_id = u.id
       WHERE c.id = ?
     `).bind(contentId).first()
 

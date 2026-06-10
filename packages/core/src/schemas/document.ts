@@ -20,6 +20,8 @@ export interface DocumentTypeSettings {
   baseGrants?: Record<string, Permission[]>
   maxVersionsPerRoot?: number
   pii?: boolean
+  /** Hide this type from the admin content list and all-view (e.g. internal system types like 'plugin'). */
+  internal?: boolean
 }
 
 export interface PluginDocumentType {
@@ -30,6 +32,8 @@ export interface PluginDocumentType {
   schema: z.ZodSchema
   settings?: DocumentTypeSettings
   queryableFields?: QueryableField[]
+  /** Auth-owned type (users/profiles/rbac). Excluded from content surfaces and public APIs. */
+  isAuth?: boolean
 }
 
 // DB row types (raw from D1)
@@ -46,6 +50,7 @@ export interface DocumentTypeRow {
   schema_version: number
   is_system: number
   is_active: number
+  is_auth: number
   created_at: number
   updated_at: number
 }
@@ -135,6 +140,7 @@ export interface DocumentType {
   schemaVersion: number
   isSystem: boolean
   isActive: boolean
+  isAuth: boolean
   createdAt: number
   updatedAt: number
 }

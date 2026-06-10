@@ -5,6 +5,7 @@ import type {
   DocumentType,
   DocumentTypeRow,
 } from '../schemas/document'
+import { ensureScalarSchema } from './document-scalar-schema'
 
 function rowToDocumentType(row: DocumentTypeRow): DocumentType {
   return {
@@ -20,6 +21,7 @@ function rowToDocumentType(row: DocumentTypeRow): DocumentType {
     schemaVersion: row.schema_version,
     isSystem: row.is_system === 1,
     isActive: row.is_active === 1,
+    isAuth: row.is_auth === 1,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }
@@ -57,6 +59,7 @@ export class DocumentTypeRegistry {
              plugin_id = ?,
              schema_version = ?,
              is_active = 1,
+             is_auth = ?,
              updated_at = ?
            WHERE id = ?`,
         )
@@ -68,10 +71,14 @@ export class DocumentTypeRegistry {
           settingsJson,
           def.pluginId ?? null,
           newVersion,
+          def.isAuth ? 1 : 0,
           now,
           def.id,
         )
         .run()
+
+      // Auto-DDL: ensure VIRTUAL generated columns + indexes for scalar fields.
+      await ensureScalarSchema(this.db, def.id, def.queryableFields ?? [])
 
       const updated = await this.findById(def.id)
       this.cache.set(def.id, updated!)
@@ -80,8 +87,8 @@ export class DocumentTypeRegistry {
 
     await this.db
       .prepare(
-        `INSERT INTO document_types (id, name, display_name, description, schema, queryable_fields, settings, plugin_id, source, schema_version, is_system, is_active, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0, 1, ?, ?)`,
+        `INSERT INTO document_types (id, name, display_name, description, schema, queryable_fields, settings, plugin_id, source, schema_version, is_system, is_active, is_auth, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0, 1, ?, ?, ?)`,
       )
       .bind(
         def.id,
@@ -93,10 +100,14 @@ export class DocumentTypeRegistry {
         settingsJson,
         def.pluginId ?? null,
         def.source ?? 'code',
+        def.isAuth ? 1 : 0,
         now,
         now,
       )
       .run()
+
+    // Auto-DDL: ensure VIRTUAL generated columns + indexes for scalar fields.
+    await ensureScalarSchema(this.db, def.id, def.queryableFields ?? [])
 
     const created = await this.findById(def.id)
     this.cache.set(def.id, created!)

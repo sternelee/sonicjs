@@ -1,6 +1,6 @@
 {
   "name": "@sonicjs-cms/core",
-  "version": "3.0.0-beta.0",
+  "version": "3.0.0-beta.2",
   "description": "Core framework for SonicJS headless CMS - Edge-first, TypeScript-native CMS built for Cloudflare Workers",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -104,6 +104,8 @@
   },
   "dependencies": {
     "@cf-wasm/resvg": "^0.3.3",
+    "better-auth": "^1.6.13",
+    "better-auth-cloudflare": "^0.3.0",
     "csv-parse": "^6.2.1",
     "drizzle-zod": "^0.8.3",
     "highlight.js": "^11.11.1",

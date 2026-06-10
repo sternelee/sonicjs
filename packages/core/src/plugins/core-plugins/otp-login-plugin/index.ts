@@ -112,7 +112,7 @@ export function createOTPLoginPlugin(): Plugin {
       // Check if user exists
       const user = await db.prepare(`
         SELECT id, email, role, is_active
-        FROM users
+        FROM auth_user
         WHERE email = ?
       `).bind(normalizedEmail).first() as any
 
@@ -263,7 +263,7 @@ export function createOTPLoginPlugin(): Plugin {
       // Code is valid - get user
       let user = await db.prepare(`
         SELECT id, email, username, first_name, last_name, role, is_active, created_at
-        FROM users
+        FROM auth_user
         WHERE email = ?
       `).bind(normalizedEmail).first() as any
 
@@ -274,7 +274,7 @@ export function createOTPLoginPlugin(): Plugin {
         const username = normalizedEmail.split('@')[0] + '_' + userId.slice(0, 6)
 
         await db.prepare(`
-          INSERT INTO users (
+          INSERT INTO auth_user (
             id, email, username, first_name, last_name,
             password_hash, role, is_active, email_verified, created_at, updated_at
           ) VALUES (?, ?, ?, '', '', NULL, 'viewer', 1, 1, ?, ?)

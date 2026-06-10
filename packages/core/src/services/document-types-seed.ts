@@ -32,6 +32,46 @@ export async function bootstrapDocumentTypes(db: D1Database): Promise<void> {
     ],
   })
 
+  // Plugin registry (document-backed plugin management)
+  await registry.register({
+    id: 'plugin',
+    name: 'plugin',
+    displayName: 'Plugin',
+    description: 'System plugin record (managed by the plugin bootstrap service)',
+    source: 'system',
+    schema: anyObject,
+    settings: {
+      baseGrants: { admin: ['read', 'create', 'update', 'delete', 'publish', 'manage'] },
+      maxVersionsPerRoot: 1,
+      internal: true,
+    },
+    queryableFields: [
+      { name: 'status',   kind: 'scalar', type: 'text',    column: 'q_plugin_status' },
+      { name: 'category', kind: 'scalar', type: 'text',    column: 'q_plugin_category' },
+      { name: 'isCore',   kind: 'scalar', type: 'integer', column: 'q_plugin_is_core' },
+    ],
+  })
+
+  // User profile (auth-owned). One document per user, addressed by slug = userId.
+  // Replaces the auth_user_profiles table. Typed fields + custom fields live in `data`.
+  await registry.register({
+    id: 'user_profile',
+    name: 'user_profile',
+    displayName: 'User Profile',
+    description: 'Per-user profile record (auth-owned; one document per user, slug = userId)',
+    source: 'system',
+    isAuth: true,
+    schema: anyObject,
+    settings: {
+      // Hidden from the content admin surfaces; a single mutable record (no version history).
+      internal: true,
+      maxVersionsPerRoot: 1,
+      pii: true,
+      baseGrants: { admin: ['read', 'create', 'update', 'delete', 'manage'] },
+    },
+    queryableFields: [],
+  })
+
 }
 
 /**

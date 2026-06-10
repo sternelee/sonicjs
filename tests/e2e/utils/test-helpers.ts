@@ -340,73 +340,29 @@ export async function ensureTestCollectionExists(page: Page) {
  * Login as admin user
  */
 export async function loginAsAdmin(page: Page) {
-  // Ensure admin user exists first
+  // Ensure admin exists (also creates auth_account for Better Auth)
   await ensureAdminUserExists(page);
-  
-  await page.goto('/auth/login');
-  await page.fill('[name="email"]', ADMIN_CREDENTIALS.email);
-  await page.fill('[name="password"]', ADMIN_CREDENTIALS.password);
-  await page.click('button[type="submit"]');
-  
-  // Wait for HTMX response and success message with longer timeout for CI
-  // CI environments can be slow, especially with Workers cold starts
-  try {
-    await expect(page.locator('#form-response .bg-green-100')).toBeVisible({ timeout: 10000 });
-  } catch (error) {
-    // If success message doesn't appear, check if we're already redirected to admin
-    const currentUrl = page.url();
-    if (currentUrl.includes('/admin')) {
-      console.log('Login succeeded (already on admin page despite missing success message)');
-    } else {
-      // Try one more time - sometimes Workers need a moment
-      console.log('Retrying login form submission...');
-      await page.click('button[type="submit"]');
-      await expect(page.locator('#form-response .bg-green-100')).toBeVisible({ timeout: 10000 });
-    }
+
+  // Use Better Auth's sign-in/email API — sets session cookie in the page context
+  const res = await page.request.post('/auth/sign-in/email', {
+    data: { email: ADMIN_CREDENTIALS.email, password: ADMIN_CREDENTIALS.password },
+    headers: { 'Content-Type': 'application/json' },
+  });
+
+  if (!res.ok()) {
+    throw new Error(`BA sign-in failed: ${res.status()} ${await res.text()}`);
   }
 
-  // Wait for JavaScript redirect to admin dashboard (up to 20 seconds for CI)
-  // The app redirects /admin to /admin/dashboard, so we accept any /admin/* URL
-  try {
-    await page.waitForURL(/\/admin/, { timeout: 20000 });
-    await page.waitForLoadState('networkidle', { timeout: 15000 });
-  } catch (error) {
-    // If redirect doesn't happen automatically, try navigating manually
-    console.log('Auto-redirect failed, navigating manually to /admin');
-    await page.goto('/admin');
-    await page.waitForLoadState('networkidle', { timeout: 15000 });
-  }
-
-  // Simply verify we're on an admin page - accept /admin or /admin/*
-  // The app redirects /admin -> /admin/dashboard
+  // Navigate to admin (session cookie is now in context)
+  await page.goto('/admin');
+  await page.waitForLoadState('networkidle', { timeout: 20000 });
   await expect(page).toHaveURL(/\/admin/);
 
-  // Ensure workflow tables exist for workflow tests (after login)
   await ensureWorkflowTablesExist(page);
-
-  // Ensure workflow plugin is active for workflow-related tests
   await ensureWorkflowPluginActive(page);
 
-  // Navigate back to admin dashboard after plugin setup
   await page.goto('/admin');
   await page.waitForLoadState('networkidle', { timeout: 15000 });
-
-  // Auto-attach CSRF token to all state-changing page.request calls
-  const csrfToken = await getCsrfTokenFromPage(page);
-  if (csrfToken) {
-    const addCsrf = (opts?: any) => ({
-      ...opts,
-      headers: { ...(opts?.headers || {}), 'X-CSRF-Token': csrfToken }
-    });
-    const origPost = page.request.post.bind(page.request);
-    const origPut = page.request.put.bind(page.request);
-    const origDelete = page.request.delete.bind(page.request);
-    const origPatch = page.request.patch.bind(page.request);
-    (page.request as any).post = (url: string, opts?: any) => origPost(url, addCsrf(opts));
-    (page.request as any).put = (url: string, opts?: any) => origPut(url, addCsrf(opts));
-    (page.request as any).delete = (url: string, opts?: any) => origDelete(url, addCsrf(opts));
-    (page.request as any).patch = (url: string, opts?: any) => origPatch(url, addCsrf(opts));
-  }
 }
 
 /**
@@ -542,7 +498,8 @@ export async function waitForHTMX(page: Page) {
 export async function isAuthenticated(page: Page): Promise<boolean> {
   try {
     const cookies = await page.context().cookies();
-    const authCookie = cookies.find(c => c.name === 'auth_token');
+    // Better Auth uses 'better-auth.session_token' cookie
+    const authCookie = cookies.find(c => c.name === 'better-auth.session_token' || c.name === 'auth_token');
     return !!authCookie;
   } catch {
     return false;
@@ -553,7 +510,9 @@ export async function isAuthenticated(page: Page): Promise<boolean> {
  * Logout current user
  */
 export async function logout(page: Page) {
-  await page.goto('/auth/logout');
+  // Better Auth sign-out via API — must send JSON body {}
+  await page.request.post('/auth/sign-out', { data: {}, headers: { 'Content-Type': 'application/json' } });
+  await page.goto('/auth/login');
   await page.waitForURL(/\/auth\/login/);
   // Wait a moment for cookies to be cleared
   await page.waitForTimeout(500);

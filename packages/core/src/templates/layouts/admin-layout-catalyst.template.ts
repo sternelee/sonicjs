@@ -512,6 +512,29 @@ export function renderAdminLayoutCatalyst(
 
     // Check for pending migrations when the page loads
     document.addEventListener('DOMContentLoaded', checkPendingMigrations);
+
+    // Plugins accordion toggle
+    function togglePluginsMenu(btn) {
+      var accordion = btn.closest('[data-plugins-accordion]');
+      var submenu = accordion.querySelector('[data-plugins-submenu]');
+      var chevron = btn.querySelector('[data-plugins-chevron]');
+      submenu.classList.toggle('hidden');
+      if (chevron) chevron.classList.toggle('rotate-180');
+    }
+
+    // Auto-expand plugins submenu if a sub-item is currently active
+    document.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('[data-plugins-submenu]').forEach(function(submenu) {
+        if (submenu.querySelector('[data-current="true"]')) {
+          submenu.classList.remove('hidden');
+          var accordion = submenu.closest('[data-plugins-accordion]');
+          if (accordion) {
+            var chevron = accordion.querySelector('[data-plugins-chevron]');
+            if (chevron) chevron.classList.add('rotate-180');
+          }
+        }
+      });
+    });
   </script>
 </body>
 </html>`;
@@ -541,24 +564,10 @@ function renderCatalystSidebar(
       </svg>`,
     },
     {
-      label: "Forms",
-      path: "/admin/forms",
-      icon: `<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-      </svg>`,
-    },
-    {
       label: "Content",
       path: "/admin/content",
       icon: `<svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
         <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"/>
-      </svg>`,
-    },
-    {
-      label: "Media",
-      path: "/admin/media",
-      icon: `<svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-        <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/>
       </svg>`,
     },
     {
@@ -568,21 +577,11 @@ function renderCatalystSidebar(
         <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
       </svg>`,
     },
-    {
-      label: "Plugins",
-      path: "/admin/plugins",
-      icon: `<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
-      </svg>`,
-    },
-    {
-      label: "Cache",
-      path: "/admin/cache",
-      icon: `<svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-        <path fill-rule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm14 1a1 1 0 11-2 0 1 1 0 012 0zM2 13a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2v-2zm14 1a1 1 0 11-2 0 1 1 0 012 0z" clip-rule="evenodd"/>
-      </svg>`,
-    },
   ];
+
+  const pluginsIcon = `<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+  </svg>`;
 
   const settingsMenuItem = {
     label: "Settings",
@@ -592,22 +591,40 @@ function renderCatalystSidebar(
     </svg>`,
   };
 
-  // Combine base menu items with dynamic menu items
   const allMenuItems = [...baseMenuItems];
-  if (dynamicMenuItems && dynamicMenuItems.length > 0) {
-    // Insert dynamic menu items after Users menu item
-    const usersIndex = allMenuItems.findIndex(
-      (item) => item.path === "/admin/users"
-    );
-    if (usersIndex !== -1) {
-      allMenuItems.splice(usersIndex + 1, 0, ...dynamicMenuItems);
-    } else {
-      // Fallback: add to end if Users not found
-      allMenuItems.push(...dynamicMenuItems);
-    }
-  }
-  // Marker for middleware-injected plugin menu items (used when dynamicMenuItems is not passed explicitly)
-  const pluginMenuMarker = (!dynamicMenuItems || dynamicMenuItems.length === 0) ? '<!-- DYNAMIC_PLUGIN_MENU -->' : '';
+
+  const isPluginsActive =
+    currentPath === "/admin/plugins" ||
+    (currentPath?.startsWith("/admin/plugins") ?? false);
+
+  const pluginsSubItems =
+    dynamicMenuItems && dynamicMenuItems.length > 0
+      ? dynamicMenuItems
+          .map((item) => {
+            const isActive =
+              currentPath === item.path ||
+              (item.path !== "/admin" && currentPath?.startsWith(item.path));
+            return `
+              <span class="relative">
+                ${isActive ? '<span class="absolute inset-y-2 -left-4 w-0.5 rounded-full bg-cyan-500 dark:bg-cyan-400"></span>' : ""}
+                <a
+                  href="${item.path}"
+                  class="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left text-sm/5 font-medium ${
+                    isActive
+                      ? "text-zinc-950 dark:text-white"
+                      : "text-zinc-600 hover:bg-zinc-950/5 dark:text-zinc-400 dark:hover:bg-white/5"
+                  }"
+                  ${isActive ? 'data-current="true"' : ""}
+                >
+                  <span class="shrink-0 ${isActive ? "fill-zinc-950 dark:fill-white" : "fill-zinc-500 dark:fill-zinc-400"}">
+                    ${item.icon}
+                  </span>
+                  <span class="truncate">${item.label}</span>
+                </a>
+              </span>`;
+          })
+          .join("")
+      : "<!-- DYNAMIC_PLUGIN_MENU -->";
 
   const closeButton = isMobile
     ? `
@@ -672,7 +689,38 @@ function renderCatalystSidebar(
             `;
             })
             .join("")}
-          ${pluginMenuMarker}
+          <!-- Plugins accordion -->
+          <div data-plugins-accordion class="relative">
+            ${isPluginsActive ? '<span class="absolute inset-y-2 -left-4 w-0.5 rounded-full bg-cyan-500 dark:bg-cyan-400"></span>' : ""}
+            <div class="flex w-full items-center">
+              <a
+                href="/admin/plugins"
+                class="flex flex-1 items-center gap-3 rounded-lg px-2 py-2.5 text-left text-sm/5 font-medium ${
+                  isPluginsActive
+                    ? "text-zinc-950 dark:text-white"
+                    : "text-zinc-950 hover:bg-zinc-950/5 dark:text-white dark:hover:bg-white/5"
+                }"
+                ${isPluginsActive ? 'data-current="true"' : ""}
+              >
+                <span class="shrink-0 ${isPluginsActive ? "fill-zinc-950 dark:fill-white" : "fill-zinc-500 dark:fill-zinc-400"}">
+                  ${pluginsIcon}
+                </span>
+                <span class="truncate">Plugins</span>
+              </a>
+              <button
+                onclick="togglePluginsMenu(this)"
+                class="flex items-center justify-center rounded-lg p-2 text-zinc-500 hover:bg-zinc-950/5 dark:text-zinc-400 dark:hover:bg-white/5 flex-shrink-0"
+                aria-label="Toggle plugins submenu"
+              >
+                <svg data-plugins-chevron class="h-4 w-4 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+              </button>
+            </div>
+            <div data-plugins-submenu class="pl-6 mt-0.5 flex flex-col gap-0.5 hidden">
+              ${pluginsSubItems}
+            </div>
+          </div>
         </div>
       </div>
 

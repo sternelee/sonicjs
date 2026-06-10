@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS document_types (
   schema_version INTEGER NOT NULL DEFAULT 1,
   is_system INTEGER NOT NULL DEFAULT 0,
   is_active INTEGER NOT NULL DEFAULT 1,
+  is_auth INTEGER NOT NULL DEFAULT 0,
   created_at INTEGER NOT NULL DEFAULT (unixepoch()),
   updated_at INTEGER NOT NULL DEFAULT (unixepoch())
 );
@@ -63,29 +64,10 @@ CREATE TABLE IF NOT EXISTS documents (
   updated_at INTEGER NOT NULL DEFAULT (unixepoch())
 );
 
--- Queryable scalar fields as VIRTUAL generated columns (no write cost, no drift).
-
--- FAQ
-ALTER TABLE documents ADD COLUMN q_faq_category   TEXT    AS (json_extract(data, '$.category'))  VIRTUAL;
-ALTER TABLE documents ADD COLUMN q_faq_sort_order  INTEGER AS (json_extract(data, '$.sortOrder')) VIRTUAL;
-
--- Testimonial
-ALTER TABLE documents ADD COLUMN q_tst_rating      INTEGER AS (json_extract(data, '$.rating'))        VIRTUAL;
-ALTER TABLE documents ADD COLUMN q_tst_company     TEXT    AS (json_extract(data, '$.authorCompany')) VIRTUAL;
-ALTER TABLE documents ADD COLUMN q_tst_sort_order  INTEGER AS (json_extract(data, '$.sortOrder'))     VIRTUAL;
-
--- Contact Message
-ALTER TABLE documents ADD COLUMN q_msg_review      TEXT    AS (json_extract(data, '$.reviewStatus')) VIRTUAL;
-ALTER TABLE documents ADD COLUMN q_msg_email       TEXT    AS (json_extract(data, '$.email'))        VIRTUAL;
-
--- Media Asset
-ALTER TABLE documents ADD COLUMN q_media_mime      TEXT    AS (json_extract(data, '$.mimeType')) VIRTUAL;
-ALTER TABLE documents ADD COLUMN q_media_folder    TEXT    AS (json_extract(data, '$.folder'))   VIRTUAL;
-ALTER TABLE documents ADD COLUMN q_media_size      INTEGER AS (json_extract(data, '$.size'))     VIRTUAL;
-
--- Blog Post
-ALTER TABLE documents ADD COLUMN q_blog_difficulty TEXT AS (json_extract(data, '$.difficulty')) VIRTUAL;
-ALTER TABLE documents ADD COLUMN q_blog_author     TEXT AS (json_extract(data, '$.author'))     VIRTUAL;
+-- Queryable scalar fields (VIRTUAL generated columns) and their q_* filter indexes
+-- are AUTO-GENERATED at runtime from each document type's queryableFields config —
+-- see DocumentTypeRegistry.register() -> ensureScalarSchema() (document-scalar-schema.ts).
+-- Do not hand-add q_* columns/indexes here; declare the field in the type instead.
 
 -- Revision chain
 CREATE INDEX IF NOT EXISTS idx_documents_root ON documents(root_id, version_number DESC);
@@ -107,18 +89,7 @@ CREATE INDEX IF NOT EXISTS idx_documents_published_cursor
   ON documents(tenant_id, type_id, updated_at DESC, id DESC)
   WHERE is_published = 1 AND deleted_at IS NULL;
 
--- Generated-column filter indexes
-CREATE INDEX IF NOT EXISTS idx_q_faq_category ON documents(tenant_id, type_id, q_faq_category, q_faq_sort_order) WHERE is_published = 1;
-CREATE INDEX IF NOT EXISTS idx_q_tst_rating   ON documents(tenant_id, type_id, q_tst_rating, q_tst_sort_order)   WHERE is_published = 1;
-CREATE INDEX IF NOT EXISTS idx_q_tst_company  ON documents(tenant_id, type_id, q_tst_company, q_tst_sort_order)  WHERE is_published = 1;
-CREATE INDEX IF NOT EXISTS idx_q_media_mime   ON documents(tenant_id, type_id, q_media_mime)   WHERE is_published = 1;
-CREATE INDEX IF NOT EXISTS idx_q_media_folder ON documents(tenant_id, type_id, q_media_folder) WHERE is_published = 1;
-CREATE INDEX IF NOT EXISTS idx_q_media_size   ON documents(tenant_id, type_id, q_media_size)   WHERE is_published = 1;
-CREATE INDEX IF NOT EXISTS idx_q_msg_review   ON documents(tenant_id, type_id, q_msg_review) WHERE is_current_draft = 1;
-CREATE INDEX IF NOT EXISTS idx_q_msg_email    ON documents(tenant_id, type_id, q_msg_email)  WHERE is_current_draft = 1;
-CREATE INDEX IF NOT EXISTS idx_q_blog_difficulty ON documents(tenant_id, type_id, q_blog_difficulty) WHERE is_current_draft = 1;
-CREATE INDEX IF NOT EXISTS idx_q_blog_author ON documents(tenant_id, type_id, q_blog_author) WHERE is_current_draft = 1;
-CREATE INDEX IF NOT EXISTS idx_q_blog_difficulty_pub ON documents(tenant_id, type_id, q_blog_difficulty) WHERE is_published = 1;
+-- (q_* generated-column filter indexes are auto-created at runtime — see note above.)
 
 -- Partial unique indexes: the hard concurrency guarantees for draft/publish invariants.
 CREATE UNIQUE INDEX IF NOT EXISTS idx_documents_one_current_draft
