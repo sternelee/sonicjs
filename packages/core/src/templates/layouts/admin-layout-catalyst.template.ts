@@ -353,7 +353,7 @@ export function renderAdminLayoutCatalyst(
           </svg>
         </button>
         <div class="ml-4 flex-1">
-          ${renderLogo({ size: "sm", showText: true, variant: "white", version: data.version, href: "/admin" })}
+          ${renderLogo({ size: "sm", showText: true, variant: "white", version: data.version, href: "/admin/content" })}
         </div>
       </header>
 
@@ -550,17 +550,17 @@ function renderCatalystSidebar(
 ): string {
   let baseMenuItems = [
     {
-      label: "Collections",
-      path: "/admin/collections",
-      icon: `<svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-        <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z"/>
-      </svg>`,
-    },
-    {
       label: "Content",
       path: "/admin/content",
       icon: `<svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
         <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"/>
+      </svg>`,
+    },
+    {
+      label: "Collections",
+      path: "/admin/collections",
+      icon: `<svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+        <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z"/>
       </svg>`,
     },
     {
@@ -640,7 +640,7 @@ function renderCatalystSidebar(
 
       <!-- Sidebar Header -->
       <div class="flex flex-col border-b border-zinc-950/5 p-4 dark:border-white/5">
-        ${renderLogo({ size: "md", showText: true, variant: "white", version, href: "/admin" })}
+        ${renderLogo({ size: "md", showText: true, variant: "white", version, href: "/admin/content" })}
       </div>
 
       <!-- Sidebar Body -->

@@ -582,7 +582,8 @@ userRoutes.get('/users', async (c) => {
         name: user!.email.split('@')[0] || user!.email,
         email: user!.email,
         role: user!.role
-      }
+      },
+      version: c.get('appVersion')
     }
 
     return c.html(renderUsersListPage(pageData))
