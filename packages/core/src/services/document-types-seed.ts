@@ -69,6 +69,27 @@ export async function bootstrapDocumentTypes(db: D1Database): Promise<void> {
     ],
   })
 
+  // Tenant registry (document-backed multi-tenancy; rows managed by the multi-tenant plugin).
+  // Tenant records are platform metadata and live under the 'default' tenant themselves.
+  // Zero rows until the multi-tenant plugin is activated and used.
+  await registry.register({
+    id: 'tenant',
+    name: 'tenant',
+    displayName: 'Tenant',
+    description: 'Tenant record (managed by the multi-tenant plugin; slug = tenant id)',
+    source: 'system',
+    schema: anyObject,
+    settings: {
+      baseGrants: { admin: ['read', 'create', 'update', 'delete', 'manage'] },
+      maxVersionsPerRoot: 1,
+      internal: true,
+    },
+    queryableFields: [
+      { name: 'status', kind: 'scalar', type: 'text', column: 'q_tenant_status' },
+      { name: 'domain', kind: 'scalar', type: 'text', column: 'q_tenant_domain' },
+    ],
+  })
+
   // User profile (auth-owned). One document per user, addressed by slug = userId.
   // Replaces the auth_user_profiles table. Typed fields + custom fields live in `data`.
   await registry.register({

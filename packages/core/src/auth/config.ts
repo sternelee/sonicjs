@@ -51,9 +51,9 @@ import { hashPassword as baHashPassword, verifyPassword as baVerifyPassword } fr
 import { APIError } from 'better-auth/api'
 import { magicLink } from 'better-auth/plugins/magic-link'
 import { emailOTP } from 'better-auth/plugins/email-otp'
-// twoFactor and organization imports deferred until Drizzle schema entries added
+import { organization } from 'better-auth/plugins/organization'
 import { drizzle } from 'drizzle-orm/d1'
-import { authUser, authSession, authAccount, authVerification } from '../db/schema'
+import { authUser, authSession, authAccount, authVerification, authTenant, authTenantMember, authTenantInvitation, authTenantTeam } from '../db/schema'
 import { isRegistrationEnabled, isFirstUserRegistration } from '../services/auth-validation'
 import type { Bindings } from '../app'
 
@@ -99,7 +99,7 @@ export function getDefaultAuthOptions(env: Bindings) {
           db,
           options: {
             // Keys MUST match modelName values — BA resolves by modelName, not by JS variable name.
-            schema: { auth_user: authUser, auth_session: authSession, auth_account: authAccount, auth_verification: authVerification },
+            schema: { auth_user: authUser, auth_session: authSession, auth_account: authAccount, auth_verification: authVerification, auth_tenant: authTenant, auth_tenant_member: authTenantMember, auth_tenant_invitation: authTenantInvitation, auth_tenant_team: authTenantTeam },
           },
         },
         kv: env.CACHE_KV, // session secondary storage → getSession skips D1
@@ -142,6 +142,7 @@ export function getDefaultAuthOptions(env: Bindings) {
             role: { type: 'string', required: false, defaultValue: 'viewer', input: false },
             firstName: { type: 'string', required: false, defaultValue: '', input: true },
             lastName: { type: 'string', required: false, defaultValue: '', input: true },
+            isSuperAdmin: { type: 'boolean', required: false, defaultValue: false, input: false },
           },
         },
         session: {
@@ -239,9 +240,30 @@ export function getDefaultAuthOptions(env: Bindings) {
         expiresIn: 10 * 60,
       }),
 
-      // twoFactor and organization disabled until Drizzle schema entries for
-      // auth_two_factor / auth_organization / auth_member / auth_invitation / auth_team
-      // are wired into the adapter. Enable in a follow-up.
+      organization({
+        schema: {
+          organization: {
+            modelName: 'auth_tenant',
+            additionalFields: {
+              status: { type: 'string', required: false, defaultValue: 'active', input: true },
+              domain: { type: 'string', required: false, input: true },
+              notes: { type: 'string', required: false, defaultValue: '', input: true },
+            },
+          },
+          member: {
+            modelName: 'auth_tenant_member',
+            fields: { organizationId: 'tenant_id' },
+          },
+          invitation: {
+            modelName: 'auth_tenant_invitation',
+            fields: { organizationId: 'tenant_id' },
+          },
+          team: {
+            modelName: 'auth_tenant_team',
+            fields: { organizationId: 'tenant_id' },
+          },
+        },
+      }),
     ],
 
     // ── Phase 4: Social providers ─────────────────────────────────────────

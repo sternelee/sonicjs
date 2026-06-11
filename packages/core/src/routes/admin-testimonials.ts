@@ -9,6 +9,7 @@ import { renderTestimonialsList } from '../templates/pages/admin-testimonials-li
 import { renderTestimonialsForm } from '../templates/pages/admin-testimonials-form.template'
 import { DocumentsService } from '../services/documents'
 import { DocumentTypeRegistry } from '../services/document-type-registry'
+import { getRequestTenant } from '../services/document-request-context'
 
 type Bindings = { DB: D1Database; KV: KVNamespace }
 type Variables = { user?: { userId: string; email: string; role: string; exp: number; iat: number } }
@@ -55,13 +56,14 @@ function docToFormItem(row: any) {
   }
 }
 
-async function getService(db: D1Database) {
+async function getService(db: D1Database, tenantId: string) {
   const registry = new DocumentTypeRegistry(db)
   const docType = await registry.findById('testimonial')
   return new DocumentsService(db, {
     queryableFields: docType?.queryableFields ?? [],
     typeSchemaVersion: docType?.schemaVersion ?? 1,
     maxVersionsPerRoot: docType?.settings.maxVersionsPerRoot ?? 50,
+    tenantId,
   })
 }
 
@@ -84,7 +86,7 @@ adminTestimonialsRoutes.get('/', async (c) => {
     // Build ONE WHERE clause shared by both COUNT and the page query so the total reflects the active
     // filters (D13: previously COUNT ignored published/minRating/search → phantom pages).
     const whereParts: string[] = ['tenant_id = ?', 'type_id = ?', 'is_current_draft = 1', 'deleted_at IS NULL']
-    const whereParams: (string | number)[] = ['default', 'testimonial']
+    const whereParams: (string | number)[] = [getRequestTenant(c), 'testimonial']
 
     if (published !== undefined) {
       whereParts.push('is_published = ?')
@@ -148,9 +150,9 @@ adminTestimonialsRoutes.post('/', async (c) => {
     const formData = await c.req.formData()
     const validated = testimonialSchema.parse(Object.fromEntries(formData.entries()))
 
-    const svc = await getService(db)
+    const svc = await getService(db, getRequestTenant(c))
     const doc = await svc.create({
-      typeId: 'testimonial', tenantId: 'default', locale: 'default',
+      typeId: 'testimonial', tenantId: getRequestTenant(c), locale: 'default',
       title: validated.authorName,
       sortOrder: validated.sortOrder,
       data: {
@@ -186,7 +188,7 @@ adminTestimonialsRoutes.get('/:id', async (c) => {
     const rootId = c.req.param('id')
     const row = await db.prepare(
       'SELECT * FROM documents WHERE root_id = ? AND tenant_id = ? AND is_current_draft = 1'
-    ).bind(rootId, 'default').first()
+    ).bind(rootId, getRequestTenant(c)).first()
 
     if (!row) return c.redirect('/admin/testimonials?message=Testimonial not found&type=error')
 
@@ -206,7 +208,8 @@ adminTestimonialsRoutes.put('/:id', async (c) => {
     const formData = await c.req.formData()
     const validated = testimonialSchema.parse(Object.fromEntries(formData.entries()))
 
-    const svc = await getService(db)
+    const tenantId = getRequestTenant(c)
+    const svc = await getService(db, tenantId)
     const newDraft = await svc.saveDraft(rootId, {
       title: validated.authorName,
       sortOrder: validated.sortOrder,
@@ -224,7 +227,7 @@ adminTestimonialsRoutes.put('/:id', async (c) => {
     // newDraft.isPublished (it is always false). Act on the root's currently-published row instead.
     const pubRow = await db
       .prepare('SELECT id FROM documents WHERE root_id = ? AND is_published = 1 AND tenant_id = ?')
-      .bind(rootId, 'default')
+      .bind(rootId, tenantId)
       .first<{ id: string }>()
     if (validated.isPublished) {
       await svc.publish(newDraft.id, user?.userId)
@@ -237,7 +240,7 @@ adminTestimonialsRoutes.put('/:id', async (c) => {
     if (error instanceof z.ZodError) {
       const errors: Record<string, string[]> = {}
       error.issues.forEach(e => { const f = String(e.path[0]); errors[f] = [...(errors[f] ?? []), e.message] })
-      const row = await db.prepare('SELECT * FROM documents WHERE root_id = ? AND is_current_draft = 1').bind(rootId).first()
+      const row = await db.prepare('SELECT * FROM documents WHERE root_id = ? AND tenant_id = ? AND is_current_draft = 1').bind(rootId, getRequestTenant(c)).first()
       return c.html(renderTestimonialsForm({ testimonial: row ? docToFormItem(row) : undefined, isEdit: true, user: userShape(user), errors, message: 'Please correct the errors below', messageType: 'error' }))
     }
     console.error('Error updating testimonial:', error)
@@ -250,11 +253,12 @@ adminTestimonialsRoutes.delete('/:id', async (c) => {
   const db = (c as any).env?.DB as D1Database
   try {
     const rootId = c.req.param('id')
+    const tenantId = getRequestTenant(c)
     // Soft-delete the current draft (the only queryable row for this root).
-    const row = await db.prepare('SELECT id FROM documents WHERE root_id = ? AND is_current_draft = 1').bind(rootId).first() as any
+    const row = await db.prepare('SELECT id FROM documents WHERE root_id = ? AND tenant_id = ? AND is_current_draft = 1').bind(rootId, tenantId).first() as any
     if (!row) return c.json({ error: 'Testimonial not found' }, 404)
 
-    const svc = await getService(db)
+    const svc = await getService(db, tenantId)
     await svc.softDelete(row.id)
     return c.redirect('/admin/testimonials?message=Testimonial deleted successfully')
   } catch (error) {

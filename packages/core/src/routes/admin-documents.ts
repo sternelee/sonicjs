@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { DocumentsService } from '../services/documents'
 import { DocumentTypeRegistry } from '../services/document-type-registry'
 import { DocumentRepository } from '../services/document-repository'
-import { getDocumentRequestContext } from '../services/document-request-context'
+import { getDocumentRequestContext, getRequestTenant } from '../services/document-request-context'
 import { createDocumentSchema, updateDocumentSchema } from '../schemas/document'
 import type { Permission, DocumentTypeSettings } from '../schemas/document'
 import type { D1Database } from '@cloudflare/workers-types'
@@ -73,7 +73,7 @@ adminDocumentsRoutes.get('/', async (c) => {
   try {
     const db = c.env.DB
     const user = c.get('user') as { userId: string; email: string; role: string }
-    const tenantId = 'default'
+    const tenantId = getRequestTenant(c)
 
     const typeId = c.req.query('type') ?? ''
     const status = (c.req.query('status') ?? 'draft') as 'draft' | 'published' | 'all'
@@ -162,7 +162,7 @@ adminDocumentsRoutes.get('/', async (c) => {
 // inserting a new GET /:something before them would shadow those literals (see commit 5af9dea).
 adminDocumentsRoutes.get('/:id', async (c) => {
   try {
-    const repo = new DocumentRepository(c.env.DB, 'default')
+    const repo = new DocumentRepository(c.env.DB, getRequestTenant(c))
     const doc = await repo.getById(c.req.param('id'))
     if (!doc) return c.json({ error: 'Not found' }, 404)
     return c.json({ data: doc })
@@ -175,7 +175,7 @@ adminDocumentsRoutes.get('/:id', async (c) => {
 // ─── Get version history ──────────────────────────────────────────────────────
 adminDocumentsRoutes.get('/:rootId/versions', async (c) => {
   try {
-    const repo = new DocumentRepository(c.env.DB, 'default')
+    const repo = new DocumentRepository(c.env.DB, getRequestTenant(c))
     const versions = await repo.getVersionHistory(c.req.param('rootId'))
     return c.json({ data: versions })
   } catch (error) {
@@ -224,14 +224,16 @@ adminDocumentsRoutes.post('/', async (c) => {
     // { error: 'Validation failed', details: result.error.issues } with 400. (Removed the previous
     // broken no-op that referenced a nonexistent _zodSchema.)
 
+    const tenantId = getRequestTenant(c)
     const svc = new DocumentsService(db, {
       queryableFields: docType.queryableFields,
       typeSchemaVersion: docType.schemaVersion,
       maxVersionsPerRoot: docType.settings.maxVersionsPerRoot,
+      tenantId,
     })
 
-    // Inject tenant from context (POC: always 'default').
-    const doc = await svc.create({ ...input, tenantId: 'default' }, user.userId)
+    // Inject the resolved request tenant; never trust a body-supplied tenant.
+    const doc = await svc.create({ ...input, tenantId }, user.userId)
 
     return c.json({ data: doc }, 201)
   } catch (error) {
@@ -261,11 +263,12 @@ adminDocumentsRoutes.put('/:rootId', async (c) => {
     const { rootId } = c.req.param()
     const db = c.env.DB
     const user = c.get('user') as { userId: string; email: string; role: string }
+    const tenantId = getRequestTenant(c)
 
     // Look up the type from the existing draft to get queryableFields.
     const existing = await db
-      .prepare('SELECT type_id FROM documents WHERE root_id = ? AND is_current_draft = 1')
-      .bind(rootId)
+      .prepare('SELECT type_id FROM documents WHERE root_id = ? AND tenant_id = ? AND is_current_draft = 1')
+      .bind(rootId, tenantId)
       .first() as any
 
     if (!existing) return c.json({ error: 'Document not found' }, 404)
@@ -280,6 +283,7 @@ adminDocumentsRoutes.put('/:rootId', async (c) => {
       queryableFields: docType?.queryableFields ?? [],
       typeSchemaVersion: docType?.schemaVersion,
       maxVersionsPerRoot: docType?.settings.maxVersionsPerRoot,
+      tenantId,
     })
 
     const doc = await svc.saveDraft(rootId, validation.data, user.userId)
@@ -297,8 +301,9 @@ adminDocumentsRoutes.post('/:id/publish', async (c) => {
     const { id } = c.req.param()
     const db = c.env.DB
     const user = c.get('user') as { userId: string; email: string; role: string }
+    const tenantId = getRequestTenant(c)
 
-    const row = await db.prepare('SELECT type_id, root_id FROM documents WHERE id = ?').bind(id).first() as any
+    const row = await db.prepare('SELECT type_id, root_id FROM documents WHERE id = ? AND tenant_id = ?').bind(id, tenantId).first() as any
     if (!row) return c.json({ error: 'Document not found' }, 404)
 
     const registry = new DocumentTypeRegistry(db)
@@ -310,6 +315,7 @@ adminDocumentsRoutes.post('/:id/publish', async (c) => {
     const svc = new DocumentsService(db, {
       queryableFields: docType?.queryableFields ?? [],
       typeSchemaVersion: docType?.schemaVersion,
+      tenantId,
     })
 
     const doc = await svc.publish(id, user.userId)
@@ -326,8 +332,9 @@ adminDocumentsRoutes.post('/:id/unpublish', async (c) => {
   try {
     const { id } = c.req.param()
     const db = c.env.DB
+    const tenantId = getRequestTenant(c)
 
-    const row = await db.prepare('SELECT type_id, root_id FROM documents WHERE id = ?').bind(id).first() as any
+    const row = await db.prepare('SELECT type_id, root_id FROM documents WHERE id = ? AND tenant_id = ?').bind(id, tenantId).first() as any
     if (!row) return c.json({ error: 'Document not found' }, 404)
 
     const registry = new DocumentTypeRegistry(db)
@@ -338,6 +345,7 @@ adminDocumentsRoutes.post('/:id/unpublish', async (c) => {
 
     const svc = new DocumentsService(db, {
       queryableFields: docType?.queryableFields ?? [],
+      tenantId,
     })
 
     const doc = await svc.unpublish(id)
@@ -355,8 +363,9 @@ adminDocumentsRoutes.delete('/:id', async (c) => {
   try {
     const { id } = c.req.param()
     const db = c.env.DB
+    const tenantId = getRequestTenant(c)
 
-    const row = await db.prepare('SELECT type_id, root_id FROM documents WHERE id = ?').bind(id).first() as any
+    const row = await db.prepare('SELECT type_id, root_id FROM documents WHERE id = ? AND tenant_id = ?').bind(id, tenantId).first() as any
     if (!row) return c.json({ error: 'Document not found' }, 404)
 
     const registry = new DocumentTypeRegistry(db)
@@ -365,11 +374,11 @@ adminDocumentsRoutes.delete('/:id', async (c) => {
     const deleteDenied = await denyIfNotAllowed(c, db, row.root_id, 'delete', docType?.settings)
     if (deleteDenied) return deleteDenied
 
-    const svc = new DocumentsService(db, { queryableFields: docType?.queryableFields ?? [] })
+    const svc = new DocumentsService(db, { queryableFields: docType?.queryableFields ?? [], tenantId })
 
     // Hard erase PII types; soft delete others.
     if (docType?.settings.pii) {
-      if (row.root_id) await svc.erase(row.root_id, 'default')
+      if (row.root_id) await svc.erase(row.root_id, tenantId)
     } else {
       await svc.softDelete(id)
     }
@@ -396,7 +405,7 @@ adminDocumentsRoutes.post('/types/:typeId/reindex', async (c) => {
 
     const { DocumentProjection } = await import('../services/document-projection')
     const projection = new DocumentProjection(db)
-    const rebuilt = await projection.reindexType(typeId, 'default', docType.queryableFields)
+    const rebuilt = await projection.reindexType(typeId, getRequestTenant(c), docType.queryableFields)
 
     return c.json({ rebuilt })
   } catch (error) {

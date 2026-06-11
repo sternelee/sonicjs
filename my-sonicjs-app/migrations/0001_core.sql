@@ -16,6 +16,9 @@ CREATE TABLE IF NOT EXISTS auth_user (
   first_name TEXT NOT NULL,
   last_name TEXT NOT NULL,
   role TEXT NOT NULL DEFAULT 'viewer',
+  -- Platform super-admin: bypasses the multi-tenant membership gate, uses global roles in every
+  -- tenant. Opt-in (default 0); intentionally NOT derived from the 'admin' role.
+  is_super_admin INTEGER NOT NULL DEFAULT 0,
   avatar TEXT,
   password_hash TEXT,
   is_active INTEGER NOT NULL DEFAULT 1,
@@ -98,49 +101,54 @@ CREATE TABLE IF NOT EXISTS auth_two_factor (
 );
 CREATE INDEX IF NOT EXISTS idx_auth_two_factor_user_id ON auth_two_factor(user_id);
 
-CREATE TABLE IF NOT EXISTS auth_organization (
+CREATE TABLE IF NOT EXISTS auth_tenant (
   id         TEXT PRIMARY KEY,
   name       TEXT NOT NULL,
   slug       TEXT NOT NULL UNIQUE,
   logo       TEXT,
   metadata   TEXT,
+  -- SonicJS tenant-resolution fields (BA organization additionalFields):
+  status     TEXT NOT NULL DEFAULT 'active',
+  domain     TEXT,
+  notes      TEXT NOT NULL DEFAULT '',
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL
 );
+CREATE INDEX IF NOT EXISTS idx_auth_tenant_domain ON auth_tenant(domain);
 
-CREATE TABLE IF NOT EXISTS auth_member (
-  id              TEXT PRIMARY KEY,
-  organization_id TEXT NOT NULL REFERENCES auth_organization(id) ON DELETE CASCADE,
-  user_id         TEXT NOT NULL REFERENCES auth_user(id)         ON DELETE CASCADE,
-  role            TEXT NOT NULL DEFAULT 'member',
-  email           TEXT,
-  created_at      INTEGER NOT NULL,
-  updated_at      INTEGER NOT NULL,
-  UNIQUE(organization_id, user_id)
+CREATE TABLE IF NOT EXISTS auth_tenant_member (
+  id        TEXT PRIMARY KEY,
+  tenant_id TEXT NOT NULL REFERENCES auth_tenant(id) ON DELETE CASCADE,
+  user_id   TEXT NOT NULL REFERENCES auth_user(id)   ON DELETE CASCADE,
+  role      TEXT NOT NULL DEFAULT 'member',
+  email     TEXT,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  UNIQUE(tenant_id, user_id)
 );
-CREATE INDEX IF NOT EXISTS idx_auth_member_org  ON auth_member(organization_id);
-CREATE INDEX IF NOT EXISTS idx_auth_member_user ON auth_member(user_id);
+CREATE INDEX IF NOT EXISTS idx_auth_tenant_member_tenant ON auth_tenant_member(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_auth_tenant_member_user   ON auth_tenant_member(user_id);
 
-CREATE TABLE IF NOT EXISTS auth_invitation (
-  id              TEXT PRIMARY KEY,
-  organization_id TEXT NOT NULL REFERENCES auth_organization(id) ON DELETE CASCADE,
-  email           TEXT NOT NULL,
-  role            TEXT NOT NULL DEFAULT 'member',
-  status          TEXT NOT NULL DEFAULT 'pending',
-  expires_at      INTEGER NOT NULL,
-  inviter_id      TEXT REFERENCES auth_user(id) ON DELETE SET NULL,
-  created_at      INTEGER NOT NULL,
-  updated_at      INTEGER NOT NULL
+CREATE TABLE IF NOT EXISTS auth_tenant_invitation (
+  id         TEXT PRIMARY KEY,
+  tenant_id  TEXT NOT NULL REFERENCES auth_tenant(id) ON DELETE CASCADE,
+  email      TEXT NOT NULL,
+  role       TEXT NOT NULL DEFAULT 'member',
+  status     TEXT NOT NULL DEFAULT 'pending',
+  expires_at INTEGER NOT NULL,
+  inviter_id TEXT REFERENCES auth_user(id) ON DELETE SET NULL,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
 );
-CREATE INDEX IF NOT EXISTS idx_auth_invitation_org   ON auth_invitation(organization_id);
-CREATE INDEX IF NOT EXISTS idx_auth_invitation_email ON auth_invitation(email);
+CREATE INDEX IF NOT EXISTS idx_auth_tenant_invitation_tenant ON auth_tenant_invitation(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_auth_tenant_invitation_email  ON auth_tenant_invitation(email);
 
-CREATE TABLE IF NOT EXISTS auth_team (
-  id              TEXT PRIMARY KEY,
-  name            TEXT NOT NULL,
-  organization_id TEXT NOT NULL REFERENCES auth_organization(id) ON DELETE CASCADE,
-  created_at      INTEGER NOT NULL,
-  updated_at      INTEGER NOT NULL
+CREATE TABLE IF NOT EXISTS auth_tenant_team (
+  id        TEXT PRIMARY KEY,
+  name      TEXT NOT NULL,
+  tenant_id TEXT NOT NULL REFERENCES auth_tenant(id) ON DELETE CASCADE,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
 );
 
 -- ── RBAC ─────────────────────────────────────────────────────────────────────

@@ -446,6 +446,34 @@ export const PLUGIN_REGISTRY: Record<string, PluginRegistryEntry> = {
     "adminMenu": null
   },
 
+  'multi-tenant': {
+    "id": "multi-tenant",
+    "codeName": "multi-tenant",
+    "displayName": "Multi-Tenant",
+    "description": "Multi-tenancy for the document model: tenant registry, per-request tenant resolution (header, admin switcher cookie, or domain), and tenant-scoped content isolation. Off by default.",
+    "version": "1.0.0",
+    "author": "SonicJS Team",
+    "category": "utilities",
+    "iconEmoji": "🏢",
+    "is_core": false,
+    "permissions": [
+      "tenants.manage",
+      "tenants.view"
+    ],
+    "dependencies": [],
+    "defaultSettings": {
+      "headerName": "X-Tenant-Id",
+      "subdomainResolution": false,
+      "rootDomain": ""
+    },
+    "adminMenu": {
+      "label": "Tenants",
+      "icon": "building-office",
+      "path": "/admin/tenants",
+      "order": 80
+    }
+  },
+
   'oauth-providers': {
     "id": "oauth-providers",
     "codeName": "oauth-providers",

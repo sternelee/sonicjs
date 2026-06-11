@@ -1,4 +1,5 @@
 import type { D1Database } from '@cloudflare/workers-types'
+import { invalidateTenantCache } from '../middleware/tenant'
 
 export interface PluginData {
   id: string
@@ -147,6 +148,10 @@ export class PluginService {
           updated_at = ?
       WHERE slug = ? AND type_id = ? AND tenant_id = ? AND is_current_draft = 1 AND deleted_at IS NULL
     `).bind(now, now, pluginId, TYPE_ID, TENANT).run()
+    // Plugin activation state feeds the tenant resolver cache (the multi-tenant plugin short-circuits
+    // to single-tenant while inactive). The UI toggle does not run plugin lifecycle callbacks, so bust
+    // the cache here. Cheap no-op for every other plugin.
+    invalidateTenantCache()
     await this.logActivity(pluginId, 'activated', null)
   }
 
@@ -161,6 +166,7 @@ export class PluginService {
           updated_at = ?
       WHERE slug = ? AND type_id = ? AND tenant_id = ? AND is_current_draft = 1 AND deleted_at IS NULL
     `).bind(now, pluginId, TYPE_ID, TENANT).run()
+    invalidateTenantCache()
     await this.logActivity(pluginId, 'deactivated', null)
   }
 
@@ -173,6 +179,8 @@ export class PluginService {
       SET data = json_set(data, '$.settings', json(?)), updated_at = ?
       WHERE slug = ? AND type_id = ? AND tenant_id = ? AND is_current_draft = 1 AND deleted_at IS NULL
     `).bind(JSON.stringify(settings), now, pluginId, TYPE_ID, TENANT).run()
+    // Multi-tenant resolver settings (header name, subdomain config) live in plugin settings.
+    invalidateTenantCache()
     await this.logActivity(pluginId, 'settings_updated', null)
   }
 

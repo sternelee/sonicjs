@@ -824,6 +824,9 @@ function renderCatalystSidebar(
         })()}
       </div>
 
+      <!-- Tenant switcher (injected by tenantMiddleware when the multi-tenant plugin is active) -->
+      <!-- TENANT_SWITCHER -->
+
       <!-- Sidebar Footer (User) -->
       ${
         user

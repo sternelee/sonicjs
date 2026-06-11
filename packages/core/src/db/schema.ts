@@ -11,6 +11,8 @@ export const authUser = sqliteTable('auth_user', {
   name: text('name'), // Better Auth display name (required by Better Auth for registration)
   emailVerified: integer('email_verified', { mode: 'boolean' }).notNull().default(false), // Better Auth
   role: text('role').notNull().default('viewer'), // 'admin', 'editor', 'author', 'viewer'
+  // Platform super-admin: bypasses the multi-tenant membership gate. Opt-in, default false.
+  isSuperAdmin: integer('is_super_admin', { mode: 'boolean' }).notNull().default(false),
   avatar: text('avatar'),
   isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true),
   lastLoginAt: integer('last_login_at'),
@@ -82,6 +84,50 @@ export const authVerification = sqliteTable('auth_verification', {
 export const session = authSession;
 export const account = authAccount;
 export const verification = authVerification;
+
+// ── Better Auth tenant (organization plugin) tables ──────────────────────────
+export const authTenant = sqliteTable('auth_tenant', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  slug: text('slug').notNull().unique(),
+  logo: text('logo'),
+  metadata: text('metadata'),
+  status: text('status').notNull().default('active'),
+  domain: text('domain'),
+  notes: text('notes').notNull().default(''),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+})
+
+export const authTenantMember = sqliteTable('auth_tenant_member', {
+  id: text('id').primaryKey(),
+  tenantId: text('tenant_id').notNull().references(() => authTenant.id, { onDelete: 'cascade' }),
+  userId: text('user_id').notNull().references(() => authUser.id, { onDelete: 'cascade' }),
+  role: text('role').notNull().default('member'),
+  email: text('email'),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+})
+
+export const authTenantInvitation = sqliteTable('auth_tenant_invitation', {
+  id: text('id').primaryKey(),
+  tenantId: text('tenant_id').notNull().references(() => authTenant.id, { onDelete: 'cascade' }),
+  email: text('email').notNull(),
+  role: text('role').notNull().default('member'),
+  status: text('status').notNull().default('pending'),
+  expiresAt: integer('expires_at', { mode: 'timestamp_ms' }).notNull(),
+  inviterId: text('inviter_id').references(() => authUser.id, { onDelete: 'set null' }),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+})
+
+export const authTenantTeam = sqliteTable('auth_tenant_team', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  tenantId: text('tenant_id').notNull().references(() => authTenant.id, { onDelete: 'cascade' }),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+})
 
 // Collections are code-only — registered via `registerCollections()`. The
 // `collections` table was dropped in PR 4 of the drop-db-collections plan

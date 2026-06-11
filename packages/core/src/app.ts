@@ -53,6 +53,8 @@ import { eventsApiRoutes } from './plugins/core-plugins/analytics/routes/api'
 import { globalVariablesPlugin } from './plugins/core-plugins/global-variables-plugin'
 import { shortcodesPlugin } from './plugins/core-plugins/shortcodes-plugin'
 import { helloWorldPlugin } from './plugins/core-plugins/hello-world-plugin'
+import { multiTenantPlugin } from './plugins/core-plugins/multi-tenant-plugin'
+import { tenantMiddleware } from './middleware/tenant'
 import { createMagicLinkAuthPlugin } from './plugins/available/magic-link-auth'
 import cachePlugin from './plugins/cache'
 import type { Plugin } from './plugins/types'
@@ -102,6 +104,7 @@ export interface Variables {
     userId: string
     email: string
     role: string
+    isSuperAdmin?: boolean
     exp: number
     iat: number
   }
@@ -112,6 +115,10 @@ export interface Variables {
   appVersion?: string
   csrfToken?: string
   pluginMenuItems?: Array<{ label: string; path: string; icon: string }>
+  /** Tenant slug resolved per request by tenantMiddleware ('default' when single-tenant). */
+  tenantId?: string
+  /** The authed user's role IN the resolved tenant (per-tenant RBAC); global role for 'default'. */
+  tenantRole?: string
 }
 
 export interface SonicJSConfig {
@@ -272,6 +279,7 @@ export function createSonicJSApp(config: SonicJSConfig = {}): SonicJSApp {
     globalVariablesPlugin,
     shortcodesPlugin,
     helloWorldPlugin,
+    multiTenantPlugin,
   ]
   const corePluginsAfterCatchAll = [emailPlugin, magicLinkPlugin, emailReconciliationPlugin]
 
@@ -399,7 +407,7 @@ export function createSonicJSApp(config: SonicJSConfig = {}): SonicJSApp {
       const auth = createAuth(c.env, config.auth?.extendBetterAuth)
       const session = await auth.api.getSession({ headers: c.req.raw.headers })
       if (session?.user) {
-        const u = session.user as { id: string; email: string; role?: string }
+        const u = session.user as { id: string; email: string; role?: string; isSuperAdmin?: boolean }
         const s = session.session as {
           id: string; userId: string; token: string
           expiresAt: number | Date; createdAt: number | Date; updatedAt: number | Date
@@ -409,6 +417,7 @@ export function createSonicJSApp(config: SonicJSConfig = {}): SonicJSApp {
           userId: u.id,
           email: u.email,
           role: u.role ?? 'viewer',
+          isSuperAdmin: u.isSuperAdmin === true,
           exp: ms(s.expiresAt),
           iat: ms(s.createdAt),
         })
@@ -433,6 +442,11 @@ export function createSonicJSApp(config: SonicJSConfig = {}): SonicJSApp {
       app.use('*', middleware)
     }
   }
+
+  // Tenant resolution: sets c.get('tenantId') for every request (API + admin). Short-circuits to
+  // 'default' while the multi-tenant plugin is inactive, so single-tenant behavior is unchanged.
+  // Runs after auth (admin switcher cookie) and before route handlers read the request context.
+  app.use('*', tenantMiddleware())
 
   // Admin panel access control: require authentication and dynamic RBAC portal
   // access. Legacy `users.role` no longer decides who can enter /admin/*.

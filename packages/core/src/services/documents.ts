@@ -109,7 +109,9 @@ export class DocumentsService {
       scheduledAt: input.scheduledAt ?? null,
       expiresAt: input.expiresAt ?? null,
       deletedAt: null,
-      tenantId: input.tenantId,
+      // Tenant comes from the service scope unless the caller passes one explicitly. Never trust a
+      // request-body tenant: route handlers must override with the resolved request-context tenant.
+      tenantId: input.tenantId ?? this.tenantId,
       locale: input.locale ?? 'default',
       translationGroupId: '',
       data: input.data ?? {},

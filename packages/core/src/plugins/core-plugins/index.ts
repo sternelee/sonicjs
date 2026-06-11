@@ -41,6 +41,7 @@ export { userProfilesPlugin, createUserProfilesPlugin, defineUserProfile, getUse
 export type { ProfileFieldDefinition, UserProfileConfig } from './user-profiles'
 export { stripePlugin, createStripePlugin, SubscriptionService, StripeAPI, requireSubscription } from './stripe-plugin'
 export { dashboardPlugin, createDashboardPlugin } from './dashboard-plugin'
+export { multiTenantPlugin, createMultiTenantPlugin, TenantService } from './multi-tenant-plugin'
 
 // Core plugins list - now imported from auto-generated registry
 export const CORE_PLUGIN_IDS = [
@@ -64,7 +65,8 @@ export const CORE_PLUGIN_IDS = [
   'shortcodes',
   'security-audit',
   'user-profiles',
-  'stripe'
+  'stripe',
+  'multi-tenant'
 ] as const
 
 export type CorePluginNames = (typeof CORE_PLUGIN_IDS)[number]
