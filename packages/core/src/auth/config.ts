@@ -142,6 +142,7 @@ export function getDefaultAuthOptions(env: Bindings) {
             role: { type: 'string', required: false, defaultValue: 'viewer', input: false },
             firstName: { type: 'string', required: false, defaultValue: '', input: true },
             lastName: { type: 'string', required: false, defaultValue: '', input: true },
+            isSuperAdmin: { type: 'boolean', required: false, defaultValue: false, input: false },
           },
         },
         session: {

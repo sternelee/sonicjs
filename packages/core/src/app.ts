@@ -104,6 +104,7 @@ export interface Variables {
     userId: string
     email: string
     role: string
+    isSuperAdmin?: boolean
     exp: number
     iat: number
   }
@@ -404,7 +405,7 @@ export function createSonicJSApp(config: SonicJSConfig = {}): SonicJSApp {
       const auth = createAuth(c.env, config.auth?.extendBetterAuth)
       const session = await auth.api.getSession({ headers: c.req.raw.headers })
       if (session?.user) {
-        const u = session.user as { id: string; email: string; role?: string }
+        const u = session.user as { id: string; email: string; role?: string; isSuperAdmin?: boolean }
         const s = session.session as {
           id: string; userId: string; token: string
           expiresAt: number | Date; createdAt: number | Date; updatedAt: number | Date
@@ -414,6 +415,7 @@ export function createSonicJSApp(config: SonicJSConfig = {}): SonicJSApp {
           userId: u.id,
           email: u.email,
           role: u.role ?? 'viewer',
+          isSuperAdmin: u.isSuperAdmin === true,
           exp: ms(s.expiresAt),
           iat: ms(s.createdAt),
         })

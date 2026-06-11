@@ -49,6 +49,31 @@ generated columns still registered in `document-types-seed.ts` — no longer rea
 Verification: `tsc` clean · 32 unit tests (resolver gate + membership CRUD) · spec 71 (5 tests) + spec 70 (6 tests) green.
 
 ### Deferred
-- **Platform-operator bypass** (Payload's `userHasAccessToAllTenants`): no global super-admin override today —
-  an admin only reaches tenants they're enrolled in. Add an opt-in bypass if a support/operator role needs all tenants.
 - Remove dead `tenant` document type + `q_tenant_*` generated columns from `document-types-seed.ts`.
+
+---
+
+# Phase 2: per-tenant roles (G1) + super-admin (G2)
+
+## Locked model
+- Role/verb/grant **definitions** stay global (rbac_role/verb docs under 'default') — one platform role catalog.
+- Role **assignment** is per-tenant:
+  - `default` tenant → global `rbac_user_roles` doc (unchanged, back-compat).
+  - tenant T ≠ default → `auth_tenant_member.role` holds the rbac role **name** the user has in T.
+- `can(userId, resource, verb, tenantId)` resolves grants from the per-tenant role when T≠default, else global.
+- **Super-admin (G2)** = explicit `auth_user.is_super_admin` flag (default 0). Bypasses membership gate +
+  uses global roles in every tenant. NOT derived from the 'admin' role (admin's `*:manage` wildcard would
+  make every admin a super-admin and re-open the gate). Opt-in only.
+
+## G2 (super-admin) — build first (bounded)
+1. `auth_user.is_super_admin INTEGER NOT NULL DEFAULT 0` (migration + schema + BA user additionalField input:false).
+2. `app.ts`: carry `isSuperAdmin` on `c.get('user')` from BA session.user (no extra query).
+3. `tenant.ts`: `enforceMembership = userPresent && pluginActive && !isSuperAdmin`.
+4. switcher POST: bypass membership if super-admin.
+5. Tests: e2e — super-admin switches into a non-member tenant (extends spec 71).
+
+## G1 (per-tenant roles) — build second (large, security-critical)
+- `can`/`getPermissionScope`/`permissionsForUser`/`getRolesForUser` gain a `tenantId` arg.
+- New: resolve member role-name → grants for T≠default.
+- Update callers: `requireRbac` middleware, document ACL (`isAllowed`), admin-rbac routes.
+- Member management UI to set a member's tenant role (currently auto-enroll 'owner' only).

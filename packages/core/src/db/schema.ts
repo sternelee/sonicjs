@@ -11,6 +11,8 @@ export const authUser = sqliteTable('auth_user', {
   name: text('name'), // Better Auth display name (required by Better Auth for registration)
   emailVerified: integer('email_verified', { mode: 'boolean' }).notNull().default(false), // Better Auth
   role: text('role').notNull().default('viewer'), // 'admin', 'editor', 'author', 'viewer'
+  // Platform super-admin: bypasses the multi-tenant membership gate. Opt-in, default false.
+  isSuperAdmin: integer('is_super_admin', { mode: 'boolean' }).notNull().default(false),
   avatar: text('avatar'),
   isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true),
   lastLoginAt: integer('last_login_at'),

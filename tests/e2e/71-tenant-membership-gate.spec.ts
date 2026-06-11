@@ -2,7 +2,7 @@ import { test, expect, type Page } from '@playwright/test'
 import { execFileSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
-import { loginAsAdmin, ensureAdminUserExists } from './utils/test-helpers'
+import { loginAsAdmin, ensureAdminUserExists, ADMIN_CREDENTIALS } from './utils/test-helpers'
 
 // Membership gate: an authed admin may only switch into / resolve tenants they belong to. Creating a
 // tenant auto-enrolls the creator (owner), so the happy path works; a tenant the admin is NOT a
@@ -43,6 +43,8 @@ test.describe.serial('Multi-Tenant membership gate', () => {
 
   test.afterAll(() => {
     d1Exec(`DELETE FROM auth_tenant WHERE slug = '${ORPHAN_SLUG}'`)
+    // Safety net: never leave the shared admin flagged super-admin for later specs.
+    d1Exec(`UPDATE auth_user SET is_super_admin = 0 WHERE email = 'admin@sonicjs.com'`)
   })
 
   test.beforeEach(async ({ page }) => {
@@ -99,6 +101,29 @@ test.describe.serial('Multi-Tenant membership gate', () => {
     await expect(switcher.locator(`option[value="${MEMBER_SLUG}"]`)).toHaveCount(1)
     await expect(switcher.locator(`option[value="${ORPHAN_SLUG}"]`)).toHaveCount(0)
     await expect(switcher.locator('option[value="default"]')).toHaveCount(1)
+  })
+
+  test('super-admin bypasses the gate: switches into a non-member tenant', async ({ page }) => {
+    // Promote the admin to platform super-admin, then start a FRESH session so session.user carries
+    // the new flag (re-signing over an existing session needs an explicit Origin for BA's CSRF check).
+    d1Exec(`UPDATE auth_user SET is_super_admin = 1 WHERE email = 'admin@sonicjs.com'`)
+    try {
+      await page.context().clearCookies()
+      const signin = await page.request.post(`${BASE_URL}/auth/sign-in/email`, {
+        data: { email: ADMIN_CREDENTIALS.email, password: ADMIN_CREDENTIALS.password },
+        headers: { 'Content-Type': 'application/json', Origin: BASE_URL },
+      })
+      expect(signin.ok()).toBeTruthy()
+
+      const res = await page.request.post(`${BASE_URL}/admin/tenants/switch`, {
+        form: { tenant: ORPHAN_SLUG, redirect: '/admin' },
+        maxRedirects: 0,
+      })
+      // Allowed despite no membership row (super-admin bypass).
+      expect([301, 302, 303]).toContain(res.status())
+    } finally {
+      d1Exec(`UPDATE auth_user SET is_super_admin = 0 WHERE email = 'admin@sonicjs.com'`)
+    }
   })
 
   test('teardown: deactivate plugin to restore single-tenant baseline', async ({ page }) => {

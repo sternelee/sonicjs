@@ -183,10 +183,11 @@ export function tenantMiddleware() {
     const state = await loadTenantState(db)
 
     // Membership gate: for authed requests, resolution is restricted to the user's tenants. Anon
-    // requests (public API / content) skip enforcement so public routing is unchanged.
-    const user = c.get('user') as { userId?: string } | undefined
+    // requests (public API / content) skip enforcement so public routing is unchanged. Platform
+    // super-admins bypass the gate entirely (access every tenant).
+    const user = c.get('user') as { userId?: string; isSuperAdmin?: boolean } | undefined
     let memberSlugs: Set<string> | undefined
-    const enforceMembership = !!(user?.userId && state.pluginActive)
+    const enforceMembership = !!(user?.userId && state.pluginActive && !user.isSuperAdmin)
     if (enforceMembership) {
       memberSlugs = await loadMemberSlugs(db, user!.userId!)
     }

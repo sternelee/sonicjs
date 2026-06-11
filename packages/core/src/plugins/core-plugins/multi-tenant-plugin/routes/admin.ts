@@ -17,7 +17,7 @@ import { renderTenantForm } from '../templates/tenant-form.template'
 
 type Bindings = { DB: D1Database; KV: KVNamespace }
 type Variables = {
-  user?: { userId: string; email: string; role: string; exp: number; iat: number }
+  user?: { userId: string; email: string; role: string; isSuperAdmin?: boolean; exp: number; iat: number }
   tenantId?: string
   appVersion?: string
 }
@@ -80,8 +80,10 @@ export function createTenantAdminRoutes(): Hono<{ Bindings: Bindings; Variables:
     }
 
     // Membership gate: a user may only switch into tenants they belong to ('default' is open).
+    // Platform super-admins bypass the gate (access every tenant).
     const user = c.get('user')
-    if (!user || !(await svc.isMember(user.userId, slug))) {
+    if (!user) return c.json({ error: 'Unauthorized' }, 401)
+    if (!user.isSuperAdmin && !(await svc.isMember(user.userId, slug))) {
       return c.json({ error: 'You are not a member of this tenant' }, 403)
     }
 

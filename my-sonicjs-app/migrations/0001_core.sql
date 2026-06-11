@@ -16,6 +16,9 @@ CREATE TABLE IF NOT EXISTS auth_user (
   first_name TEXT NOT NULL,
   last_name TEXT NOT NULL,
   role TEXT NOT NULL DEFAULT 'viewer',
+  -- Platform super-admin: bypasses the multi-tenant membership gate, uses global roles in every
+  -- tenant. Opt-in (default 0); intentionally NOT derived from the 'admin' role.
+  is_super_admin INTEGER NOT NULL DEFAULT 0,
   avatar TEXT,
   password_hash TEXT,
   is_active INTEGER NOT NULL DEFAULT 1,
