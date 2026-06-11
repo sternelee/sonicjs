@@ -409,13 +409,18 @@ async function loadContentEditorFlags(db: D1Database): Promise<Record<string, un
   return flags
 }
 
-function makeDocService(db: D1Database, docType: any) {
+function makeDocService(db: D1Database, docType: any, tenantId: string) {
   return new DocumentsService(db, {
     queryableFields: docType.queryableFields ?? [],
     typeSchemaVersion: docType.schemaVersion ?? 1,
     maxVersionsPerRoot: docType.settings?.maxVersionsPerRoot ?? 50,
-    tenantId: 'default',
+    tenantId,
   })
+}
+
+/** Tenant for this request (resolved by tenantMiddleware; 'default' when single-tenant). */
+function reqTenant(c: any): string {
+  return (c.get('tenantId') as string | undefined) ?? 'default'
 }
 
 function slugify(s?: string | null): string | null {
@@ -474,7 +479,7 @@ adminContentRoutes.get('/', async (c) => {
       const typeId = modelName.startsWith('doc:') ? modelName.slice(4) : modelName
       const docType = docTypes.find(dt => dt.id === typeId)
 
-      const docParams: (string | number)[] = ['default', typeId]
+      const docParams: (string | number)[] = [reqTenant(c), typeId]
       let docSql = `SELECT * FROM documents WHERE tenant_id = ? AND type_id = ? AND is_current_draft = 1`
       // D32: honor the ?status= filter (mirror the all-view union's doc-half mapping). 'deleted' shows
       // soft-deleted roots; published/draft refine by the published flag; 'all' shows the working set.
@@ -536,8 +541,8 @@ adminContentRoutes.get('/', async (c) => {
     if (modelName === 'all') {
       const allTypeIds = docTypes.map(dt => dt.id)
       const like = search ? `%${search}%` : null
-      const docConds = ['d.is_current_draft = 1', "d.tenant_id = 'default'"]
-      const docParams: any[] = []
+      const docConds = ['d.is_current_draft = 1', 'd.tenant_id = ?']
+      const docParams: any[] = [reqTenant(c)]
       if (allTypeIds.length > 0) {
         const ph = allTypeIds.map(() => '?').join(',')
         docConds.push(`d.type_id IN (${ph})`)
@@ -939,8 +944,8 @@ adminContentRoutes.get('/:id/edit', async (c) => {
 
     // ── Option B: if :id is a document-backed root, render the rich editor from the document ──
     const docRow = await db
-      .prepare("SELECT * FROM documents WHERE root_id = ? AND is_current_draft = 1 AND tenant_id = 'default' AND deleted_at IS NULL")
-      .bind(id).first() as any
+      .prepare("SELECT * FROM documents WHERE root_id = ? AND is_current_draft = 1 AND tenant_id = ? AND deleted_at IS NULL")
+      .bind(id, reqTenant(c)).first() as any
     if (docRow) {
       const docType = await getDocBackingType(db, docRow.type_id)
       const dcoll = docType ? await getCollectionByName(db, docRow.type_id) : null
@@ -1174,9 +1179,10 @@ adminContentRoutes.post('/', async (c) => {
     // ── Option B: document-backed collection → store in `documents`, not `content` ──
     const createDocType = await getDocBackingType(db, collection.name)
     if (createDocType) {
-      const svc = makeDocService(db, createDocType)
+      const tenantId = reqTenant(c)
+      const svc = makeDocService(db, createDocType, tenantId)
       const doc = await svc.create(createDocumentSchema.parse({
-        typeId: createDocType.id, tenantId: 'default', locale: 'default',
+        typeId: createDocType.id, tenantId, locale: 'default',
         title: data.title || slug || 'Untitled', slug: slug || undefined,
         data, publishOnCreate: status === 'published',
       }), user?.userId)
@@ -1295,9 +1301,10 @@ adminContentRoutes.put('/:id', async (c) => {
     const db = c.env.DB
 
     // ── Option B: if :id is a document-backed root, save a new draft + sync publish state ──
+    const tenantId = reqTenant(c)
     const docRowU = await db
-      .prepare("SELECT id, type_id FROM documents WHERE root_id = ? AND is_current_draft = 1 AND tenant_id = 'default'")
-      .bind(id).first() as any
+      .prepare("SELECT id, type_id FROM documents WHERE root_id = ? AND is_current_draft = 1 AND tenant_id = ?")
+      .bind(id, tenantId).first() as any
     if (docRowU) {
       const docType = await getDocBackingType(db, docRowU.type_id)
       const dcoll = docType ? await getCollectionByName(db, docRowU.type_id) : null
@@ -1317,10 +1324,10 @@ adminContentRoutes.put('/:id', async (c) => {
         let status = formData.get('status') as string || 'draft'
         if (action === 'save_and_publish') status = 'published'
 
-        const svc = makeDocService(db, docType)
+        const svc = makeDocService(db, docType, tenantId)
         const newDraft = await svc.saveDraft(id, { title: data.title ?? null, slug, data }, user?.userId)
         // saveDraft always returns an unpublished draft; sync against the root's published row.
-        const pub = await db.prepare("SELECT id FROM documents WHERE root_id = ? AND is_published = 1 AND tenant_id = 'default'").bind(id).first() as any
+        const pub = await db.prepare("SELECT id FROM documents WHERE root_id = ? AND is_published = 1 AND tenant_id = ?").bind(id, tenantId).first() as any
         if (status === 'published') await svc.publish(newDraft.id, user?.userId)
         else if (pub) await svc.unpublish(pub.id)
 
@@ -1577,14 +1584,15 @@ adminContentRoutes.post('/duplicate', async (c) => {
 
     const db = c.env.DB
 
+    const tenantId = reqTenant(c)
     const docOriginal = await db
-      .prepare("SELECT * FROM documents WHERE root_id = ? AND is_current_draft = 1 AND tenant_id = 'default' AND deleted_at IS NULL")
-      .bind(originalId)
+      .prepare("SELECT * FROM documents WHERE root_id = ? AND is_current_draft = 1 AND tenant_id = ? AND deleted_at IS NULL")
+      .bind(originalId, tenantId)
       .first() as any
     if (docOriginal) {
       const docType = await getDocBackingType(db, docOriginal.type_id)
       if (docType) {
-        const svc = makeDocService(db, docType)
+        const svc = makeDocService(db, docType, tenantId)
         const originalData = docOriginal.data ? JSON.parse(docOriginal.data) : {}
         const copyData = {
           ...originalData,
@@ -1592,7 +1600,7 @@ adminContentRoutes.post('/duplicate', async (c) => {
         }
         const copy = await svc.create(createDocumentSchema.parse({
           typeId: docType.id,
-          tenantId: 'default',
+          tenantId,
           locale: 'default',
           title: copyData.title,
           slug: `${docOriginal.slug || 'copy'}-copy-${Date.now()}`,
@@ -1761,10 +1769,11 @@ adminContentRoutes.post('/bulk-action', async (c) => {
     // D33: bulk ids can be document root ids (doc-backed collections) OR legacy content ids. The old
     // handler only ran `UPDATE content … WHERE id IN (…)`, which silently no-ops on doc rows while still
     // reporting success. Partition the ids and route each set to the correct store.
+    const tenantId = reqTenant(c)
     const idPlaceholders = ids.map(() => '?').join(',')
     const { results: docRootRows } = await db
-      .prepare(`SELECT DISTINCT root_id, type_id FROM documents WHERE tenant_id = 'default' AND root_id IN (${idPlaceholders})`)
-      .bind(...ids)
+      .prepare(`SELECT DISTINCT root_id, type_id FROM documents WHERE tenant_id = ? AND root_id IN (${idPlaceholders})`)
+      .bind(tenantId, ...ids)
       .all()
     const docRoots = (docRootRows || []) as Array<{ root_id: string; type_id: string }>
     const docRootIds = new Set(docRoots.map(r => r.root_id))
@@ -1777,8 +1786,8 @@ adminContentRoutes.post('/bulk-action', async (c) => {
         const nowSec = Math.floor(now / 1000)
         const dph = docRoots.map(() => '?').join(',')
         await db
-          .prepare(`UPDATE documents SET deleted_at = ?, updated_at = ? WHERE tenant_id = 'default' AND root_id IN (${dph})`)
-          .bind(nowSec, nowSec, ...docRoots.map(r => r.root_id))
+          .prepare(`UPDATE documents SET deleted_at = ?, updated_at = ? WHERE tenant_id = ? AND root_id IN (${dph})`)
+          .bind(nowSec, nowSec, tenantId, ...docRoots.map(r => r.root_id))
           .run()
       } else {
         // publish / draft → run through DocumentsService so the published flag, prev-published
@@ -1786,12 +1795,12 @@ adminContentRoutes.post('/bulk-action', async (c) => {
         for (const root of docRoots) {
           const docType = await getDocBackingType(db, root.type_id)
           if (!docType) continue
-          const svc = makeDocService(db, docType)
+          const svc = makeDocService(db, docType, tenantId)
           if (action === 'publish') {
-            const draft = await db.prepare("SELECT id FROM documents WHERE root_id = ? AND tenant_id = 'default' AND is_current_draft = 1").bind(root.root_id).first() as any
+            const draft = await db.prepare("SELECT id FROM documents WHERE root_id = ? AND tenant_id = ? AND is_current_draft = 1").bind(root.root_id, tenantId).first() as any
             if (draft) await svc.publish(draft.id, user?.userId)
           } else {
-            const pub = await db.prepare("SELECT id FROM documents WHERE root_id = ? AND tenant_id = 'default' AND is_published = 1").bind(root.root_id).first() as any
+            const pub = await db.prepare("SELECT id FROM documents WHERE root_id = ? AND tenant_id = ? AND is_published = 1").bind(root.root_id, tenantId).first() as any
             if (pub) await svc.unpublish(pub.id)
           }
         }
@@ -1826,12 +1835,13 @@ adminContentRoutes.delete('/:id', async (c) => {
     const user = c.get('user')
 
     // ── Option B: if :id is a document-backed root, soft-delete every version row of the root ──
+    const tenantId = reqTenant(c)
     const docDel = await db
-      .prepare("SELECT type_id FROM documents WHERE root_id = ? AND tenant_id = 'default' LIMIT 1")
-      .bind(id).first() as any
+      .prepare("SELECT type_id FROM documents WHERE root_id = ? AND tenant_id = ? LIMIT 1")
+      .bind(id, tenantId).first() as any
     if (docDel && (await getDocBackingType(db, docDel.type_id))) {
       const now = Math.floor(Date.now() / 1000)
-      await db.prepare("UPDATE documents SET deleted_at = ?, updated_at = ? WHERE root_id = ? AND tenant_id = 'default'").bind(now, now, id).run()
+      await db.prepare("UPDATE documents SET deleted_at = ?, updated_at = ? WHERE root_id = ? AND tenant_id = ?").bind(now, now, id, tenantId).run()
       await getCacheService(CACHE_CONFIGS.content!).invalidate('content:list:*')
       return c.html(`
         <div id="content-list" hx-get="/admin/content?model=${docDel.type_id}" hx-trigger="load" hx-swap="outerHTML">
@@ -2141,13 +2151,14 @@ function parseDocFormData(
   return { title, slug, data }
 }
 
-async function getDocService(db: D1Database, typeId: string) {
+async function getDocService(db: D1Database, typeId: string, tenantId: string) {
   const registry = new DocumentTypeRegistry(db)
   const docType = await registry.findById(typeId)
   const svc = new DocumentsService(db, {
     queryableFields: docType?.queryableFields ?? [],
     typeSchemaVersion: docType?.schemaVersion ?? 1,
     maxVersionsPerRoot: docType?.settings?.maxVersionsPerRoot ?? 50,
+    tenantId,
   })
   return { svc, docType }
 }
@@ -2167,12 +2178,13 @@ adminContentRoutes.post('/documents/:typeId/new', async (c) => {
   const db = c.env.DB
   const user = c.get('user') as any
   try {
-    const { svc, docType } = await getDocService(db, typeId)
+    const tenantId = reqTenant(c)
+    const { svc, docType } = await getDocService(db, typeId, tenantId)
     if (!docType) return c.html('<p>Unknown document type.</p>', 404)
     const formData = await c.req.formData()
     const { title, slug, data } = parseDocFormData(formData, docType.queryableFields)
     const doc = await svc.create(createDocumentSchema.parse({
-      typeId, tenantId: 'default', locale: 'default',
+      typeId, tenantId, locale: 'default',
       title: title ?? undefined, slug: slug ?? undefined, data,
     }), user?.userId)
     return c.redirect(`/admin/content/documents/${typeId}/${doc.rootId}/edit?message=Created+successfully`)
@@ -2193,16 +2205,17 @@ adminContentRoutes.get('/documents/:typeId/:rootId/edit', async (c) => {
   const docType = await registry.findById(typeId)
   if (!docType) return c.html('<p>Unknown document type.</p>', 404)
 
+  const tenantId = reqTenant(c)
   const draftRow = await db.prepare(
     'SELECT * FROM documents WHERE root_id = ? AND tenant_id = ? AND is_current_draft = 1'
-  ).bind(rootId, 'default').first() as any
+  ).bind(rootId, tenantId).first() as any
   if (!draftRow) return c.html('<p>Document not found.</p>', 404)
 
   let publishedDoc = null
   if (!draftRow.is_published) {
     const pubRow = await db.prepare(
       'SELECT * FROM documents WHERE root_id = ? AND tenant_id = ? AND is_published = 1'
-    ).bind(rootId, 'default').first() as any
+    ).bind(rootId, tenantId).first() as any
     if (pubRow) publishedDoc = { id: pubRow.id, rootId: pubRow.root_id, typeId: pubRow.type_id, versionNumber: pubRow.version_number, isCurrentDraft: false, isPublished: true, status: pubRow.status, data: JSON.parse(pubRow.data ?? '{}') } as any
   }
 
@@ -2232,7 +2245,7 @@ adminContentRoutes.post('/documents/:typeId/:rootId', async (c) => {
     const formData = await c.req.formData()
     const _method = formData.get('_method') as string | null
     if (_method !== 'PUT') return c.redirect(`/admin/content/documents/${typeId}/${rootId}/edit?message=Unknown+action`)
-    const { svc, docType } = await getDocService(db, typeId)
+    const { svc, docType } = await getDocService(db, typeId, reqTenant(c))
     const { title, slug, data } = parseDocFormData(formData, docType?.queryableFields ?? [])
     await svc.saveDraft(rootId, { title, slug, data }, user?.userId)
     return c.redirect(`/admin/content/documents/${typeId}/${rootId}/edit?message=Draft+saved`)
@@ -2247,8 +2260,9 @@ adminContentRoutes.post('/documents/:typeId/:documentId/publish', async (c) => {
   const db = c.env.DB
   const user = c.get('user') as any
   try {
-    const row = await db.prepare('SELECT root_id FROM documents WHERE id = ?').bind(documentId).first() as any
-    const { svc } = await getDocService(db, typeId)
+    const tenantId = reqTenant(c)
+    const row = await db.prepare('SELECT root_id FROM documents WHERE id = ? AND tenant_id = ?').bind(documentId, tenantId).first() as any
+    const { svc } = await getDocService(db, typeId, tenantId)
     await svc.publish(documentId, user?.userId)
     return c.redirect(`/admin/content/documents/${typeId}/${row?.root_id}/edit?message=Published`)
   } catch (err: any) {
@@ -2261,8 +2275,9 @@ adminContentRoutes.post('/documents/:typeId/:documentId/unpublish', async (c) =>
   const { typeId, documentId } = c.req.param()
   const db = c.env.DB
   try {
-    const row = await db.prepare('SELECT root_id FROM documents WHERE id = ?').bind(documentId).first() as any
-    const { svc } = await getDocService(db, typeId)
+    const tenantId = reqTenant(c)
+    const row = await db.prepare('SELECT root_id FROM documents WHERE id = ? AND tenant_id = ?').bind(documentId, tenantId).first() as any
+    const { svc } = await getDocService(db, typeId, tenantId)
     await svc.unpublish(documentId)
     return c.redirect(`/admin/content/documents/${typeId}/${row?.root_id}/edit?message=Unpublished`)
   } catch (err: any) {
@@ -2275,10 +2290,11 @@ adminContentRoutes.post('/documents/:typeId/:documentId/delete', async (c) => {
   const { typeId, documentId } = c.req.param()
   const db = c.env.DB
   try {
-    const { svc, docType } = await getDocService(db, typeId)
+    const tenantId = reqTenant(c)
+    const { svc, docType } = await getDocService(db, typeId, tenantId)
     if (docType?.settings?.pii) {
-      const row = await db.prepare('SELECT root_id FROM documents WHERE id = ?').bind(documentId).first() as any
-      if (row) await svc.erase(row.root_id, 'default')
+      const row = await db.prepare('SELECT root_id FROM documents WHERE id = ? AND tenant_id = ?').bind(documentId, tenantId).first() as any
+      if (row) await svc.erase(row.root_id, tenantId)
     } else {
       await svc.softDelete(documentId)
     }
@@ -2298,7 +2314,7 @@ adminContentRoutes.get('/documents/:typeId/:rootId/versions', async (c) => {
   if (!docType) return c.html('<div>Unknown type.</div>', 404)
   const result = await db.prepare(
     'SELECT id, version_number, is_current_draft, is_published, status, updated_at, created_by FROM documents WHERE root_id = ? AND tenant_id = ? ORDER BY version_number DESC LIMIT 50'
-  ).bind(rootId, 'default').all()
+  ).bind(rootId, reqTenant(c)).all()
   const versions = (result.results ?? []).map((r: any) => ({
     id: r.id, versionNumber: r.version_number, isCurrentDraft: r.is_current_draft === 1,
     isPublished: r.is_published === 1, status: r.status, updatedAt: r.updated_at, createdBy: r.created_by,

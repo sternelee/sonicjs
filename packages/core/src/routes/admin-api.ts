@@ -9,6 +9,7 @@ import { Hono } from 'hono'
 import { z } from 'zod'
 // import { zValidator } from '@hono/zod-validator'
 import { requireAuth, requireRole } from '../middleware'
+import { getRequestTenant } from '../services/document-request-context'
 import type { Bindings, Variables } from '../app'
 
 export const adminApiRoutes = new Hono<{ Bindings: Bindings; Variables: Variables }>()
@@ -335,12 +336,12 @@ adminApiRoutes.get('/references', async (c) => {
         JOIN collections col ON col.name = d.type_id
         WHERE d.root_id = ?
           AND d.type_id IN (${collectionNames.map(() => '?').join(', ')})
-          AND d.tenant_id = 'default'
+          AND d.tenant_id = ?
           AND d.is_current_draft = 1
           AND d.deleted_at IS NULL
         LIMIT 1
       `)
-      const item = await itemStmt.bind(id, ...collectionNames).first() as any
+      const item = await itemStmt.bind(id, ...collectionNames, getRequestTenant(c)).first() as any
 
       if (!item) {
         return c.json({ error: 'Reference not found' }, 404)
@@ -369,7 +370,7 @@ adminApiRoutes.get('/references', async (c) => {
         FROM documents d
         JOIN collections col ON col.name = d.type_id
         WHERE d.type_id IN (${typePlaceholders})
-          AND d.tenant_id = 'default'
+          AND d.tenant_id = ?
           AND d.is_current_draft = 1
           AND d.deleted_at IS NULL
           AND d.is_published = 1
@@ -378,7 +379,7 @@ adminApiRoutes.get('/references', async (c) => {
         LIMIT ?
       `)
       const queryResults = await stmt
-        .bind(...collectionNames, searchParam, searchParam, limit)
+        .bind(...collectionNames, getRequestTenant(c), searchParam, searchParam, limit)
         .all()
       results = queryResults.results
     } else {
@@ -390,7 +391,7 @@ adminApiRoutes.get('/references', async (c) => {
         FROM documents d
         JOIN collections col ON col.name = d.type_id
         WHERE d.type_id IN (${typePlaceholders})
-          AND d.tenant_id = 'default'
+          AND d.tenant_id = ?
           AND d.is_current_draft = 1
           AND d.deleted_at IS NULL
           AND d.is_published = 1
@@ -398,7 +399,7 @@ adminApiRoutes.get('/references', async (c) => {
         LIMIT ?
       `)
       const queryResults = await stmt
-        .bind(...collectionNames, limit)
+        .bind(...collectionNames, getRequestTenant(c), limit)
         .all()
       results = queryResults.results
     }
@@ -614,8 +615,9 @@ adminApiRoutes.delete('/collections/:id', async (c) => {
       return c.json({ error: 'Collection not found' }, 404)
     }
 
-    // Check if collection has document content.
-    const contentStmt = db.prepare("SELECT COUNT(DISTINCT root_id) as count FROM documents WHERE tenant_id = 'default' AND type_id = ?")
+    // Check if collection has document content. Collections/types are global (shared across tenants),
+    // so deleting one would orphan documents in ANY tenant — count across all tenants, not just one.
+    const contentStmt = db.prepare("SELECT COUNT(DISTINCT root_id) as count FROM documents WHERE type_id = ?")
     const contentResult = await contentStmt.bind(collection.name).first() as any
 
     if (contentResult && contentResult.count > 0) {

@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { requireAuth } from '../middleware'
 import type { Bindings, Variables } from '../app'
 import { MediaDocumentService } from '../services/media-documents'
+import { getRequestTenant } from '../services/document-request-context'
 
 // Phase 6 (transition / dual-write): mirror an upload into a media_asset document so the document
 // model becomes the eventual source of truth. Best-effort while the library still reads the legacy
@@ -11,9 +12,10 @@ async function mirrorUploadToDocument(
   db: any,
   rec: { filename: string; original_name: string; mime_type: string; size: number; width: number | null; height: number | null; folder: string; r2_key: string },
   userId?: string,
+  tenantId: string = 'default',
 ) {
   try {
-    await new MediaDocumentService(db).createFromUpload(
+    await new MediaDocumentService(db, tenantId).createFromUpload(
       {
         filename: rec.filename,
         originalName: rec.original_name,
@@ -191,7 +193,7 @@ apiMediaRoutes.post('/upload', async (c) => {
     await emitEvent('media.upload', { id: mediaRecord.id, filename: mediaRecord.filename })
 
     // Phase 6: mirror into a media_asset document (best-effort dual-write).
-    await mirrorUploadToDocument(c.env.DB, mediaRecord, user.userId)
+    await mirrorUploadToDocument(c.env.DB, mediaRecord, user.userId, getRequestTenant(c))
 
     return c.json({
       success: true,
@@ -349,7 +351,7 @@ apiMediaRoutes.post('/upload-multiple', async (c) => {
         ).run()
 
         // Phase 6: mirror into a media_asset document (best-effort dual-write).
-        await mirrorUploadToDocument(c.env.DB, mediaRecord, user.userId)
+        await mirrorUploadToDocument(c.env.DB, mediaRecord, user.userId, getRequestTenant(c))
 
         uploadResults.push({
           id: mediaRecord.id,

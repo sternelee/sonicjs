@@ -7,6 +7,7 @@ import { resolveContentVariables } from '../plugins/core-plugins/global-variable
 import { DocumentsService, documentSecondsToMs } from '../services/documents'
 import { DocumentTypeRegistry } from '../services/document-type-registry'
 import { createDocumentSchema } from '../schemas/document'
+import { getRequestTenant } from '../services/document-request-context'
 import type { D1Database } from '@cloudflare/workers-types'
 import { dispatchHookEvent } from '../plugins/hooks/dispatch-event'
 import type { HookActor } from '../plugins/hooks/catalog'
@@ -67,8 +68,8 @@ apiContentCrudRoutes.get('/check-slug', async (c) => {
     if (backing) {
       // D37: a slug is taken if ANY live revision uses it — the current draft OR a still-served
       // published row (a superseded published row keeps its slug until replaced).
-      let docQuery = "SELECT root_id FROM documents WHERE type_id = ? AND tenant_id = 'default' AND (is_current_draft = 1 OR is_published = 1) AND deleted_at IS NULL AND slug = ?"
-      const docParams: string[] = [backing.coll.name, slug]
+      let docQuery = "SELECT root_id FROM documents WHERE type_id = ? AND tenant_id = ? AND (is_current_draft = 1 OR is_published = 1) AND deleted_at IS NULL AND slug = ?"
+      const docParams: string[] = [backing.coll.name, getRequestTenant(c), slug]
       if (excludeId) { docQuery += ' AND root_id != ?'; docParams.push(excludeId) }
       const docExisting = await db.prepare(docQuery).bind(...docParams).first()
       if (docExisting) {
@@ -100,10 +101,10 @@ apiContentCrudRoutes.get('/:id', optionalAuth(), async (c) => {
     const docRow = await db
       .prepare(
         privileged
-          ? "SELECT * FROM documents WHERE root_id = ? AND tenant_id = 'default' AND is_current_draft = 1 AND deleted_at IS NULL"
-          : "SELECT * FROM documents WHERE root_id = ? AND tenant_id = 'default' AND is_published = 1 AND deleted_at IS NULL",
+          ? "SELECT * FROM documents WHERE root_id = ? AND tenant_id = ? AND is_current_draft = 1 AND deleted_at IS NULL"
+          : "SELECT * FROM documents WHERE root_id = ? AND tenant_id = ? AND is_published = 1 AND deleted_at IS NULL",
       )
-      .bind(id)
+      .bind(id, getRequestTenant(c))
       .first() as any
 
     let transformedContent: any
@@ -179,8 +180,8 @@ apiContentCrudRoutes.post('/', requireAuth(), requireRole(['admin', 'editor', 'a
     if (backing) {
       const dup = await db
         // D37: reject if the slug is used by any live revision (current draft OR served published row).
-        .prepare("SELECT root_id FROM documents WHERE type_id = ? AND tenant_id = 'default' AND (is_current_draft = 1 OR is_published = 1) AND deleted_at IS NULL AND slug = ?")
-        .bind(backing.coll.name, finalSlug)
+        .prepare("SELECT root_id FROM documents WHERE type_id = ? AND tenant_id = ? AND (is_current_draft = 1 OR is_published = 1) AND deleted_at IS NULL AND slug = ?")
+        .bind(backing.coll.name, getRequestTenant(c), finalSlug)
         .first()
       if (dup) {
         return c.json({ error: 'A content item with this slug already exists in this collection' }, 409)
@@ -204,15 +205,16 @@ apiContentCrudRoutes.post('/', requireAuth(), requireRole(['admin', 'editor', 'a
         return c.json({ error: 'Write cancelled by plugin', details: String(err) }, 400)
       }
 
+      const tenantId = getRequestTenant(c)
       const svc = new DocumentsService(db, {
         queryableFields: backing.docType.queryableFields ?? [],
         typeSchemaVersion: backing.docType.schemaVersion ?? 1,
         maxVersionsPerRoot: backing.docType.settings?.maxVersionsPerRoot ?? 50,
-        tenantId: 'default',
+        tenantId,
       })
       const doc = await svc.create(
         createDocumentSchema.parse({
-          typeId: backing.coll.name, tenantId: 'default', locale: 'default',
+          typeId: backing.coll.name, tenantId, locale: 'default',
           title, slug: finalSlug, data: hookData, publishOnCreate: (status || 'draft') === 'published',
         }),
         user?.userId,
@@ -254,9 +256,10 @@ apiContentCrudRoutes.put('/:id', requireAuth(), requireRole(['admin', 'editor', 
 
     // Document-backed: :id is a document root id → save a new draft and sync publish state. D39: skip
     // soft-deleted roots (so PUT can't resurrect one) → falls through → 404.
+    const tenantId = getRequestTenant(c)
     const docRow = await db
-      .prepare("SELECT root_id, type_id FROM documents WHERE root_id = ? AND tenant_id = 'default' AND is_current_draft = 1 AND deleted_at IS NULL")
-      .bind(id)
+      .prepare("SELECT root_id, type_id FROM documents WHERE root_id = ? AND tenant_id = ? AND is_current_draft = 1 AND deleted_at IS NULL")
+      .bind(id, tenantId)
       .first() as any
     if (docRow) {
       const actor: HookActor | undefined = user
@@ -282,14 +285,14 @@ apiContentCrudRoutes.put('/:id', requireAuth(), requireRole(['admin', 'editor', 
         queryableFields: docType?.queryableFields ?? [],
         typeSchemaVersion: docType?.schemaVersion ?? 1,
         maxVersionsPerRoot: docType?.settings?.maxVersionsPerRoot ?? 50,
-        tenantId: 'default',
+        tenantId,
       })
       const input: any = {}
       if (body.title !== undefined) input.title = body.title
       if (body.slug !== undefined) input.slug = slugify(body.slug)
       if (hookData !== undefined) input.data = hookData
       const newDraft = await svc.saveDraft(id!, input, user?.userId)
-      const pub = await db.prepare("SELECT id FROM documents WHERE root_id = ? AND is_published = 1 AND tenant_id = 'default'").bind(id).first() as any
+      const pub = await db.prepare("SELECT id FROM documents WHERE root_id = ? AND is_published = 1 AND tenant_id = ?").bind(id, tenantId).first() as any
       // D38: an explicit status wins; with NO status, preserve the prior effective state.
       const wasPublished = !!pub
       if (body.status === 'published' || (body.status === undefined && pub)) {
@@ -337,7 +340,8 @@ apiContentCrudRoutes.delete('/:id', requireAuth(), requireRole(['admin', 'editor
 
     // Document-backed: :id is a document root id → soft-delete every version row of the root. D39:
     // ignore an already soft-deleted root so a second DELETE falls through → 404.
-    const docRow = await db.prepare("SELECT type_id FROM documents WHERE root_id = ? AND tenant_id = 'default' AND deleted_at IS NULL LIMIT 1").bind(id).first() as any
+    const tenantId = getRequestTenant(c)
+    const docRow = await db.prepare("SELECT type_id FROM documents WHERE root_id = ? AND tenant_id = ? AND deleted_at IS NULL LIMIT 1").bind(id, tenantId).first() as any
     if (docRow) {
       const actor: HookActor | undefined = user
         ? { id: user.userId, email: user.email ?? '', role: user.role }
@@ -351,7 +355,7 @@ apiContentCrudRoutes.delete('/:id', requireAuth(), requireRole(['admin', 'editor
       }
 
       const now = Math.floor(Date.now() / 1000)
-      await db.prepare("UPDATE documents SET deleted_at = ?, updated_at = ? WHERE root_id = ? AND tenant_id = 'default'").bind(now, now, id).run()
+      await db.prepare("UPDATE documents SET deleted_at = ?, updated_at = ? WHERE root_id = ? AND tenant_id = ?").bind(now, now, id, tenantId).run()
       const cache = getCacheService(CACHE_CONFIGS.api!)
       await cache.invalidate('content-filtered:*')
       await cache.invalidate('collection-content-filtered:*')

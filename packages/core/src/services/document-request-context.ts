@@ -21,11 +21,21 @@ export interface DocumentRequestContext {
  * - Authenticated request → `[{ user }, { role }]`. Public is intentionally NOT added for authed
  *   users so a public `deny` override cannot clobber a role/user `allow`.
  */
+/**
+ * The tenant slug resolved for this request by tenantMiddleware. 'default' when the multi-tenant
+ * plugin is inactive (single-tenant) or when no tenant could be resolved. Use this anywhere a route
+ * or service needs the request tenant without the full principal set.
+ */
+export function getRequestTenant(c: Context): string {
+  return (c.get('tenantId') as string | undefined) ?? 'default'
+}
+
 export function getDocumentRequestContext(c: Context): DocumentRequestContext {
   const user = c.get('user') as { userId?: string; role?: string } | undefined
 
-  // POC: single tenant. Future: derive from subdomain/header/session here (this is the one place).
-  const tenantId = 'default'
+  // Tenant is resolved per request by tenantMiddleware (header/cookie/subdomain when the
+  // multi-tenant plugin is active, 'default' otherwise). This stays the one derivation place.
+  const tenantId = (c.get('tenantId') as string | undefined) ?? 'default'
 
   if (!user?.userId) {
     return { tenantId, principalSet: [{ type: 'public', id: '*' }], userId: null, role: null }

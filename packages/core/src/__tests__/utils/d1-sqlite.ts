@@ -78,8 +78,14 @@ export function createTestD1(): TestD1 {
     sqlite.exec(readFileSync(join(MIGRATIONS_DIR, m), 'utf8'))
   }
   // The production baseline seeds default collections for a fresh app. Tests build their
-  // own fixture collections, so clear seeded rows to avoid unique-name collisions.
-  sqlite.exec("DELETE FROM collections WHERE name IN ('blog_post', 'pages', 'news')")
+  // own fixture collections, so clear seeded rows to avoid unique-name collisions. The greenfield
+  // v3 migrations (0001 auth + 0002 documents) no longer create a `collections` table — guard the
+  // cleanup so the harness works whether or not a future migration reintroduces it.
+  try {
+    sqlite.exec("DELETE FROM collections WHERE name IN ('blog_post', 'pages', 'news')")
+  } catch {
+    // `collections` table not present in the applied migration set — nothing to clean.
+  }
 
   return {
     prepare(sql: string) {

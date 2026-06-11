@@ -10,6 +10,7 @@ import type { Plugin } from '../../types'
 import { PluginBuilder } from '../../sdk/plugin-builder'
 import { DocumentsService } from '../../../services/documents'
 import { DocumentTypeRegistry } from '../../../services/document-type-registry'
+import { getRequestTenant } from '../../../services/document-request-context'
 
 const testimonialSchema = z.object({
   authorName: z.string().min(1, 'Author name is required').max(100),
@@ -21,13 +22,14 @@ const testimonialSchema = z.object({
   sortOrder: z.number().default(0),
 })
 
-async function getService(db: D1Database) {
+async function getService(db: D1Database, tenantId: string) {
   const registry = new DocumentTypeRegistry(db)
   const docType = await registry.findById('testimonial')
   return new DocumentsService(db, {
     queryableFields: docType?.queryableFields ?? [],
     typeSchemaVersion: docType?.schemaVersion ?? 1,
     maxVersionsPerRoot: docType?.settings.maxVersionsPerRoot ?? 50,
+    tenantId,
   })
 }
 
@@ -57,7 +59,7 @@ testimonialAPIRoutes.get('/', async (c) => {
     const { published, minRating } = c.req.query()
     const now = Math.floor(Date.now() / 1000)
 
-    const params: (string | number)[] = ['default', 'testimonial', now, now]
+    const params: (string | number)[] = [getRequestTenant(c), 'testimonial', now, now]
     let sql = `SELECT * FROM documents
                WHERE tenant_id = ? AND type_id = ? AND is_published = 1 AND deleted_at IS NULL
                  AND (scheduled_at IS NULL OR scheduled_at <= ?)
@@ -98,7 +100,7 @@ testimonialAPIRoutes.get('/:id', async (c) => {
        WHERE root_id = ? AND tenant_id = ? AND is_published = 1 AND deleted_at IS NULL
          AND (scheduled_at IS NULL OR scheduled_at <= ?)
          AND (expires_at IS NULL OR expires_at > ?)`
-    ).bind(rootId, 'default', now, now).first()
+    ).bind(rootId, getRequestTenant(c), now, now).first()
 
     if (!row) return c.json({ error: 'Testimonial not found' }, 404)
     return c.json({ success: true, data: docToApiShape(row) })
@@ -113,10 +115,11 @@ testimonialAPIRoutes.post('/', async (c) => {
     const db = (c as any).env?.DB as D1Database
     const body = await c.req.json()
     const validated = testimonialSchema.parse(body)
-    const svc = await getService(db)
+    const tenantId = getRequestTenant(c)
+    const svc = await getService(db, tenantId)
 
     const doc = await svc.create({
-      typeId: 'testimonial', tenantId: 'default', locale: 'default',
+      typeId: 'testimonial', tenantId, locale: 'default',
       title: validated.authorName, sortOrder: validated.sortOrder,
       data: {
         authorName: validated.authorName, authorTitle: validated.authorTitle,
@@ -145,7 +148,8 @@ testimonialAPIRoutes.put('/:id', async (c) => {
     const rootId = c.req.param('id')
     const body = await c.req.json()
     const validated = testimonialSchema.partial().parse(body)
-    const svc = await getService(db)
+    const tenantId = getRequestTenant(c)
+    const svc = await getService(db, tenantId)
 
     const data: Record<string, unknown> = {}
     if (validated.authorName !== undefined) data.authorName = validated.authorName
@@ -168,7 +172,7 @@ testimonialAPIRoutes.put('/:id', async (c) => {
     if (validated.isPublished !== undefined) {
       const pubRow = await db
         .prepare('SELECT id FROM documents WHERE root_id = ? AND is_published = 1 AND tenant_id = ?')
-        .bind(rootId, 'default')
+        .bind(rootId, tenantId)
         .first() as { id: string } | null
       if (validated.isPublished) await svc.publish(newDraft.id)
       else if (pubRow) await svc.unpublish(pubRow.id)
@@ -188,10 +192,11 @@ testimonialAPIRoutes.delete('/:id', async (c) => {
   try {
     const db = (c as any).env?.DB as D1Database
     const rootId = c.req.param('id')
-    const row = await db.prepare('SELECT id FROM documents WHERE root_id = ? AND is_current_draft = 1').bind(rootId).first() as any
+    const tenantId = getRequestTenant(c)
+    const row = await db.prepare('SELECT id FROM documents WHERE root_id = ? AND tenant_id = ? AND is_current_draft = 1').bind(rootId, tenantId).first() as any
     if (!row) return c.json({ error: 'Testimonial not found' }, 404)
 
-    const svc = await getService(db)
+    const svc = await getService(db, tenantId)
     await svc.softDelete(row.id)
     return c.json({ success: true, message: 'Testimonial deleted successfully' })
   } catch (error) {
