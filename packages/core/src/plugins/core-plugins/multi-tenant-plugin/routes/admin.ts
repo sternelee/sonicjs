@@ -159,8 +159,9 @@ export function createTenantAdminRoutes(): Hono<{ Bindings: Bindings; Variables:
         domain: validated.domain || null,
         notes: validated.notes,
       })
-      // Auto-enroll the creator as owner so they can immediately switch into / manage the tenant.
-      if (user) await svc.addMember(validated.slug, user.userId, 'owner', user.email)
+      // Auto-enroll the creator as the tenant 'admin' (a role name the document ACL understands) so
+      // they get full per-tenant access and can immediately switch into / manage the tenant.
+      if (user) await svc.addMember(validated.slug, user.userId, 'admin', user.email)
       return c.redirect('/admin/tenants?message=Tenant created successfully')
     } catch (error) {
       const tenant = { name: String(formEntries.name ?? ''), slug: String(formEntries.slug ?? ''), domain: String(formEntries.domain ?? ''), notes: String(formEntries.notes ?? '') }

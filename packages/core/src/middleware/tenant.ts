@@ -158,17 +158,17 @@ export function resolveTenantSlug(
   return 'default'
 }
 
-/** Slugs the authed user may access (excludes always-open 'default'). Empty on error/anon. */
-async function loadMemberSlugs(db: any, userId: string): Promise<Set<string>> {
+/** slug -> the user's role in that tenant (excludes always-open 'default'). Empty on error/anon. */
+async function loadMemberRoles(db: any, userId: string): Promise<Map<string, string>> {
   try {
     const { results } = await db.prepare(`
-      SELECT t.slug FROM auth_tenant_member m
+      SELECT t.slug, m.role FROM auth_tenant_member m
       JOIN auth_tenant t ON t.id = m.tenant_id
       WHERE m.user_id = ?
     `).bind(userId).all()
-    return new Set((results ?? []).map((r: any) => r.slug as string))
+    return new Map((results ?? []).map((r: any) => [r.slug as string, (r.role as string) || 'viewer']))
   } catch {
-    return new Set()
+    return new Map()
   }
 }
 
@@ -185,11 +185,13 @@ export function tenantMiddleware() {
     // Membership gate: for authed requests, resolution is restricted to the user's tenants. Anon
     // requests (public API / content) skip enforcement so public routing is unchanged. Platform
     // super-admins bypass the gate entirely (access every tenant).
-    const user = c.get('user') as { userId?: string; isSuperAdmin?: boolean } | undefined
+    const user = c.get('user') as { userId?: string; role?: string; isSuperAdmin?: boolean } | undefined
     let memberSlugs: Set<string> | undefined
+    let memberRoles: Map<string, string> | undefined
     const enforceMembership = !!(user?.userId && state.pluginActive && !user.isSuperAdmin)
-    if (enforceMembership) {
-      memberSlugs = await loadMemberSlugs(db, user!.userId!)
+    if (user?.userId && state.pluginActive && !user.isSuperAdmin) {
+      memberRoles = await loadMemberRoles(db, user.userId)
+      memberSlugs = new Set(memberRoles.keys())
     }
 
     const tenantId = resolveTenantSlug(
@@ -202,6 +204,17 @@ export function tenantMiddleware() {
       { memberSlugs, enforceMembership }
     )
     c.set('tenantId', tenantId)
+
+    // Per-tenant RBAC: the role principal fed to the document ACL is the user's role IN the resolved
+    // tenant. For the 'default' tenant or a super-admin, the global role applies (single-tenant
+    // behavior). For a resolved non-default tenant the gate guarantees membership, so the map has it.
+    if (user?.userId) {
+      const role =
+        tenantId === 'default' || user.isSuperAdmin
+          ? user.role
+          : memberRoles?.get(tenantId) ?? user.role
+      c.set('tenantRole', role)
+    }
 
     await next()
 

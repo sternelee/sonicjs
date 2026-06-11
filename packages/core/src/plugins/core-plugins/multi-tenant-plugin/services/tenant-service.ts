@@ -145,6 +145,26 @@ export class TenantService {
     return (results || []).map((r: any) => r.slug as string)
   }
 
+  /** slug -> the user's role IN that tenant (per-tenant RBAC). Excludes 'default'. */
+  async listMemberRoles(userId: string): Promise<Map<string, string>> {
+    const { results } = await this.db.prepare(`
+      SELECT t.slug, m.role FROM auth_tenant_member m
+      JOIN auth_tenant t ON t.id = m.tenant_id
+      WHERE m.user_id = ?
+    `).bind(userId).all()
+    return new Map((results || []).map((r: any) => [r.slug as string, (r.role as string) || 'viewer']))
+  }
+
+  /** The user's role in a tenant, or null if not a member. */
+  async getMemberRole(userId: string, slug: string): Promise<string | null> {
+    const row = await this.db.prepare(`
+      SELECT m.role FROM auth_tenant_member m
+      JOIN auth_tenant t ON t.id = m.tenant_id
+      WHERE m.user_id = ? AND t.slug = ? LIMIT 1
+    `).bind(userId, slug).first() as { role?: string } | null
+    return row ? (row.role || 'viewer') : null
+  }
+
   /** True if the user may access the tenant. 'default' is always allowed. */
   async isMember(userId: string, slug: string): Promise<boolean> {
     if (slug === DEFAULT_TENANT_SLUG) return true

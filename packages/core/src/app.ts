@@ -117,6 +117,8 @@ export interface Variables {
   pluginMenuItems?: Array<{ label: string; path: string; icon: string }>
   /** Tenant slug resolved per request by tenantMiddleware ('default' when single-tenant). */
   tenantId?: string
+  /** The authed user's role IN the resolved tenant (per-tenant RBAC); global role for 'default'. */
+  tenantRole?: string
 }
 
 export interface SonicJSConfig {

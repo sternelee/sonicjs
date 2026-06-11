@@ -72,8 +72,27 @@ Verification: `tsc` clean · 32 unit tests (resolver gate + membership CRUD) · 
 4. switcher POST: bypass membership if super-admin.
 5. Tests: e2e — super-admin switches into a non-member tenant (extends spec 71).
 
-## G1 (per-tenant roles) — build second (large, security-critical)
-- `can`/`getPermissionScope`/`permissionsForUser`/`getRolesForUser` gain a `tenantId` arg.
-- New: resolve member role-name → grants for T≠default.
-- Update callers: `requireRbac` middleware, document ACL (`isAllowed`), admin-rbac routes.
-- Member management UI to set a member's tenant role (currently auto-enroll 'owner' only).
+## G1 (per-tenant roles) — SHIPPED
+Two-layer authorization (clean separation, no RBAC-core signature churn):
+- **Global role** gates route *access* (`requireRole`/`requireRbac`) — can you enter the admin doc
+  routes / platform sections at all. Unchanged.
+- **Per-tenant role** gates the document *operation* (document ACL `baseGrants[role]`) — what you can
+  do with content in the active tenant.
+
+Implementation:
+- `auth_tenant_member.role` holds a role name the document ACL understands (admin/editor/author/viewer).
+  Tenant creator auto-enrolls as `admin` (was `owner`).
+- `TenantService.listMemberRoles` / `getMemberRole`.
+- `tenant.ts`: resolves the user's role in the active tenant onto `c.set('tenantRole')`
+  (global role for 'default' / super-admins).
+- `getDocumentRequestContext` (the single ACL coupling point) feeds `tenantRole` as the role principal —
+  so the same user is admin in one tenant, viewer in another.
+
+Verification: `tsc` clean · 32 MT unit tests (incl. per-tenant role CRUD) · e2e spec 72
+(viewer-in-tenant denied create / allowed read / global admin create in default) · specs 70+71 green.
+
+### Deferred (G1 follow-ups)
+- **Member management UI/API** — add/remove members + set their tenant role. Today: auto-enroll creator
+  as admin + direct SQL only.
+- BA-native invitation flow surface (`auth_tenant_invitation` + org endpoints exist, no UI).
+- Optionally make `requireRbac` portal-section gates tenant-aware if any section should be per-tenant.

@@ -41,10 +41,15 @@ export function getDocumentRequestContext(c: Context): DocumentRequestContext {
     return { tenantId, principalSet: [{ type: 'public', id: '*' }], userId: null, role: null }
   }
 
+  // Per-tenant RBAC: tenantMiddleware resolves the user's role IN the active tenant onto
+  // `tenantRole` (the global role for the 'default' tenant / super-admins). The document ACL is
+  // keyed on this effective role, so the same user can be admin in one tenant and viewer in another.
+  const role = (c.get('tenantRole') as string | undefined) ?? user.role ?? null
+
   const principalSet: PrincipalRef[] = [{ type: 'user', id: user.userId }]
   // baseGrantAllows only matches 'public' and 'role' principals, so the role MUST be included for
   // an authed user to match role-keyed base grants (D11).
-  if (user.role) principalSet.push({ type: 'role', id: user.role })
+  if (role) principalSet.push({ type: 'role', id: role })
 
-  return { tenantId, principalSet, userId: user.userId, role: user.role ?? null }
+  return { tenantId, principalSet, userId: user.userId, role }
 }

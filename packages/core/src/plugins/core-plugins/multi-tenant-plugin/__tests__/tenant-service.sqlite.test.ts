@@ -91,17 +91,24 @@ describe('TenantService — real SQLite', () => {
     // 'default' is always allowed without a row.
     expect(await svc.isMember('u1', 'default')).toBe(true)
 
-    await svc.addMember('acme', 'u1', 'owner', 'u1@example.com')
+    await svc.addMember('acme', 'u1', 'admin', 'u1@example.com')
     expect(await svc.isMember('u1', 'acme')).toBe(true)
     expect(await svc.isMember('u1', 'beta')).toBe(false)
     expect((await svc.listMemberSlugs('u1')).sort()).toEqual(['acme'])
 
     // Idempotent — second add does not duplicate (UNIQUE(tenant_id,user_id)).
-    await svc.addMember('acme', 'u1', 'owner', 'u1@example.com')
+    await svc.addMember('acme', 'u1', 'admin', 'u1@example.com')
     expect((await svc.listMemberSlugs('u1'))).toEqual(['acme'])
 
-    await svc.addMember('beta', 'u1')
+    // Per-tenant roles: admin in acme, viewer in beta (same user, different roles).
+    await svc.addMember('beta', 'u1', 'viewer')
     expect((await svc.listMemberSlugs('u1')).sort()).toEqual(['acme', 'beta'])
+    expect(await svc.getMemberRole('u1', 'acme')).toBe('admin')
+    expect(await svc.getMemberRole('u1', 'beta')).toBe('viewer')
+    expect(await svc.getMemberRole('u1', 'nope')).toBeNull()
+    const roles = await svc.listMemberRoles('u1')
+    expect(roles.get('acme')).toBe('admin')
+    expect(roles.get('beta')).toBe('viewer')
   })
 
   it('deleteTenant is blocked while the tenant owns documents, allowed once empty', async () => {
