@@ -319,4 +319,38 @@ tenant-scoped media R2 prefixes, cascade delete option (Payload-style `cleanupAf
 
 ## 11. Review
 
-_(filled in at completion)_
+**Shipped.** Multi-tenancy is a working, off-by-default plugin on the document model.
+
+What landed:
+- `tenant` document type (no new tables) + `q_tenant_status`/`q_tenant_domain` generated columns
+  (self-healed via `ensureScalarSchema` on registration; confirmed created on real-app bootstrap).
+- `middleware/tenant.ts`: per-request resolution (header > cookie > exact domain > subdomain >
+  default), per-isolate cache busted by tenant/plugin writes, and the sidebar switcher injection at
+  a layout marker. `getDocumentRequestContext` reads the resolved tenant (the one chokepoint).
+- `DocumentsService.create()` unified to stamp the service/request tenant, never the request body.
+- Plugin package (`multi-tenant-plugin`): `TenantService`, admin Tenants CRUD + switch endpoint
+  (self-gated), list/form templates, registered in `app.ts` + core-plugins, registry regenerated.
+- Literal-`'default'` sweep across content (admin + api), documents, testimonials, media, and the
+  admin reference picker. Globals (settings, RBAC, plugin/user-profile/email, type registry) stay
+  platform-wide; the collection-delete guard now counts across all tenants (collections are global).
+- `PluginService` activate/deactivate/settings writes bust the resolver cache.
+
+Tests:
+- 23 plugin unit tests (TenantService CRUD/guards/generated columns, resolver precedence, real-DB
+  cross-tenant isolation) — green.
+- E2E `tests/e2e/70-multi-tenant.spec.ts` (6 tests) — green against the real app on wrangler dev:
+  off-by-default → activate via Plugins page → Tenants nav + switcher appear → create tenant via UI
+  → cross-tenant document isolation (created doc stamped + visible to its tenant, invisible to
+  default) → switch updates the current badge → deactivate restores single-tenant.
+- Fixed a pre-existing harness bug (`createTestD1` deleted from a non-existent `collections` table,
+  which had been erroring every real-SQLite test on `v3`).
+
+Deviations from plan:
+- Isolation E2E uses `blog_post` (a seeded, app-registered type) rather than `testimonial`
+  (plugin-owned, not in the core bootstrap seed) — same chokepoints exercised.
+- Nav-link assertion checks DOM presence, not visibility: plugin menu items live inside the
+  collapsed Plugins accordion. The tenant switcher renders twice (responsive desktop + mobile
+  sidebar), asserted with `.first()`.
+
+Deferred (per §10): per-user tenant membership / per-tenant RBAC, per-tenant plugin activation and
+settings, theming, custom-domain management, cross-tenant data migration tooling, quotas.
