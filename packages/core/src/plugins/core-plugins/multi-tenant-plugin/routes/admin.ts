@@ -99,6 +99,24 @@ export function createTenantAdminRoutes(): Hono<{ Bindings: Bindings; Variables:
     return c.redirect(target)
   })
 
+  // ─── Accept an invitation ─────────────────────────────────────────────────────
+  // Registered before the /:slug routes so 'invitations' is never read as a tenant slug. The accept
+  // is gated on the signed-in user's email matching the invited email (see acceptInvitation).
+  routes.get('/invitations/accept', async (c) => {
+    const db = c.env.DB
+    if (!(await isMultiTenantActive(db))) return c.json({ error: 'Multi-tenant plugin is not active' }, 403)
+    const user = c.get('user')
+    if (!user) return c.redirect('/auth/login')
+    const token = c.req.query('token') ?? ''
+    try {
+      const { slug } = await new TenantService(db).acceptInvitation(token, user.userId, user.email)
+      return c.redirect(`/admin/tenants/${slug}/members?message=Invitation accepted`)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to accept invitation'
+      return c.redirect(`/admin/tenants?message=${encodeURIComponent(message)}&type=error`)
+    }
+  })
+
   // ─── List ───────────────────────────────────────────────────────────────────
   routes.get('/', async (c) => {
     const db = c.env.DB
@@ -245,10 +263,10 @@ export function createTenantAdminRoutes(): Hono<{ Bindings: Bindings; Variables:
     const tenant = await svc.getTenantBySlug(slug)
     if (!tenant) return c.redirect('/admin/tenants?message=Tenant not found&type=error')
 
-    const members = await svc.listMembers(slug)
+    const [members, invitations] = await Promise.all([svc.listMembers(slug), svc.listInvitations(slug)])
     const messageType = c.req.query('type') === 'error' ? 'error' as const : 'success' as const
     return c.html(renderTenantMembers({
-      slug, tenantName: tenant.name, members,
+      slug, tenantName: tenant.name, members, invitations,
       user: userShape(user), version,
       message: c.req.query('message'), messageType,
     }))
@@ -299,6 +317,39 @@ export function createTenantAdminRoutes(): Hono<{ Bindings: Bindings; Variables:
       return c.redirect(`/admin/tenants/${slug}/members?message=Member removed`)
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to remove member'
+      return c.redirect(`/admin/tenants/${slug}/members?message=${encodeURIComponent(message)}&type=error`)
+    }
+  })
+
+  // ─── Invitations: create ──────────────────────────────────────────────────────
+  routes.post('/:slug/invitations', async (c) => {
+    const db = c.env.DB
+    const slug = c.req.param('slug')
+    const user = c.get('user')
+    if (!(await isMultiTenantActive(db))) return c.json({ error: 'Multi-tenant plugin is not active' }, 403)
+    try {
+      const form = await c.req.formData()
+      const email = String(form.get('email') ?? '')
+      const role = String(form.get('role') ?? 'viewer')
+      await new TenantService(db).createInvitation(slug, email, role, user?.userId ?? null)
+      return c.redirect(`/admin/tenants/${slug}/members?message=Invitation created`)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to create invitation'
+      return c.redirect(`/admin/tenants/${slug}/members?message=${encodeURIComponent(message)}&type=error`)
+    }
+  })
+
+  // ─── Invitations: revoke ──────────────────────────────────────────────────────
+  routes.post('/:slug/invitations/:id/revoke', async (c) => {
+    const db = c.env.DB
+    const slug = c.req.param('slug')
+    const id = c.req.param('id')
+    if (!(await isMultiTenantActive(db))) return c.json({ error: 'Multi-tenant plugin is not active' }, 403)
+    try {
+      await new TenantService(db).revokeInvitation(slug, id)
+      return c.redirect(`/admin/tenants/${slug}/members?message=Invitation revoked`)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to revoke invitation'
       return c.redirect(`/admin/tenants/${slug}/members?message=${encodeURIComponent(message)}&type=error`)
     }
   })

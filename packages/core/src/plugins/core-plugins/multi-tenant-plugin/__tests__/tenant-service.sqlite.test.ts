@@ -151,6 +151,52 @@ describe('TenantService — real SQLite', () => {
     expect((await svc.listMembers('acme')).map((m) => m.email)).toEqual(['ed@example.com'])
   })
 
+  it('invitations: create → accept (email must match) → membership; revoke + duplicate + expiry guards', async () => {
+    await svc.createTenant({ name: 'Acme', slug: 'acme' })
+    db.raw.prepare(
+      `INSERT INTO auth_user (id, email, first_name, last_name, created_at, updated_at)
+       VALUES ('invitee', 'invitee@example.com', 'In', 'Vitee', 1, 1)`
+    ).run()
+
+    // Create a pending invitation.
+    const token = await svc.createInvitation('acme', 'Invitee@example.com', 'editor', null)
+    expect((await svc.listInvitations('acme')).map((i) => i.email)).toEqual(['invitee@example.com'])
+
+    // Duplicate pending invite is rejected; bad role rejected.
+    await expect(svc.createInvitation('acme', 'invitee@example.com', 'viewer')).rejects.toThrow(/already exists/)
+    await expect(svc.createInvitation('acme', 'x@example.com', 'root')).rejects.toThrow(/Invalid role/)
+
+    // Accept with a mismatched email is refused (no token-only binding).
+    await expect(svc.acceptInvitation(token, 'invitee', 'someone-else@example.com')).rejects.toThrow(/different email/)
+
+    // Accept with the matching email → member with the invited role; invitation leaves 'pending'.
+    const res = await svc.acceptInvitation(token, 'invitee', 'invitee@example.com')
+    expect(res).toEqual({ slug: 'acme', role: 'editor' })
+    expect(await svc.getMemberRole('invitee', 'acme')).toBe('editor')
+    expect(await svc.listInvitations('acme')).toEqual([])
+
+    // Re-accepting a used invitation fails.
+    await expect(svc.acceptInvitation(token, 'invitee', 'invitee@example.com')).rejects.toThrow(/invalid or already used/)
+
+    // Inviting an existing member is rejected.
+    await expect(svc.createInvitation('acme', 'invitee@example.com', 'viewer')).rejects.toThrow(/already a member/)
+
+    // Revoke drops a pending invite from the list.
+    const t2 = await svc.createInvitation('acme', 'another@example.com', 'viewer')
+    expect((await svc.listInvitations('acme')).length).toBe(1)
+    await svc.revokeInvitation('acme', t2)
+    expect(await svc.listInvitations('acme')).toEqual([])
+
+    // Expired invitation cannot be accepted.
+    db.raw.prepare(
+      `INSERT INTO auth_user (id, email, first_name, last_name, created_at, updated_at)
+       VALUES ('late', 'late@example.com', 'La', 'Te', 1, 1)`
+    ).run()
+    const t3 = await svc.createInvitation('acme', 'late@example.com', 'viewer')
+    db.raw.prepare("UPDATE auth_tenant_invitation SET expires_at = 1 WHERE id = ?").run(t3)
+    await expect(svc.acceptInvitation(t3, 'late', 'late@example.com')).rejects.toThrow(/expired/)
+  })
+
   it('deleteTenant is blocked while the tenant owns documents, allowed once empty', async () => {
     await svc.createTenant({ name: 'Acme', slug: 'acme' })
     // Seed a content document owned by tenant 'acme'.

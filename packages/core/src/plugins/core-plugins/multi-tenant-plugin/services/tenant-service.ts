@@ -23,7 +23,7 @@ export interface TenantData {
 export const DEFAULT_TENANT_SLUG = 'default'
 
 /** Slugs that would collide with routing or platform conventions. */
-export const RESERVED_TENANT_SLUGS = ['www', 'admin', 'api', 'auth', 'assets', 'static']
+export const RESERVED_TENANT_SLUGS = ['www', 'admin', 'api', 'auth', 'assets', 'static', 'invitations']
 
 const SLUG_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/
 
@@ -42,6 +42,18 @@ export interface TenantMember {
   role: string
   createdAt: number
 }
+
+export interface TenantInvitation {
+  id: string
+  email: string
+  role: string
+  status: string
+  expiresAt: number
+  createdAt: number
+}
+
+/** Pending invitations live this long (ms) before they expire. */
+const INVITATION_TTL_MS = 7 * 24 * 60 * 60 * 1000
 
 export function isValidTenantSlug(slug: string): boolean {
   return SLUG_PATTERN.test(slug)
@@ -276,6 +288,96 @@ export class TenantService {
       WHERE t.slug = ? AND m.role = 'admin'
     `).bind(slug).first() as { c?: number } | null
     return row?.c ?? 0
+  }
+
+  // ─── Invitations (auth_tenant_invitation) ──────────────────────────────────
+  // Invite an email to a tenant with a per-tenant role. The pending row's id doubles as the accept
+  // token. Accepting requires the invitee to be signed in with the invited email — it never trusts
+  // the token alone to bind an arbitrary account.
+
+  /** Create a pending invitation. Returns the invitation id (the accept token). */
+  async createInvitation(slug: string, email: string, role: string, inviterId: string | null): Promise<string> {
+    const normalized = email.trim().toLowerCase()
+    if (!normalized) throw new Error('Email is required')
+    if (!isValidMemberRole(role)) throw new Error(`Invalid role '${role}'`)
+    const tenant = await this.getTenantBySlug(slug)
+    if (!tenant) throw new Error('Tenant not found')
+
+    const existingUser = await this.db.prepare('SELECT id FROM auth_user WHERE lower(email) = ?')
+      .bind(normalized).first() as { id?: string } | null
+    if (existingUser?.id && await this.isMember(existingUser.id, slug)) {
+      throw new Error(`${email} is already a member of '${slug}'`)
+    }
+    const pending = await this.db.prepare(`
+      SELECT i.id FROM auth_tenant_invitation i
+      JOIN auth_tenant t ON t.id = i.tenant_id
+      WHERE t.slug = ? AND lower(i.email) = ? AND i.status = 'pending' LIMIT 1
+    `).bind(slug, normalized).first()
+    if (pending) throw new Error(`A pending invitation for ${email} already exists`)
+
+    const id = crypto.randomUUID()
+    const now = Date.now()
+    // R5: 9 columns / 9 ? — verified.
+    await this.db.prepare(`
+      INSERT INTO auth_tenant_invitation (id, tenant_id, email, role, status, expires_at, inviter_id, created_at, updated_at)
+      VALUES (?, (SELECT id FROM auth_tenant WHERE slug = ?), ?, ?, 'pending', ?, ?, ?, ?)
+    `).bind(id, slug, normalized, role, now + INVITATION_TTL_MS, inviterId, now, now).run()
+    return id
+  }
+
+  /** Pending (non-expired) invitations for a tenant. */
+  async listInvitations(slug: string): Promise<TenantInvitation[]> {
+    const { results } = await this.db.prepare(`
+      SELECT i.id, i.email, i.role, i.status, i.expires_at, i.created_at
+      FROM auth_tenant_invitation i
+      JOIN auth_tenant t ON t.id = i.tenant_id
+      WHERE t.slug = ? AND i.status = 'pending'
+      ORDER BY i.created_at DESC
+    `).bind(slug).all()
+    return (results || []).map((r: any) => ({
+      id: r.id, email: r.email, role: r.role || 'viewer', status: r.status,
+      expiresAt: Number(r.expires_at), createdAt: Number(r.created_at),
+    }))
+  }
+
+  /** Revoke (cancel) a pending invitation by id, scoped to the tenant. */
+  async revokeInvitation(slug: string, id: string): Promise<void> {
+    await this.db.prepare(`
+      UPDATE auth_tenant_invitation SET status = 'revoked', updated_at = ?
+      WHERE id = ? AND tenant_id = (SELECT id FROM auth_tenant WHERE slug = ?) AND status = 'pending'
+    `).bind(Date.now(), id, slug).run()
+  }
+
+  /**
+   * Accept an invitation. Fail-closed: the token must be a pending, non-expired invitation AND the
+   * accepting user's email must match the invited email. On success the user becomes a member with
+   * the invited role and the invitation is marked accepted.
+   */
+  async acceptInvitation(token: string, userId: string, userEmail: string): Promise<{ slug: string; role: string }> {
+    const row = await this.db.prepare(`
+      SELECT i.id, i.email, i.role, i.status, i.expires_at, t.slug
+      FROM auth_tenant_invitation i
+      JOIN auth_tenant t ON t.id = i.tenant_id
+      WHERE i.id = ?
+    `).bind(token).first() as
+      { id?: string; email?: string; role?: string; status?: string; expires_at?: number; slug?: string } | null
+
+    if (!row?.id || row.status !== 'pending') throw new Error('Invitation is invalid or already used')
+    if (Number(row.expires_at) < Date.now()) {
+      await this.db.prepare("UPDATE auth_tenant_invitation SET status = 'expired', updated_at = ? WHERE id = ?")
+        .bind(Date.now(), token).run()
+      throw new Error('Invitation has expired')
+    }
+    if ((row.email ?? '').toLowerCase() !== userEmail.trim().toLowerCase()) {
+      throw new Error('This invitation is for a different email address')
+    }
+
+    const slug = row.slug!
+    const role = row.role || 'viewer'
+    await this.addMember(slug, userId, role, userEmail)
+    await this.db.prepare("UPDATE auth_tenant_invitation SET status = 'accepted', updated_at = ? WHERE id = ?")
+      .bind(Date.now(), token).run()
+    return { slug, role }
   }
 
   /** Live documents owned by the tenant (all types — content, media, plugin data, …). */

@@ -103,7 +103,22 @@ remove. Lockout guards refuse demoting/removing the last admin.
 Verification: `tsc` clean · 33 MT unit tests (incl. lockout guards) · e2e spec 73 (add/role/remove +
 error) · specs 70/71/72 green.
 
+## G3 (invitation flow) — SHIPPED
+Invite an email to a tenant with a per-tenant role; the invitee joins by opening the accept link
+while signed in with the invited email. On the members page (`/admin/tenants/<slug>/members`).
+
+- `TenantService`: `createInvitation` (pending row, id = accept token, 7-day TTL), `listInvitations`,
+  `revokeInvitation`, `acceptInvitation` (fail-closed: pending + non-expired + signed-in email must
+  match the invited email — never token-only).
+- Routes: POST `/:slug/invitations`, POST `/:slug/invitations/:id/revoke`, and
+  GET `/invitations/accept?token=…` (registered before `/:slug` routes; `invitations` is a reserved slug).
+- Invitations section on the members template (invite form + pending list w/ accept link + revoke).
+
+Verification: `tsc` clean · 34 MT unit tests (full lifecycle + email-mismatch/expiry/duplicate/revoke
+guards) · e2e spec 74 (invite→accept→member, revoke) · specs 70–73 green.
+
 ### Deferred
-- BA-native invitation flow surface (`auth_tenant_invitation` + org endpoints exist, no UI) — G3.
+- **Email delivery** of the accept link — v1 surfaces the link in the admin UI (admin shares it).
+  Wire the email plugin to send it (BA org endpoints / sendViaEmailPlugin).
 - Shared/global (non-tenant) collections — G5.
 - Optionally make `requireRbac` portal-section gates tenant-aware if any section should be per-tenant.
