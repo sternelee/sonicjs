@@ -16,6 +16,7 @@ export interface CollectionRecord extends CollectionConfig {
 
 export class CollectionRegistry {
   private byName = new Map<string, CollectionRecord>()
+  private bySlug = new Map<string, CollectionRecord>()
 
   /**
    * Replace the registry contents with the given configs. Idempotent —
@@ -23,15 +24,18 @@ export class CollectionRegistry {
    */
   register(configs: CollectionConfig[]): void {
     this.byName.clear()
+    this.bySlug.clear()
     for (const config of configs) {
       if (!config.name) continue
       const record: CollectionRecord = {
         ...config,
         id: config.name,
+        slug: config.slug ?? config.name.replace(/_/g, '-'),
         managed: config.managed !== undefined ? config.managed : true,
         isActive: config.isActive !== undefined ? config.isActive : true,
       }
       this.byName.set(record.name, record)
+      this.bySlug.set(record.slug!, record)
     }
   }
 
@@ -54,6 +58,16 @@ export class CollectionRegistry {
     return this.byName.get(id)
   }
 
+  /** Look up by the URL slug (set in CollectionConfig.slug). Falls back to getByName if needed. */
+  getBySlug(slug: string): CollectionRecord | undefined {
+    return this.bySlug.get(slug)
+  }
+
+  /** Resolve a path segment to a record — tries slug first, then name. */
+  getBySlugOrName(slugOrName: string): CollectionRecord | undefined {
+    return this.bySlug.get(slugOrName) ?? this.byName.get(slugOrName)
+  }
+
   isActive(name: string): boolean {
     const record = this.byName.get(name)
     return record?.isActive !== false && record !== undefined
@@ -66,6 +80,7 @@ export class CollectionRegistry {
   /** Test helper — wipe state. */
   clear(): void {
     this.byName.clear()
+    this.bySlug.clear()
   }
 }
 
