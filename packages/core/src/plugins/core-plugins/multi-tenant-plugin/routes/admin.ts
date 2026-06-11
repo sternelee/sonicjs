@@ -73,9 +73,16 @@ export function createTenantAdminRoutes(): Hono<{ Bindings: Bindings; Variables:
     const slug = String(form.get('tenant') ?? '').trim().toLowerCase()
     const redirect = String(form.get('redirect') ?? '')
 
-    const tenant = await new TenantService(db).getTenantBySlug(slug)
+    const svc = new TenantService(db)
+    const tenant = await svc.getTenantBySlug(slug)
     if (!tenant || tenant.status !== 'active') {
       return c.json({ error: 'Unknown or inactive tenant' }, 400)
+    }
+
+    // Membership gate: a user may only switch into tenants they belong to ('default' is open).
+    const user = c.get('user')
+    if (!user || !(await svc.isMember(user.userId, slug))) {
+      return c.json({ error: 'You are not a member of this tenant' }, 403)
     }
 
     setCookie(c, TENANT_COOKIE, slug, {
@@ -143,12 +150,15 @@ export function createTenantAdminRoutes(): Hono<{ Bindings: Bindings; Variables:
       const validated = tenantFormSchema.parse(formEntries)
       if (!validated.slug) throw new z.ZodError([{ code: 'custom', message: 'Slug is required', path: ['slug'] }])
 
-      await new TenantService(db).createTenant({
+      const svc = new TenantService(db)
+      await svc.createTenant({
         name: validated.name,
         slug: validated.slug,
         domain: validated.domain || null,
         notes: validated.notes,
       })
+      // Auto-enroll the creator as owner so they can immediately switch into / manage the tenant.
+      if (user) await svc.addMember(validated.slug, user.userId, 'owner', user.email)
       return c.redirect('/admin/tenants?message=Tenant created successfully')
     } catch (error) {
       const tenant = { name: String(formEntries.name ?? ''), slug: String(formEntries.slug ?? ''), domain: String(formEntries.domain ?? ''), notes: String(formEntries.notes ?? '') }

@@ -89,14 +89,13 @@ async function loadTenantState(db: any): Promise<TenantCacheEntry> {
       }
 
       const { results } = await db.prepare(
-        `SELECT slug, title, data, q_tenant_status, q_tenant_domain FROM documents
-         WHERE type_id = 'tenant' AND tenant_id = 'default' AND is_current_draft = 1 AND deleted_at IS NULL`
+        `SELECT slug, name, status, domain FROM auth_tenant`
       ).all()
       for (const row of (results ?? []) as any[]) {
-        const status = row.q_tenant_status === 'inactive' ? 'inactive' : 'active'
-        tenants.set(row.slug, { name: row.title || row.slug, status })
-        if (row.q_tenant_domain && status === 'active') {
-          domains.set(String(row.q_tenant_domain).toLowerCase(), row.slug)
+        const status = row.status === 'inactive' ? 'inactive' : 'active'
+        tenants.set(row.slug, { name: row.name || row.slug, status })
+        if (row.domain && status === 'active') {
+          domains.set(String(row.domain).toLowerCase(), row.slug)
         }
       }
       // The default tenant always resolves, even before its registry row is materialized.
@@ -117,30 +116,60 @@ function isActiveTenant(state: TenantCacheEntry, slug: string | undefined | null
   return !!entry && entry.status === 'active'
 }
 
-/** Pure resolution, exported for tests. Returns the tenant slug for a request snapshot. */
+/**
+ * Pure resolution, exported for tests. Returns the tenant slug for a request snapshot.
+ *
+ * When `opts.enforceMembership` is set (authed requests), every non-'default' candidate must also be
+ * in `opts.memberSlugs` — an authed user can only resolve into tenants they belong to. Anonymous
+ * requests (public API / content serving) pass `enforceMembership: false` so domain/header routing
+ * to public content is unaffected. 'default' is always allowed.
+ */
 export function resolveTenantSlug(
   state: Pick<TenantCacheEntry, 'pluginActive' | 'settings' | 'tenants' | 'domains'>,
-  req: { header: string | undefined; cookie: string | undefined; host: string | undefined }
+  req: { header: string | undefined; cookie: string | undefined; host: string | undefined },
+  opts?: { memberSlugs?: Set<string>; enforceMembership?: boolean }
 ): string {
   if (!state.pluginActive) return 'default'
   const full = state as TenantCacheEntry
+  const enforce = opts?.enforceMembership === true
+  const member = (slug: string): boolean =>
+    !enforce || slug === 'default' || (opts?.memberSlugs?.has(slug) ?? false)
+  const accept = (slug: string | undefined | null): slug is string =>
+    isActiveTenant(full, slug) && member(slug)
 
-  if (isActiveTenant(full, req.header?.trim().toLowerCase())) return req.header!.trim().toLowerCase()
-  if (isActiveTenant(full, req.cookie?.trim().toLowerCase())) return req.cookie!.trim().toLowerCase()
+  const header = req.header?.trim().toLowerCase()
+  if (accept(header)) return header
+
+  const cookie = req.cookie?.trim().toLowerCase()
+  if (accept(cookie)) return cookie
 
   const host = req.host?.split(':')[0]?.toLowerCase() ?? ''
   if (host) {
     const bySlug = state.domains.get(host)
-    if (isActiveTenant(full, bySlug)) return bySlug!
+    if (accept(bySlug)) return bySlug
 
     const { subdomainResolution, rootDomain } = state.settings
     if (subdomainResolution && rootDomain && host.endsWith(`.${rootDomain}`)) {
       const sub = host.slice(0, -(rootDomain.length + 1))
-      if (sub && !sub.includes('.') && isActiveTenant(full, sub)) return sub
+      if (sub && !sub.includes('.') && accept(sub)) return sub
     }
   }
 
   return 'default'
+}
+
+/** Slugs the authed user may access (excludes always-open 'default'). Empty on error/anon. */
+async function loadMemberSlugs(db: any, userId: string): Promise<Set<string>> {
+  try {
+    const { results } = await db.prepare(`
+      SELECT t.slug FROM auth_tenant_member m
+      JOIN auth_tenant t ON t.id = m.tenant_id
+      WHERE m.user_id = ?
+    `).bind(userId).all()
+    return new Set((results ?? []).map((r: any) => r.slug as string))
+  } catch {
+    return new Set()
+  }
 }
 
 export function tenantMiddleware() {
@@ -152,11 +181,25 @@ export function tenantMiddleware() {
     }
 
     const state = await loadTenantState(db)
-    const tenantId = resolveTenantSlug(state, {
-      header: c.req.header(state.settings.headerName),
-      cookie: getCookie(c, TENANT_COOKIE),
-      host: c.req.header('host'),
-    })
+
+    // Membership gate: for authed requests, resolution is restricted to the user's tenants. Anon
+    // requests (public API / content) skip enforcement so public routing is unchanged.
+    const user = c.get('user') as { userId?: string } | undefined
+    let memberSlugs: Set<string> | undefined
+    const enforceMembership = !!(user?.userId && state.pluginActive)
+    if (enforceMembership) {
+      memberSlugs = await loadMemberSlugs(db, user!.userId!)
+    }
+
+    const tenantId = resolveTenantSlug(
+      state,
+      {
+        header: c.req.header(state.settings.headerName),
+        cookie: getCookie(c, TENANT_COOKIE),
+        host: c.req.header('host'),
+      },
+      { memberSlugs, enforceMembership }
+    )
     c.set('tenantId', tenantId)
 
     await next()
@@ -172,7 +215,9 @@ export function tenantMiddleware() {
     const headers = new Headers(c.res.headers)
     const html = await c.res.text()
     if (html.includes(TENANT_SWITCHER_MARKER)) {
-      const replacement = state.pluginActive ? renderTenantSwitcher(state, tenantId) : ''
+      const replacement = state.pluginActive
+        ? renderTenantSwitcher(state, tenantId, enforceMembership ? memberSlugs : undefined)
+        : ''
       c.res = new Response(html.split(TENANT_SWITCHER_MARKER).join(replacement), { status, headers })
     } else {
       // Body was consumed by .text(); must rebuild the Response either way.
@@ -181,9 +226,9 @@ export function tenantMiddleware() {
   }
 }
 
-function renderTenantSwitcher(state: TenantCacheEntry, currentTenantId: string): string {
+function renderTenantSwitcher(state: TenantCacheEntry, currentTenantId: string, memberSlugs?: Set<string>): string {
   const active = [...state.tenants.entries()]
-    .filter(([, t]) => t.status === 'active')
+    .filter(([slug, t]) => t.status === 'active' && (!memberSlugs || slug === 'default' || memberSlugs.has(slug)))
     .sort(([a], [b]) => (a === 'default' ? -1 : b === 'default' ? 1 : a.localeCompare(b)))
 
   const options = active

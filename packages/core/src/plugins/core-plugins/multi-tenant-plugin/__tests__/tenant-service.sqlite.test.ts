@@ -1,35 +1,16 @@
 // @ts-nocheck
-// Real-SQLite coverage for the multi-tenant plugin's TenantService. Exercises actual SQL — the
-// `tenant` document type's generated columns (q_tenant_status/q_tenant_domain), slug/domain
-// uniqueness, reserved slugs, the default-tenant guards, and the delete-blocked-while-owning-docs
-// guard. Mock tests can't verify any of this (R10).
+// Real-SQLite coverage for the multi-tenant plugin's TenantService. Exercises actual SQL against
+// the Better Auth `auth_tenant` table — slug/domain uniqueness, reserved slugs, the default-tenant
+// guards, and the delete-blocked-while-owning-docs guard. Mock tests can't verify any of this (R10).
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { createTestD1 } from '../../../../__tests__/utils/d1-sqlite'
-import { DocumentTypeRegistry } from '../../../../services/document-type-registry'
 import { TenantService } from '../services/tenant-service'
-
-async function registerTenantType(db) {
-  const registry = new DocumentTypeRegistry(db)
-  await registry.register({
-    id: 'tenant',
-    name: 'tenant',
-    displayName: 'Tenant',
-    source: 'system',
-    schema: { parse: (x) => x },
-    settings: { internal: true, maxVersionsPerRoot: 1, baseGrants: { admin: ['read', 'create', 'update', 'delete', 'manage'] } },
-    queryableFields: [
-      { name: 'status', kind: 'scalar', type: 'text', column: 'q_tenant_status' },
-      { name: 'domain', kind: 'scalar', type: 'text', column: 'q_tenant_domain' },
-    ],
-  })
-}
 
 describe('TenantService — real SQLite', () => {
   let db
   let svc
   beforeEach(async () => {
     db = createTestD1()
-    await registerTenantType(db)
     svc = new TenantService(db)
   })
   afterEach(() => db.close())
@@ -40,17 +21,17 @@ describe('TenantService — real SQLite', () => {
     expect(a.slug).toBe('default')
     expect(a.status).toBe('active')
     expect(b.slug).toBe('default')
-    const rows = db.raw.prepare("SELECT COUNT(*) c FROM documents WHERE type_id='tenant' AND slug='default' AND is_current_draft=1").get()
+    const rows = db.raw.prepare("SELECT COUNT(*) c FROM auth_tenant WHERE slug='default'").get()
     expect(rows.c).toBe(1)
   })
 
-  it('createTenant persists row and populates generated columns', async () => {
+  it('createTenant persists row with status and normalized domain', async () => {
     const t = await svc.createTenant({ name: 'Acme Inc', slug: 'acme', domain: 'Acme.Example.com' })
     expect(t.slug).toBe('acme')
     expect(t.status).toBe('active')
     expect(t.domain).toBe('acme.example.com') // normalized lowercase
 
-    const row = db.raw.prepare("SELECT q_tenant_status s, q_tenant_domain d FROM documents WHERE type_id='tenant' AND slug='acme'").get()
+    const row = db.raw.prepare("SELECT status s, domain d FROM auth_tenant WHERE slug='acme'").get()
     expect(row.s).toBe('active')
     expect(row.d).toBe('acme.example.com')
   })
@@ -95,6 +76,32 @@ describe('TenantService — real SQLite', () => {
   it('deleteTenant refuses the default tenant', async () => {
     await svc.ensureDefaultTenant()
     await expect(svc.deleteTenant('default')).rejects.toThrow(/cannot be deleted/)
+  })
+
+  it('membership: addMember enrolls a user; isMember/listMemberSlugs reflect it', async () => {
+    // FK targets — a tenant row and a user row.
+    await svc.createTenant({ name: 'Acme', slug: 'acme' })
+    await svc.createTenant({ name: 'Beta', slug: 'beta' })
+    db.raw.prepare(
+      `INSERT INTO auth_user (id, email, first_name, last_name, created_at, updated_at)
+       VALUES ('u1','u1@example.com','U','One',1,1)`
+    ).run()
+
+    expect(await svc.isMember('u1', 'acme')).toBe(false)
+    // 'default' is always allowed without a row.
+    expect(await svc.isMember('u1', 'default')).toBe(true)
+
+    await svc.addMember('acme', 'u1', 'owner', 'u1@example.com')
+    expect(await svc.isMember('u1', 'acme')).toBe(true)
+    expect(await svc.isMember('u1', 'beta')).toBe(false)
+    expect((await svc.listMemberSlugs('u1')).sort()).toEqual(['acme'])
+
+    // Idempotent — second add does not duplicate (UNIQUE(tenant_id,user_id)).
+    await svc.addMember('acme', 'u1', 'owner', 'u1@example.com')
+    expect((await svc.listMemberSlugs('u1'))).toEqual(['acme'])
+
+    await svc.addMember('beta', 'u1')
+    expect((await svc.listMemberSlugs('u1')).sort()).toEqual(['acme', 'beta'])
   })
 
   it('deleteTenant is blocked while the tenant owns documents, allowed once empty', async () => {
