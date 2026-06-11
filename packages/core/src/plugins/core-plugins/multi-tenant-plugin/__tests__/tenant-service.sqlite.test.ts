@@ -111,6 +111,46 @@ describe('TenantService — real SQLite', () => {
     expect(roles.get('beta')).toBe('viewer')
   })
 
+  it('member management: add-by-email, listMembers, setMemberRole, removeMember + lockout guards', async () => {
+    await svc.createTenant({ name: 'Acme', slug: 'acme' })
+    const mkUser = (id: string, email: string) =>
+      db.raw.prepare(
+        `INSERT INTO auth_user (id, email, first_name, last_name, created_at, updated_at)
+         VALUES (?, ?, 'F', 'L', 1, 1)`
+      ).run(id, email)
+    mkUser('owner1', 'owner@example.com')
+    mkUser('ed1', 'ed@example.com')
+
+    // Seed an admin so the tenant is not adminless.
+    await svc.addMember('acme', 'owner1', 'admin', 'owner@example.com')
+
+    // Add by email with a role.
+    await svc.addMemberByEmail('acme', 'ED@example.com', 'editor')
+    const members = await svc.listMembers('acme')
+    expect(members.map((m) => m.email).sort()).toEqual(['ed@example.com', 'owner@example.com'])
+    expect(members.find((m) => m.email === 'ed@example.com')?.role).toBe('editor')
+    // admin sorts first.
+    expect(members[0].role).toBe('admin')
+
+    // Unknown email + duplicate + bad role are rejected.
+    await expect(svc.addMemberByEmail('acme', 'ghost@example.com', 'viewer')).rejects.toThrow(/No user found/)
+    await expect(svc.addMemberByEmail('acme', 'ed@example.com', 'viewer')).rejects.toThrow(/already a member/)
+    await expect(svc.addMemberByEmail('acme', 'owner@example.com', 'superuser')).rejects.toThrow(/Invalid role/)
+
+    // Change role.
+    await svc.setMemberRole('acme', 'ed1', 'viewer')
+    expect(await svc.getMemberRole('ed1', 'acme')).toBe('viewer')
+
+    // Lockout guard: cannot demote or remove the last admin.
+    await expect(svc.setMemberRole('acme', 'owner1', 'viewer')).rejects.toThrow(/last admin/)
+    await expect(svc.removeMember('acme', 'owner1')).rejects.toThrow(/last admin/)
+
+    // Promote ed to admin → now two admins → owner can be removed.
+    await svc.setMemberRole('acme', 'ed1', 'admin')
+    await svc.removeMember('acme', 'owner1')
+    expect((await svc.listMembers('acme')).map((m) => m.email)).toEqual(['ed@example.com'])
+  })
+
   it('deleteTenant is blocked while the tenant owns documents, allowed once empty', async () => {
     await svc.createTenant({ name: 'Acme', slug: 'acme' })
     // Seed a content document owned by tenant 'acme'.

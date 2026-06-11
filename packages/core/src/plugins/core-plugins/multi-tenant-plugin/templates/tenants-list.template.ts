@@ -44,6 +44,7 @@ function renderRow(tenant: TenantData & { documentCount: number }, currentTenant
                  </form>`
               : ''
           }
+          <a href="/admin/tenants/${slug}/members" data-members-tenant="${slug}" class="rounded-lg px-2.5 py-1.5 text-sm font-medium text-zinc-600 hover:bg-zinc-950/5 dark:text-zinc-400 dark:hover:bg-white/5">Members</a>
           <a href="/admin/tenants/${slug}/edit" data-edit-tenant="${slug}" class="rounded-lg px-2.5 py-1.5 text-sm font-medium text-zinc-600 hover:bg-zinc-950/5 dark:text-zinc-400 dark:hover:bg-white/5">Edit</a>
           ${
             !isDefault

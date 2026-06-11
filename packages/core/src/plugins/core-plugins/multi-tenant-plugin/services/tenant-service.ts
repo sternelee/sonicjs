@@ -27,6 +27,22 @@ export const RESERVED_TENANT_SLUGS = ['www', 'admin', 'api', 'auth', 'assets', '
 
 const SLUG_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/
 
+/** Role names the document ACL understands (per-tenant member roles). */
+export const VALID_MEMBER_ROLES = ['admin', 'editor', 'author', 'viewer'] as const
+export type MemberRole = (typeof VALID_MEMBER_ROLES)[number]
+
+export function isValidMemberRole(role: string): role is MemberRole {
+  return (VALID_MEMBER_ROLES as readonly string[]).includes(role)
+}
+
+export interface TenantMember {
+  userId: string
+  email: string
+  name: string
+  role: string
+  createdAt: number
+}
+
 export function isValidTenantSlug(slug: string): boolean {
   return SLUG_PATTERN.test(slug)
 }
@@ -187,6 +203,79 @@ export class TenantService {
       INSERT OR IGNORE INTO auth_tenant_member (id, tenant_id, user_id, role, email, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `).bind(id, tenant.id, userId, role, email, now, now).run()
+  }
+
+  /** Members of a tenant joined with user details, ordered admins-first then by email. */
+  async listMembers(slug: string): Promise<TenantMember[]> {
+    const { results } = await this.db.prepare(`
+      SELECT u.id AS user_id, u.email, u.first_name, u.last_name, m.role, m.created_at
+      FROM auth_tenant_member m
+      JOIN auth_tenant t ON t.id = m.tenant_id
+      JOIN auth_user u ON u.id = m.user_id
+      WHERE t.slug = ?
+      ORDER BY CASE WHEN m.role = 'admin' THEN 0 ELSE 1 END, u.email ASC
+    `).bind(slug).all()
+    return (results || []).map((r: any) => ({
+      userId: r.user_id,
+      email: r.email,
+      name: [r.first_name, r.last_name].filter(Boolean).join(' ').trim() || r.email,
+      role: r.role || 'viewer',
+      createdAt: Number(r.created_at),
+    }))
+  }
+
+  /** Add a member by their email address (the admin-facing flow). */
+  async addMemberByEmail(slug: string, email: string, role: string): Promise<void> {
+    const normalized = email.trim().toLowerCase()
+    if (!normalized) throw new Error('Email is required')
+    if (!isValidMemberRole(role)) throw new Error(`Invalid role '${role}'`)
+    const tenant = await this.getTenantBySlug(slug)
+    if (!tenant) throw new Error('Tenant not found')
+
+    const user = await this.db.prepare('SELECT id, email FROM auth_user WHERE lower(email) = ?')
+      .bind(normalized).first() as { id?: string; email?: string } | null
+    if (!user?.id) throw new Error(`No user found with email '${email}'`)
+    if (await this.isMember(user.id, slug)) throw new Error(`${email} is already a member of '${slug}'`)
+
+    await this.addMember(slug, user.id, role, user.email ?? normalized)
+  }
+
+  /** Change a member's role. Refuses to demote the last admin (lockout guard). */
+  async setMemberRole(slug: string, userId: string, role: string): Promise<void> {
+    if (!isValidMemberRole(role)) throw new Error(`Invalid role '${role}'`)
+    const current = await this.getMemberRole(userId, slug)
+    if (current === null) throw new Error('Member not found')
+    if (current === 'admin' && role !== 'admin' && (await this.adminCount(slug)) <= 1) {
+      throw new Error('Cannot demote the last admin of a tenant')
+    }
+    const now = Date.now()
+    await this.db.prepare(`
+      UPDATE auth_tenant_member SET role = ?, updated_at = ?
+      WHERE tenant_id = (SELECT id FROM auth_tenant WHERE slug = ?) AND user_id = ?
+    `).bind(role, now, slug, userId).run()
+  }
+
+  /** Remove a member. Refuses to remove the last admin (lockout guard). */
+  async removeMember(slug: string, userId: string): Promise<void> {
+    const current = await this.getMemberRole(userId, slug)
+    if (current === null) throw new Error('Member not found')
+    if (current === 'admin' && (await this.adminCount(slug)) <= 1) {
+      throw new Error('Cannot remove the last admin of a tenant')
+    }
+    await this.db.prepare(`
+      DELETE FROM auth_tenant_member
+      WHERE tenant_id = (SELECT id FROM auth_tenant WHERE slug = ?) AND user_id = ?
+    `).bind(slug, userId).run()
+  }
+
+  /** Count admin-role members of a tenant. */
+  private async adminCount(slug: string): Promise<number> {
+    const row = await this.db.prepare(`
+      SELECT COUNT(*) AS c FROM auth_tenant_member m
+      JOIN auth_tenant t ON t.id = m.tenant_id
+      WHERE t.slug = ? AND m.role = 'admin'
+    `).bind(slug).first() as { c?: number } | null
+    return row?.c ?? 0
   }
 
   /** Live documents owned by the tenant (all types — content, media, plugin data, …). */

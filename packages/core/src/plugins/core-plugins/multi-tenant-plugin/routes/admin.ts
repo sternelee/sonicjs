@@ -14,6 +14,7 @@ import { PluginService } from '../../../../services/plugin-service'
 import { TenantService } from '../services/tenant-service'
 import { renderTenantsList, renderTenantsInactive } from '../templates/tenants-list.template'
 import { renderTenantForm } from '../templates/tenant-form.template'
+import { renderTenantMembers } from '../templates/tenant-members.template'
 
 type Bindings = { DB: D1Database; KV: KVNamespace }
 type Variables = {
@@ -228,6 +229,77 @@ export function createTenantAdminRoutes(): Hono<{ Bindings: Bindings; Variables:
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to delete tenant'
       return c.redirect(`/admin/tenants?message=${encodeURIComponent(message)}&type=error`)
+    }
+  })
+
+  // ─── Members: list ────────────────────────────────────────────────────────────
+  routes.get('/:slug/members', async (c) => {
+    const db = c.env.DB
+    const user = c.get('user')
+    const version = c.get('appVersion')
+    if (!(await isMultiTenantActive(db))) {
+      return c.html(renderTenantsInactive({ user: userShape(user), version }))
+    }
+    const slug = c.req.param('slug')
+    const svc = new TenantService(db)
+    const tenant = await svc.getTenantBySlug(slug)
+    if (!tenant) return c.redirect('/admin/tenants?message=Tenant not found&type=error')
+
+    const members = await svc.listMembers(slug)
+    const messageType = c.req.query('type') === 'error' ? 'error' as const : 'success' as const
+    return c.html(renderTenantMembers({
+      slug, tenantName: tenant.name, members,
+      user: userShape(user), version,
+      message: c.req.query('message'), messageType,
+    }))
+  })
+
+  // ─── Members: add by email ──────────────────────────────────────────────────────
+  routes.post('/:slug/members', async (c) => {
+    const db = c.env.DB
+    const slug = c.req.param('slug')
+    if (!(await isMultiTenantActive(db))) return c.json({ error: 'Multi-tenant plugin is not active' }, 403)
+    try {
+      const form = await c.req.formData()
+      const email = String(form.get('email') ?? '')
+      const role = String(form.get('role') ?? 'viewer')
+      await new TenantService(db).addMemberByEmail(slug, email, role)
+      return c.redirect(`/admin/tenants/${slug}/members?message=Member added`)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to add member'
+      return c.redirect(`/admin/tenants/${slug}/members?message=${encodeURIComponent(message)}&type=error`)
+    }
+  })
+
+  // ─── Members: change role ─────────────────────────────────────────────────────────
+  routes.post('/:slug/members/:userId/role', async (c) => {
+    const db = c.env.DB
+    const slug = c.req.param('slug')
+    const userId = c.req.param('userId')
+    if (!(await isMultiTenantActive(db))) return c.json({ error: 'Multi-tenant plugin is not active' }, 403)
+    try {
+      const form = await c.req.formData()
+      const role = String(form.get('role') ?? '')
+      await new TenantService(db).setMemberRole(slug, userId, role)
+      return c.redirect(`/admin/tenants/${slug}/members?message=Role updated`)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to update role'
+      return c.redirect(`/admin/tenants/${slug}/members?message=${encodeURIComponent(message)}&type=error`)
+    }
+  })
+
+  // ─── Members: remove ──────────────────────────────────────────────────────────────
+  routes.post('/:slug/members/:userId/delete', async (c) => {
+    const db = c.env.DB
+    const slug = c.req.param('slug')
+    const userId = c.req.param('userId')
+    if (!(await isMultiTenantActive(db))) return c.json({ error: 'Multi-tenant plugin is not active' }, 403)
+    try {
+      await new TenantService(db).removeMember(slug, userId)
+      return c.redirect(`/admin/tenants/${slug}/members?message=Member removed`)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to remove member'
+      return c.redirect(`/admin/tenants/${slug}/members?message=${encodeURIComponent(message)}&type=error`)
     }
   })
 

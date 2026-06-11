@@ -91,8 +91,19 @@ Implementation:
 Verification: `tsc` clean · 32 MT unit tests (incl. per-tenant role CRUD) · e2e spec 72
 (viewer-in-tenant denied create / allowed read / global admin create in default) · specs 70+71 green.
 
-### Deferred (G1 follow-ups)
-- **Member management UI/API** — add/remove members + set their tenant role. Today: auto-enroll creator
-  as admin + direct SQL only.
-- BA-native invitation flow surface (`auth_tenant_invitation` + org endpoints exist, no UI).
+## G4 (member management UI) — SHIPPED
+`/admin/tenants/<slug>/members` — add a user by email with a per-tenant role, change role inline,
+remove. Lockout guards refuse demoting/removing the last admin.
+
+- `TenantService`: `listMembers` (joined w/ auth_user), `addMemberByEmail`, `setMemberRole`,
+  `removeMember`, `adminCount`; `VALID_MEMBER_ROLES` = admin/editor/author/viewer.
+- Routes: GET/POST `/:slug/members`, POST `/:slug/members/:userId/role`, `/:slug/members/:userId/delete`.
+- `tenant-members.template.ts` + a "Members" action on each tenant row.
+
+Verification: `tsc` clean · 33 MT unit tests (incl. lockout guards) · e2e spec 73 (add/role/remove +
+error) · specs 70/71/72 green.
+
+### Deferred
+- BA-native invitation flow surface (`auth_tenant_invitation` + org endpoints exist, no UI) — G3.
+- Shared/global (non-tenant) collections — G5.
 - Optionally make `requireRbac` portal-section gates tenant-aware if any section should be per-tenant.
