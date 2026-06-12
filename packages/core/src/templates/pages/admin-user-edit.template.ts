@@ -167,7 +167,7 @@ export function renderUserEditPage(data: UserEditPageData): string {
       </div>
 
       <!-- Alert Messages -->
-      <div id="form-messages">
+      <div id="form-messages" class="mb-6 empty:mb-0">
         ${data.error ? renderAlert({ type: 'error', message: data.error, dismissible: true }) : ''}
         ${data.success ? renderAlert({ type: 'success', message: data.success, dismissible: true }) : ''}
       </div>
