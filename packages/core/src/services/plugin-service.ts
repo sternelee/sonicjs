@@ -90,7 +90,7 @@ export class PluginService {
       author: pluginData.author || 'Unknown',
       category: pluginData.category || 'utilities',
       icon: pluginData.icon || '🔌',
-      status: 'inactive',
+      status: 'active',
       isCore: pluginData.is_core || false,
       settings: pluginData.settings || {},
       permissions: pluginData.permissions || [],
@@ -116,9 +116,33 @@ export class PluginService {
     ).run()
 
     await this.logActivity(slug, 'installed', null, { version: pluginData.version })
+    await this.logActivity(slug, 'activated', null)
     const installed = await this.getPlugin(slug)
     if (!installed) throw new Error('Failed to install plugin')
     return installed
+  }
+
+  /**
+   * Ensure a definePlugin-registered plugin exists in the DB with active status.
+   * No-op if already present. Used by admin routes to auto-register SDK plugins
+   * that have never been explicitly installed.
+   */
+  async ensurePlugin(id: string, data: {
+    displayName?: string
+    description?: string
+    author?: string
+    version?: string
+  }): Promise<PluginData> {
+    const existing = await this.getPlugin(id)
+    if (existing) return existing
+    return this.installPlugin({
+      id,
+      name: id,
+      display_name: data.displayName || id,
+      description: data.description || '',
+      author: data.author || '',
+      version: data.version || '1.0.0',
+    })
   }
 
   async uninstallPlugin(pluginId: string): Promise<void> {
@@ -215,19 +239,23 @@ export class PluginService {
   }
 
   async getPluginActivity(pluginId: string, limit: number = 10): Promise<any[]> {
-    const { results } = await this.db.prepare(`
-      SELECT * FROM plugin_activity_log
-      WHERE plugin_id = ?
-      ORDER BY timestamp DESC
-      LIMIT ?
-    `).bind(pluginId, limit).all()
-    return (results || []).map((row: any) => ({
-      id: row.id,
-      action: row.action,
-      userId: row.user_id,
-      details: row.details ? JSON.parse(row.details) : null,
-      timestamp: row.timestamp,
-    }))
+    try {
+      const { results } = await this.db.prepare(`
+        SELECT * FROM plugin_activity_log
+        WHERE plugin_id = ?
+        ORDER BY timestamp DESC
+        LIMIT ?
+      `).bind(pluginId, limit).all()
+      return (results || []).map((row: any) => ({
+        id: row.id,
+        action: row.action,
+        userId: row.user_id,
+        details: row.details ? JSON.parse(row.details) : null,
+        timestamp: row.timestamp,
+      }))
+    } catch {
+      return []
+    }
   }
 
   async registerHook(pluginId: string, hookName: string, handlerName: string, priority: number = 10): Promise<void> {

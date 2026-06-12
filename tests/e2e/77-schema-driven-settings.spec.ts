@@ -27,9 +27,8 @@ test.describe('Schema-driven plugin settings', () => {
     const greetingInput = page.locator('input[name="greeting"]')
     await expect(greetingInput).toBeVisible()
 
-    // Default value from configSchema should be pre-filled
-    const value = await greetingInput.inputValue()
-    expect(value).toBe('Hello World!')
+    // Placeholder reflects the schema default (actual value may differ after prior saves)
+    await expect(greetingInput).toHaveAttribute('placeholder', 'Hello World!')
 
     // Save + Cancel buttons should be present
     await expect(page.locator('button[type="submit"]')).toBeVisible()
@@ -42,28 +41,38 @@ test.describe('Schema-driven plugin settings', () => {
     expect(resp?.status()).toBe(404)
   })
 
-  test('hello-world configure form stays accessible after save attempt', async ({ page }) => {
+  test('hello-world configure save persists the value', async ({ page }) => {
+    const uniqueGreeting = `E2E greeting ${Date.now()}`
+
     await page.goto(`${BASE_URL}/admin/plugins/hello-world/configure`)
     await page.waitForLoadState('networkidle')
 
     const greetingInput = page.locator('input[name="greeting"]')
     await expect(greetingInput).toBeVisible({ timeout: 10000 })
 
-    // Change the greeting value and submit
-    await greetingInput.fill(`E2E test greeting ${Date.now()}`)
+    await greetingInput.fill(uniqueGreeting)
     await page.locator('button[type="submit"]').click()
 
-    // Wait briefly for the POST response then explicitly re-navigate to the
-    // configure page (the save may fail with 500 if hello-world is not yet
-    // installed in the DB; in that case the redirect doesn't happen but the
-    // GET configure route still works).
-    await page.waitForTimeout(2000)
-    await page.goto(`${BASE_URL}/admin/plugins/hello-world/configure`)
+    // POST auto-upserts the plugin if not in DB then redirects back to /configure
+    await page.waitForURL(`**/configure`, { timeout: 10000 })
     await page.waitForLoadState('networkidle')
 
-    // The form should always render regardless of whether the save succeeded
     const savedInput = page.locator('input[name="greeting"]')
     await expect(savedInput).toBeVisible({ timeout: 10000 })
+    expect(await savedInput.inputValue()).toBe(uniqueGreeting)
+  })
+
+  test('/admin/plugins/hello-world settings page renders (auto-registers plugin)', async ({ page }) => {
+    const resp = await page.goto(`${BASE_URL}/admin/plugins/hello-world`)
+    await page.waitForLoadState('networkidle')
+
+    // Should NOT be a 404 — the route auto-registers definePlugin plugins
+    expect(resp?.status()).not.toBe(404)
+    expect(resp?.status()).not.toBe(500)
+
+    // Should land on a page that contains the plugin name
+    const body = await page.locator('body').textContent()
+    expect(body?.toLowerCase()).toContain('hello')
   })
 
   test('email plugin /configure renders apiKey as password field', async ({ page }) => {

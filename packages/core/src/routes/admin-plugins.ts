@@ -143,10 +143,20 @@ adminPluginRoutes.get('/:id', async (c) => {
     }
 
     const pluginService = new PluginService(db)
-    const plugin = await pluginService.getPlugin(pluginId)
+    let plugin = await pluginService.getPlugin(pluginId)
 
     if (!plugin) {
-      return c.text('Plugin not found', 404)
+      // Auto-register definePlugin-based plugins that have never been explicitly installed.
+      const def = getPluginDefinition(pluginId)
+      if (!def) return c.text('Plugin not found', 404)
+      plugin = await pluginService.ensurePlugin(pluginId, {
+        displayName: def.displayName ?? pluginId,
+        version: def.version,
+        description: (def as any).description,
+        author: typeof (def as any).author === 'object'
+          ? (def as any).author?.name
+          : (def as any).author,
+      })
     }
 
     // Get activity log
@@ -289,6 +299,15 @@ adminPluginRoutes.post('/:id/configure', async (c) => {
 
     const db = c.env.DB
     const pluginService = new PluginService(db)
+    // Ensure plugin row exists (auto-registers definePlugin plugins on first save)
+    await pluginService.ensurePlugin(pluginId, {
+      displayName: def.displayName ?? pluginId,
+      version: def.version,
+      description: (def as any).description,
+      author: typeof (def as any).author === 'object'
+        ? (def as any).author?.name
+        : (def as any).author,
+    })
     await pluginService.updatePluginSettings(pluginId, parsed)
 
     return c.redirect(`/admin/plugins/${encodeURIComponent(pluginId)}/configure`)
