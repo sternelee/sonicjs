@@ -42,8 +42,10 @@ import {
   type WireResult,
 } from '../wire'
 import { setPluginMenu, type PluginMenuEntry } from '../../services/plugin-menu-singleton'
+import { setPluginDefinitions } from '../../services/plugin-definition-registry'
 import { collectCronSchedules, type CronDeclaration } from '../cron'
 import { getCoreVersion } from '../../utils/version'
+import type { ConfigSchema } from './config-schema'
 
 // ── Discriminated error class ────────────────────────────────────────────────
 
@@ -77,6 +79,8 @@ export interface RegisterablePlugin extends MountablePlugin, WirablePlugin {
   sonicjsVersionRange?: string
   menu?: PluginMenuEntry[]
   crons?: CronDeclaration[]
+  /** Schema-driven settings — the admin route reads this via getPluginDefinition(id). */
+  configSchema?: ConfigSchema
 }
 
 // ── Host context ─────────────────────────────────────────────────────────────
@@ -179,6 +183,10 @@ export function registerPlugins(
   // ── 3. Collect menu (overwrites previous registration — last registerPlugins wins)
   const menu = list.flatMap((p) => p.menu ?? [])
   setPluginMenu(menu)
+
+  // Make plugin definitions discoverable by id (admin settings route reads
+  // configSchema from here; future tools / introspection can use the rest).
+  setPluginDefinitions(list)
 
   // ── 4. Collect crons
   const crons = list.flatMap((p) => p.crons ?? [])
