@@ -385,3 +385,17 @@ There is no `PluginBuilder`, `PluginHelpers`, or `.build()` in v4. Every plugin 
 - `packages/core/src/services/plugin-menu-singleton.ts` — menu filtering + icon map
 - `packages/core/src/plugins/core-plugins/hello-world-plugin/index.ts` — reference implementation
 - `packages/core/src/plugins/core-plugins/email-plugin/index.ts` — configSchema with 4 typed fields
+
+---
+
+## Credits
+
+Plugin SDK v4 was designed with reference to the [mmcintosh/sonicjs-infowall-merge](https://github.com/mmcintosh/sonicjs-infowall-merge) fork maintained by **MarkMac** (`mmcintosh@infowall.com`). Three concepts in particular originated in that work:
+
+| Concept | Infowall source commit |
+|---------|----------------------|
+| Declarative `menu: [...]` on plugins → admin sidebar | `6a30846c` (PR-1) |
+| `configSchema` → auto-rendered settings form | `bef0e7ea` + `902a0d1e` (PR-2a / PR-2b) |
+| Attach `hookSystem` to request before heavy bootstrap work | `60c0846f` (bootstrap-fix PR) |
+
+SonicJS v4 SDK re-implements these ideas from scratch with a different internal architecture (`definePlugin` identity model vs. infowall's manifest-registry approach), but the design direction — and the bootstrap-hookSystem fix specifically — derives directly from that fork.
