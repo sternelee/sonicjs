@@ -151,6 +151,29 @@ describe('TenantService — real SQLite', () => {
     expect((await svc.listMembers('acme')).map((m) => m.email)).toEqual(['ed@example.com'])
   })
 
+  it('user-centric: listUserMemberships + listAssignmentsByRole', async () => {
+    await svc.createTenant({ name: 'Acme', slug: 'acme' })
+    await svc.createTenant({ name: 'Beta', slug: 'beta' })
+    db.raw.prepare(`INSERT INTO auth_user (id, email, first_name, last_name, created_at, updated_at) VALUES ('u1','u1@x.com','U','One',1,1)`).run()
+    db.raw.prepare(`INSERT INTO auth_user (id, email, first_name, last_name, created_at, updated_at) VALUES ('u2','u2@x.com','U','Two',1,1)`).run()
+
+    await svc.addMember('acme', 'u1', 'admin', 'u1@x.com')
+    await svc.addMember('beta', 'u1', 'viewer', 'u1@x.com')
+    await svc.addMember('acme', 'u2', 'viewer', 'u2@x.com')
+
+    // User-centric: u1 belongs to acme(admin) + beta(viewer).
+    const u1 = await svc.listUserMemberships('u1')
+    expect(u1.map((m) => `${m.slug}:${m.role}`).sort()).toEqual(['acme:admin', 'beta:viewer'])
+    expect(u1.find((m) => m.slug === 'acme')?.name).toBe('Acme')
+    expect(await svc.listUserMemberships('u2')).toEqual([{ slug: 'acme', name: 'Acme', role: 'viewer' }])
+
+    // Role-centric: 'viewer' assigned to u1@beta and u2@acme.
+    const viewers = await svc.listAssignmentsByRole('viewer')
+    expect(viewers.map((a) => `${a.email}@${a.slug}`).sort()).toEqual(['u1@x.com@beta', 'u2@x.com@acme'])
+    expect((await svc.listAssignmentsByRole('admin')).map((a) => a.email)).toEqual(['u1@x.com'])
+    expect(await svc.listAssignmentsByRole('author')).toEqual([])
+  })
+
   it('invitations: create → accept (email must match) → membership; revoke + duplicate + expiry guards', async () => {
     await svc.createTenant({ name: 'Acme', slug: 'acme' })
     db.raw.prepare(

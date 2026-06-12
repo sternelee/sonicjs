@@ -11,10 +11,12 @@ import type { D1Database, KVNamespace } from '@cloudflare/workers-types'
 import { requireAuth } from '../../../../middleware/auth'
 import { TENANT_COOKIE, MULTI_TENANT_PLUGIN_ID } from '../../../../middleware/tenant'
 import { PluginService } from '../../../../services/plugin-service'
-import { TenantService } from '../services/tenant-service'
+import { TenantService, isValidMemberRole } from '../services/tenant-service'
 import { renderTenantsList, renderTenantsInactive } from '../templates/tenants-list.template'
 import { renderTenantForm } from '../templates/tenant-form.template'
 import { renderTenantMembers } from '../templates/tenant-members.template'
+import { renderUserMemberships } from '../templates/user-memberships.template'
+import { renderRoleUsage } from '../templates/role-usage.template'
 import { getEmailService, hasEmailService } from '../../../../services/email/email-service-singleton'
 import { escapeHtml } from '../../../../utils/sanitize'
 
@@ -110,7 +112,9 @@ export function createTenantAdminRoutes(): Hono<{ Bindings: Bindings; Variables:
       maxAge: 60 * 60 * 24 * 365,
     })
 
-    const target = redirect.startsWith('/') && !redirect.startsWith('//') ? redirect : '/admin'
+    let target = redirect.startsWith('/') && !redirect.startsWith('//') ? redirect : '/admin'
+    // Detail/edit pages are tenant-specific; send back to the list instead.
+    if (/^\/admin\/content\/.+/.test(target)) target = '/admin/content'
     return c.redirect(target)
   })
 
@@ -132,6 +136,113 @@ export function createTenantAdminRoutes(): Hono<{ Bindings: Bindings; Variables:
     }
   })
 
+  // ─── User email search for datalist autocomplete ────────────────────────────
+  routes.get('/users/search', async (c) => {
+    const db = c.env.DB
+    if (!(await isMultiTenantActive(db))) return c.text('', 200)
+    const q = (c.req.query('email') ?? c.req.query('q') ?? '').trim().toLowerCase()
+    if (!q) return c.text('', 200)
+    const { results } = await db.prepare(
+      `SELECT email FROM auth_user WHERE LOWER(email) LIKE ? LIMIT 10`
+    ).bind(`%${q}%`).all()
+    const options = (results ?? []).map((r: any) => `<option value="${escapeHtml(r.email as string)}">`).join('')
+    return c.html(options)
+  })
+
+  // ─── User-centric memberships (registered before /:slug; 'users' is reserved) ──
+  routes.get('/users/:userId', async (c) => {
+    const db = c.env.DB
+    const cur = c.get('user')
+    const version = c.get('appVersion')
+    if (!(await isMultiTenantActive(db))) {
+      return c.html(renderTenantsInactive({ user: userShape(cur), version }))
+    }
+    const userId = c.req.param('userId')
+    const target = await db.prepare('SELECT id, email FROM auth_user WHERE id = ?').bind(userId).first() as { id?: string; email?: string } | null
+    if (!target?.id) return c.redirect('/admin/users?message=User not found&type=error')
+
+    const svc = new TenantService(db)
+    const [memberships, allTenants] = await Promise.all([svc.listUserMemberships(userId), svc.listTenants()])
+    const memberSlugs = new Set(memberships.map((m) => m.slug))
+    const availableTenants = allTenants
+      .filter((t) => t.status === 'active' && !memberSlugs.has(t.slug))
+      .map((t) => ({ slug: t.slug, name: t.name }))
+    const messageType = c.req.query('type') === 'error' ? 'error' as const : 'success' as const
+    return c.html(renderUserMemberships({
+      userId, userEmail: target.email ?? userId, memberships, availableTenants,
+      user: userShape(cur), version, message: c.req.query('message'), messageType,
+    }))
+  })
+
+  routes.post('/users/:userId/memberships', async (c) => {
+    const db = c.env.DB
+    const userId = c.req.param('userId')
+    if (!(await isMultiTenantActive(db))) return c.json({ error: 'Multi-tenant plugin is not active' }, 403)
+    try {
+      const form = await c.req.formData()
+      const slug = String(form.get('slug') ?? '').trim().toLowerCase()
+      const role = String(form.get('role') ?? 'viewer')
+      const redirectTo = String(form.get('_redirect') ?? '') || `/admin/tenants/users/${userId}`
+      if (!isValidMemberRole(role)) throw new Error(`Invalid role '${role}'`)
+      const target = await db.prepare('SELECT email FROM auth_user WHERE id = ?').bind(userId).first() as { email?: string } | null
+      if (!target) throw new Error('User not found')
+      const svc = new TenantService(db)
+      if (!(await svc.getTenantBySlug(slug))) throw new Error('Tenant not found')
+      if (await svc.isMember(userId, slug)) throw new Error(`Already a member of '${slug}'`)
+      await svc.addMember(slug, userId, role, target.email ?? null)
+      return c.redirect(`${redirectTo}?message=Added to ${encodeURIComponent(slug)}`)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to add membership'
+      return c.redirect(`/admin/tenants/users/${userId}?message=${encodeURIComponent(message)}&type=error`)
+    }
+  })
+
+  routes.post('/users/:userId/memberships/:slug/role', async (c) => {
+    const db = c.env.DB
+    const userId = c.req.param('userId')
+    const slug = c.req.param('slug')
+    if (!(await isMultiTenantActive(db))) return c.json({ error: 'Multi-tenant plugin is not active' }, 403)
+    try {
+      const form = await c.req.formData()
+      const role = String(form.get('role') ?? '')
+      const redirectTo = String(form.get('_redirect') ?? '') || `/admin/tenants/users/${userId}`
+      await new TenantService(db).setMemberRole(slug, userId, role)
+      return c.redirect(`${redirectTo}?message=Role updated`)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to update role'
+      return c.redirect(`/admin/tenants/users/${userId}?message=${encodeURIComponent(message)}&type=error`)
+    }
+  })
+
+  routes.post('/users/:userId/memberships/:slug/delete', async (c) => {
+    const db = c.env.DB
+    const userId = c.req.param('userId')
+    const slug = c.req.param('slug')
+    if (!(await isMultiTenantActive(db))) return c.json({ error: 'Multi-tenant plugin is not active' }, 403)
+    try {
+      const form = await c.req.formData()
+      const redirectTo = String(form.get('_redirect') ?? '') || `/admin/tenants/users/${userId}`
+      await new TenantService(db).removeMember(slug, userId)
+      return c.redirect(`${redirectTo}?message=Removed from ${encodeURIComponent(slug)}`)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to remove membership'
+      return c.redirect(`/admin/tenants/users/${userId}?message=${encodeURIComponent(message)}&type=error`)
+    }
+  })
+
+  // ─── Role usage (read-only): where a role is assigned across tenants ──────────
+  routes.get('/roles/:roleName', async (c) => {
+    const db = c.env.DB
+    const cur = c.get('user')
+    const version = c.get('appVersion')
+    if (!(await isMultiTenantActive(db))) {
+      return c.html(renderTenantsInactive({ user: userShape(cur), version }))
+    }
+    const roleName = c.req.param('roleName')
+    const assignments = await new TenantService(db).listAssignmentsByRole(roleName)
+    return c.html(renderRoleUsage({ roleName, assignments, user: userShape(cur), version }))
+  })
+
   // ─── List ───────────────────────────────────────────────────────────────────
   routes.get('/', async (c) => {
     const db = c.env.DB
@@ -145,14 +256,16 @@ export function createTenantAdminRoutes(): Hono<{ Bindings: Bindings; Variables:
     await svc.ensureDefaultTenant()
     const tenants = await svc.listTenants()
 
-    const { results } = await db.prepare(
-      'SELECT tenant_id, COUNT(*) as count FROM documents WHERE deleted_at IS NULL GROUP BY tenant_id'
-    ).all()
-    const counts = new Map((results ?? []).map((r: any) => [r.tenant_id, r.count as number]))
+    const [docRes, memberRes] = await db.batch([
+      db.prepare('SELECT tenant_id, COUNT(*) as count FROM documents WHERE deleted_at IS NULL GROUP BY tenant_id'),
+      db.prepare('SELECT t.slug, COUNT(m.id) as count FROM auth_tenant t LEFT JOIN auth_tenant_member m ON m.tenant_id = t.id GROUP BY t.id'),
+    ])
+    const counts = new Map((docRes?.results ?? []).map((r: any) => [r.tenant_id, r.count as number]))
+    const memberCounts = new Map((memberRes?.results ?? []).map((r: any) => [r.slug, r.count as number]))
 
     const messageType = c.req.query('type') === 'error' ? 'error' as const : 'success' as const
     return c.html(renderTenantsList({
-      tenants: tenants.map(t => ({ ...t, documentCount: counts.get(t.slug) ?? 0 })),
+      tenants: tenants.map(t => ({ ...t, documentCount: counts.get(t.slug) ?? 0, memberCount: memberCounts.get(t.slug) ?? 0 })),
       currentTenantId: c.get('tenantId') ?? 'default',
       user: userShape(user),
       version,
@@ -279,11 +392,13 @@ export function createTenantAdminRoutes(): Hono<{ Bindings: Bindings; Variables:
     if (!tenant) return c.redirect('/admin/tenants?message=Tenant not found&type=error')
 
     const [members, invitations] = await Promise.all([svc.listMembers(slug), svc.listInvitations(slug)])
-    const messageType = c.req.query('type') === 'error' ? 'error' as const : 'success' as const
+    const qt = c.req.query('type')
+    const messageType = qt === 'error' ? 'error' as const : qt === 'warning' ? 'warning' as const : 'success' as const
     return c.html(renderTenantMembers({
       slug, tenantName: tenant.name, members, invitations,
       user: userShape(user), version,
       message: c.req.query('message'), messageType,
+      retryInvitationId: c.req.query('retry_invitation'),
     }))
   })
 
@@ -351,25 +466,70 @@ export function createTenantAdminRoutes(): Hono<{ Bindings: Bindings; Variables:
       // Best-effort email delivery of the accept link. The link is also shown in the UI, so a
       // missing/failed mailer never blocks the invite (mirrors the password-reset flow).
       const origin = c.req.header('origin') || new URL(c.req.url).origin
-      const acceptUrl = `${origin}/admin/tenants/invitations/accept?token=${encodeURIComponent(token)}`
-      let note = 'Invitation created'
-      if (hasEmailService()) {
-        try {
-          await getEmailService().send({
-            to: email.trim(),
-            subject: `You're invited to the ${slug} workspace`,
-            flow: 'tenant-invitation',
-            html: renderInviteEmail(acceptUrl, slug, role),
-            text: `You've been invited to '${slug}' as ${role}. Sign in with this email and accept: ${acceptUrl}`,
-          })
+      const acceptUrl = `${origin}/join/invite?token=${encodeURIComponent(token)}`
+      let note: string
+      let noteType = ''
+      const svc2 = hasEmailService() ? getEmailService() : null
+      const hasRealProvider = !!svc2 && svc2.getProviderName() !== 'console'
+      if (hasRealProvider) {
+        const result = await svc2!.send({
+          to: email.trim(),
+          subject: `You're invited to the ${slug} workspace`,
+          flow: 'tenant-invitation',
+          html: renderInviteEmail(acceptUrl, slug, role),
+          text: `You've been invited to '${slug}' as ${role}. Sign in with this email and accept: ${acceptUrl}`,
+        })
+        if (result.ok) {
           note = 'Invitation created and emailed'
-        } catch (err) {
-          console.error('Failed to send invitation email:', err)
+        } else {
+          console.error('Failed to send invitation email:', result.error)
+          note = 'Invitation created — email failed to send, share the accept link manually'
+          noteType = 'warning'
         }
+      } else {
+        note = 'Invitation created — no email plugin active, share the accept link manually'
+        noteType = 'warning'
       }
-      return c.redirect(`/admin/tenants/${slug}/members?message=${encodeURIComponent(note)}`)
+      const typeParam = noteType ? `&type=${noteType}` : ''
+      const retryParam = noteType === 'warning' && hasRealProvider ? `&retry_invitation=${encodeURIComponent(token)}` : ''
+      return c.redirect(`/admin/tenants/${slug}/members?message=${encodeURIComponent(note)}${typeParam}${retryParam}`)
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to create invitation'
+      return c.redirect(`/admin/tenants/${slug}/members?message=${encodeURIComponent(message)}&type=error`)
+    }
+  })
+
+  // ─── Invitations: resend email ────────────────────────────────────────────────
+  routes.post('/:slug/invitations/:id/resend', async (c) => {
+    const db = c.env.DB
+    const slug = c.req.param('slug')
+    const id = c.req.param('id')
+    if (!(await isMultiTenantActive(db))) return c.json({ error: 'Multi-tenant plugin is not active' }, 403)
+    try {
+      const inv = await db.prepare(
+        `SELECT i.id, i.email, i.role FROM auth_tenant_invitation i
+         JOIN auth_tenant t ON t.id = i.tenant_id
+         WHERE i.id = ? AND t.slug = ? AND i.status = 'pending'`
+      ).bind(id, slug).first() as { id: string; email: string; role: string } | null
+      if (!inv) throw new Error('Invitation not found or already used')
+
+      const svc2 = hasEmailService() ? getEmailService() : null
+      const hasRealProvider = !!svc2 && svc2.getProviderName() !== 'console'
+      if (!hasRealProvider) throw new Error('No email plugin active')
+
+      const origin = c.req.header('origin') || new URL(c.req.url).origin
+      const acceptUrl = `${origin}/join/invite?token=${encodeURIComponent(inv.id)}`
+      const result = await svc2!.send({
+        to: inv.email,
+        subject: `You're invited to the ${slug} workspace`,
+        flow: 'tenant-invitation',
+        html: renderInviteEmail(acceptUrl, slug, inv.role),
+        text: `You've been invited to '${slug}' as ${inv.role}. Sign in with this email and accept: ${acceptUrl}`,
+      })
+      if (!result.ok) throw new Error(result.error ?? 'Send failed')
+      return c.redirect(`/admin/tenants/${slug}/members?message=Invitation email sent to ${encodeURIComponent(inv.email)}`)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to resend invitation'
       return c.redirect(`/admin/tenants/${slug}/members?message=${encodeURIComponent(message)}&type=error`)
     }
   })
