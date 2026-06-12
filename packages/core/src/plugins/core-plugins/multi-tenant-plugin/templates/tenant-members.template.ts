@@ -10,7 +10,7 @@ export interface TenantMembersPageData {
   user?: { name: string; email: string; role: string }
   version?: string
   message?: string
-  messageType?: 'success' | 'error'
+  messageType?: 'success' | 'error' | 'warning'
 }
 
 function roleOptions(selected: string): string {
@@ -109,6 +109,8 @@ export function renderTenantMembers(data: TenantMembersPageData): string {
     ? `<div data-members-alert class="mb-6 rounded-lg border px-4 py-3 text-sm ${
         data.messageType === 'error'
           ? 'border-red-500/20 bg-red-500/10 text-red-700 dark:text-red-400'
+          : data.messageType === 'warning'
+          ? 'border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-400'
           : 'border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
       }">${escapeHtml(data.message)}</div>`
     : ''

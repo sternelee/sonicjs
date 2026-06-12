@@ -392,7 +392,8 @@ export function createTenantAdminRoutes(): Hono<{ Bindings: Bindings; Variables:
     if (!tenant) return c.redirect('/admin/tenants?message=Tenant not found&type=error')
 
     const [members, invitations] = await Promise.all([svc.listMembers(slug), svc.listInvitations(slug)])
-    const messageType = c.req.query('type') === 'error' ? 'error' as const : 'success' as const
+    const qt = c.req.query('type')
+    const messageType = qt === 'error' ? 'error' as const : qt === 'warning' ? 'warning' as const : 'success' as const
     return c.html(renderTenantMembers({
       slug, tenantName: tenant.name, members, invitations,
       user: userShape(user), version,
@@ -465,7 +466,8 @@ export function createTenantAdminRoutes(): Hono<{ Bindings: Bindings; Variables:
       // missing/failed mailer never blocks the invite (mirrors the password-reset flow).
       const origin = c.req.header('origin') || new URL(c.req.url).origin
       const acceptUrl = `${origin}/admin/tenants/invitations/accept?token=${encodeURIComponent(token)}`
-      let note = 'Invitation created'
+      let note: string
+      let noteType = ''
       if (hasEmailService()) {
         try {
           await getEmailService().send({
@@ -478,9 +480,15 @@ export function createTenantAdminRoutes(): Hono<{ Bindings: Bindings; Variables:
           note = 'Invitation created and emailed'
         } catch (err) {
           console.error('Failed to send invitation email:', err)
+          note = 'Invitation created — email failed to send, share the accept link manually'
+          noteType = 'warning'
         }
+      } else {
+        note = 'Invitation created — no email plugin active, share the accept link manually'
+        noteType = 'warning'
       }
-      return c.redirect(`/admin/tenants/${slug}/members?message=${encodeURIComponent(note)}`)
+      const typeParam = noteType ? `&type=${noteType}` : ''
+      return c.redirect(`/admin/tenants/${slug}/members?message=${encodeURIComponent(note)}${typeParam}`)
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to create invitation'
       return c.redirect(`/admin/tenants/${slug}/members?message=${encodeURIComponent(message)}&type=error`)
