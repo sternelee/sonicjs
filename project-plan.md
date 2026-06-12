@@ -152,5 +152,21 @@ isolated). 36 MT unit + 25 e2e green.
   document routes above, so this is intentional, not a silent gap.
 - A way to mark a type global from config/UI (today: only via type registration `settings.global`).
 
+## User- & role-centric membership UI — SHIPPED
+Payload's model: one shared role catalog; global-vs-tenant is the *assignment location*
+(global = `rbac_user_roles`/`is_super_admin`, per-tenant = `auth_tenant_member`). No schema change.
+
+- **User-centric** (`/admin/tenants/users/:userId`): list a user's tenants + per-tenant role, add the
+  user to a tenant (picker + role), change role, remove. Linked from the user edit page (`/admin/users/:id/edit`)
+  when the plugin is active, and from each tenant member row ("All tenants").
+- **Role-centric** (`/admin/tenants/roles/:roleName`, read-only): per-tenant assignments of a role.
+  Linked per-role from the RBAC roles tab.
+- `TenantService.listUserMemberships` / `listAssignmentsByRole`; reserved slugs `users`/`roles`.
+
+Verification: 37 MT unit (incl. the two new queries) + e2e spec 76 (user edit link → add/change/remove +
+role-usage page). Full suite 70–76 = 29 e2e green.
+
 ### Other deferred
 - Optionally make `requireRbac` portal-section gates tenant-aware if any section should be per-tenant.
+- The per-role "tenants" link on the RBAC roles tab is authored but not e2e-covered (hidden-tab DOM
+  assertion was flaky); the role-usage page is reached directly + from user pages.

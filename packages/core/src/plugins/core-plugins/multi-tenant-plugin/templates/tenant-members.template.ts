@@ -37,6 +37,7 @@ function renderRow(slug: string, m: TenantMember): string {
         </form>
       </td>
       <td class="px-4 py-3 text-right">
+        <a href="/admin/tenants/users/${uid}" data-member-memberships="${escapeHtml(m.email)}" class="mr-1 rounded-lg px-2.5 py-1.5 text-sm font-medium text-zinc-600 hover:bg-zinc-950/5 dark:text-zinc-400 dark:hover:bg-white/5">All tenants</a>
         <form method="POST" action="/admin/tenants/${escapeHtml(slug)}/members/${uid}/delete" class="inline"
           onsubmit="return confirm('Remove ${escapeHtml(m.email)} from this tenant?')">
           <button type="submit" data-remove-member="${escapeHtml(m.email)}" class="rounded-lg px-2.5 py-1.5 text-sm font-medium text-red-600 hover:bg-red-500/10 dark:text-red-400">Remove</button>
