@@ -134,6 +134,19 @@ export function createTenantAdminRoutes(): Hono<{ Bindings: Bindings; Variables:
     }
   })
 
+  // ─── User email search for datalist autocomplete ────────────────────────────
+  routes.get('/users/search', async (c) => {
+    const db = c.env.DB
+    if (!(await isMultiTenantActive(db))) return c.text('', 200)
+    const q = (c.req.query('email') ?? c.req.query('q') ?? '').trim().toLowerCase()
+    if (!q) return c.text('', 200)
+    const { results } = await db.prepare(
+      `SELECT email FROM auth_user WHERE LOWER(email) LIKE ? LIMIT 10`
+    ).bind(`%${q}%`).all()
+    const options = (results ?? []).map((r: any) => `<option value="${escapeHtml(r.email as string)}">`).join('')
+    return c.html(options)
+  })
+
   // ─── User-centric memberships (registered before /:slug; 'users' is reserved) ──
   routes.get('/users/:userId', async (c) => {
     const db = c.env.DB

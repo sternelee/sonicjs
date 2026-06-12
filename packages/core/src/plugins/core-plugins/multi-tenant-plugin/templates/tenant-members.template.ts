@@ -128,7 +128,10 @@ export function renderTenantMembers(data: TenantMembersPageData): string {
           <div class="flex-1 min-w-[16rem]">
             <label for="member-email" class="mb-1 block text-xs font-medium text-zinc-500 dark:text-zinc-400">User email</label>
             <input id="member-email" name="email" type="email" required placeholder="user@example.com"
+              list="member-email-suggestions"
+              hx-get="/admin/tenants/users/search" hx-trigger="keyup changed delay:300ms" hx-target="#member-email-suggestions" hx-swap="innerHTML" hx-include="this"
               class="w-full rounded-lg border border-zinc-950/10 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-white/10 dark:bg-zinc-800 dark:text-white">
+          <datalist id="member-email-suggestions"></datalist>
           </div>
           <div>
             <label for="member-role" class="mb-1 block text-xs font-medium text-zinc-500 dark:text-zinc-400">Role</label>
