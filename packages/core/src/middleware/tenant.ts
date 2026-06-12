@@ -252,7 +252,7 @@ function renderTenantSwitcher(state: TenantCacheEntry, currentTenantId: string, 
     .join('')
 
   return `
-    <div class="mt-3 border-t border-zinc-950/5 pt-3 dark:border-white/5" data-tenant-switcher>
+    <div class="mt-4 border-t border-zinc-950/5 pt-4 dark:border-white/5" data-tenant-switcher>
       <label for="tenant-switcher-select" class="mb-1 flex items-center gap-1.5 text-xs/5 font-medium text-zinc-500 dark:text-zinc-400">
         <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21"/></svg>
         Tenant
