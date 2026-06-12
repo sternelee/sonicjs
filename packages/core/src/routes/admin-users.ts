@@ -869,10 +869,18 @@ userRoutes.get('/users/:id/edit', async (c) => {
       profile
     }
 
+    // Multi-tenant plugin active? (same source of truth as middleware/tenant.ts). When active, the
+    // edit page links to the user's per-tenant membership management. Single-tenant installs: no link.
+    const mtRow = await db.prepare(
+      `SELECT 1 FROM documents WHERE type_id = 'plugin' AND slug = 'multi-tenant'
+         AND q_plugin_status = 'active' AND is_current_draft = 1 AND deleted_at IS NULL`
+    ).first().catch(() => null)
+
     const pageData: UserEditPageData = {
       userToEdit: editData,
       roles: ROLES,
       customProfileFieldsHtml,
+      tenantMembershipsHref: mtRow ? `/admin/tenants/users/${userId}` : undefined,
       user: {
         name: user!.email.split('@')[0] || user!.email,
         email: user!.email,

@@ -11,10 +11,12 @@ import type { D1Database, KVNamespace } from '@cloudflare/workers-types'
 import { requireAuth } from '../../../../middleware/auth'
 import { TENANT_COOKIE, MULTI_TENANT_PLUGIN_ID } from '../../../../middleware/tenant'
 import { PluginService } from '../../../../services/plugin-service'
-import { TenantService } from '../services/tenant-service'
+import { TenantService, isValidMemberRole } from '../services/tenant-service'
 import { renderTenantsList, renderTenantsInactive } from '../templates/tenants-list.template'
 import { renderTenantForm } from '../templates/tenant-form.template'
 import { renderTenantMembers } from '../templates/tenant-members.template'
+import { renderUserMemberships } from '../templates/user-memberships.template'
+import { renderRoleUsage } from '../templates/role-usage.template'
 import { getEmailService, hasEmailService } from '../../../../services/email/email-service-singleton'
 import { escapeHtml } from '../../../../utils/sanitize'
 
@@ -130,6 +132,95 @@ export function createTenantAdminRoutes(): Hono<{ Bindings: Bindings; Variables:
       const message = error instanceof Error ? error.message : 'Failed to accept invitation'
       return c.redirect(`/admin/tenants?message=${encodeURIComponent(message)}&type=error`)
     }
+  })
+
+  // ─── User-centric memberships (registered before /:slug; 'users' is reserved) ──
+  routes.get('/users/:userId', async (c) => {
+    const db = c.env.DB
+    const cur = c.get('user')
+    const version = c.get('appVersion')
+    if (!(await isMultiTenantActive(db))) {
+      return c.html(renderTenantsInactive({ user: userShape(cur), version }))
+    }
+    const userId = c.req.param('userId')
+    const target = await db.prepare('SELECT id, email FROM auth_user WHERE id = ?').bind(userId).first() as { id?: string; email?: string } | null
+    if (!target?.id) return c.redirect('/admin/users?message=User not found&type=error')
+
+    const svc = new TenantService(db)
+    const [memberships, allTenants] = await Promise.all([svc.listUserMemberships(userId), svc.listTenants()])
+    const memberSlugs = new Set(memberships.map((m) => m.slug))
+    const availableTenants = allTenants
+      .filter((t) => t.status === 'active' && !memberSlugs.has(t.slug))
+      .map((t) => ({ slug: t.slug, name: t.name }))
+    const messageType = c.req.query('type') === 'error' ? 'error' as const : 'success' as const
+    return c.html(renderUserMemberships({
+      userId, userEmail: target.email ?? userId, memberships, availableTenants,
+      user: userShape(cur), version, message: c.req.query('message'), messageType,
+    }))
+  })
+
+  routes.post('/users/:userId/memberships', async (c) => {
+    const db = c.env.DB
+    const userId = c.req.param('userId')
+    if (!(await isMultiTenantActive(db))) return c.json({ error: 'Multi-tenant plugin is not active' }, 403)
+    try {
+      const form = await c.req.formData()
+      const slug = String(form.get('slug') ?? '').trim().toLowerCase()
+      const role = String(form.get('role') ?? 'viewer')
+      if (!isValidMemberRole(role)) throw new Error(`Invalid role '${role}'`)
+      const target = await db.prepare('SELECT email FROM auth_user WHERE id = ?').bind(userId).first() as { email?: string } | null
+      if (!target) throw new Error('User not found')
+      const svc = new TenantService(db)
+      if (!(await svc.getTenantBySlug(slug))) throw new Error('Tenant not found')
+      if (await svc.isMember(userId, slug)) throw new Error(`Already a member of '${slug}'`)
+      await svc.addMember(slug, userId, role, target.email ?? null)
+      return c.redirect(`/admin/tenants/users/${userId}?message=Added to ${encodeURIComponent(slug)}`)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to add membership'
+      return c.redirect(`/admin/tenants/users/${userId}?message=${encodeURIComponent(message)}&type=error`)
+    }
+  })
+
+  routes.post('/users/:userId/memberships/:slug/role', async (c) => {
+    const db = c.env.DB
+    const userId = c.req.param('userId')
+    const slug = c.req.param('slug')
+    if (!(await isMultiTenantActive(db))) return c.json({ error: 'Multi-tenant plugin is not active' }, 403)
+    try {
+      const role = String((await c.req.formData()).get('role') ?? '')
+      await new TenantService(db).setMemberRole(slug, userId, role)
+      return c.redirect(`/admin/tenants/users/${userId}?message=Role updated`)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to update role'
+      return c.redirect(`/admin/tenants/users/${userId}?message=${encodeURIComponent(message)}&type=error`)
+    }
+  })
+
+  routes.post('/users/:userId/memberships/:slug/delete', async (c) => {
+    const db = c.env.DB
+    const userId = c.req.param('userId')
+    const slug = c.req.param('slug')
+    if (!(await isMultiTenantActive(db))) return c.json({ error: 'Multi-tenant plugin is not active' }, 403)
+    try {
+      await new TenantService(db).removeMember(slug, userId)
+      return c.redirect(`/admin/tenants/users/${userId}?message=Removed from ${encodeURIComponent(slug)}`)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to remove membership'
+      return c.redirect(`/admin/tenants/users/${userId}?message=${encodeURIComponent(message)}&type=error`)
+    }
+  })
+
+  // ─── Role usage (read-only): where a role is assigned across tenants ──────────
+  routes.get('/roles/:roleName', async (c) => {
+    const db = c.env.DB
+    const cur = c.get('user')
+    const version = c.get('appVersion')
+    if (!(await isMultiTenantActive(db))) {
+      return c.html(renderTenantsInactive({ user: userShape(cur), version }))
+    }
+    const roleName = c.req.param('roleName')
+    const assignments = await new TenantService(db).listAssignmentsByRole(roleName)
+    return c.html(renderRoleUsage({ roleName, assignments, user: userShape(cur), version }))
   })
 
   // ─── List ───────────────────────────────────────────────────────────────────

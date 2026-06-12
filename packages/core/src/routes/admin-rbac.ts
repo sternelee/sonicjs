@@ -237,6 +237,7 @@ adminRbacRoutes.get('/', async (c) => {
             } class="h-3.5 w-3.5 rounded border-zinc-400 text-cyan-600 focus:ring-cyan-500">
             Access portal
           </label>
+          <a href="/admin/tenants/roles/${esc(r.name)}" data-role-tenants="${esc(r.name)}" class="text-xs text-cyan-600 dark:text-cyan-400 hover:underline" title="Per-tenant assignments of this role">tenants</a>
           ${
             r.is_system
               ? ''

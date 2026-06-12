@@ -23,7 +23,7 @@ export interface TenantData {
 export const DEFAULT_TENANT_SLUG = 'default'
 
 /** Slugs that would collide with routing or platform conventions. */
-export const RESERVED_TENANT_SLUGS = ['www', 'admin', 'api', 'auth', 'assets', 'static', 'invitations']
+export const RESERVED_TENANT_SLUGS = ['www', 'admin', 'api', 'auth', 'assets', 'static', 'invitations', 'users', 'roles']
 
 const SLUG_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/
 
@@ -181,6 +181,31 @@ export class TenantService {
       WHERE m.user_id = ?
     `).bind(userId).all()
     return new Map((results || []).map((r: any) => [r.slug as string, (r.role as string) || 'viewer']))
+  }
+
+  /** A user's tenant memberships joined with tenant details (user-centric view). */
+  async listUserMemberships(userId: string): Promise<Array<{ slug: string; name: string; role: string }>> {
+    const { results } = await this.db.prepare(`
+      SELECT t.slug, t.name AS tenant_name, m.role
+      FROM auth_tenant_member m
+      JOIN auth_tenant t ON t.id = m.tenant_id
+      WHERE m.user_id = ?
+      ORDER BY CASE WHEN t.slug = 'default' THEN 0 ELSE 1 END, t.name ASC
+    `).bind(userId).all()
+    return (results || []).map((r: any) => ({ slug: r.slug, name: r.tenant_name || r.slug, role: r.role || 'viewer' }))
+  }
+
+  /** All (tenant, user) assignments holding a given role — powers the roles "where used" view. */
+  async listAssignmentsByRole(role: string): Promise<Array<{ slug: string; tenantName: string; userId: string; email: string }>> {
+    const { results } = await this.db.prepare(`
+      SELECT t.slug, t.name AS tenant_name, u.id AS user_id, u.email
+      FROM auth_tenant_member m
+      JOIN auth_tenant t ON t.id = m.tenant_id
+      JOIN auth_user u ON u.id = m.user_id
+      WHERE m.role = ?
+      ORDER BY t.name ASC, u.email ASC
+    `).bind(role).all()
+    return (results || []).map((r: any) => ({ slug: r.slug, tenantName: r.tenant_name || r.slug, userId: r.user_id, email: r.email }))
   }
 
   /** The user's role in a tenant, or null if not a member. */

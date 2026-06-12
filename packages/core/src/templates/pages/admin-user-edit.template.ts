@@ -29,6 +29,8 @@ export interface UserEditPageData {
   error?: string
   success?: string
   customProfileFieldsHtml?: string
+  /** When the multi-tenant plugin is active: link to this user's per-tenant membership management. */
+  tenantMembershipsHref?: string
   user?: {
     name: string
     email: string
@@ -167,6 +169,17 @@ export function renderUserEditPage(data: UserEditPageData): string {
               </div>
 
               ${data.customProfileFieldsHtml || ''}
+
+              ${data.tenantMembershipsHref ? `
+              <!-- Tenant Memberships (multi-tenant plugin) -->
+              <div class="mb-8">
+                <h3 class="text-base font-semibold text-zinc-950 dark:text-white mb-2">Tenant memberships</h3>
+                <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-3">Assign this user to one or more tenants and set their role within each.</p>
+                <a href="${data.tenantMembershipsHref}" data-tenant-memberships-link class="inline-flex items-center gap-2 rounded-lg bg-zinc-950 px-3.5 py-2 text-sm font-semibold text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200">
+                  Manage tenant memberships
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </a>
+              </div>` : ''}
 
               <!-- Set Password -->
               <div class="mb-8">
