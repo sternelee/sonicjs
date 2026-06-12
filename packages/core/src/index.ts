@@ -40,6 +40,16 @@ export { getHookSystem, hasHookSystem, setHookSystem, resetHookSystem, getTypedH
 export { topoSort, PluginDependencyCycleError } from './plugins/topo-sort'
 export type { SortablePlugin, TopoSortOptions } from './plugins/topo-sort'
 
+// Single-chokepoint plugin registration
+export { registerPlugins, RegisterPluginsError } from './plugins/sdk/register-plugins'
+export type {
+  RegisterablePlugin,
+  RegisterPluginsHostContext,
+  RegisterPluginsErrorReason,
+  PluginsRegistry,
+  RegistryEntry,
+} from './plugins/sdk/register-plugins'
+
 // Schema-driven plugin settings
 export {
   parseConfigSchema,
