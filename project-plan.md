@@ -133,11 +133,23 @@ Centralized-first, safe-by-default approach.
 - **Tests:** helper unit + `global-tenant-scope.sqlite.test.ts` (global visible from every tenant;
   normal type stays isolated — the security property).
 
-### G5 remaining (follow-up — do NOT ship half-wired silently)
-- Wire the rest of `admin-documents` (update/publish/unpublish/delete/by-id read) and `api-documents`
-  reads to `effectiveTenantForType`. By-id ops need a tenant-independent type lookup first
-  (the row's `tenant_id` is unknown until resolved).
-- `admin-content` (primary admin path), `media-documents`, `api-content-crud`.
+### G5 — canonical document routes COMPLETE
+Both R4-sanctioned document-model routes are now fully global-aware:
+- `admin-documents`: create, list, get-by-id, versions, update, publish, unpublish, delete, reindex.
+  By-id/root-id ops use `resolveDocScope` — look up the type without a tenant filter, compute the
+  effective tenant, then **re-verify the row lives in that effective scope** (the isolation guard
+  reproduces the old `AND tenant_id = ?` semantics for normal types → no leak).
+- `api-documents`: list + by-id/by-root public reads. The ACL override lookup also uses the effective
+  tenant (`denyIfNotAllowed`/`aclAllowsRead` take an override); the role principal stays per-tenant.
+
+Proven end-to-end: e2e spec 75 (global type created in tenant A, visible from tenant B; normal type
+isolated). 36 MT unit + 25 e2e green.
+
+### G5 remaining (follow-up)
+- Legacy `admin-content` / `api-content-crud` / `admin-media` / `media-documents` raw-SQL paths are
+  NOT global-aware. These are the legacy content/media routes already slated for decommissioning
+  (CLAUDE.md §"content/media table DROP") — global types are a document-model feature served by the
+  document routes above, so this is intentional, not a silent gap.
 - A way to mark a type global from config/UI (today: only via type registration `settings.global`).
 
 ### Other deferred

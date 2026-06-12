@@ -2,7 +2,7 @@ import { Hono } from 'hono'
 import type { Bindings, Variables } from '../app'
 import { DocumentRepository } from '../services/document-repository'
 import { DocumentTypeRegistry } from '../services/document-type-registry'
-import { getDocumentRequestContext } from '../services/document-request-context'
+import { getDocumentRequestContext, effectiveTenantForType } from '../services/document-request-context'
 import type { D1Database } from '@cloudflare/workers-types'
 import type { PrincipalRef } from '../schemas/document'
 
@@ -13,8 +13,9 @@ async function aclAllowsRead(
   tenantId: string,
   principalSet: PrincipalRef[],
   row: { type_id: string; root_id: string },
+  preloadedType?: any,
 ): Promise<boolean> {
-  const docType = await new DocumentTypeRegistry(db).findById(row.type_id)
+  const docType = preloadedType ?? await new DocumentTypeRegistry(db).findById(row.type_id)
   if (!docType) return false
   return new DocumentRepository(db, tenantId).isAllowed(principalSet, row.root_id, 'read', docType.settings)
 }
@@ -80,7 +81,8 @@ apiDocumentsRoutes.get('/', async (c) => {
     const sortDir = (c.req.query('dir') ?? 'desc').toLowerCase() === 'asc' ? 'ASC' : 'DESC'
 
     // Single source of list SQL: the tenant-scoped repository chokepoint (R4/D10). No inline SQL.
-    const repo = new DocumentRepository(db, tenantId)
+    // Global types read from the shared pool regardless of the request tenant (G5).
+    const repo = new DocumentRepository(db, effectiveTenantForType(tenantId, docType.settings))
     const docs = await repo.list({
       typeId, status: 'published', timeWindow: true, now, locale, limit,
       cursorUpdatedAt, cursorId,
@@ -128,16 +130,21 @@ apiDocumentsRoutes.get('/root/:rootId', async (c) => {
     const now = Math.floor(Date.now() / 1000)
     const { rootId } = c.req.param()
 
+    // No tenant filter here: the effective tenant depends on the row's type (global types live in
+    // the shared pool, G5). Resolve the type, then enforce ownership against the effective tenant.
     const row = await db.prepare(
       `SELECT * FROM documents
-       WHERE root_id = ? AND tenant_id = ? AND is_published = 1 AND deleted_at IS NULL
+       WHERE root_id = ? AND is_published = 1 AND deleted_at IS NULL
          AND (scheduled_at IS NULL OR scheduled_at <= ?)
-         AND (expires_at IS NULL OR expires_at > ?)`,
-    ).bind(rootId, tenantId, now, now).first() as any
+         AND (expires_at IS NULL OR expires_at > ?) LIMIT 1`,
+    ).bind(rootId, now, now).first() as any
 
     if (!row) return c.json({ error: 'Not found' }, 404)
 
-    if (!(await aclAllowsRead(db, tenantId, principalSet, row))) {
+    const docType = await new DocumentTypeRegistry(db).findById(row.type_id)
+    const effTenant = effectiveTenantForType(tenantId, docType?.settings)
+    if (row.tenant_id !== effTenant) return c.json({ error: 'Not found' }, 404) // isolation guard
+    if (!(await aclAllowsRead(db, effTenant, principalSet, row, docType))) {
       return c.json({ error: 'Not found' }, 404)
     }
 
@@ -163,14 +170,17 @@ apiDocumentsRoutes.get('/:id', async (c) => {
 
     const row = await db.prepare(
       `SELECT * FROM documents
-       WHERE id = ? AND tenant_id = ? AND is_published = 1 AND deleted_at IS NULL
+       WHERE id = ? AND is_published = 1 AND deleted_at IS NULL
          AND (scheduled_at IS NULL OR scheduled_at <= ?)
-         AND (expires_at IS NULL OR expires_at > ?)`,
-    ).bind(id, tenantId, now, now).first() as any
+         AND (expires_at IS NULL OR expires_at > ?) LIMIT 1`,
+    ).bind(id, now, now).first() as any
 
     if (!row) return c.json({ error: 'Not found' }, 404)
 
-    if (!(await aclAllowsRead(db, tenantId, principalSet, row))) {
+    const docType = await new DocumentTypeRegistry(db).findById(row.type_id)
+    const effTenant = effectiveTenantForType(tenantId, docType?.settings)
+    if (row.tenant_id !== effTenant) return c.json({ error: 'Not found' }, 404) // isolation guard
+    if (!(await aclAllowsRead(db, effTenant, principalSet, row, docType))) {
       return c.json({ error: 'Not found' }, 404)
     }
 
