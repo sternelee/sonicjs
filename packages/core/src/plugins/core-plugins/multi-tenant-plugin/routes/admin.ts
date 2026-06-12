@@ -15,6 +15,8 @@ import { TenantService } from '../services/tenant-service'
 import { renderTenantsList, renderTenantsInactive } from '../templates/tenants-list.template'
 import { renderTenantForm } from '../templates/tenant-form.template'
 import { renderTenantMembers } from '../templates/tenant-members.template'
+import { getEmailService, hasEmailService } from '../../../../services/email/email-service-singleton'
+import { escapeHtml } from '../../../../utils/sanitize'
 
 type Bindings = { DB: D1Database; KV: KVNamespace }
 type Variables = {
@@ -33,6 +35,19 @@ const tenantFormSchema = z.object({
 
 function userShape(user: any) {
   return user ? { name: user.email, email: user.email, role: user.role } : undefined
+}
+
+function renderInviteEmail(acceptUrl: string, slug: string, role: string): string {
+  const s = escapeHtml(slug)
+  const r = escapeHtml(role)
+  const url = escapeHtml(acceptUrl)
+  return `<div style="font-family:sans-serif;max-width:600px">
+    <h2>You're invited to ${s}</h2>
+    <p>You've been invited to the <strong>${s}</strong> workspace as <strong>${r}</strong>.</p>
+    <p>Sign in with this email address, then open the link below to join:</p>
+    <p><a href="${url}" style="background:#465FFF;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none">Accept invitation</a></p>
+    <p style="color:#666;font-size:12px">Or copy this link: ${url}</p>
+  </div>`
 }
 
 function zodToFieldErrors(error: z.ZodError): Record<string, string[]> {
@@ -331,8 +346,28 @@ export function createTenantAdminRoutes(): Hono<{ Bindings: Bindings; Variables:
       const form = await c.req.formData()
       const email = String(form.get('email') ?? '')
       const role = String(form.get('role') ?? 'viewer')
-      await new TenantService(db).createInvitation(slug, email, role, user?.userId ?? null)
-      return c.redirect(`/admin/tenants/${slug}/members?message=Invitation created`)
+      const token = await new TenantService(db).createInvitation(slug, email, role, user?.userId ?? null)
+
+      // Best-effort email delivery of the accept link. The link is also shown in the UI, so a
+      // missing/failed mailer never blocks the invite (mirrors the password-reset flow).
+      const origin = c.req.header('origin') || new URL(c.req.url).origin
+      const acceptUrl = `${origin}/admin/tenants/invitations/accept?token=${encodeURIComponent(token)}`
+      let note = 'Invitation created'
+      if (hasEmailService()) {
+        try {
+          await getEmailService().send({
+            to: email.trim(),
+            subject: `You're invited to the ${slug} workspace`,
+            flow: 'tenant-invitation',
+            html: renderInviteEmail(acceptUrl, slug, role),
+            text: `You've been invited to '${slug}' as ${role}. Sign in with this email and accept: ${acceptUrl}`,
+          })
+          note = 'Invitation created and emailed'
+        } catch (err) {
+          console.error('Failed to send invitation email:', err)
+        }
+      }
+      return c.redirect(`/admin/tenants/${slug}/members?message=${encodeURIComponent(note)}`)
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to create invitation'
       return c.redirect(`/admin/tenants/${slug}/members?message=${encodeURIComponent(message)}&type=error`)
