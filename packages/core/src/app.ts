@@ -115,6 +115,13 @@ export interface Variables {
   appVersion?: string
   csrfToken?: string
   pluginMenuItems?: Array<{ label: string; path: string; icon: string }>
+  /**
+   * The plugin hook system attached to the request. Set by bootstrapMiddleware
+   * BEFORE any heavy bootstrap work runs, so anything that emits a hook during
+   * bootstrap (cron cold starts, RBAC seed, document-type registration) sees a
+   * live bus instead of a no-op.
+   */
+  hookSystem?: import('./plugins/hooks/typed-hooks').HookSystemLike
   /** Tenant slug resolved per request by tenantMiddleware ('default' when single-tenant). */
   tenantId?: string
   /** The authed user's role IN the resolved tenant (per-tenant RBAC); global role for 'default'. */
