@@ -1,26 +1,26 @@
-import { PluginBuilder } from '../../sdk/plugin-builder'
-import type { Plugin } from '@sonicjs-cms/core'
+/**
+ * Dashboard Plugin — Payload-shaped port.
+ */
+
+import { definePlugin } from '../../sdk/define-plugin'
 import { adminDashboardRoutes } from '../../../routes/admin-dashboard'
 
-export function createDashboardPlugin(): Plugin {
-  const builder = PluginBuilder.create({
-    name: 'dashboard',
-    version: '1.0.0',
-    description: 'Admin dashboard with stats, storage usage, and recent activity'
-  })
+export const dashboardPlugin = definePlugin({
+  id: 'dashboard',
+  version: '1.0.0',
+  name: 'Dashboard',
+  description: 'Admin dashboard with stats, storage usage, and recent activity.',
+  sonicjsVersionRange: '^3.0.0',
 
-  builder.addRoute('/admin/dashboard', adminDashboardRoutes as any, {
-    description: 'Admin dashboard',
-    requiresAuth: true,
-    priority: 100
-  })
+  register(app) {
+    app.route('/admin/dashboard', adminDashboardRoutes as any)
+  },
 
-  builder.addMenuItem('Dashboard', '/admin/dashboard', {
-    icon: 'home',
-    order: 1
-  })
+  menu: [
+    { label: 'Dashboard', path: '/admin/dashboard', icon: 'chart', order: 1 },
+  ],
+})
 
-  return builder.build() as Plugin
+export function createDashboardPlugin() {
+  return dashboardPlugin
 }
-
-export const dashboardPlugin = createDashboardPlugin()
