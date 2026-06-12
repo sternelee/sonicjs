@@ -1,69 +1,36 @@
 /**
- * Forms Plugin
+ * Forms Plugin — Payload-shaped port.
  *
- * Form builder with Form.io integration, Turnstile CAPTCHA support,
- * and submission management via the content collection system.
+ * Form builder with Form.io integration, Turnstile CAPTCHA support, and
+ * submission management via the content collection system.
  */
 
-import type { Plugin } from '../../types'
-import { PluginBuilder } from '../../sdk/plugin-builder'
+import { definePlugin } from '../../sdk/define-plugin'
 import { adminFormsRoutes } from '../../../routes/admin-forms'
 import { publicFormsRoutes } from '../../../routes/public-forms'
 
-export function createFormsPlugin(): Plugin {
-  const builder = PluginBuilder.create({
-    name: 'forms',
-    version: '1.0.0',
-    description: 'Form builder with Form.io integration, CAPTCHA support, and submission management'
-  })
+export const formsPlugin = definePlugin({
+  id: 'forms',
+  version: '1.0.0',
+  name: 'Forms',
+  description: 'Form builder with Form.io integration, CAPTCHA support, and submission management.',
+  sonicjsVersionRange: '^3.0.0',
+  author: { name: 'SonicJS Team', email: 'team@sonicjs.com' },
 
-  builder.metadata({
-    author: {
-      name: 'SonicJS Team',
-      email: 'team@sonicjs.com'
-    },
-    license: 'MIT',
-    compatibility: '^2.0.0'
-  })
+  register(app) {
+    app.route('/admin/forms', adminFormsRoutes as any)
+    app.route('/forms', publicFormsRoutes as any)
+    app.route('/api/forms', publicFormsRoutes as any)
+  },
 
-  // Admin UI — form builder and submissions management
-  builder.addRoute('/admin/forms', adminFormsRoutes as any, {
-    description: 'Forms admin management',
-    requiresAuth: true,
-    priority: 30
-  })
+  menu: [
+    { label: 'Forms', path: '/admin/forms', icon: 'document', order: 30, permissions: ['forms:manage'] },
+  ],
 
-  // Public form rendering — /forms/:name
-  builder.addRoute('/forms', publicFormsRoutes as any, {
-    description: 'Public form rendering and submission',
-    requiresAuth: false,
-    priority: 30
-  })
+  activate: async () => console.info('✅ Forms plugin activated'),
+  deactivate: async () => console.info('❌ Forms plugin deactivated'),
+})
 
-  // API endpoint — /api/forms/:identifier/submit and related
-  builder.addRoute('/api/forms', publicFormsRoutes as any, {
-    description: 'Forms API for headless frontends',
-    requiresAuth: false,
-    priority: 30
-  })
-
-  // Sidebar menu item
-  builder.addMenuItem('Forms', '/admin/forms', {
-    icon: 'document-text',
-    order: 30,
-    permissions: ['forms:manage']
-  })
-
-  builder.lifecycle({
-    activate: async () => {
-      console.info('✅ Forms plugin activated')
-    },
-    deactivate: async () => {
-      console.info('❌ Forms plugin deactivated')
-    }
-  })
-
-  return builder.build() as Plugin
+export function createFormsPlugin() {
+  return formsPlugin
 }
-
-export const formsPlugin = createFormsPlugin()
