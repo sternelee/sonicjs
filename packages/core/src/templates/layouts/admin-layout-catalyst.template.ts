@@ -242,7 +242,10 @@ export function renderAdminLayoutCatalyst(
       transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
       transition-duration: 150ms;
     }
+    .plugins-closed [data-plugins-submenu] { display: none; }
   </style>
+  <!-- Restore plugins submenu state before first paint (no flash) -->
+  <script>(function(){try{var c=document.cookie.split(';').reduce(function(v,p){var t=p.trim().split('=');return t[0]==='plugins_menu_open'?t[1]:v;},null);if(c==='0'){document.documentElement.classList.add('plugins-closed');document.addEventListener('DOMContentLoaded',function(){var ch=document.querySelector('[data-plugins-chevron]');if(ch)ch.classList.remove('rotate-180');});};}catch(e){}})();</script>
 
   <!-- Scripts -->
   <script src="https://unpkg.com/htmx.org@2.0.3"></script>
@@ -536,18 +539,17 @@ export function renderAdminLayoutCatalyst(
 
     // Plugins accordion toggle
     function togglePluginsMenu(btn) {
-      var accordion = btn.closest('[data-plugins-accordion]');
-      var submenu = accordion.querySelector('[data-plugins-submenu]');
+      var isNowClosed = document.documentElement.classList.toggle('plugins-closed');
       var chevron = btn.querySelector('[data-plugins-chevron]');
-      submenu.classList.toggle('hidden');
       if (chevron) chevron.classList.toggle('rotate-180');
+      document.cookie = 'plugins_menu_open=' + (isNowClosed ? '0' : '1') + ';path=/;max-age=31536000';
     }
 
-    // Auto-expand plugins submenu if a sub-item is currently active
+    // Auto-expand plugins submenu if a sub-item is currently active (overrides closed cookie)
     document.addEventListener('DOMContentLoaded', function() {
       document.querySelectorAll('[data-plugins-submenu]').forEach(function(submenu) {
         if (submenu.querySelector('[data-current="true"]')) {
-          submenu.classList.remove('hidden');
+          document.documentElement.classList.remove('plugins-closed');
           var accordion = submenu.closest('[data-plugins-accordion]');
           if (accordion) {
             var chevron = accordion.querySelector('[data-plugins-chevron]');
@@ -570,13 +572,6 @@ function renderCatalystSidebar(
   enableExperimentalFeatures?: boolean
 ): string {
   let baseMenuItems = [
-    {
-      label: "Home",
-      path: "/admin",
-      icon: `<svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-        <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/>
-      </svg>`,
-    },
     {
       label: "Content",
       path: "/admin/content",
@@ -667,9 +662,12 @@ function renderCatalystSidebar(
       ${closeButton}
 
       <!-- Sidebar Header -->
-      <div class="flex flex-col border-b border-zinc-950/5 p-4 dark:border-white/5">
+      <div class="flex w-full flex-col border-b border-zinc-950/5 p-4 dark:border-white/5">
         ${renderLogo({ size: "md", showText: true, variant: "white", version, href: "/admin/content" })}
       </div>
+
+      <!-- Tenant switcher (injected by tenantMiddleware when the multi-tenant plugin is active) -->
+      <!-- TENANT_SWITCHER -->
 
       <!-- Sidebar Body -->
       <div class="flex flex-1 flex-col overflow-y-auto p-4">
@@ -733,12 +731,12 @@ function renderCatalystSidebar(
                 class="flex items-center justify-center rounded-lg p-2 text-zinc-500 hover:bg-zinc-950/5 dark:text-zinc-400 dark:hover:bg-white/5 flex-shrink-0"
                 aria-label="Toggle plugins submenu"
               >
-                <svg data-plugins-chevron class="h-4 w-4 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg data-plugins-chevron class="h-4 w-4 rotate-180 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                 </svg>
               </button>
             </div>
-            <div data-plugins-submenu class="pl-6 mt-0.5 flex flex-col gap-0.5 hidden">
+            <div data-plugins-submenu class="pl-6 mt-0.5 flex flex-col gap-0.5">
               ${pluginsSubItems}
             </div>
           </div>
@@ -823,9 +821,6 @@ function renderCatalystSidebar(
           `;
         })()}
       </div>
-
-      <!-- Tenant switcher (injected by tenantMiddleware when the multi-tenant plugin is active) -->
-      <!-- TENANT_SWITCHER -->
 
       <!-- Sidebar Footer (User) -->
       ${

@@ -9,6 +9,7 @@ import { renderUserNewPage, type UserNewPageData } from '../templates/pages/admi
 import { renderUsersListPage, type UsersListPageData, type User } from '../templates/pages/admin-users-list.template'
 import type { Bindings, Variables } from '../app'
 import { getUserProfileConfig, renderCustomProfileSection, getCustomData, saveCustomData, extractCustomFieldsFromForm, sanitizeCustomData, validateCustomData, readProfileData, writeProfileData } from '../plugins/core-plugins/user-profiles'
+import { TenantService, VALID_MEMBER_ROLES } from '../plugins/core-plugins/multi-tenant-plugin/services/tenant-service'
 
 const userRoutes = new Hono<{ Bindings: Bindings; Variables: Variables }>()
 
@@ -869,18 +870,39 @@ userRoutes.get('/users/:id/edit', async (c) => {
       profile
     }
 
-    // Multi-tenant plugin active? (same source of truth as middleware/tenant.ts). When active, the
-    // edit page links to the user's per-tenant membership management. Single-tenant installs: no link.
+    // Multi-tenant plugin active? Fetch memberships inline for the matrix section.
     const mtRow = await db.prepare(
       `SELECT 1 FROM documents WHERE type_id = 'plugin' AND slug = 'multi-tenant'
          AND q_plugin_status = 'active' AND is_current_draft = 1 AND deleted_at IS NULL`
     ).first().catch(() => null)
 
+    let tenantMemberships: UserEditPageData['tenantMemberships']
+    if (mtRow) {
+      const svc = new TenantService(db)
+      const [memberships, allTenants] = await Promise.all([
+        svc.listUserMemberships(userId),
+        svc.listTenants(),
+      ])
+      const memberSlugs = new Set(memberships.map((m) => m.slug))
+      tenantMemberships = {
+        memberships,
+        availableTenants: allTenants
+          .filter((t) => t.status === 'active' && !memberSlugs.has(t.slug))
+          .map((t) => ({ slug: t.slug, name: t.name })),
+        memberRoles: [...VALID_MEMBER_ROLES],
+      }
+    }
+
+    const queryMessage = c.req.query('message')
+    const queryType = c.req.query('type') === 'error' ? 'error' : 'success'
+
     const pageData: UserEditPageData = {
       userToEdit: editData,
       roles: ROLES,
       customProfileFieldsHtml,
-      tenantMembershipsHref: mtRow ? `/admin/tenants/users/${userId}` : undefined,
+      tenantMemberships,
+      ...(queryMessage && queryType === 'error' ? { error: queryMessage } : {}),
+      ...(queryMessage && queryType === 'success' ? { success: queryMessage } : {}),
       user: {
         name: user!.email.split('@')[0] || user!.email,
         email: user!.email,

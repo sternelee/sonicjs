@@ -3,7 +3,7 @@ import { escapeHtml } from '../../../../utils/sanitize'
 import type { TenantData } from '../services/tenant-service'
 
 export interface TenantsListPageData {
-  tenants: Array<TenantData & { documentCount: number }>
+  tenants: Array<TenantData & { documentCount: number; memberCount: number }>
   currentTenantId: string
   user?: { name: string; email: string; role: string }
   version?: string
@@ -17,7 +17,7 @@ function statusBadge(status: string): string {
     : '<span class="inline-flex items-center rounded-md bg-zinc-500/10 px-2 py-1 text-xs font-medium text-zinc-600 dark:text-zinc-400">Inactive</span>'
 }
 
-function renderRow(tenant: TenantData & { documentCount: number }, currentTenantId: string): string {
+function renderRow(tenant: TenantData & { documentCount: number; memberCount: number }, currentTenantId: string): string {
   const slug = escapeHtml(tenant.slug)
   const isCurrent = tenant.slug === currentTenantId
   const isDefault = tenant.slug === 'default'
@@ -33,6 +33,7 @@ function renderRow(tenant: TenantData & { documentCount: number }, currentTenant
       <td class="px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400">${tenant.domain ? escapeHtml(tenant.domain) : '—'}</td>
       <td class="px-4 py-3">${statusBadge(tenant.status)}</td>
       <td class="px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400" data-tenant-doc-count>${tenant.documentCount}</td>
+      <td class="px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400" data-tenant-member-count>${tenant.memberCount}</td>
       <td class="px-4 py-3">
         <div class="flex items-center justify-end gap-2">
           ${
@@ -91,6 +92,7 @@ export function renderTenantsList(data: TenantsListPageData): string {
               <th class="px-4 py-3">Domain</th>
               <th class="px-4 py-3">Status</th>
               <th class="px-4 py-3">Documents</th>
+              <th class="px-4 py-3">Members</th>
               <th class="px-4 py-3 text-right">Actions</th>
             </tr>
           </thead>

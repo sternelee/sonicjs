@@ -272,7 +272,11 @@ export class TenantService {
     const user = await this.db.prepare('SELECT id, email FROM auth_user WHERE lower(email) = ?')
       .bind(normalized).first() as { id?: string; email?: string } | null
     if (!user?.id) throw new Error(`No user found with email '${email}'`)
-    if (await this.isMember(user.id, slug)) throw new Error(`${email} is already a member of '${slug}'`)
+    const existing = await this.db.prepare(`
+      SELECT 1 FROM auth_tenant_member m JOIN auth_tenant t ON t.id = m.tenant_id
+      WHERE m.user_id = ? AND t.slug = ? LIMIT 1
+    `).bind(user.id, slug).first()
+    if (existing) throw new Error(`${email} is already a member of '${slug}'`)
 
     await this.addMember(slug, user.id, role, user.email ?? normalized)
   }
@@ -330,8 +334,12 @@ export class TenantService {
 
     const existingUser = await this.db.prepare('SELECT id FROM auth_user WHERE lower(email) = ?')
       .bind(normalized).first() as { id?: string } | null
-    if (existingUser?.id && await this.isMember(existingUser.id, slug)) {
-      throw new Error(`${email} is already a member of '${slug}'`)
+    if (existingUser?.id) {
+      const alreadyMember = await this.db.prepare(`
+        SELECT 1 FROM auth_tenant_member m JOIN auth_tenant t ON t.id = m.tenant_id
+        WHERE m.user_id = ? AND t.slug = ? LIMIT 1
+      `).bind(existingUser.id, slug).first()
+      if (alreadyMember) throw new Error(`${email} is already a member of '${slug}'`)
     }
     const pending = await this.db.prepare(`
       SELECT i.id FROM auth_tenant_invitation i

@@ -10,7 +10,9 @@ export interface TenantMembersPageData {
   user?: { name: string; email: string; role: string }
   version?: string
   message?: string
-  messageType?: 'success' | 'error'
+  messageType?: 'success' | 'error' | 'warning'
+  /** When set alongside a warning: renders a "Try again" button to resend the invitation email. */
+  retryInvitationId?: string
 }
 
 function roleOptions(selected: string): string {
@@ -50,7 +52,7 @@ function renderInvitations(slug: string, invitations: TenantInvitation[]): strin
   const s = escapeHtml(slug)
   const rows = invitations.length
     ? invitations.map((inv) => {
-        const acceptUrl = `/admin/tenants/invitations/accept?token=${encodeURIComponent(inv.id)}`
+        const acceptUrl = `/join/invite?token=${encodeURIComponent(inv.id)}`
         return `
         <tr data-invite-row="${escapeHtml(inv.email)}" class="border-b border-zinc-950/5 dark:border-white/5">
           <td class="px-4 py-3 text-sm text-zinc-950 dark:text-white">${escapeHtml(inv.email)}</td>
@@ -75,6 +77,7 @@ function renderInvitations(slug: string, invitations: TenantInvitation[]): strin
           <div class="flex-1 min-w-[16rem]">
             <label for="invite-email" class="mb-1 block text-xs font-medium text-zinc-500 dark:text-zinc-400">Invite email</label>
             <input id="invite-email" name="email" type="email" required placeholder="invitee@example.com"
+              autocomplete="off"
               class="w-full rounded-lg border border-zinc-950/10 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-white/10 dark:bg-zinc-800 dark:text-white">
           </div>
           <div>
@@ -105,11 +108,22 @@ function renderInvitations(slug: string, invitations: TenantInvitation[]): strin
 
 export function renderTenantMembers(data: TenantMembersPageData): string {
   const alert = data.message
-    ? `<div data-members-alert class="mb-6 rounded-lg border px-4 py-3 text-sm ${
-        data.messageType === 'error'
+    ? (() => {
+        const colorClass = data.messageType === 'error'
           ? 'border-red-500/20 bg-red-500/10 text-red-700 dark:text-red-400'
+          : data.messageType === 'warning'
+          ? 'border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-400'
           : 'border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
-      }">${escapeHtml(data.message)}</div>`
+        const retryBtn = data.messageType === 'warning' && data.retryInvitationId
+          ? `<form method="POST" action="/admin/tenants/${escapeHtml(data.slug)}/invitations/${escapeHtml(data.retryInvitationId)}/resend" class="shrink-0">
+              <button type="submit" class="rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-400">Try again</button>
+            </form>`
+          : ''
+        return `<div data-members-alert class="mb-6 flex items-center justify-between gap-4 rounded-lg border px-4 py-3 text-sm ${colorClass}">
+          <span>${escapeHtml(data.message)}</span>
+          ${retryBtn}
+        </div>`
+      })()
     : ''
 
   const slug = escapeHtml(data.slug)
@@ -128,7 +142,11 @@ export function renderTenantMembers(data: TenantMembersPageData): string {
           <div class="flex-1 min-w-[16rem]">
             <label for="member-email" class="mb-1 block text-xs font-medium text-zinc-500 dark:text-zinc-400">User email</label>
             <input id="member-email" name="email" type="email" required placeholder="user@example.com"
+              list="member-email-suggestions"
+              hx-get="/admin/tenants/users/search" hx-trigger="keyup changed delay:300ms" hx-target="#member-email-suggestions" hx-swap="innerHTML" hx-include="this"
+              autocomplete="off"
               class="w-full rounded-lg border border-zinc-950/10 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-white/10 dark:bg-zinc-800 dark:text-white">
+          <datalist id="member-email-suggestions"></datalist>
           </div>
           <div>
             <label for="member-role" class="mb-1 block text-xs font-medium text-zinc-500 dark:text-zinc-400">Role</label>
