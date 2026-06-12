@@ -79,7 +79,6 @@ export function renderSettingsPage(data: SettingsPageData): string {
             ${renderTabButton('security', 'Security', 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z', activeTab)}
             ${renderTabButton('migrations', 'Migrations', 'M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4', activeTab)}
             ${renderTabButton('database-tools', 'Database Tools', 'M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01', activeTab)}
-            ${renderTabButton('email-log', 'Email Log', 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z', activeTab)}
           </nav>
         </div>
       </div>
@@ -485,11 +484,6 @@ function renderTabContent(activeTab: string, settings?: SettingsPageData['settin
       return renderMigrationSettings(settings?.migrations)
     case 'database-tools':
       return renderDatabaseToolsSettings(settings?.databaseTools)
-    case 'email-log':
-      // The email log has its own server-rendered route; redirect to it when
-      // the tab is clicked so the page is loaded with real DB data.
-      return `<script>window.location.replace('/admin/settings/email-log')<\/script>
-              <div class="text-center py-12 text-zinc-500">Loading email log…</div>`
     default:
       return renderGeneralSettings(settings?.general)
   }
