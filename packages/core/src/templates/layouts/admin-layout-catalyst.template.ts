@@ -662,6 +662,8 @@ function renderCatalystSidebar(
       <!-- Sidebar Header -->
       <div class="flex flex-col border-b border-zinc-950/5 p-4 dark:border-white/5">
         ${renderLogo({ size: "md", showText: true, variant: "white", version, href: "/admin/content" })}
+        <!-- Tenant switcher (injected by tenantMiddleware when the multi-tenant plugin is active) -->
+        <!-- TENANT_SWITCHER -->
       </div>
 
       <!-- Sidebar Body -->
@@ -816,9 +818,6 @@ function renderCatalystSidebar(
           `;
         })()}
       </div>
-
-      <!-- Tenant switcher (injected by tenantMiddleware when the multi-tenant plugin is active) -->
-      <!-- TENANT_SWITCHER -->
 
       <!-- Sidebar Footer (User) -->
       ${
