@@ -728,12 +728,12 @@ function renderCatalystSidebar(
                 class="flex items-center justify-center rounded-lg p-2 text-zinc-500 hover:bg-zinc-950/5 dark:text-zinc-400 dark:hover:bg-white/5 flex-shrink-0"
                 aria-label="Toggle plugins submenu"
               >
-                <svg data-plugins-chevron class="h-4 w-4 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg data-plugins-chevron class="h-4 w-4 rotate-180 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                 </svg>
               </button>
             </div>
-            <div data-plugins-submenu class="pl-6 mt-0.5 flex flex-col gap-0.5 hidden">
+            <div data-plugins-submenu class="pl-6 mt-0.5 flex flex-col gap-0.5">
               ${pluginsSubItems}
             </div>
           </div>
