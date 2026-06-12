@@ -1,7 +1,6 @@
 import { Hono } from 'hono'
 import { z } from 'zod'
-import { Plugin } from '@sonicjs-cms/core'
-import { PluginBuilder } from '../../sdk/plugin-builder'
+import { definePlugin } from '../../sdk/define-plugin'
 
 const codeExampleSchema = z.object({
   id: z.number().optional(),
@@ -274,75 +273,36 @@ codeExampleAPIRoutes.delete('/:id', async (c) => {
   }
 })
 
-export function createCodeExamplesPlugin(): Plugin {
-  const builder = PluginBuilder.create({
-    name: 'code-examples-plugin',
-    version: '1.0.0-beta.1',
-    description: 'Code examples and snippets management plugin'
-  })
+export const codeExamplesPlugin = definePlugin({
+  id: 'code-examples-plugin',
+  version: '1.0.0',
+  name: 'Code Examples',
+  description: 'Code examples and snippets management plugin.',
+  sonicjsVersionRange: '^3.0.0',
+  author: { name: 'SonicJS', email: 'info@sonicjs.com' },
 
-  builder.metadata({
-    author: {
-      name: 'SonicJS',
-      email: 'info@sonicjs.com'
-    },
-    license: 'MIT',
-    compatibility: '^1.0.0'
-  })
+  register(app) {
+    app.route('/api/code-examples', codeExampleAPIRoutes)
+  },
 
-  builder.addModel('CodeExample', {
-    tableName: 'code_examples',
-    schema: codeExampleSchema,
-    migrations: [codeExampleMigration]
-  })
+  menu: [
+    { label: 'Code Examples', path: '/admin/code-examples', icon: 'document', order: 65, permissions: ['admin', 'editor'] },
+  ],
 
-  builder.addRoute('/api/code-examples', codeExampleAPIRoutes, {
-    description: 'Code Examples API endpoints',
-    requiresAuth: false
-  })
+  install: async (context: any) => {
+    const { db } = context
+    await db.prepare(codeExampleMigration).run()
+    console.log('Code Examples plugin installed successfully')
+  },
+  uninstall: async (context: any) => {
+    const { db } = context
+    await db.prepare('DROP TABLE IF EXISTS code_examples').run()
+    console.log('Code Examples plugin uninstalled successfully')
+  },
+  activate: async () => console.log('Code Examples plugin activated'),
+  deactivate: async () => console.log('Code Examples plugin deactivated'),
+})
 
-  builder.addAdminPage('/code-examples', 'Code Examples', 'CodeExamplesListView', {
-    description: 'Manage code snippets and examples',
-    icon: 'code',
-    permissions: ['admin', 'editor']
-  })
-
-  builder.addAdminPage('/code-examples/new', 'New Code Example', 'CodeExamplesFormView', {
-    description: 'Create a new code example',
-    permissions: ['admin', 'editor']
-  })
-
-  builder.addAdminPage('/code-examples/:id', 'Edit Code Example', 'CodeExamplesFormView', {
-    description: 'Edit an existing code example',
-    permissions: ['admin', 'editor']
-  })
-
-  builder.addMenuItem('Code Examples', '/admin/code-examples', {
-    icon: 'code',
-    order: 65,
-    permissions: ['admin', 'editor']
-  })
-
-  builder.lifecycle({
-    install: async (context) => {
-      const { db } = context
-      await db.prepare(codeExampleMigration).run()
-      console.log('Code Examples plugin installed successfully')
-    },
-    uninstall: async (context) => {
-      const { db } = context
-      await db.prepare('DROP TABLE IF EXISTS code_examples').run()
-      console.log('Code Examples plugin uninstalled successfully')
-    },
-    activate: async () => {
-      console.log('Code Examples plugin activated')
-    },
-    deactivate: async () => {
-      console.log('Code Examples plugin deactivated')
-    }
-  })
-
-  return builder.build() as Plugin
+export function createCodeExamplesPlugin() {
+  return codeExamplesPlugin
 }
-
-export const codeExamplesPlugin = createCodeExamplesPlugin()
