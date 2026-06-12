@@ -468,18 +468,20 @@ export function createTenantAdminRoutes(): Hono<{ Bindings: Bindings; Variables:
       const acceptUrl = `${origin}/admin/tenants/invitations/accept?token=${encodeURIComponent(token)}`
       let note: string
       let noteType = ''
-      if (hasEmailService()) {
-        try {
-          await getEmailService().send({
-            to: email.trim(),
-            subject: `You're invited to the ${slug} workspace`,
-            flow: 'tenant-invitation',
-            html: renderInviteEmail(acceptUrl, slug, role),
-            text: `You've been invited to '${slug}' as ${role}. Sign in with this email and accept: ${acceptUrl}`,
-          })
+      const svc2 = hasEmailService() ? getEmailService() : null
+      const hasRealProvider = !!svc2 && svc2.getProviderName() !== 'console'
+      if (hasRealProvider) {
+        const result = await svc2!.send({
+          to: email.trim(),
+          subject: `You're invited to the ${slug} workspace`,
+          flow: 'tenant-invitation',
+          html: renderInviteEmail(acceptUrl, slug, role),
+          text: `You've been invited to '${slug}' as ${role}. Sign in with this email and accept: ${acceptUrl}`,
+        })
+        if (result.ok) {
           note = 'Invitation created and emailed'
-        } catch (err) {
-          console.error('Failed to send invitation email:', err)
+        } else {
+          console.error('Failed to send invitation email:', result.error)
           note = 'Invitation created — email failed to send, share the accept link manually'
           noteType = 'warning'
         }
