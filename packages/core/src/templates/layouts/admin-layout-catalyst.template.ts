@@ -1,5 +1,6 @@
 import { HtmlEscapedString } from "hono/utils/html";
 import { renderLogo } from "../components/logo.template";
+import { resolvePluginMenuItems } from "../../services/plugin-menu-singleton";
 
 // Catalyst Checkbox Component (HTML implementation)
 export interface CatalystCheckboxProps {
@@ -565,12 +566,20 @@ export function renderAdminLayoutCatalyst(
 
 function renderCatalystSidebar(
   currentPath: string = "",
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- user shape varies across admin pages; permissions read narrowly below
   user?: any,
   dynamicMenuItems?: Array<{ label: string; path: string; icon: string }>,
   isMobile: boolean = false,
   version?: string,
   enableExperimentalFeatures?: boolean
 ): string {
+  // Fall back to the declarative plugin menu singleton when no explicit
+  // dynamicMenuItems were passed in. The singleton is populated by
+  // registerPlugins() collecting each plugin's `menu: [...]` entries.
+  const resolvedMenuItems =
+    dynamicMenuItems && dynamicMenuItems.length > 0
+      ? dynamicMenuItems
+      : resolvePluginMenuItems(user);
   let baseMenuItems = [
     {
       label: "Content",
@@ -614,8 +623,8 @@ function renderCatalystSidebar(
     (currentPath?.startsWith("/admin/plugins") ?? false);
 
   const pluginsSubItems =
-    dynamicMenuItems && dynamicMenuItems.length > 0
-      ? dynamicMenuItems
+    resolvedMenuItems && resolvedMenuItems.length > 0
+      ? resolvedMenuItems
           .map((item) => {
             const isActive =
               currentPath === item.path ||

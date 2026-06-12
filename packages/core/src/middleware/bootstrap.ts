@@ -4,6 +4,7 @@ import { getCollectionRegistry } from "../services/collection-registry";
 import { MigrationService } from "../services/migrations";
 import { PluginBootstrapService } from "../services/plugin-bootstrap";
 import { bootstrapDocumentTypes, autoRegisterCollectionDocumentTypes } from "../services/document-types-seed";
+import { getHookSystem, hasHookSystem } from "../plugins/hooks/hook-system-singleton";
 import type { SonicJSConfig } from "../app";
 
 type Bindings = {
@@ -79,7 +80,17 @@ export function verifySecurityConfig(env: Bindings): void {
  * Runs once per worker instance
  */
 export function bootstrapMiddleware(config: SonicJSConfig = {}) {
-  return async (c: Context<{ Bindings: Bindings }>, next: Next) => {
+  return async (c: Context<{ Bindings: Bindings; Variables: { hookSystem?: unknown } }>, next: Next) => {
+    // Attach the hook system to the request BEFORE any heavy bootstrap work
+    // runs, so anything that emits a hook during bootstrap (cron cold starts,
+    // RBAC seed, document-type registration, plugin onBoot via createPluginWirer)
+    // sees a live bus instead of a no-op. The process singleton was published at
+    // app-factory time (app.ts); we only forward it onto the request here.
+    if (hasHookSystem()) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Variables typed loosely here; concrete type lives in app.ts
+      (c as any).set("hookSystem", getHookSystem());
+    }
+
     // Skip if already bootstrapped in this worker instance
     if (bootstrapComplete) {
       return next();

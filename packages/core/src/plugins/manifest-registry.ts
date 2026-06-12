@@ -225,29 +225,6 @@ export const PLUGIN_REGISTRY: Record<string, PluginRegistryEntry> = {
     }
   },
 
-  'database-tools': {
-    "id": "database-tools",
-    "codeName": "database-tools",
-    "displayName": "Database Tools",
-    "description": "Database management and administration tools including migrations, backups, and query execution",
-    "version": "1.0.0-beta.1",
-    "author": "SonicJS Team",
-    "category": "development",
-    "iconEmoji": "🗄️",
-    "is_core": false,
-    "permissions": [
-      "database:admin"
-    ],
-    "dependencies": [],
-    "defaultSettings": {
-      "enableTruncate": true,
-      "enableBackup": true,
-      "enableValidation": true,
-      "requireConfirmation": true
-    },
-    "adminMenu": null
-  },
-
   'demo-login-plugin': {
     "id": "demo-login-plugin",
     "codeName": "demo-login-plugin",

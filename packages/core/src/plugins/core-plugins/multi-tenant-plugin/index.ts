@@ -1,59 +1,50 @@
-import { PluginBuilder } from '../../sdk/plugin-builder'
-import type { Plugin } from '../../types'
+/**
+ * Multi-Tenant Plugin — Payload-shaped port.
+ *
+ * Tenant management UI + activation hooks that bust the per-isolate resolver
+ * cache. PluginService writes call invalidateTenantCache() directly; the
+ * lifecycle callbacks here cover direct activate/deactivate paths.
+ */
+
+import { definePlugin } from '../../sdk/define-plugin'
 import manifest from './manifest.json'
 import { createTenantAdminRoutes } from './routes/admin'
 import { createJoinRoutes } from './routes/join'
 import { invalidateTenantCache } from '../../../middleware/tenant'
 
-export function createMultiTenantPlugin(): Plugin {
-  const builder = PluginBuilder.create({
-    name: manifest.id,
-    version: manifest.version,
-    description: manifest.description,
-  })
+const TENANT_ICON = `<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21"/></svg>`
 
-  builder.metadata({
-    author: { name: manifest.author },
-    license: manifest.license,
-    compatibility: '^2.0.0',
-  })
+export const multiTenantPlugin = definePlugin({
+  id: manifest.id,
+  version: '1.0.0',
+  name: manifest.name,
+  description: manifest.description,
+  sonicjsVersionRange: '^3.0.0',
+  author: { name: manifest.author },
 
-  // Admin tenant management (self-gates on plugin activation; mounts before the /admin catch-all).
-  builder.addRoute('/admin/tenants', createTenantAdminRoutes() as any, {
-    description: 'Tenant management admin routes',
-    requiresAuth: true,
-    priority: 90,
-  })
+  register(app) {
+    app.route('/admin/tenants', createTenantAdminRoutes() as any)
+    // Public invitation join routes — NO auth middleware (unauthenticated invitees).
+    app.route('/join/invite', createJoinRoutes() as any)
+  },
 
-  // Public invitation join routes — NO auth middleware (unauthenticated invitees).
-  builder.addRoute('/join/invite', createJoinRoutes() as any, {
-    description: 'Public invitation accept / register / sign-in',
-    requiresAuth: false,
-    priority: 95,
-  })
+  menu: [
+    { label: 'Tenants', path: '/admin/tenants', icon: TENANT_ICON, order: 80 },
+  ],
 
-  builder.addMenuItem('Tenants', '/admin/tenants', {
-    icon: `<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21"/></svg>`,
-    order: 80,
-  })
+  activate: async () => {
+    invalidateTenantCache()
+    console.info('✅ Multi-Tenant plugin activated')
+  },
+  deactivate: async () => {
+    invalidateTenantCache()
+    console.info('❌ Multi-Tenant plugin deactivated')
+  },
+})
 
-  // The admin UI toggle (PluginService) does not invoke these callbacks today, but keep them so a
-  // direct lifecycle call still busts the per-isolate resolver cache. The settings/activation
-  // writes also call invalidateTenantCache() directly (see PluginService).
-  builder.lifecycle({
-    activate: async () => {
-      invalidateTenantCache()
-      console.info('✅ Multi-Tenant plugin activated')
-    },
-    deactivate: async () => {
-      invalidateTenantCache()
-      console.info('❌ Multi-Tenant plugin deactivated')
-    },
-  })
-
-  return builder.build()
+export function createMultiTenantPlugin() {
+  return multiTenantPlugin
 }
 
-export const multiTenantPlugin = createMultiTenantPlugin()
 export { TenantService } from './services/tenant-service'
 export default multiTenantPlugin

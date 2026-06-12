@@ -5,6 +5,12 @@ import { renderPluginSettingsPage, PluginSettingsPageData } from '../templates/p
 import { SettingsService } from '../services/settings'
 import { PluginService } from '../services'
 import { PLUGIN_REGISTRY, findPluginByCodeName } from '../plugins/manifest-registry'
+import { getPluginDefinition } from '../services/plugin-definition-registry'
+import {
+  renderSchemaFields,
+  parseFormDataToSettings,
+  applySchemaDefaults,
+} from '../plugins/sdk/config-schema'
 import type { Bindings, Variables } from '../app'
 
 const adminPluginRoutes = new Hono<{ Bindings: Bindings; Variables: Variables }>()
@@ -137,10 +143,20 @@ adminPluginRoutes.get('/:id', async (c) => {
     }
 
     const pluginService = new PluginService(db)
-    const plugin = await pluginService.getPlugin(pluginId)
+    let plugin = await pluginService.getPlugin(pluginId)
 
     if (!plugin) {
-      return c.text('Plugin not found', 404)
+      // Auto-register definePlugin-based plugins that have never been explicitly installed.
+      const def = getPluginDefinition(pluginId)
+      if (!def) return c.text('Plugin not found', 404)
+      plugin = await pluginService.ensurePlugin(pluginId, {
+        displayName: def.displayName ?? pluginId,
+        version: def.version,
+        description: (def as any).description,
+        author: typeof (def as any).author === 'object'
+          ? (def as any).author?.name
+          : (def as any).author,
+      })
     }
 
     // Get activity log
@@ -218,6 +234,85 @@ adminPluginRoutes.get('/:id', async (c) => {
     return c.html(renderPluginSettingsPage(pageData))
   } catch (error) {
     console.error('Error getting plugin settings page:', error)
+    return c.text('Internal server error', 500)
+  }
+})
+
+// ── Schema-driven settings (configSchema renderer) ───────────────────────────
+//
+// GET  /admin/plugins/:id/configure  →  auto-rendered form per the plugin's
+//                                       configSchema (set via definePlugin)
+// POST /admin/plugins/:id/configure  →  parse FormData → persist via PluginService
+//
+// Plugins that haven't declared configSchema get a 404 here; they continue to
+// use the legacy per-plugin settings template on GET /:id.
+
+adminPluginRoutes.get('/:id/configure', async (c) => {
+  try {
+    const user = c.get('user')
+    const pluginId = c.req.param('id')
+    if (user?.role !== 'admin') return c.redirect('/admin/plugins')
+
+    const def = getPluginDefinition(pluginId)
+    if (!def?.configSchema) return c.text('No schema-driven settings for this plugin', 404)
+
+    const db = c.env.DB
+    const pluginService = new PluginService(db)
+    const plugin = await pluginService.getPlugin(pluginId)
+    const stored = (plugin?.settings ?? {}) as Record<string, unknown>
+    const values = applySchemaDefaults(def.configSchema, stored)
+    const fieldsHtml = renderSchemaFields(def.configSchema, values)
+
+    const displayName = plugin?.display_name ?? def.displayName ?? def.id
+    return c.html(`<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8"><title>${displayName} settings</title>
+  <link rel="stylesheet" href="/admin/styles.css" />
+</head><body class="bg-zinc-950 text-zinc-100 min-h-screen p-8">
+<main class="max-w-2xl mx-auto">
+  <h1 class="text-2xl font-semibold mb-6">${displayName} settings</h1>
+  <form method="POST" action="/admin/plugins/${encodeURIComponent(pluginId)}/configure" class="space-y-4">
+    ${fieldsHtml}
+    <div class="pt-4 flex gap-3">
+      <button type="submit" class="rounded bg-cyan-600 hover:bg-cyan-500 px-4 py-2 text-sm font-medium">Save</button>
+      <a href="/admin/plugins" class="rounded border border-zinc-700 px-4 py-2 text-sm">Cancel</a>
+    </div>
+  </form>
+</main></body></html>`)
+  } catch (error) {
+    console.error('Error rendering schema settings:', error)
+    return c.text('Internal server error', 500)
+  }
+})
+
+adminPluginRoutes.post('/:id/configure', async (c) => {
+  try {
+    const user = c.get('user')
+    const pluginId = c.req.param('id')
+    if (user?.role !== 'admin') return c.json({ error: 'Access denied' }, 403)
+
+    const def = getPluginDefinition(pluginId)
+    if (!def?.configSchema) return c.text('No schema-driven settings for this plugin', 404)
+
+    const form = await c.req.formData()
+    const parsed = parseFormDataToSettings(def.configSchema, form)
+
+    const db = c.env.DB
+    const pluginService = new PluginService(db)
+    // Ensure plugin row exists (auto-registers definePlugin plugins on first save)
+    await pluginService.ensurePlugin(pluginId, {
+      displayName: def.displayName ?? pluginId,
+      version: def.version,
+      description: (def as any).description,
+      author: typeof (def as any).author === 'object'
+        ? (def as any).author?.name
+        : (def as any).author,
+    })
+    await pluginService.updatePluginSettings(pluginId, parsed)
+
+    return c.redirect(`/admin/plugins/${encodeURIComponent(pluginId)}/configure`)
+  } catch (error) {
+    console.error('Error saving schema settings:', error)
     return c.text('Internal server error', 500)
   }
 })

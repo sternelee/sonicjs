@@ -44,6 +44,8 @@ import type { PluginBootContext, WirableHook } from '../wire'
 import type { CronContext, CronDeclaration, CronTickEvent } from '../cron'
 import type { MountableRoute } from '../mount'
 import { getCoreVersion } from '../../utils/version'
+import type { ConfigSchema } from './config-schema'
+import type { PluginMenuEntry } from '../../services/plugin-menu-singleton'
 
 // ── Minimal semver helpers (no external dep — Workers are bundle-size constrained) ─
 
@@ -190,6 +192,21 @@ export interface DefinePluginInput<Caps extends readonly Capability[] = readonly
   uninstall?: (context: unknown) => void | Promise<void>
   activate?: (context: unknown) => void | Promise<void>
   deactivate?: (context: unknown) => void | Promise<void>
+
+  // ── Declarative admin surface ──
+  /**
+   * Declarative admin-sidebar entries collected by registerPlugins. The catalyst
+   * sidebar renders them automatically; no per-plugin `addMenuItem(...)` call
+   * required.
+   */
+  menu?: PluginMenuEntry[]
+  /**
+   * Schema-driven settings. Declaring this auto-renders the admin form at
+   * `/admin/settings/plugins/:id`, parses FormData back into typed values, and
+   * persists them via the plugin-service. Authors no longer hand-roll settings
+   * routes/templates.
+   */
+  configSchema?: ConfigSchema
 }
 
 /**
@@ -220,6 +237,10 @@ export interface DefinedPlugin {
   uninstall?: (context: unknown) => void | Promise<void>
   activate?: (context: unknown) => void | Promise<void>
   deactivate?: (context: unknown) => void | Promise<void>
+  /** Declarative admin sidebar entries. registerPlugins collects + sets the menu singleton. */
+  menu?: PluginMenuEntry[]
+  /** Schema-driven settings. Renders the admin settings form for this plugin. */
+  configSchema?: ConfigSchema
   /** Marker so tooling/tests can detect a v3-defined plugin. */
   // eslint-disable-next-line @typescript-eslint/naming-convention -- intentional internal marker
   readonly __sonicV3: true
@@ -339,6 +360,8 @@ export function definePlugin<const Caps extends readonly Capability[] = readonly
     uninstall: input.uninstall,
     activate: input.activate,
     deactivate: input.deactivate,
+    menu: input.menu,
+    configSchema: input.configSchema,
     // eslint-disable-next-line @typescript-eslint/naming-convention -- intentional internal marker
     __sonicV3: true,
   }

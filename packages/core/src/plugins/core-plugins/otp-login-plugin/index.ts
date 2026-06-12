@@ -8,8 +8,8 @@
 import { Hono } from 'hono'
 import { setCookie } from 'hono/cookie'
 import { z } from 'zod'
-import { PluginBuilder } from '../../sdk/plugin-builder'
-import type { Plugin } from '@sonicjs-cms/core'
+import { definePlugin } from '../../sdk/define-plugin'
+import type { DefinedPlugin } from '../../sdk/define-plugin'
 import { OTPService, type OTPSettings } from './otp-service'
 import { renderOTPEmail } from './email-templates'
 import { AuthManager } from '../../../middleware'
@@ -44,24 +44,7 @@ const DEFAULT_SETTINGS: OTPSettings = {
   loginButtonText: ''
 }
 
-export function createOTPLoginPlugin(): Plugin {
-  const builder = PluginBuilder.create({
-    name: 'otp-login',
-    version: '1.0.0-beta.1',
-    description: 'Passwordless authentication via email one-time codes'
-  })
-
-  builder.metadata({
-    author: {
-      name: 'SonicJS Team',
-      email: 'team@sonicjs.com'
-    },
-    license: 'MIT',
-    compatibility: '^2.0.0'
-  })
-
-  // ==================== API Routes ====================
-
+function buildOtpApi(): Hono {
   const otpAPI = new Hono()
 
   // POST /auth/otp/request - Request OTP code
@@ -372,34 +355,30 @@ export function createOTPLoginPlugin(): Plugin {
     }
   })
 
-  // Register API routes
-  builder.addRoute('/auth/otp', otpAPI, {
-    description: 'OTP authentication endpoints',
-    requiresAuth: false,
-    priority: 100
-  })
-
-  // Note: Admin UI is now handled by the generic plugin settings page
-  // with custom component at admin-plugin-settings.template.ts
-
-  // Add menu item (points to generic plugin settings page)
-  builder.addMenuItem('OTP Login', '/admin/plugins/otp-login', {
-    icon: 'key',
-    order: 85,
-    permissions: ['otp:manage']
-  })
-
-  // Lifecycle hooks
-  builder.lifecycle({
-    activate: async () => {
-      console.info('✅ OTP Login plugin activated')
-    },
-    deactivate: async () => {
-      console.info('❌ OTP Login plugin deactivated')
-    }
-  })
-
-  return builder.build() as Plugin
+  return otpAPI
 }
 
-export const otpLoginPlugin = createOTPLoginPlugin()
+export const otpLoginPlugin: DefinedPlugin = definePlugin({
+  id: 'otp-login',
+  version: '1.0.0',
+  name: 'OTP Login',
+  description: 'Passwordless authentication via email one-time codes.',
+  sonicjsVersionRange: '^3.0.0',
+  author: { name: 'SonicJS Team', email: 'team@sonicjs.com' },
+  capabilities: ['email:send'],
+
+  register(app) {
+    app.route('/auth/otp', buildOtpApi())
+  },
+
+  menu: [
+    { label: 'OTP Login', path: '/admin/plugins/otp-login', icon: 'lock', order: 85, permissions: ['otp:manage'] },
+  ],
+
+  activate: async () => console.info('✅ OTP Login plugin activated'),
+  deactivate: async () => console.info('❌ OTP Login plugin deactivated'),
+})
+
+export function createOTPLoginPlugin() {
+  return otpLoginPlugin
+}

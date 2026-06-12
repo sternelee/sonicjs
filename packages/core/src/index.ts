@@ -40,6 +40,43 @@ export { getHookSystem, hasHookSystem, setHookSystem, resetHookSystem, getTypedH
 export { topoSort, PluginDependencyCycleError } from './plugins/topo-sort'
 export type { SortablePlugin, TopoSortOptions } from './plugins/topo-sort'
 
+// Single-chokepoint plugin registration
+export { registerPlugins, RegisterPluginsError } from './plugins/sdk/register-plugins'
+export type {
+  RegisterablePlugin,
+  RegisterPluginsHostContext,
+  RegisterPluginsErrorReason,
+  PluginsRegistry,
+  RegistryEntry,
+} from './plugins/sdk/register-plugins'
+
+// Schema-driven plugin settings
+export {
+  parseConfigSchema,
+  renderSchemaFields,
+  parseFormDataToSettings,
+  applySchemaDefaults,
+} from './plugins/sdk/config-schema'
+export type {
+  ConfigSchema,
+  ConfigSchemaField,
+  StringField,
+  NumberField,
+  BooleanField,
+  SelectField,
+  ParsedField,
+  SettingsFor,
+} from './plugins/sdk/config-schema'
+
+// Declarative plugin admin-sidebar menu
+export {
+  setPluginMenu,
+  getPluginMenu,
+  resetPluginMenu,
+  resolvePluginMenuItems,
+} from './services/plugin-menu-singleton'
+export type { PluginMenuEntry, ResolvedPluginMenuEntry } from './services/plugin-menu-singleton'
+
 // RBAC (document-backed) + document type bootstrap — used by app seed scripts
 export { RbacService } from './services/rbac'
 export { bootstrapDocumentTypes } from './services/document-types-seed'
@@ -319,8 +356,8 @@ export type {
   NewLogConfig,
 } from './db'
 
-// Plugin SDK (Beta)
-export { PluginBuilder, PluginHelpers } from './plugins/sdk'
+// Plugin SDK (v4 — Payload-shaped)
+export { definePlugin, isDefinedPlugin } from './plugins/sdk'
 
 // OAuth Providers Plugin
 export { oauthProvidersPlugin, createOAuthProvidersPlugin } from './plugins/core-plugins/oauth-providers'

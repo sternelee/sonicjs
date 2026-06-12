@@ -13,7 +13,7 @@
  */
 
 import { Hono } from 'hono'
-import { PluginBuilder } from '../../sdk/plugin-builder'
+import { definePlugin } from '../../sdk/define-plugin'
 import { wrapAdminPage } from '../_shared/admin-template'
 import {
   resolveVariablesInObject,
@@ -659,83 +659,66 @@ function renderAdminPage(variables: any[], editorStatus: { editorActive: boolean
   ` })
 }
 
-// ─── Plugin Builder ──────────────────────────────────────────────────────────
+// ─── Plugin definition ──────────────────────────────────────────────────────
+
+export const globalVariablesPlugin = definePlugin({
+  id: 'global-variables',
+  version: '1.1.0',
+  name: 'Global Variables',
+  description: 'Dynamic content variables with inline token support and CRUD admin page.',
+  sonicjsVersionRange: '^3.0.0',
+  author: { name: 'SonicJS Community', email: 'community@sonicjs.com' },
+  capabilities: ['hooks.content:subscribe'],
+
+  register(app) {
+    app.route('/api/global-variables', apiRoutes)
+    app.route('/admin/global-variables', adminRoutes)
+  },
+
+  menu: [
+    { label: 'Global Variables', path: '/admin/global-variables', icon: 'bolt', order: 45, permissions: ['global-variables:view'] },
+  ],
+
+  hooks: {
+    // eslint-disable-next-line @typescript-eslint/naming-convention -- hook event names use colons
+    'content:read': async (data: any, context: any) => {
+      try {
+        const db = context?.context?.env?.DB
+        if (!db || !data) return data
+        const variables = await getVariablesMap(db)
+        if (variables.size === 0) return data
+        return resolveVariablesInObject(data, variables)
+      } catch {
+        return data
+      }
+    },
+  },
+
+  install: async (ctx: any) => {
+    const db = ctx?.env?.DB
+    if (db) {
+      const statements = MIGRATION_SQL.split(';').map((s: string) => s.trim()).filter((s: string) => s.length > 0)
+      for (const stmt of statements) { await db.prepare(stmt).run() }
+      console.info('[GlobalVariables] Tables created')
+    }
+  },
+  activate: async () => console.info('[GlobalVariables] Plugin activated'),
+  deactivate: async () => {
+    invalidateVariablesCache()
+    console.info('[GlobalVariables] Plugin deactivated, cache cleared')
+  },
+  uninstall: async (ctx: any) => {
+    const db = ctx?.env?.DB
+    if (db) {
+      await db.prepare('DROP TABLE IF EXISTS global_variables').run()
+      console.info('[GlobalVariables] Tables dropped')
+    }
+  },
+})
 
 export function createGlobalVariablesPlugin() {
-  const builder = PluginBuilder.create({
-    name: 'global-variables',
-    version: '1.1.0',
-    description: 'Dynamic content variables with inline token support and CRUD admin page',
-  })
-
-  builder.metadata({
-    author: { name: 'SonicJS Community', email: 'community@sonicjs.com' },
-    license: 'MIT',
-    compatibility: '^2.0.0',
-  })
-
-  builder.addRoute('/api/global-variables', apiRoutes, {
-    description: 'Global variables CRUD API',
-    requiresAuth: true,
-    priority: 50,
-  })
-
-  builder.addRoute('/admin/global-variables', adminRoutes, {
-    description: 'Global variables admin page with full CRUD',
-    requiresAuth: true,
-    priority: 50,
-  })
-
-  builder.addMenuItem('Global Variables', '/admin/global-variables', {
-    icon: 'variable',
-    order: 45,
-    permissions: ['global-variables:view'],
-  })
-
-  builder.addHook('content:read', async (data: any, context: any) => {
-    try {
-      const db = context?.context?.env?.DB
-      if (!db || !data) return data
-      const variables = await getVariablesMap(db)
-      if (variables.size === 0) return data
-      return resolveVariablesInObject(data, variables)
-    } catch {
-      return data
-    }
-  }, {
-    priority: 50,
-    description: 'Resolve {variable_key} tokens in content data',
-  })
-
-  builder.lifecycle({
-    install: async (ctx: any) => {
-      const db = ctx?.env?.DB
-      if (db) {
-        const statements = MIGRATION_SQL.split(';').map(s => s.trim()).filter(s => s.length > 0)
-        for (const stmt of statements) { await db.prepare(stmt).run() }
-        console.info('[GlobalVariables] Tables created')
-      }
-    },
-    activate: async () => {
-      console.info('[GlobalVariables] Plugin activated')
-    },
-    deactivate: async () => {
-      invalidateVariablesCache()
-      console.info('[GlobalVariables] Plugin deactivated, cache cleared')
-    },
-    uninstall: async (ctx: any) => {
-      const db = ctx?.env?.DB
-      if (db) {
-        await db.prepare('DROP TABLE IF EXISTS global_variables').run()
-        console.info('[GlobalVariables] Tables dropped')
-      }
-    },
-  })
-
-  return builder.build()
+  return globalVariablesPlugin
 }
-
-export const globalVariablesPlugin = createGlobalVariablesPlugin()
 
 // Export raw route handlers for direct mounting
 export { apiRoutes as globalVariablesApiRoutes, adminRoutes as globalVariablesAdminRoutes }

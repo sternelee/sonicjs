@@ -1,45 +1,25 @@
-import { PluginBuilder } from '../../sdk/plugin-builder'
-import { Plugin } from '@sonicjs-cms/core'
-// import { createSeedDataAdminRoutes } from './admin-routes'
+/**
+ * Seed Data Plugin — Payload-shaped port.
+ */
+
+import { definePlugin } from '../../sdk/define-plugin'
 import { SeedDataService } from './services/seed-data-service'
 
-export function createSeedDataPlugin(): Plugin {
-  const builder = PluginBuilder.create({
-    name: 'seed-data',
-    version: '1.0.0-beta.1',
-    description: 'Generate realistic example users and content for testing and development'
-  })
+export const seedDataPlugin = definePlugin({
+  id: 'seed-data',
+  version: '1.0.0',
+  name: 'Seed Data',
+  description: 'Generate realistic example users and content for testing and development.',
+  sonicjsVersionRange: '^3.0.0',
+  author: { name: 'SonicJS', email: 'admin@sonicjs.com' },
 
-  builder.metadata({
-    author: { name: 'SonicJS', email: 'admin@sonicjs.com' },
-    license: 'MIT',
-    compatibility: '^1.0.0',
-    dependencies: []
-  })
+  menu: [
+    { label: 'Seed Data', path: '/admin/seed-data', icon: 'document', order: 65, permissions: ['admin'] },
+  ],
+})
 
-  // Add admin page
-  builder.addAdminPage('/seed-data', 'Seed Data', 'SeedData', {
-    description: 'Generate example users and content',
-    icon: 'seedling',
-    permissions: ['admin']
-  })
-
-  // Add menu item to admin sidebar
-  builder.addMenuItem('Seed Data', '/admin/seed-data', {
-    icon: 'seedling',
-    order: 65,
-    permissions: ['admin']
-  })
-
-  // Add service
-  builder.addService('seedData', {
-    implementation: SeedDataService,
-    description: 'Seed data generation service',
-    singleton: true
-  })
-
-  return builder.build() as Plugin
+export function createSeedDataPlugin() {
+  return seedDataPlugin
 }
 
-export const seedDataPlugin = createSeedDataPlugin()
-export { SeedDataService } from './services/seed-data-service'
+export { SeedDataService }

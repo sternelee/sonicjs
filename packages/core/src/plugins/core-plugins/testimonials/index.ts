@@ -6,8 +6,7 @@
  */
 import { Hono } from 'hono'
 import { z } from 'zod'
-import type { Plugin } from '../../types'
-import { PluginBuilder } from '../../sdk/plugin-builder'
+import { definePlugin } from '../../sdk/define-plugin'
 import { DocumentsService } from '../../../services/documents'
 import { DocumentTypeRegistry } from '../../../services/document-type-registry'
 import { getRequestTenant } from '../../../services/document-request-context'
@@ -204,38 +203,28 @@ testimonialAPIRoutes.delete('/:id', async (c) => {
   }
 })
 
-export function createTestimonialPlugin(): Plugin {
-  const builder = PluginBuilder.create({
-    name: 'testimonials-plugin',
-    version: '1.0.0-beta.2',
-    description: 'Customer testimonials management — backed by the document model'
-  })
+export const testimonialsPlugin = definePlugin({
+  id: 'testimonials-plugin',
+  version: '1.0.0',
+  name: 'Testimonials',
+  description: 'Customer testimonials management — backed by the document model.',
+  sonicjsVersionRange: '^3.0.0',
+  author: { name: 'SonicJS', email: 'info@sonicjs.com' },
 
-  builder.metadata({ author: { name: 'SonicJS', email: 'info@sonicjs.com' }, license: 'MIT', compatibility: '^1.0.0' })
+  register(app) {
+    app.route('/api/testimonials', testimonialAPIRoutes)
+  },
 
-  // No addModel() — the testimonials table no longer exists.
-  // Data lives in the documents table (type_id = 'testimonial').
+  menu: [
+    { label: 'Testimonials', path: '/admin/testimonials', icon: 'sparkles', order: 60, permissions: ['admin', 'editor'] },
+  ],
 
-  builder.addRoute('/api/testimonials', testimonialAPIRoutes, {
-    description: 'Testimonials API — document-model backed',
-    requiresAuth: false
-  })
+  install: async () => console.log('Testimonials plugin installed (document-model backed)'),
+  uninstall: async () => console.log('Testimonials plugin uninstalled'),
+  activate: async () => console.log('Testimonials plugin activated'),
+  deactivate: async () => console.log('Testimonials plugin deactivated'),
+})
 
-  builder.addAdminPage('/testimonials', 'Testimonials', 'TestimonialsListView', {
-    description: 'Manage customer testimonials', icon: 'star', permissions: ['admin', 'editor']
-  })
-  builder.addAdminPage('/testimonials/new', 'New Testimonial', 'TestimonialsFormView', { permissions: ['admin', 'editor'] })
-  builder.addAdminPage('/testimonials/:id', 'Edit Testimonial', 'TestimonialsFormView', { permissions: ['admin', 'editor'] })
-  builder.addMenuItem('Testimonials', '/admin/testimonials', { icon: 'star', order: 60, permissions: ['admin', 'editor'] })
-
-  builder.lifecycle({
-    install: async () => { console.log('Testimonials plugin installed (document-model backed)') },
-    uninstall: async () => { console.log('Testimonials plugin uninstalled') },
-    activate: async () => { console.log('Testimonials plugin activated') },
-    deactivate: async () => { console.log('Testimonials plugin deactivated') },
-  })
-
-  return builder.build() as Plugin
+export function createTestimonialPlugin() {
+  return testimonialsPlugin
 }
-
-export const testimonialsPlugin = createTestimonialPlugin()

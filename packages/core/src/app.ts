@@ -69,6 +69,8 @@ import { setEmailService, getEmailService, hasEmailService } from './services/em
 import type { EmailProvider } from './services/email/types'
 import { faviconSvg } from './assets/favicon'
 import { setAppInstance } from './services/route-metadata'
+import { setPluginMenu } from './services/plugin-menu-singleton'
+import { setPluginDefinitions } from './services/plugin-definition-registry'
 
 // ============================================================================
 // Type Definitions
@@ -115,6 +117,13 @@ export interface Variables {
   appVersion?: string
   csrfToken?: string
   pluginMenuItems?: Array<{ label: string; path: string; icon: string }>
+  /**
+   * The plugin hook system attached to the request. Set by bootstrapMiddleware
+   * BEFORE any heavy bootstrap work runs, so anything that emits a hook during
+   * bootstrap (cron cold starts, RBAC seed, document-type registration) sees a
+   * live bus instead of a no-op.
+   */
+  hookSystem?: import('./plugins/hooks/typed-hooks').HookSystemLike
   /** Tenant slug resolved per request by tenantMiddleware ('default' when single-tenant). */
   tenantId?: string
   /** The authed user's role IN the resolved tenant (per-tenant RBAC); global role for 'default'. */
@@ -532,21 +541,14 @@ export function createSonicJSApp(config: SonicJSConfig = {}): SonicJSApp {
   // but the HTML router itself must be mounted here like the other core admin routers — it was missing,
   // so the Testimonials page and "add testimonial" form (hx-post /admin/testimonials) 404'd.
   app.route('/admin/testimonials', adminTestimonialsRoutes)
-  // Testimonials PUBLIC API (/api/testimonials, document-model backed). The plugin declares it via
-  // builder.addRoute, but — like the admin router above — it was never mounted here, so the public
-  // testimonials API 404'd on a fresh install. Mount it the same way the other plugin routes are.
-  if (testimonialsPlugin.routes && testimonialsPlugin.routes.length > 0) {
-    for (const route of testimonialsPlugin.routes) {
-      app.route(route.path, route.handler as any)
-    }
-  }
+  // Testimonials PUBLIC API (/api/testimonials). After the definePlugin port,
+  // the plugin uses register(app) instead of routes[]; call registerPluginRoutes
+  // so the API routes are actually mounted.
+  registerPluginRoutes(app, [testimonialsPlugin as any], { source: 'core' })
 
-  // Plugin routes - Forms (admin builder, public rendering, API submission)
-  if (formsPlugin.routes && formsPlugin.routes.length > 0) {
-    for (const route of formsPlugin.routes) {
-      app.route(route.path, route.handler as any)
-    }
-  }
+  // Forms (admin builder, public rendering, API submission). Same as above —
+  // routes[] was replaced with register(app) in the definePlugin port.
+  registerPluginRoutes(app, [formsPlugin as any], { source: 'core' })
 
   app.route('/admin/api', adminApiRoutes)
   app.route('/admin/collections', adminCollectionsRoutes)
@@ -606,6 +608,22 @@ export function createSonicJSApp(config: SonicJSConfig = {}): SonicJSApp {
   // registered here; position preserved to keep route-match precedence identical.
   if (!config.plugins?.disableAll) {
     registerPluginRoutes(app, corePluginsAfterCatchAll, { source: 'core' })
+  }
+
+  // Wire the menu singleton + definition registry so the catalyst sidebar and
+  // /admin/plugins/:id/configure work for plugins that declared menu[] and
+  // configSchema via definePlugin.  We do this once after ALL routes are mounted
+  // so the singletons reflect the full set of plugins the app will serve.
+  if (!config.plugins?.disableAll) {
+    const allMountedPlugins: any[] = [
+      ...corePluginsBeforeCatchAll,
+      testimonialsPlugin,
+      formsPlugin,
+      ...corePluginsAfterCatchAll,
+      ...(config.plugins?.register ?? []),
+    ]
+    setPluginMenu(allMountedPlugins.flatMap((p) => (p.menu ?? [])))
+    setPluginDefinitions(allMountedPlugins)
   }
 
   // Serve favicon

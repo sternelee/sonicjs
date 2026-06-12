@@ -1,109 +1,65 @@
-import { PluginBuilder } from '../sdk/plugin-builder'
-import type { Plugin, PluginContext } from '../types'
+/**
+ * Redirect Management Plugin — Payload-shaped port.
+ */
+
+import { definePlugin } from '../sdk/define-plugin'
 import manifest from './manifest.json'
 import { RedirectService } from './services/redirect'
 import { createRedirectAdminRoutes } from './routes/admin'
 import { createRedirectApiRoutes } from './routes/api'
 
-// Export middleware for direct mounting in app
+// Re-exports
 export { createRedirectMiddleware, invalidateRedirectCache, warmRedirectCache } from './middleware/redirect'
-
-// Export admin routes for mounting
 export { createRedirectAdminRoutes } from './routes/admin'
-
-// Export API routes for mounting
 export { createRedirectApiRoutes } from './routes/api'
 
-export function createRedirectPlugin(): Plugin {
-  const builder = PluginBuilder.create({
-    name: manifest.id,
-    version: manifest.version,
-    description: manifest.description
-  })
+let redirectService: RedirectService | null = null
 
-  builder.metadata({
-    author: { name: manifest.author },
-    license: manifest.license,
-    compatibility: '^2.0.0'
-  })
+export const redirectPlugin = definePlugin({
+  id: manifest.id,
+  version: manifest.version,
+  name: manifest.name,
+  description: manifest.description,
+  sonicjsVersionRange: '^3.0.0',
+  author: { name: manifest.author },
 
-  // Admin routes
-  builder.addRoute('/admin/redirects', createRedirectAdminRoutes(), {
-    description: 'Redirect management admin routes',
-    requiresAuth: true,
-    priority: 100
-  })
+  register(app) {
+    app.route('/admin/redirects', createRedirectAdminRoutes() as any)
+    app.route('/api/redirects', createRedirectApiRoutes() as any)
+  },
 
-  // API routes
-  builder.addRoute('/api/redirects', createRedirectApiRoutes(), {
-    description: 'Redirect management REST API',
-    requiresAuth: false,  // API handles its own auth via Bearer tokens
-    priority: 100
-  })
+  menu: [
+    { label: 'Redirects', path: '/admin/redirects', icon: 'bolt', order: 85, permissions: ['admin', 'redirect.manage'] },
+  ],
 
-  // Add admin page
-  builder.addAdminPage(
-    '/redirect-management/settings',
-    'Redirect Management Settings',
-    'RedirectManagementSettings',
-    {
-      description: 'Configure redirect settings and manage URL redirects',
-      icon: 'arrow-right',
-      permissions: ['admin', 'redirect.manage']
+  install: async (context: any) => {
+    redirectService = new RedirectService(context.db)
+    await redirectService.install()
+    console.log('Redirect Management plugin installed successfully')
+  },
+  activate: async (context: any) => {
+    redirectService = new RedirectService(context.db)
+    await redirectService.activate()
+    console.log('Redirect Management plugin activated')
+  },
+  deactivate: async (_context: any) => {
+    if (redirectService) {
+      await redirectService.deactivate()
+      redirectService = null
     }
-  )
-
-  // Add menu item
-  builder.addMenuItem('Redirects', '/admin/redirects', {
-    icon: 'arrow-right',
-    order: 85,
-    permissions: ['admin', 'redirect.manage']
-  })
-
-  // Register service
-  let redirectService: RedirectService | null = null
-
-  builder.addService('redirectService', {
-    implementation: RedirectService,
-    description: 'Redirect management service for lifecycle and settings',
-    singleton: true
-  })
-
-  // Lifecycle
-  builder.lifecycle({
-    install: async (context: PluginContext) => {
-      redirectService = new RedirectService(context.db)
-      await redirectService.install()
-      console.log('Redirect Management plugin installed successfully')
-    },
-    activate: async (context: PluginContext) => {
-      redirectService = new RedirectService(context.db)
-      await redirectService.activate()
-      console.log('Redirect Management plugin activated')
-    },
-    deactivate: async (context: PluginContext) => {
-      if (redirectService) {
-        await redirectService.deactivate()
-        redirectService = null
-      }
-      console.log('Redirect Management plugin deactivated')
-    },
-    uninstall: async (context: PluginContext) => {
-      if (redirectService) {
-        await redirectService.uninstall()
-        redirectService = null
-      }
-      console.log('Redirect Management plugin uninstalled')
-    },
-    configure: async (config: any) => {
-      if (redirectService) {
-        await redirectService.saveSettings(config)
-      }
-      console.log('Redirect Management plugin configured', config)
+    console.log('Redirect Management plugin deactivated')
+  },
+  uninstall: async (_context: any) => {
+    if (redirectService) {
+      await redirectService.uninstall()
+      redirectService = null
     }
-  })
+    console.log('Redirect Management plugin uninstalled')
+  },
+})
 
-  return builder.build()
+export function createRedirectPlugin() {
+  return redirectPlugin
 }
 
-export default createRedirectPlugin()
+export default redirectPlugin
