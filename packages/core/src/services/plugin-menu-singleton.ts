@@ -83,14 +83,17 @@ export function resetPluginMenu(): void {
  *
  * Permission semantics: an entry with no `permissions` is always visible. An entry
  * with `permissions: ['x','y']` is visible if the user has ANY of `x` or `y`.
+ * Users with `role: 'admin'` bypass all permission checks (admins see everything).
  */
 export function resolvePluginMenuItems(
-  user?: { permissions?: readonly string[] }
+  user?: { permissions?: readonly string[]; role?: string }
 ): ResolvedPluginMenuEntry[] {
+  const isAdmin = user?.role === 'admin'
   const userPerms = new Set(user?.permissions ?? [])
   return menuItems
     .filter((m) => {
       if (!m.permissions || m.permissions.length === 0) return true
+      if (isAdmin) return true
       return m.permissions.some((p) => userPerms.has(p))
     })
     .slice()
