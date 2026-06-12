@@ -52,7 +52,7 @@ function renderInvitations(slug: string, invitations: TenantInvitation[]): strin
   const s = escapeHtml(slug)
   const rows = invitations.length
     ? invitations.map((inv) => {
-        const acceptUrl = `/admin/tenants/invitations/accept?token=${encodeURIComponent(inv.id)}`
+        const acceptUrl = `/join/invite?token=${encodeURIComponent(inv.id)}`
         return `
         <tr data-invite-row="${escapeHtml(inv.email)}" class="border-b border-zinc-950/5 dark:border-white/5">
           <td class="px-4 py-3 text-sm text-zinc-950 dark:text-white">${escapeHtml(inv.email)}</td>

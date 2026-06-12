@@ -2,6 +2,7 @@ import { PluginBuilder } from '../../sdk/plugin-builder'
 import type { Plugin } from '../../types'
 import manifest from './manifest.json'
 import { createTenantAdminRoutes } from './routes/admin'
+import { createJoinRoutes } from './routes/join'
 import { invalidateTenantCache } from '../../../middleware/tenant'
 
 export function createMultiTenantPlugin(): Plugin {
@@ -22,6 +23,13 @@ export function createMultiTenantPlugin(): Plugin {
     description: 'Tenant management admin routes',
     requiresAuth: true,
     priority: 90,
+  })
+
+  // Public invitation join routes — NO auth middleware (unauthenticated invitees).
+  builder.addRoute('/join/invite', createJoinRoutes() as any, {
+    description: 'Public invitation accept / register / sign-in',
+    requiresAuth: false,
+    priority: 95,
   })
 
   builder.addMenuItem('Tenants', '/admin/tenants', {

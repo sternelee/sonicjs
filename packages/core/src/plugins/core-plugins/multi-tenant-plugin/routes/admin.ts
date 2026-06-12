@@ -466,7 +466,7 @@ export function createTenantAdminRoutes(): Hono<{ Bindings: Bindings; Variables:
       // Best-effort email delivery of the accept link. The link is also shown in the UI, so a
       // missing/failed mailer never blocks the invite (mirrors the password-reset flow).
       const origin = c.req.header('origin') || new URL(c.req.url).origin
-      const acceptUrl = `${origin}/admin/tenants/invitations/accept?token=${encodeURIComponent(token)}`
+      const acceptUrl = `${origin}/join/invite?token=${encodeURIComponent(token)}`
       let note: string
       let noteType = ''
       const svc2 = hasEmailService() ? getEmailService() : null
@@ -518,7 +518,7 @@ export function createTenantAdminRoutes(): Hono<{ Bindings: Bindings; Variables:
       if (!hasRealProvider) throw new Error('No email plugin active')
 
       const origin = c.req.header('origin') || new URL(c.req.url).origin
-      const acceptUrl = `${origin}/admin/tenants/invitations/accept?token=${encodeURIComponent(inv.id)}`
+      const acceptUrl = `${origin}/join/invite?token=${encodeURIComponent(inv.id)}`
       const result = await svc2!.send({
         to: inv.email,
         subject: `You're invited to the ${slug} workspace`,
