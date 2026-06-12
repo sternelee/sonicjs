@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { DocumentsService } from '../services/documents'
 import { DocumentTypeRegistry } from '../services/document-type-registry'
 import { DocumentRepository } from '../services/document-repository'
-import { getDocumentRequestContext, getRequestTenant } from '../services/document-request-context'
+import { getDocumentRequestContext, getRequestTenant, effectiveTenantForType } from '../services/document-request-context'
 import { createDocumentSchema, updateDocumentSchema } from '../schemas/document'
 import type { Permission, DocumentTypeSettings } from '../schemas/document'
 import type { D1Database } from '@cloudflare/workers-types'
@@ -122,7 +122,8 @@ adminDocumentsRoutes.get('/', async (c) => {
     const sortDir = (c.req.query('dir') ?? 'desc').toLowerCase() === 'asc' ? 'ASC' : 'DESC'
 
     // Single source of list SQL: the tenant-scoped repository chokepoint (R4/D10). No inline SQL.
-    const repo = new DocumentRepository(db, tenantId)
+    // Global types read from the shared pool regardless of the request tenant (G5).
+    const repo = new DocumentRepository(db, effectiveTenantForType(tenantId, docType.settings))
     const docs = await repo.list({
       typeId, status, locale, limit, cursorUpdatedAt, cursorId,
       scalarFilters, facetFilter: facetFilter ?? undefined, sortColumn, sortDir,
@@ -224,7 +225,8 @@ adminDocumentsRoutes.post('/', async (c) => {
     // { error: 'Validation failed', details: result.error.issues } with 400. (Removed the previous
     // broken no-op that referenced a nonexistent _zodSchema.)
 
-    const tenantId = getRequestTenant(c)
+    // Global types write to the shared pool; tenant-isolated types use the request tenant (G5).
+    const tenantId = effectiveTenantForType(getRequestTenant(c), docType.settings)
     const svc = new DocumentsService(db, {
       queryableFields: docType.queryableFields,
       typeSchemaVersion: docType.schemaVersion,
@@ -232,7 +234,7 @@ adminDocumentsRoutes.post('/', async (c) => {
       tenantId,
     })
 
-    // Inject the resolved request tenant; never trust a body-supplied tenant.
+    // Inject the resolved (effective) tenant; never trust a body-supplied tenant.
     const doc = await svc.create({ ...input, tenantId }, user.userId)
 
     return c.json({ data: doc }, 201)
