@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { DocumentsService } from '../services/documents'
 import { DocumentTypeRegistry } from '../services/document-type-registry'
 import { DocumentRepository } from '../services/document-repository'
-import { getDocumentRequestContext, getRequestTenant } from '../services/document-request-context'
+import { getDocumentRequestContext, getRequestTenant, effectiveTenantForType } from '../services/document-request-context'
 import { createDocumentSchema, updateDocumentSchema } from '../schemas/document'
 import type { Permission, DocumentTypeSettings } from '../schemas/document'
 import type { D1Database } from '@cloudflare/workers-types'
@@ -19,11 +19,44 @@ async function denyIfNotAllowed(
   rootId: string,
   permission: Permission,
   typeSettings?: DocumentTypeSettings,
+  tenantOverride?: string,
 ) {
   const { principalSet, tenantId } = getDocumentRequestContext(c)
-  const repo = new DocumentRepository(db, tenantId)
+  // Global types resolve their per-document ACL overrides from the shared pool, not the request
+  // tenant — callers pass the effective tenant (G5). The role principal stays the per-tenant role.
+  const repo = new DocumentRepository(db, tenantOverride ?? tenantId)
   const ok = await repo.isAllowed(principalSet, rootId, permission, typeSettings ?? {})
   return ok ? null : c.json({ error: 'Forbidden' }, 403)
+}
+
+/**
+ * Resolve a document's type + the EFFECTIVE tenant scope from an id/root_id, for by-id operations
+ * where the type (and thus whether it's a global type) isn't known up front.
+ *
+ * Looks up the row's type without a tenant filter, computes the effective tenant for that type
+ * (G5 — global types resolve to the shared pool), then re-checks that the row actually lives in that
+ * effective scope. The re-check is the isolation guard: a normal doc owned by another tenant has
+ * `tenant_id !== effectiveTenant`, so it resolves to null (→ 404) exactly as the old
+ * `AND tenant_id = ?` filter did. Returns null when missing or out-of-scope.
+ */
+async function resolveDocScope(
+  c: Context,
+  db: D1Database,
+  by: { id: string } | { rootId: string },
+  opts: { currentDraftOnly?: boolean } = {},
+): Promise<{ typeId: string; rootId: string; tenantId: string; docType: any } | null> {
+  const col = 'id' in by ? 'id' : 'root_id'
+  const val = 'id' in by ? by.id : by.rootId
+  const draft = opts.currentDraftOnly ? ' AND is_current_draft = 1' : ''
+  const row = await db
+    .prepare(`SELECT type_id, root_id, tenant_id FROM documents WHERE ${col} = ?${draft} LIMIT 1`)
+    .bind(val)
+    .first() as any
+  if (!row) return null
+  const docType = await new DocumentTypeRegistry(db).findById(row.type_id)
+  const tenantId = effectiveTenantForType(getRequestTenant(c), docType?.settings)
+  if (row.tenant_id !== tenantId) return null // requester's effective scope does not own this doc
+  return { typeId: row.type_id, rootId: row.root_id, tenantId, docType }
 }
 
 const adminDocumentsRoutes = new Hono<{ Bindings: Bindings; Variables: Variables }>()
@@ -122,7 +155,8 @@ adminDocumentsRoutes.get('/', async (c) => {
     const sortDir = (c.req.query('dir') ?? 'desc').toLowerCase() === 'asc' ? 'ASC' : 'DESC'
 
     // Single source of list SQL: the tenant-scoped repository chokepoint (R4/D10). No inline SQL.
-    const repo = new DocumentRepository(db, tenantId)
+    // Global types read from the shared pool regardless of the request tenant (G5).
+    const repo = new DocumentRepository(db, effectiveTenantForType(tenantId, docType.settings))
     const docs = await repo.list({
       typeId, status, locale, limit, cursorUpdatedAt, cursorId,
       scalarFilters, facetFilter: facetFilter ?? undefined, sortColumn, sortDir,
@@ -162,7 +196,9 @@ adminDocumentsRoutes.get('/', async (c) => {
 // inserting a new GET /:something before them would shadow those literals (see commit 5af9dea).
 adminDocumentsRoutes.get('/:id', async (c) => {
   try {
-    const repo = new DocumentRepository(c.env.DB, getRequestTenant(c))
+    const scope = await resolveDocScope(c, c.env.DB, { id: c.req.param('id') })
+    if (!scope) return c.json({ error: 'Not found' }, 404)
+    const repo = new DocumentRepository(c.env.DB, scope.tenantId)
     const doc = await repo.getById(c.req.param('id'))
     if (!doc) return c.json({ error: 'Not found' }, 404)
     return c.json({ data: doc })
@@ -175,7 +211,9 @@ adminDocumentsRoutes.get('/:id', async (c) => {
 // ─── Get version history ──────────────────────────────────────────────────────
 adminDocumentsRoutes.get('/:rootId/versions', async (c) => {
   try {
-    const repo = new DocumentRepository(c.env.DB, getRequestTenant(c))
+    const scope = await resolveDocScope(c, c.env.DB, { rootId: c.req.param('rootId') })
+    if (!scope) return c.json({ data: [] })
+    const repo = new DocumentRepository(c.env.DB, scope.tenantId)
     const versions = await repo.getVersionHistory(c.req.param('rootId'))
     return c.json({ data: versions })
   } catch (error) {
@@ -224,7 +262,8 @@ adminDocumentsRoutes.post('/', async (c) => {
     // { error: 'Validation failed', details: result.error.issues } with 400. (Removed the previous
     // broken no-op that referenced a nonexistent _zodSchema.)
 
-    const tenantId = getRequestTenant(c)
+    // Global types write to the shared pool; tenant-isolated types use the request tenant (G5).
+    const tenantId = effectiveTenantForType(getRequestTenant(c), docType.settings)
     const svc = new DocumentsService(db, {
       queryableFields: docType.queryableFields,
       typeSchemaVersion: docType.schemaVersion,
@@ -232,7 +271,7 @@ adminDocumentsRoutes.post('/', async (c) => {
       tenantId,
     })
 
-    // Inject the resolved request tenant; never trust a body-supplied tenant.
+    // Inject the resolved (effective) tenant; never trust a body-supplied tenant.
     const doc = await svc.create({ ...input, tenantId }, user.userId)
 
     return c.json({ data: doc }, 201)
@@ -263,27 +302,20 @@ adminDocumentsRoutes.put('/:rootId', async (c) => {
     const { rootId } = c.req.param()
     const db = c.env.DB
     const user = c.get('user') as { userId: string; email: string; role: string }
-    const tenantId = getRequestTenant(c)
 
-    // Look up the type from the existing draft to get queryableFields.
-    const existing = await db
-      .prepare('SELECT type_id FROM documents WHERE root_id = ? AND tenant_id = ? AND is_current_draft = 1')
-      .bind(rootId, tenantId)
-      .first() as any
+    // Resolve the type + effective tenant (global types live in the shared pool, G5).
+    const scope = await resolveDocScope(c, db, { rootId }, { currentDraftOnly: true })
+    if (!scope) return c.json({ error: 'Document not found' }, 404)
+    const docType = scope.docType
 
-    if (!existing) return c.json({ error: 'Document not found' }, 404)
-
-    const registry = new DocumentTypeRegistry(db)
-    const docType = await registry.findById(existing.type_id)
-
-    const updateDenied = await denyIfNotAllowed(c, db, rootId, 'update', docType?.settings)
+    const updateDenied = await denyIfNotAllowed(c, db, rootId, 'update', docType?.settings, scope.tenantId)
     if (updateDenied) return updateDenied
 
     const svc = new DocumentsService(db, {
       queryableFields: docType?.queryableFields ?? [],
       typeSchemaVersion: docType?.schemaVersion,
       maxVersionsPerRoot: docType?.settings.maxVersionsPerRoot,
-      tenantId,
+      tenantId: scope.tenantId,
     })
 
     const doc = await svc.saveDraft(rootId, validation.data, user.userId)
@@ -301,21 +333,18 @@ adminDocumentsRoutes.post('/:id/publish', async (c) => {
     const { id } = c.req.param()
     const db = c.env.DB
     const user = c.get('user') as { userId: string; email: string; role: string }
-    const tenantId = getRequestTenant(c)
 
-    const row = await db.prepare('SELECT type_id, root_id FROM documents WHERE id = ? AND tenant_id = ?').bind(id, tenantId).first() as any
-    if (!row) return c.json({ error: 'Document not found' }, 404)
+    const scope = await resolveDocScope(c, db, { id })
+    if (!scope) return c.json({ error: 'Document not found' }, 404)
+    const docType = scope.docType
 
-    const registry = new DocumentTypeRegistry(db)
-    const docType = await registry.findById(row.type_id)
-
-    const publishDenied = await denyIfNotAllowed(c, db, row.root_id, 'publish', docType?.settings)
+    const publishDenied = await denyIfNotAllowed(c, db, scope.rootId, 'publish', docType?.settings, scope.tenantId)
     if (publishDenied) return publishDenied
 
     const svc = new DocumentsService(db, {
       queryableFields: docType?.queryableFields ?? [],
       typeSchemaVersion: docType?.schemaVersion,
-      tenantId,
+      tenantId: scope.tenantId,
     })
 
     const doc = await svc.publish(id, user.userId)
@@ -332,20 +361,17 @@ adminDocumentsRoutes.post('/:id/unpublish', async (c) => {
   try {
     const { id } = c.req.param()
     const db = c.env.DB
-    const tenantId = getRequestTenant(c)
 
-    const row = await db.prepare('SELECT type_id, root_id FROM documents WHERE id = ? AND tenant_id = ?').bind(id, tenantId).first() as any
-    if (!row) return c.json({ error: 'Document not found' }, 404)
+    const scope = await resolveDocScope(c, db, { id })
+    if (!scope) return c.json({ error: 'Document not found' }, 404)
+    const docType = scope.docType
 
-    const registry = new DocumentTypeRegistry(db)
-    const docType = await registry.findById(row.type_id)
-
-    const unpublishDenied = await denyIfNotAllowed(c, db, row.root_id, 'publish', docType?.settings)
+    const unpublishDenied = await denyIfNotAllowed(c, db, scope.rootId, 'publish', docType?.settings, scope.tenantId)
     if (unpublishDenied) return unpublishDenied
 
     const svc = new DocumentsService(db, {
       queryableFields: docType?.queryableFields ?? [],
-      tenantId,
+      tenantId: scope.tenantId,
     })
 
     const doc = await svc.unpublish(id)
@@ -363,22 +389,19 @@ adminDocumentsRoutes.delete('/:id', async (c) => {
   try {
     const { id } = c.req.param()
     const db = c.env.DB
-    const tenantId = getRequestTenant(c)
 
-    const row = await db.prepare('SELECT type_id, root_id FROM documents WHERE id = ? AND tenant_id = ?').bind(id, tenantId).first() as any
-    if (!row) return c.json({ error: 'Document not found' }, 404)
+    const scope = await resolveDocScope(c, db, { id })
+    if (!scope) return c.json({ error: 'Document not found' }, 404)
+    const docType = scope.docType
 
-    const registry = new DocumentTypeRegistry(db)
-    const docType = await registry.findById(row.type_id)
-
-    const deleteDenied = await denyIfNotAllowed(c, db, row.root_id, 'delete', docType?.settings)
+    const deleteDenied = await denyIfNotAllowed(c, db, scope.rootId, 'delete', docType?.settings, scope.tenantId)
     if (deleteDenied) return deleteDenied
 
-    const svc = new DocumentsService(db, { queryableFields: docType?.queryableFields ?? [], tenantId })
+    const svc = new DocumentsService(db, { queryableFields: docType?.queryableFields ?? [], tenantId: scope.tenantId })
 
     // Hard erase PII types; soft delete others.
     if (docType?.settings.pii) {
-      if (row.root_id) await svc.erase(row.root_id, tenantId)
+      if (scope.rootId) await svc.erase(scope.rootId, scope.tenantId)
     } else {
       await svc.softDelete(id)
     }
@@ -400,12 +423,13 @@ adminDocumentsRoutes.post('/types/:typeId/reindex', async (c) => {
     const docType = await registry.findById(typeId)
     if (!docType) return c.json({ error: 'Unknown document type' }, 400)
 
-    const reindexDenied = await denyIfNotAllowed(c, db, '', 'manage', docType.settings)
+    const reindexTenant = effectiveTenantForType(getRequestTenant(c), docType.settings)
+    const reindexDenied = await denyIfNotAllowed(c, db, '', 'manage', docType.settings, reindexTenant)
     if (reindexDenied) return reindexDenied
 
     const { DocumentProjection } = await import('../services/document-projection')
     const projection = new DocumentProjection(db)
-    const rebuilt = await projection.reindexType(typeId, getRequestTenant(c), docType.queryableFields)
+    const rebuilt = await projection.reindexType(typeId, reindexTenant, docType.queryableFields)
 
     return c.json({ rebuilt })
   } catch (error) {

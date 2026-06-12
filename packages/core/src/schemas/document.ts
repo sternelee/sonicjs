@@ -22,6 +22,12 @@ export interface DocumentTypeSettings {
   pii?: boolean
   /** Hide this type from the admin content list and all-view (e.g. internal system types like 'plugin'). */
   internal?: boolean
+  /**
+   * Shared/global type: its documents are NOT tenant-scoped — they live in one shared pool and are
+   * visible from every tenant. Opt-in (default false). When false, the type is tenant-isolated like
+   * everything else. See `effectiveTenantForType` (services/document-request-context.ts).
+   */
+  global?: boolean
 }
 
 export interface PluginDocumentType {

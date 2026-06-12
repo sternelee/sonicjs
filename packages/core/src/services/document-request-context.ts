@@ -30,6 +30,28 @@ export function getRequestTenant(c: Context): string {
   return (c.get('tenantId') as string | undefined) ?? 'default'
 }
 
+/**
+ * The single shared pool that every `settings.global` document type lives in. A distinct literal
+ * (not 'default') so global rows are cleanly separated from the default tenant's own content.
+ */
+export const GLOBAL_TENANT = '__global__'
+
+/**
+ * The CENTRAL decision for which tenant scope a typed document operation runs under.
+ *
+ * Tenant-isolated types (the default) run under the request tenant — unchanged behavior. A type that
+ * opts into `settings.global` instead runs under the single shared `GLOBAL_TENANT` pool, so its
+ * documents are written once and visible from every tenant. Defaulting to the request tenant is the
+ * safety property: a type is isolated unless it explicitly sets `global: true`, so existing types can
+ * never regress into a cross-tenant leak.
+ */
+export function effectiveTenantForType(
+  requestTenant: string,
+  typeSettings?: { global?: boolean },
+): string {
+  return typeSettings?.global ? GLOBAL_TENANT : requestTenant
+}
+
 export function getDocumentRequestContext(c: Context): DocumentRequestContext {
   const user = c.get('user') as { userId?: string; role?: string } | undefined
 
