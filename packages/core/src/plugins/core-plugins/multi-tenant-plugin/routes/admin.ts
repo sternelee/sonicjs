@@ -112,7 +112,9 @@ export function createTenantAdminRoutes(): Hono<{ Bindings: Bindings; Variables:
       maxAge: 60 * 60 * 24 * 365,
     })
 
-    const target = redirect.startsWith('/') && !redirect.startsWith('//') ? redirect : '/admin'
+    let target = redirect.startsWith('/') && !redirect.startsWith('//') ? redirect : '/admin'
+    // Detail/edit pages are tenant-specific; send back to the list instead.
+    if (/^\/admin\/content\/.+/.test(target)) target = '/admin/content'
     return c.redirect(target)
   })
 
@@ -180,6 +182,7 @@ export function createTenantAdminRoutes(): Hono<{ Bindings: Bindings; Variables:
       const form = await c.req.formData()
       const slug = String(form.get('slug') ?? '').trim().toLowerCase()
       const role = String(form.get('role') ?? 'viewer')
+      const redirectTo = String(form.get('_redirect') ?? '') || `/admin/tenants/users/${userId}`
       if (!isValidMemberRole(role)) throw new Error(`Invalid role '${role}'`)
       const target = await db.prepare('SELECT email FROM auth_user WHERE id = ?').bind(userId).first() as { email?: string } | null
       if (!target) throw new Error('User not found')
@@ -187,7 +190,7 @@ export function createTenantAdminRoutes(): Hono<{ Bindings: Bindings; Variables:
       if (!(await svc.getTenantBySlug(slug))) throw new Error('Tenant not found')
       if (await svc.isMember(userId, slug)) throw new Error(`Already a member of '${slug}'`)
       await svc.addMember(slug, userId, role, target.email ?? null)
-      return c.redirect(`/admin/tenants/users/${userId}?message=Added to ${encodeURIComponent(slug)}`)
+      return c.redirect(`${redirectTo}?message=Added to ${encodeURIComponent(slug)}`)
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to add membership'
       return c.redirect(`/admin/tenants/users/${userId}?message=${encodeURIComponent(message)}&type=error`)
@@ -200,9 +203,11 @@ export function createTenantAdminRoutes(): Hono<{ Bindings: Bindings; Variables:
     const slug = c.req.param('slug')
     if (!(await isMultiTenantActive(db))) return c.json({ error: 'Multi-tenant plugin is not active' }, 403)
     try {
-      const role = String((await c.req.formData()).get('role') ?? '')
+      const form = await c.req.formData()
+      const role = String(form.get('role') ?? '')
+      const redirectTo = String(form.get('_redirect') ?? '') || `/admin/tenants/users/${userId}`
       await new TenantService(db).setMemberRole(slug, userId, role)
-      return c.redirect(`/admin/tenants/users/${userId}?message=Role updated`)
+      return c.redirect(`${redirectTo}?message=Role updated`)
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to update role'
       return c.redirect(`/admin/tenants/users/${userId}?message=${encodeURIComponent(message)}&type=error`)
@@ -215,8 +220,10 @@ export function createTenantAdminRoutes(): Hono<{ Bindings: Bindings; Variables:
     const slug = c.req.param('slug')
     if (!(await isMultiTenantActive(db))) return c.json({ error: 'Multi-tenant plugin is not active' }, 403)
     try {
+      const form = await c.req.formData()
+      const redirectTo = String(form.get('_redirect') ?? '') || `/admin/tenants/users/${userId}`
       await new TenantService(db).removeMember(slug, userId)
-      return c.redirect(`/admin/tenants/users/${userId}?message=Removed from ${encodeURIComponent(slug)}`)
+      return c.redirect(`${redirectTo}?message=Removed from ${encodeURIComponent(slug)}`)
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to remove membership'
       return c.redirect(`/admin/tenants/users/${userId}?message=${encodeURIComponent(message)}&type=error`)
