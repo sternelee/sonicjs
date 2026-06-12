@@ -539,20 +539,28 @@ export function renderAdminLayoutCatalyst(
       var accordion = btn.closest('[data-plugins-accordion]');
       var submenu = accordion.querySelector('[data-plugins-submenu]');
       var chevron = btn.querySelector('[data-plugins-chevron]');
-      submenu.classList.toggle('hidden');
+      var isNowHidden = submenu.classList.toggle('hidden');
       if (chevron) chevron.classList.toggle('rotate-180');
+      document.cookie = 'plugins_menu_open=' + (isNowHidden ? '0' : '1') + ';path=/;max-age=31536000';
     }
 
-    // Auto-expand plugins submenu if a sub-item is currently active
+    // Restore plugins submenu state from cookie (active sub-item always wins open)
     document.addEventListener('DOMContentLoaded', function() {
+      var cookieOpen = document.cookie.split(';').reduce(function(v, p) {
+        var parts = p.trim().split('=');
+        return parts[0] === 'plugins_menu_open' ? parts[1] : v;
+      }, null);
       document.querySelectorAll('[data-plugins-submenu]').forEach(function(submenu) {
-        if (submenu.querySelector('[data-current="true"]')) {
+        var accordion = submenu.closest('[data-plugins-accordion]');
+        var chevron = accordion ? accordion.querySelector('[data-plugins-chevron]') : null;
+        var hasActive = !!submenu.querySelector('[data-current="true"]');
+        var shouldOpen = hasActive || cookieOpen !== '0';
+        if (shouldOpen) {
           submenu.classList.remove('hidden');
-          var accordion = submenu.closest('[data-plugins-accordion]');
-          if (accordion) {
-            var chevron = accordion.querySelector('[data-plugins-chevron]');
-            if (chevron) chevron.classList.add('rotate-180');
-          }
+          if (chevron) chevron.classList.add('rotate-180');
+        } else {
+          submenu.classList.add('hidden');
+          if (chevron) chevron.classList.remove('rotate-180');
         }
       });
     });
