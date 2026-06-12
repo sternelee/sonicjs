@@ -356,8 +356,8 @@ export type {
   NewLogConfig,
 } from './db'
 
-// Plugin SDK (Beta)
-export { PluginBuilder, PluginHelpers } from './plugins/sdk'
+// Plugin SDK (v4 — Payload-shaped)
+export { definePlugin, isDefinedPlugin } from './plugins/sdk'
 
 // OAuth Providers Plugin
 export { oauthProvidersPlugin, createOAuthProvidersPlugin } from './plugins/core-plugins/oauth-providers'
