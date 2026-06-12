@@ -11,6 +11,8 @@ export interface TenantMembersPageData {
   version?: string
   message?: string
   messageType?: 'success' | 'error' | 'warning'
+  /** When set alongside a warning: renders a "Try again" button to resend the invitation email. */
+  retryInvitationId?: string
 }
 
 function roleOptions(selected: string): string {
@@ -106,13 +108,22 @@ function renderInvitations(slug: string, invitations: TenantInvitation[]): strin
 
 export function renderTenantMembers(data: TenantMembersPageData): string {
   const alert = data.message
-    ? `<div data-members-alert class="mb-6 rounded-lg border px-4 py-3 text-sm ${
-        data.messageType === 'error'
+    ? (() => {
+        const colorClass = data.messageType === 'error'
           ? 'border-red-500/20 bg-red-500/10 text-red-700 dark:text-red-400'
           : data.messageType === 'warning'
           ? 'border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-400'
           : 'border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
-      }">${escapeHtml(data.message)}</div>`
+        const retryBtn = data.messageType === 'warning' && data.retryInvitationId
+          ? `<form method="POST" action="/admin/tenants/${escapeHtml(data.slug)}/invitations/${escapeHtml(data.retryInvitationId)}/resend" class="shrink-0">
+              <button type="submit" class="rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-400">Try again</button>
+            </form>`
+          : ''
+        return `<div data-members-alert class="mb-6 flex items-center justify-between gap-4 rounded-lg border px-4 py-3 text-sm ${colorClass}">
+          <span>${escapeHtml(data.message)}</span>
+          ${retryBtn}
+        </div>`
+      })()
     : ''
 
   const slug = escapeHtml(data.slug)

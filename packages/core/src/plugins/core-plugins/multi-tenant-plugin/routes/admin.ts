@@ -398,6 +398,7 @@ export function createTenantAdminRoutes(): Hono<{ Bindings: Bindings; Variables:
       slug, tenantName: tenant.name, members, invitations,
       user: userShape(user), version,
       message: c.req.query('message'), messageType,
+      retryInvitationId: c.req.query('retry_invitation'),
     }))
   })
 
@@ -490,9 +491,45 @@ export function createTenantAdminRoutes(): Hono<{ Bindings: Bindings; Variables:
         noteType = 'warning'
       }
       const typeParam = noteType ? `&type=${noteType}` : ''
-      return c.redirect(`/admin/tenants/${slug}/members?message=${encodeURIComponent(note)}${typeParam}`)
+      const retryParam = noteType === 'warning' && hasRealProvider ? `&retry_invitation=${encodeURIComponent(token)}` : ''
+      return c.redirect(`/admin/tenants/${slug}/members?message=${encodeURIComponent(note)}${typeParam}${retryParam}`)
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to create invitation'
+      return c.redirect(`/admin/tenants/${slug}/members?message=${encodeURIComponent(message)}&type=error`)
+    }
+  })
+
+  // ─── Invitations: resend email ────────────────────────────────────────────────
+  routes.post('/:slug/invitations/:id/resend', async (c) => {
+    const db = c.env.DB
+    const slug = c.req.param('slug')
+    const id = c.req.param('id')
+    if (!(await isMultiTenantActive(db))) return c.json({ error: 'Multi-tenant plugin is not active' }, 403)
+    try {
+      const inv = await db.prepare(
+        `SELECT i.id, i.email, i.role FROM auth_tenant_invitation i
+         JOIN auth_tenant t ON t.id = i.tenant_id
+         WHERE i.id = ? AND t.slug = ? AND i.status = 'pending'`
+      ).bind(id, slug).first() as { id: string; email: string; role: string } | null
+      if (!inv) throw new Error('Invitation not found or already used')
+
+      const svc2 = hasEmailService() ? getEmailService() : null
+      const hasRealProvider = !!svc2 && svc2.getProviderName() !== 'console'
+      if (!hasRealProvider) throw new Error('No email plugin active')
+
+      const origin = c.req.header('origin') || new URL(c.req.url).origin
+      const acceptUrl = `${origin}/admin/tenants/invitations/accept?token=${encodeURIComponent(inv.id)}`
+      const result = await svc2!.send({
+        to: inv.email,
+        subject: `You're invited to the ${slug} workspace`,
+        flow: 'tenant-invitation',
+        html: renderInviteEmail(acceptUrl, slug, inv.role),
+        text: `You've been invited to '${slug}' as ${inv.role}. Sign in with this email and accept: ${acceptUrl}`,
+      })
+      if (!result.ok) throw new Error(result.error ?? 'Send failed')
+      return c.redirect(`/admin/tenants/${slug}/members?message=Invitation email sent to ${encodeURIComponent(inv.email)}`)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to resend invitation'
       return c.redirect(`/admin/tenants/${slug}/members?message=${encodeURIComponent(message)}&type=error`)
     }
   })
