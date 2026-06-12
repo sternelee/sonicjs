@@ -236,14 +236,16 @@ export function createTenantAdminRoutes(): Hono<{ Bindings: Bindings; Variables:
     await svc.ensureDefaultTenant()
     const tenants = await svc.listTenants()
 
-    const { results } = await db.prepare(
-      'SELECT tenant_id, COUNT(*) as count FROM documents WHERE deleted_at IS NULL GROUP BY tenant_id'
-    ).all()
-    const counts = new Map((results ?? []).map((r: any) => [r.tenant_id, r.count as number]))
+    const [docRes, memberRes] = await db.batch([
+      db.prepare('SELECT tenant_id, COUNT(*) as count FROM documents WHERE deleted_at IS NULL GROUP BY tenant_id'),
+      db.prepare('SELECT t.slug, COUNT(m.id) as count FROM auth_tenant t LEFT JOIN auth_tenant_member m ON m.tenant_id = t.id GROUP BY t.id'),
+    ])
+    const counts = new Map((docRes?.results ?? []).map((r: any) => [r.tenant_id, r.count as number]))
+    const memberCounts = new Map((memberRes?.results ?? []).map((r: any) => [r.slug, r.count as number]))
 
     const messageType = c.req.query('type') === 'error' ? 'error' as const : 'success' as const
     return c.html(renderTenantsList({
-      tenants: tenants.map(t => ({ ...t, documentCount: counts.get(t.slug) ?? 0 })),
+      tenants: tenants.map(t => ({ ...t, documentCount: counts.get(t.slug) ?? 0, memberCount: memberCounts.get(t.slug) ?? 0 })),
       currentTenantId: c.get('tenantId') ?? 'default',
       user: userShape(user),
       version,
