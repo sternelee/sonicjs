@@ -12,7 +12,6 @@ export { mediaPlugin, createMediaPlugin } from './media'
 export { analyticsPlugin, createAnalyticsPlugin } from './analytics'
 export { demoLoginPlugin } from './demo-login'
 export { workflowPlugin, createWorkflowPlugin } from './workflow-plugin'
-export { seedDataPlugin, createSeedDataPlugin } from './seed-data-plugin'
 export { databaseToolsPlugin } from './database-tools-plugin'
 export { helloWorldPlugin, createHelloWorldPlugin } from './hello-world-plugin'
 export { quillEditorPlugin, createQuillEditorPlugin } from './quill-editor'
@@ -51,7 +50,6 @@ export const CORE_PLUGIN_IDS = [
   'core-analytics',
   'demo-login-plugin',
   'workflow-plugin',
-  'seed-data',
   'database-tools',
   'hello-world',
   'quill-editor',
