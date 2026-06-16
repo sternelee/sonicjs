@@ -38,7 +38,7 @@ import { oauthProvidersPlugin } from './plugins/core-plugins/oauth-providers'
 import { userProfilesPlugin } from './plugins/core-plugins/user-profiles'
 import { aiSearchPlugin } from './plugins/core-plugins/ai-search-plugin'
 import { securityAuditPlugin } from './plugins/core-plugins/security-audit-plugin'
-import { securityAuditMiddleware } from './plugins/core-plugins/security-audit-plugin'
+import { securityAuditMiddleware, securityAuditApiRoutes, securityAuditAdminRoutes } from './plugins/core-plugins/security-audit-plugin'
 import { stripePlugin } from './plugins/core-plugins/stripe-plugin'
 import { formsPlugin } from './plugins/core-plugins/forms-plugin'
 import { requireAuth, requireRole, requireRbac } from './middleware/auth'
@@ -542,6 +542,11 @@ export function createSonicJSApp(config: SonicJSConfig = {}): SonicJSApp {
       /* leave response as-is on any failure */
     }
   })
+
+  // Plugin-specific API routes that would otherwise be shadowed by the generic
+  // /api/:collection/:id catch-all must be mounted BEFORE app.route('/api', apiRoutes).
+  app.route('/api/security-audit', securityAuditApiRoutes as any)
+  app.route('/admin/plugins/security-audit', securityAuditAdminRoutes as any)
 
   // Core routes
   // Routes are being imported incrementally from routes/*
