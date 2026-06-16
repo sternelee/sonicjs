@@ -181,7 +181,6 @@ export {
   adminPluginRoutes,
   adminCheckboxRoutes,
   adminTestimonialsRoutes,
-  adminCodeExamplesRoutes,
   adminDashboardRoutes,
   adminCollectionsRoutes,
   adminSettingsRoutes,
