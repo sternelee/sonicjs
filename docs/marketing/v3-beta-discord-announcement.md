@@ -31,7 +31,7 @@ If you're starting a new project, v3 is the way to go right now.
 
 ---
 
-**Get started:** `npm create sonicjs@beta` *(link TBD)*
+**Get started:** `npm create sonicjs`
 **Docs:** sonicjs.com/docs
 **Feedback:** drop it in #v3-beta or open an issue on GitHub
 

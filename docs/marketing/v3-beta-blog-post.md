@@ -106,7 +106,7 @@ v3 is a beta. Here's what we're still working on before stable:
 ## Getting Started
 
 ```bash
-npm create sonicjs@beta my-app
+npm create sonicjs my-app
 cd my-app
 npm run setup:db
 npm run dev
