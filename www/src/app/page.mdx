@@ -480,7 +480,7 @@ Join thousands of developers building the future of web APIs
     <div className="border-l-4 border-purple-500 dark:border-purple-400 pl-4 py-1">
       <div className="flex items-center gap-2 mb-2">
         <span className="text-xs font-bold px-2 py-1 rounded bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300">v3.0.0-beta</span>
-        <span className="text-xs px-2 py-1 rounded bg-gradient-to-r from-orange-100 to-red-100 dark:from-orange-900/30 dark:to-red-900/30 border border-orange-300 dark:border-orange-700 text-orange-800 dark:text-orange-300 font-bold">LATEST</span>
+        
         <span className="text-sm text-gray-500 dark:text-gray-400">2026-06-15</span>
       </div>
       <div className="text-sm space-y-1">
@@ -518,20 +518,42 @@ Join thousands of developers building the future of web APIs
     {/* v2.19.0 */}
     <div className="border-l-4 border-emerald-500 dark:border-emerald-400 pl-4 py-1">
       <div className="flex items-center gap-2 mb-2">
-        <span className="text-xs font-bold px-2 py-1 rounded bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300">v2.19.0</span>
-        <span className="text-sm text-gray-500 dark:text-gray-400">2026-05-28</span>
+        <span className="text-xs font-bold px-2 py-1 rounded bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300">v3.0.0-beta.3</span>
+        <span className="text-xs px-2 py-1 rounded bg-gradient-to-r from-orange-100 to-red-100 dark:from-orange-900/30 dark:to-red-900/30 border border-orange-300 dark:border-orange-700 text-orange-800 dark:text-orange-300 font-bold">LATEST</span>
+        <span className="text-sm text-gray-500 dark:text-gray-400">2026-06-18</span>
       </div>
       <div className="text-sm space-y-1">
         <div className="flex items-start gap-2">
           <span className="text-emerald-600 dark:text-emerald-400 mt-0.5">✓</span>
+          <span className="text-gray-700 dark:text-gray-300">**fix**: Blog collection included by default — no prompt during `npx create-sonicjs`</span>
+        </div>
+        <div className="flex items-start gap-2">
+          <span className="text-emerald-600 dark:text-emerald-400 mt-0.5">✓</span>
+          <span className="text-gray-700 dark:text-gray-300">**fix**: Admin seed crash resolved — `Date.now()` → `new Date()` for Drizzle `timestamp_ms` columns (`value.getTime is not a function`)</span>
+        </div>
+        <div className="flex items-start gap-2">
+          <span className="text-emerald-600 dark:text-emerald-400 mt-0.5">✓</span>
+          <span className="text-gray-700 dark:text-gray-300">**fix**: Post-install output simplified — Cloudflare resource creation moved to optional "Deploy to Cloudflare" section; migration/seed steps only shown when they actually failed</span>
+        </div>
+      </div>
+    </div>
+
+    <div className="border-l-4 border-blue-500 dark:border-blue-400 pl-4 py-1">
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-xs font-bold px-2 py-1 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">v2.19.0</span>
+        <span className="text-sm text-gray-500 dark:text-gray-400">2026-05-28</span>
+      </div>
+      <div className="text-sm space-y-1">
+        <div className="flex items-start gap-2">
+          <span className="text-blue-600 dark:text-blue-400 mt-0.5">✓</span>
           <span className="text-gray-700 dark:text-gray-300"><strong>Admin code export modal for collections</strong> — Generate ready-to-use TypeScript collection config code directly from the admin UI</span>
         </div>
         <div className="flex items-start gap-2">
-          <span className="text-emerald-600 dark:text-emerald-400 mt-0.5">✓</span>
+          <span className="text-blue-600 dark:text-blue-400 mt-0.5">✓</span>
           <span className="text-gray-700 dark:text-gray-300"><strong>Array fields with media items no longer crash the form</strong> — Collections configured as <code>{`type: 'array'`}</code> with <code>{`items: { type: 'media' }`}</code> now load cleanly in the new-content form</span>
         </div>
         <div className="flex items-start gap-2">
-          <span className="text-emerald-600 dark:text-emerald-400 mt-0.5">✓</span>
+          <span className="text-blue-600 dark:text-blue-400 mt-0.5">✓</span>
           <span className="text-gray-700 dark:text-gray-300"><strong>AuthManager.verifyToken usable from custom Hono routes</strong>, SVG uploads no longer fail on D1, and the <code>create-sonicjs</code> starter uses the <code>MEDIA_BUCKET</code> binding name</span>
         </div>
       </div>
