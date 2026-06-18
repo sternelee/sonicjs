@@ -24,6 +24,7 @@ import {
   adminApiReferenceRoutes,
   apiDocumentsRoutes,
   adminDocumentsRoutes,
+  adminDashboardRoutes
 } from './routes'
 import { getCoreVersion } from './utils/version'
 import { bootstrapMiddleware } from './middleware/bootstrap'
@@ -553,11 +554,17 @@ export function createSonicJSApp(config: SonicJSConfig = {}): SonicJSApp {
   // Core routes
   // Routes are being imported incrementally from routes/*
   // Each route is tested and migrated one-by-one
-  app.route('/api', apiRoutes)
+  // Dedicated /api sub-routers MUST be registered before the bare `/api` router,
+  // whose `/:collection` wildcard otherwise shadows them (e.g. GET /api/documents
+  // matched `/:collection`='documents' → 404 "Collection not found").
+  // Plugin API routes that live under /api/* must also go here for the same reason.
   app.route('/api/media', apiMediaRoutes)
   app.route('/api/system', apiSystemRoutes)
   app.route('/api/documents', apiDocumentsRoutes)
+  app.route('/api', apiRoutes)
   app.route('/admin/documents', adminDocumentsRoutes)
+
+
   // Forms (admin builder, public rendering, API submission). Same as above —
   // routes[] was replaced with register(app) in the definePlugin port.
   registerPluginRoutes(app, [formsPlugin as any], { source: 'core' })
@@ -596,6 +603,7 @@ export function createSonicJSApp(config: SonicJSConfig = {}): SonicJSApp {
   // Public event tracking API — POST /api/events (open), GET /api/events (admin)
   app.route('/api/events', eventsApiRoutes)
 
+  app.route('/admin/dashboard', adminDashboardRoutes)
   app.route('/admin/plugins', adminPluginRoutes)
   app.route('/admin/logs', adminLogsRoutes)
   app.route('/admin/rbac', adminRbacRoutes)

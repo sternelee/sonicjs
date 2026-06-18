@@ -23,9 +23,10 @@ import './user-profile.model';
 // Import code-defined collections
 import { siteSettingsCollection } from '@sonicjs-cms/core';
 import blogPostsCollection from './collections/blog-posts.collection';
+import pageBlocksCollection from './collections/page-blocks.collection';
 
 // Register collections so they appear in admin UI
-registerCollections([siteSettingsCollection, blogPostsCollection]);
+registerCollections([siteSettingsCollection, blogPostsCollection, pageBlocksCollection]);
 
 const config: SonicJSConfig = {
   plugins: {
