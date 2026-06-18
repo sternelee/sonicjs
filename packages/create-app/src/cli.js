@@ -3,6 +3,7 @@
 import fs from 'fs-extra'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import { randomBytes } from 'crypto'
 import prompts from 'prompts'
 import kleur from 'kleur'
 import ora from 'ora'
@@ -50,7 +51,9 @@ const flags = {
   databaseName: args.find(arg => arg.startsWith('--database='))?.split('=')[1],
   bucketName: args.find(arg => arg.startsWith('--bucket='))?.split('=')[1],
   skipExample: args.includes('--skip-example'),
-  includeExample: args.includes('--include-example')
+  includeExample: args.includes('--include-example'),
+  adminEmail: args.find(arg => arg.startsWith('--admin-email='))?.split('=')[1],
+  adminPassword: args.find(arg => arg.startsWith('--admin-password='))?.split('=')[1],
 }
 
 async function main() {
@@ -171,39 +174,40 @@ async function getProjectDetails(initialName) {
     })
   }
 
-  // Seed admin user
-  questions.push({
-    type: 'confirm',
-    name: 'seedAdmin',
-    message: 'Create admin user?',
-    initial: true
-  })
+  // Seed admin user (skip prompt if credentials provided via flags)
+  if (!flags.adminEmail || !flags.adminPassword) {
+    questions.push({
+      type: 'confirm',
+      name: 'seedAdmin',
+      message: 'Create admin user?',
+      initial: true
+    })
 
-  // Admin email (only if seeding)
-  questions.push({
-    type: (prev, values) => values.seedAdmin ? 'text' : null,
-    name: 'adminEmail',
-    message: 'Admin email:',
-    validate: (value) => {
-      if (!value) return 'Admin email is required'
-      // Basic email validation
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-      if (!emailRegex.test(value)) return 'Please enter a valid email address'
-      return true
-    }
-  })
+    // Admin email (only if seeding)
+    questions.push({
+      type: (prev, values) => values.seedAdmin ? 'text' : null,
+      name: 'adminEmail',
+      message: 'Admin email:',
+      validate: (value) => {
+        if (!value) return 'Admin email is required'
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+        if (!emailRegex.test(value)) return 'Please enter a valid email address'
+        return true
+      }
+    })
 
-  // Admin password (only if seeding)
-  questions.push({
-    type: (prev, values) => values.seedAdmin ? 'password' : null,
-    name: 'adminPassword',
-    message: 'Admin password:',
-    validate: (value) => {
-      if (!value) return 'Admin password is required'
-      if (value.length < 8) return 'Password must be at least 8 characters'
-      return true
-    }
-  })
+    // Admin password (only if seeding)
+    questions.push({
+      type: (prev, values) => values.seedAdmin ? 'password' : null,
+      name: 'adminPassword',
+      message: 'Admin password:',
+      validate: (value) => {
+        if (!value) return 'Admin password is required'
+        if (value.length < 8) return 'Password must be at least 8 characters'
+        return true
+      }
+    })
+  }
 
   // Create Cloudflare resources
   if (!flags.skipCloudflare) {
@@ -236,9 +240,9 @@ async function getProjectDetails(initialName) {
     template: flags.template || 'starter', // Always default to starter template
     databaseName: flags.databaseName || answers.databaseName || `${initialName || answers.projectName}-db`,
     bucketName: flags.bucketName || answers.bucketName || `${initialName || answers.projectName}-media`,
-    seedAdmin: answers.seedAdmin !== undefined ? answers.seedAdmin : true,
-    adminEmail: answers.adminEmail,
-    adminPassword: answers.adminPassword,
+    seedAdmin: (flags.adminEmail && flags.adminPassword) ? true : (answers.seedAdmin !== undefined ? answers.seedAdmin : true),
+    adminEmail: flags.adminEmail || answers.adminEmail,
+    adminPassword: flags.adminPassword || answers.adminPassword,
     includeExample: true,
     createResources: flags.skipCloudflare ? false : answers.createResources,
     runMigrations: true, // Always run migrations automatically
@@ -444,100 +448,88 @@ async function copyTemplate(templateName, targetDir, options) {
       password: options.adminPassword
     })
   }
+
+  // Generate .dev.vars with a random BETTER_AUTH_SECRET for local dev
+  const devVarsPath = path.join(targetDir, '.dev.vars')
+  if (!fs.existsSync(devVarsPath)) {
+    const secret = randomBytes(32).toString('hex')
+    await fs.writeFile(devVarsPath, `BETTER_AUTH_SECRET="${secret}"\n`)
+  }
 }
 
 async function createAdminSeedScript(targetDir, { email, password }) {
-  const seedScriptContent = `import { createDb, users } from '@sonicjs-cms/core'
-import { eq } from 'drizzle-orm'
-import * as crypto from 'crypto'
+  const seedScriptContent = `import { bootstrapDocumentTypes, RbacService } from '@sonicjs-cms/core'
 import { getPlatformProxy } from 'wrangler'
 
 /**
  * Seed script to create initial admin user
- *
- * Run this script after migrations:
- * npm run db:migrate:local
- * npm run seed
  *
  * Admin credentials:
  * Email: ${email}
  * Password: [as entered during setup]
  */
 
+async function hashPassword(password) {
+  const iterations = 100000
+  const salt = new Uint8Array(16)
+  crypto.getRandomValues(salt)
+  const encoder = new TextEncoder()
+  const keyMaterial = await crypto.subtle.importKey('raw', encoder.encode(password), 'PBKDF2', false, ['deriveBits'])
+  const hashBuffer = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt, iterations, hash: 'SHA-256' }, keyMaterial, 256)
+  const saltHex = Array.from(salt).map(b => b.toString(16).padStart(2, '0')).join('')
+  const hashHex = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('')
+  return \`pbkdf2:\${iterations}:\${saltHex}:\${hashHex}\`
+}
+
 async function seed() {
-  // Get D1 database from Cloudflare environment using wrangler's getPlatformProxy
   const { env, dispose } = await getPlatformProxy()
 
   if (!env?.DB) {
-    console.error('❌ Error: DB binding not found')
-    console.error('')
-    console.error('Make sure you have:')
-    console.error('1. Created your D1 database: wrangler d1 create <database-name>')
-    console.error('2. Updated wrangler.toml with the database_id')
-    console.error('3. Run migrations: npm run db:migrate:local')
-    console.error('')
+    console.error('❌ Error: DB binding not found. Run migrations first: npm run db:migrate:local')
     process.exit(1)
   }
 
-  const db = createDb(env.DB)
-
   try {
     // Check if admin user already exists
-    const existingUser = await db
-      .select()
-      .from(users)
-      .where(eq(users.email, '${email}'))
-      .get()
-
-    if (existingUser) {
+    const existing = await env.DB.prepare('SELECT id FROM auth_user WHERE email = ?').bind('${email}').first()
+    if (existing) {
       console.log('✓ Admin user already exists')
-      console.log(\`  Email: ${email}\`)
-      console.log(\`  Role: \${existingUser.role}\`)
+      await dispose()
       return
     }
 
-    // Hash password using SHA-256 (same as SonicJS auth system)
-    const data = '${password}' + 'salt-change-in-production'
-    const passwordHash = crypto.createHash('sha256').update(data).digest('hex')
-    const now = new Date()
-    const odid = \`admin-\${now.getTime()}-\${Math.random().toString(36).substr(2, 9)}\`
+    const passwordHash = await hashPassword('${password}')
+    const nowMs = Date.now()
+    const odid = \`admin-\${nowMs}-\${Math.random().toString(36).substr(2, 9)}\`
 
-    // Create admin user
-    await db
-      .insert(users)
-      .values({
-        id: odid,
-        email: '${email}',
-        username: '${email.split('@')[0]}',
-        firstName: 'Admin',
-        lastName: 'User',
-        passwordHash: passwordHash,
-        role: 'admin',
-        isActive: true,
-        createdAt: now,
-        updatedAt: now
-      })
-      .run()
+    await env.DB.batch([
+      env.DB.prepare(
+        'INSERT INTO auth_user (id, email, first_name, last_name, role, is_active, created_at, updated_at, name) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+      ).bind(odid, '${email}', 'Admin', 'User', 'admin', 1, nowMs, nowMs, 'Admin User'),
+      env.DB.prepare(
+        'INSERT INTO auth_account (id, user_id, account_id, provider_id, password, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
+      ).bind(crypto.randomUUID(), odid, odid, 'credential', passwordHash, nowMs, nowMs),
+    ])
+
+    await bootstrapDocumentTypes(env.DB)
+    const rbac = new RbacService(env.DB)
+    await rbac.ensureSystemRbacSeed()
+    await rbac.addUserRoleByName(odid, 'admin')
 
     console.log('✓ Admin user created successfully')
     console.log(\`  Email: ${email}\`)
     console.log(\`  Role: admin\`)
-    console.log('')
-    console.log('You can now login at: http://localhost:8787/auth/login')
   } catch (error) {
     console.error('❌ Error creating admin user:', error)
     await dispose()
     process.exit(1)
   }
 
-  // Clean up the platform proxy
   await dispose()
 }
 
-// Run seed
 seed()
   .then(() => {
-    console.log('')
     console.log('✓ Seeding complete')
     process.exit(0)
   })
@@ -796,15 +788,9 @@ function printSuccessMessage(answers) {
   console.log(kleur.bold('Visit:'))
   console.log(kleur.cyan('  http://localhost:8787/admin'))
 
-  if (!createResources || !resourcesCreated) {
-    console.log()
-    console.log(kleur.bold('Deploy to Cloudflare (when ready):'))
-    if (!databaseIdSet) {
-      console.log(kleur.cyan(`  wrangler d1 create ${answers.databaseName}`))
-      console.log(kleur.dim('  # Copy database_id to wrangler.toml'))
-    }
-    console.log(kleur.cyan(`  wrangler r2 bucket create ${answers.bucketName}`))
-  }
+  console.log()
+  console.log(kleur.bold('Deploy to Cloudflare (when ready):'))
+  console.log(kleur.cyan('  npm run deploy'))
 
   console.log()
   console.log(kleur.dim('Need help? Visit https://sonicjs.com'))
