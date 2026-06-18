@@ -1,6 +1,6 @@
 {
   "name": "sonicjs",
-  "version": "2.19.0",
+  "version": "3.0.0-beta.2",
   "private": true,
   "type": "module",
   "workspaces": [
@@ -46,7 +46,7 @@
     "social:post": "node scripts/social/post-both.js",
     "social:promote-blog": "node scripts/social/promote-blog.js",
     "db:reset": "npm run setup:db --workspace=my-sonicjs-app",
-    "workspace": "npm install && npm run db:reset",
+    "reset": "npm install && npm run db:reset",
     "kill": "pkill workerd && npm run dev --workspace=my-sonicjs-app"
   },
   "dependencies": {
@@ -54,7 +54,7 @@
     "@hono/zod-openapi": "^0.19.8",
     "@hono/zod-validator": "^0.7.0",
     "@libsql/client": "^0.15.9",
-    "@sonicjs-cms/core": "^2.0.1",
+    "@sonicjs-cms/core": "^3.0.0-beta.0",
     "clsx": "^2.1.1",
     "drizzle-kit": "^0.31.2",
     "drizzle-orm": "^0.45.2",

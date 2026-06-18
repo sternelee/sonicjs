@@ -5,10 +5,11 @@ import { PLUGIN_REGISTRY } from '../plugins/manifest-registry'
 // Build menu plugin data from the auto-generated registry.
 // Any plugin with an adminMenu entry in its manifest.json will
 // automatically appear in the sidebar when active.
+// `id` matches the `slug` column in the documents table (how plugins are stored).
 const REGISTRY_MENU_PLUGINS = Object.values(PLUGIN_REGISTRY)
   .filter(p => p.adminMenu !== null)
   .map(p => ({
-    codeName: p.codeName,
+    id: p.id,
     label: p.adminMenu!.label,
     path: p.adminMenu!.path,
     icon: p.adminMenu!.icon,
@@ -27,6 +28,10 @@ const ICON_SVG: Record<string, string> = {
   'arrow-right': '<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>',
   'shield-check': '<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>',
   'credit-card': '<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z"/></svg>',
+  'document-text': '<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z"/></svg>',
+  'pencil-square': '<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"/></svg>',
+  'server': '<svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm14 1a1 1 0 11-2 0 1 1 0 012 0zM2 13a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2v-2zm14 1a1 1 0 11-2 0 1 1 0 012 0z" clip-rule="evenodd"/></svg>',
+  'building-office': '<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21"/></svg>',
 }
 
 function resolveIcon(iconName?: string): string {
@@ -48,10 +53,10 @@ function renderMenuItem(item: { label: string; path: string; icon?: string }, cu
       ${isActive ? '<span class="absolute inset-y-2 -left-4 w-0.5 rounded-full bg-cyan-500 dark:bg-cyan-400"></span>' : ''}
       <a
         href="${item.path}"
-        class="flex w-full items-center gap-3 rounded-lg px-2 py-2.5 text-left text-sm/5 font-medium ${
+        class="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left text-sm/5 font-medium ${
           isActive
             ? 'text-zinc-950 dark:text-white'
-            : 'text-zinc-950 hover:bg-zinc-950/5 dark:text-white dark:hover:bg-white/5'
+            : 'text-zinc-600 hover:bg-zinc-950/5 dark:text-zinc-400 dark:hover:bg-white/5'
         }"
         ${isActive ? 'data-current="true"' : ''}
       >
@@ -74,17 +79,17 @@ export function pluginMenuMiddleware() {
     let activeMenuItems: Array<{ label: string; path: string; icon?: string; order: number }> = []
     try {
       const db = c.env.DB
-      const pluginCodeNames = REGISTRY_MENU_PLUGINS.map(p => p.codeName)
-      if (pluginCodeNames.length > 0) {
-        const placeholders = pluginCodeNames.map(() => '?').join(',')
+      const pluginIds = REGISTRY_MENU_PLUGINS.map(p => p.id)
+      if (pluginIds.length > 0) {
+        const placeholders = pluginIds.map(() => '?').join(',')
         const result = await db.prepare(
-          `SELECT name FROM plugins WHERE name IN (${placeholders}) AND status = 'active'`
-        ).bind(...pluginCodeNames).all()
+          `SELECT slug FROM documents WHERE type_id = 'plugin' AND tenant_id = 'default' AND slug IN (${placeholders}) AND q_plugin_status = 'active' AND is_current_draft = 1 AND deleted_at IS NULL`
+        ).bind(...pluginIds).all()
 
-        const activeNames = new Set((result.results || []).map((r: any) => r.name))
+        const activeIds = new Set((result.results || []).map((r: any) => r.slug))
 
         for (const plugin of REGISTRY_MENU_PLUGINS) {
-          if (activeNames.has(plugin.codeName)) {
+          if (activeIds.has(plugin.id)) {
             activeMenuItems.push({
               label: plugin.label,
               path: plugin.path,

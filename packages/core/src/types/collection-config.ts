@@ -14,6 +14,7 @@ export type FieldType =
   | 'email'
   | 'url'
   | 'richtext'
+  | 'lexical'
   | 'markdown'
   | 'mdxeditor'
   | 'easymde'
@@ -35,6 +36,7 @@ export type FieldType =
   | 'tinymce'
   | 'quill'
   | 'easymde'
+  | 'user'
 
 export interface BlockDefinition {
   label?: string
@@ -94,7 +96,7 @@ export interface CollectionSchema {
 export interface CollectionConfig {
   /**
    * Unique machine name for the collection (lowercase, underscores)
-   * e.g., 'blog_posts', 'products', 'team_members'
+   * e.g., 'blog_post', 'products', 'team_members'
    */
   name: string
 
@@ -119,6 +121,12 @@ export interface CollectionConfig {
    * Default: true for config-based collections
    */
   managed?: boolean
+
+  /**
+   * If true, this is an internal system collection hidden by default in the admin UI
+   * Default: false
+   */
+  internal?: boolean
 
   /**
    * If true, the collection is active and available for use
@@ -160,6 +168,32 @@ export interface CollectionConfig {
    * Optional metadata
    */
   metadata?: Record<string, any>
+
+  /**
+   * Optional URL-safe slug for the API base route.
+   * Defaults to the collection name if not set.
+   * e.g., slug: 'blog-posts' → GET /api/blog-posts
+   */
+  slug?: string
+
+  /**
+   * Opt this collection into version history. Default false.
+   * When true: each saveDraft creates a new version row; the versioning-plugin
+   * surfaces history/restore UI on the edit form.
+   * When false: saveDraft updates the single draft row in place (no history).
+   */
+  versioning?: boolean
+
+  /**
+   * Optional per-collection cache config.
+   * Overrides the cache plugin's default TTL for this collection's API responses.
+   * `enabled: false` disables caching for the collection entirely.
+   * `ttl` is in seconds.
+   */
+  cache?: {
+    enabled?: boolean
+    ttl?: number
+  }
 }
 
 export interface CollectionConfigModule {

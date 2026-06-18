@@ -14,8 +14,7 @@
 
 import { Hono } from 'hono'
 import { setCookie, getCookie } from 'hono/cookie'
-import { PluginBuilder } from '../../sdk/plugin-builder'
-import type { Plugin } from '../../types'
+import { definePlugin } from '../../sdk/define-plugin'
 import {
   OAuthService,
   BUILT_IN_PROVIDERS,
@@ -28,22 +27,7 @@ import { getJwtExpirySecondsFromDb } from '../../../middleware/auth'
 const STATE_COOKIE_NAME = 'oauth_state'
 const STATE_COOKIE_MAX_AGE = 600 // 10 minutes
 
-export function createOAuthProvidersPlugin(): Plugin {
-  const builder = PluginBuilder.create({
-    name: 'oauth-providers',
-    version: '1.0.0-beta.1',
-    description: 'OAuth2/OIDC social login with GitHub, Google, and more'
-  })
-
-  builder.metadata({
-    author: {
-      name: 'SonicJS Team',
-      email: 'team@sonicjs.com'
-    },
-    license: 'MIT',
-    compatibility: '^2.0.0'
-  })
-
+function buildOauthApi(): Hono {
   // ==================== Helper Functions ====================
 
   function getCallbackUrl(c: any, provider: string): string {
@@ -211,7 +195,7 @@ export function createOAuthProvidersPlugin(): Plugin {
 
         // Fetch user to generate JWT
         const user = await db.prepare(
-          'SELECT id, email, role, is_active FROM users WHERE id = ?'
+          'SELECT id, email, role, is_active FROM auth_user WHERE id = ?'
         ).bind(existingOAuth.user_id).first() as any
 
         if (!user || !user.is_active) {
@@ -394,31 +378,29 @@ export function createOAuthProvidersPlugin(): Plugin {
     }
   })
 
-  // Register routes
-  builder.addRoute('/auth/oauth', oauthAPI, {
-    description: 'OAuth2 social login endpoints',
-    requiresAuth: false,
-    priority: 100
-  })
-
-  // Add menu item for admin settings
-  builder.addMenuItem('OAuth Providers', '/admin/plugins/oauth-providers', {
-    icon: 'shield',
-    order: 86,
-    permissions: ['oauth:manage']
-  })
-
-  // Lifecycle hooks
-  builder.lifecycle({
-    activate: async () => {
-      console.info('✅ OAuth Providers plugin activated')
-    },
-    deactivate: async () => {
-      console.info('❌ OAuth Providers plugin deactivated')
-    }
-  })
-
-  return builder.build() as Plugin
+  return oauthAPI
 }
 
-export const oauthProvidersPlugin = createOAuthProvidersPlugin()
+export const oauthProvidersPlugin = definePlugin({
+  id: 'oauth-providers',
+  version: '1.0.0',
+  name: 'OAuth Providers',
+  description: 'OAuth2/OIDC social login with GitHub, Google, and more.',
+  sonicjsVersionRange: '^3.0.0',
+  author: { name: 'SonicJS Team', email: 'team@sonicjs.com' },
+
+  register(app) {
+    app.route('/auth/oauth', buildOauthApi())
+  },
+
+  menu: [
+    { label: 'OAuth Providers', path: '/admin/plugins/oauth-providers', icon: 'lock', order: 86, permissions: ['oauth:manage'] },
+  ],
+
+  activate: async () => console.info('✅ OAuth Providers plugin activated'),
+  deactivate: async () => console.info('❌ OAuth Providers plugin deactivated'),
+})
+
+export function createOAuthProvidersPlugin() {
+  return oauthProvidersPlugin
+}

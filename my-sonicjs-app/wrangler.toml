@@ -13,8 +13,8 @@ workers_dev = true
 # Note: database_name and database_id are automatically updated by GitHub Actions
 [[d1_databases]]
 binding = "DB"
-database_name = "sonicjs-worktree-main"
-database_id = "b14707c3-a1c5-4565-8ffc-4f22f930d289"
+database_name = "sonicjs-worktree-lane711-cache-plugin-document-model"
+database_id = "d2d7477e-6278-419b-bd12-962e2d0a050c"
 migrations_dir = "./migrations"
 
 # R2 Bucket for media storage (using CI bucket)
@@ -27,10 +27,16 @@ bucket_name = "sonicjs-ci-media"
 binding = "CACHE_KV"
 id = "a16f8246fc294d809c90b0fb2df6d363"
 
+# Cloudflare Email Service binding (send_email)
+# remote = true requires valid Cloudflare auth; omit for local dev
+[[send_email]]
+name = "EMAIL"
+
 # Environment variables
 [vars]
 ENVIRONMENT = "development"
 CORS_ORIGINS = "http://localhost:8787"
+DEFAULT_FROM_EMAIL = "lane@sonicjs.com"
 
 # Observability
 [observability]

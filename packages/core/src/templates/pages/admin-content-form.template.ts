@@ -1,6 +1,7 @@
 import { getMDXEditorInitScript, getMDXEditorScripts } from '../../plugins/available/easy-mdx'
 import { getTinyMCEInitScript, getTinyMCEScript } from '../../plugins/available/tinymce-plugin'
 import { getQuillCDN, getQuillInitScript } from '../../plugins/core-plugins/quill-editor'
+import { getLexicalImportMap, getLexicalLoaderScript, getLexicalInitScript, getLexicalStyles } from '../../plugins/core-plugins/lexical-editor'
 import { renderAlert } from '../alert.template'
 import { FieldDefinition, renderDynamicField, renderFieldGroup } from '../components/dynamic-field.template'
 import { getConfirmationDialogScript, renderConfirmationDialog } from '../confirmation-dialog.template'
@@ -56,6 +57,13 @@ export interface ContentFormData {
     toolbar?: string
     placeholder?: string
   }
+  lexicalEnabled?: boolean // Flag to indicate if Lexical Editor plugin is active (default richtext editor)
+  lexicalSettings?: {
+    defaultHeight?: number
+    defaultToolbar?: 'full' | 'standard' | 'minimal'
+    placeholder?: string
+  }
+  versioningEnabled?: boolean // Flag to indicate if versioning is enabled for this document type
   referrerParams?: string // URL parameters to preserve filters when returning to list
   user?: {
     name: string
@@ -65,7 +73,7 @@ export interface ContentFormData {
   version?: string
 }
 
-export function renderContentFormPage(data: ContentFormData): string {
+export function renderContentFormPage(data: ContentFormData, opts?: { partialOnly?: boolean }): string {
   const isEdit = data.isEdit || !!data.id
   const title = isEdit ? `Edit: ${data.title || 'Content'}` : `New ${data.collection.display_name}`
   const hasValidationErrors = Boolean(data.validationErrors && Object.keys(data.validationErrors).length > 0)
@@ -91,7 +99,8 @@ export function renderContentFormPage(data: ContentFormData): string {
   const pluginStatuses = {
     quillEnabled: data.quillEnabled || false,
     mdxeditorEnabled: data.mdxeditorEnabled || false,
-    tinymceEnabled: data.tinymceEnabled || false
+    tinymceEnabled: data.tinymceEnabled || false,
+    lexicalEnabled: data.lexicalEnabled || false,
   }
 
   // Render field groups
@@ -126,7 +135,7 @@ export function renderContentFormPage(data: ContentFormData): string {
     }))
 
   const pageContent = `
-    <div class="space-y-6">
+    <div id="content-form-page" class="space-y-6">
       <!-- Header -->
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -183,17 +192,15 @@ export function renderContentFormPage(data: ContentFormData): string {
             <input type="hidden" name="collection_id" value="${data.collection.id}">
             ${isEdit ? `<input type="hidden" name="id" value="${data.id}">` : ''}
             ${data.referrerParams ? `<input type="hidden" name="referrer_params" value="${data.referrerParams}">` : ''}
-            
+
             <!-- Core Fields -->
             ${renderFieldGroup('Basic Information', coreFieldsHTML)}
-            
+
             <!-- Content Fields -->
             ${contentFields.length > 0 ? renderFieldGroup('Content Details', contentFieldsHTML) : ''}
-            
+
             <!-- SEO & Meta Fields -->
             ${metaFields.length > 0 ? renderFieldGroup('SEO & Metadata', metaFieldsHTML, true) : ''}
-            
-            <div id="form-messages"></div>
           </form>
         </div>
 
@@ -299,7 +306,7 @@ export function renderContentFormPage(data: ContentFormData): string {
                 ` : ''}
               </dl>
 
-              <div class="mt-4 pt-4 border-t border-zinc-950/5 dark:border-white/10">
+              ${data.versioningEnabled ? `<div class="mt-4 pt-4 border-t border-zinc-950/5 dark:border-white/10">
                 <button
                   type="button"
                   onclick="showVersionHistory('${data.id}')"
@@ -310,7 +317,7 @@ export function renderContentFormPage(data: ContentFormData): string {
                   </svg>
                   View Version History
                 </button>
-              </div>
+              </div>` : ''}
             </div>
           ` : ''}
 
@@ -368,18 +375,20 @@ export function renderContentFormPage(data: ContentFormData): string {
           </a>
 
           <div class="flex items-center gap-x-3">
-            <button
-              type="submit"
-              form="content-form"
-              name="action"
-              value="save"
-              class="inline-flex items-center justify-center gap-x-1.5 rounded-lg bg-zinc-950 dark:bg-white px-3.5 py-2.5 text-sm font-semibold text-white dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-colors shadow-sm"
-            >
-              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
-              </svg>
-              ${isEdit ? 'Update' : 'Save'}
-            </button>
+            ${data.versioningEnabled ? `
+              <button
+                type="submit"
+                form="content-form"
+                name="action"
+                value="save"
+                class="inline-flex items-center justify-center gap-x-1.5 rounded-lg bg-zinc-950 dark:bg-white px-3.5 py-2.5 text-sm font-semibold text-white dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-colors shadow-sm"
+              >
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                </svg>
+                ${isEdit ? 'Update' : 'Save'}
+              </button>
+            ` : ''}
 
             ${data.user?.role !== 'viewer' ? `
               <button
@@ -387,12 +396,12 @@ export function renderContentFormPage(data: ContentFormData): string {
                 form="content-form"
                 name="action"
                 value="save_and_publish"
-                class="inline-flex items-center justify-center gap-x-1.5 rounded-lg bg-lime-600 dark:bg-lime-500 px-3.5 py-2.5 text-sm font-semibold text-white hover:bg-lime-700 dark:hover:bg-lime-600 transition-colors shadow-sm"
+                class="inline-flex items-center justify-center gap-x-1.5 rounded-lg ${data.versioningEnabled ? 'bg-lime-600 dark:bg-lime-500 hover:bg-lime-700 dark:hover:bg-lime-600' : 'bg-zinc-950 dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-100 text-white dark:text-zinc-950'} px-3.5 py-2.5 text-sm font-semibold text-white transition-colors shadow-sm"
               >
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
-                ${isEdit ? 'Update' : 'Save'} & Publish
+                ${data.versioningEnabled ? `${isEdit ? 'Update' : 'Save'} & Publish` : (isEdit ? 'Update' : 'Save')}
               </button>
             ` : ''}
           </div>
@@ -447,6 +456,14 @@ export function renderContentFormPage(data: ContentFormData): string {
     })}
 
     ${getConfirmationDialogScript()}
+
+    ${data.lexicalEnabled ? getLexicalStyles() : '<!-- Lexical plugin not active -->'}
+
+    ${data.lexicalEnabled ? getLexicalImportMap() : ''}
+
+    ${data.lexicalEnabled ? getLexicalLoaderScript() : ''}
+
+    ${data.lexicalEnabled ? getLexicalInitScript({ defaultHeight: data.lexicalSettings?.defaultHeight, defaultToolbar: data.lexicalSettings?.defaultToolbar }) : ''}
 
     ${data.tinymceEnabled ? getTinyMCEScript(data.tinymceSettings?.apiKey) : '<!-- TinyMCE plugin not active -->'}
 
@@ -1452,7 +1469,7 @@ export function renderContentFormPage(data: ContentFormData): string {
         document.body.appendChild(modal);
 
         // Load version history
-        fetch(\`/admin/content/\${contentId}/versions\`)
+        fetch(\`/admin/versioning/\${contentId}\`)
         .then(response => response.text())
         .then(html => {
           const container = document.getElementById('version-history-content');
@@ -1513,6 +1530,10 @@ export function renderContentFormPage(data: ContentFormData): string {
   }) : ''}
     </script>
   `
+
+  if (opts?.partialOnly) {
+    return pageContent
+  }
 
   const layoutData: AdminLayoutCatalystData = {
     title: title,

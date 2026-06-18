@@ -1,4 +1,5 @@
 import { getDragSortableScript } from './drag-sortable.template'
+import { renderLexicalField } from '../../plugins/core-plugins/lexical-editor'
 
 /**
  * Returns shared readFieldValue function used by both blocks and structured fields.
@@ -183,6 +184,7 @@ export interface FieldRenderOptions {
     quillEnabled?: boolean
     mdxeditorEnabled?: boolean
     tinymceEnabled?: boolean
+    lexicalEnabled?: boolean
   }
   collectionId?: string
   contentId?: string
@@ -228,13 +230,20 @@ export function renderDynamicField(field: FieldDefinition, options: FieldRenderO
   let fallbackToTextarea = false
   let fallbackWarning = ''
 
-  if (field.field_type === 'quill' && !pluginStatuses.quillEnabled) {
+  if (field.field_type === 'lexical' && !pluginStatuses.lexicalEnabled) {
+    fallbackToTextarea = true
+    fallbackWarning = '⚠️ Lexical Editor plugin is inactive. Using textarea fallback.'
+  } else if (field.field_type === 'quill' && !pluginStatuses.quillEnabled) {
     fallbackToTextarea = true
     fallbackWarning = '⚠️ Quill Editor plugin is inactive. Using textarea fallback.'
   } else if (isMarkdownEditorFieldType(field.field_type) && !pluginStatuses.mdxeditorEnabled) {
     fallbackToTextarea = true
     fallbackWarning = '⚠️ Markdown editor plugin is inactive. Using textarea fallback.'
-  } else if ((field.field_type === 'richtext' || field.field_type === 'tinymce') && !pluginStatuses.tinymceEnabled) {
+  } else if (field.field_type === 'richtext' && !pluginStatuses.lexicalEnabled && !pluginStatuses.tinymceEnabled) {
+    // richtext with no active editor plugin → textarea
+    fallbackToTextarea = true
+    fallbackWarning = '⚠️ No rich text editor plugin is active. Using textarea fallback.'
+  } else if (field.field_type === 'tinymce' && !pluginStatuses.tinymceEnabled) {
     fallbackToTextarea = true
     fallbackWarning = '⚠️ TinyMCE plugin is inactive. Using textarea fallback.'
   }
@@ -372,7 +381,38 @@ export function renderDynamicField(field: FieldDefinition, options: FieldRenderO
       `
       break
 
+    case 'lexical':
+      fieldHTML = renderLexicalField(fieldId, fieldName, value, {
+        toolbar: opts.toolbar || 'standard',
+        placeholder: opts.placeholder || 'Enter content...',
+        height: opts.height || 300,
+      })
+      break
+
     case 'richtext':
+      // Lexical is the default richtext editor; fall back to TinyMCE if only that is active.
+      if (pluginStatuses.lexicalEnabled) {
+        fieldHTML = renderLexicalField(fieldId, fieldName, value, {
+          toolbar: opts.toolbar || 'standard',
+          placeholder: opts.placeholder || 'Enter content...',
+          height: opts.height || 300,
+        })
+      } else {
+        const editorMetadata = getEditorMetadata(field.field_type)
+        fieldHTML = `
+          <div class="richtext-container" data-height="${opts.height || 300}" data-toolbar="${opts.toolbar || 'full'}" data-editor-family="${editorMetadata?.family || ''}" data-editor-provider="${editorMetadata?.provider || ''}">
+            <textarea
+              id="${fieldId}"
+              name="${fieldName}"
+              class="${baseClasses} ${errorClasses} min-h-[${opts.height || 300}px]"
+              ${required}
+              ${disabled ? 'disabled' : ''}
+            >${escapeHtml(value)}</textarea>
+          </div>
+        `
+      }
+      break
+
     case 'tinymce':
       {
       const editorMetadata = getEditorMetadata(field.field_type)
@@ -484,7 +524,7 @@ export function renderDynamicField(field: FieldDefinition, options: FieldRenderO
           value="${value}"
           min="${opts.min || ''}"
           max="${opts.max || ''}"
-          class="${baseClasses} ${errorClasses}"
+          class="${baseClasses} ${errorClasses} !w-auto dark:[color-scheme:dark]"
           ${required}
           ${disabled ? 'disabled' : ''}
         >
@@ -500,7 +540,7 @@ export function renderDynamicField(field: FieldDefinition, options: FieldRenderO
           value="${value}"
           min="${opts.min || ''}"
           max="${opts.max || ''}"
-          class="${baseClasses} ${errorClasses}"
+          class="${baseClasses} ${errorClasses} !w-auto dark:[color-scheme:dark]"
           ${required}
           ${disabled ? 'disabled' : ''}
         >
@@ -593,8 +633,12 @@ export function renderDynamicField(field: FieldDefinition, options: FieldRenderO
                 
                 const response = await fetch(url);
                 const data = await response.json();
-                
-                if (data.available) {
+
+                if (!response.ok || data.error) {
+                  // Server error (e.g. collection not found) — don't block the form
+                  statusDiv.innerHTML = '<span class="text-yellow-500 dark:text-yellow-400">⚠ Could not verify</span>';
+                  slugField.setCustomValidity('');
+                } else if (data.available) {
                   statusDiv.innerHTML = '<span class="text-green-500 dark:text-green-400">✓ Available</span>';
                   slugField.setCustomValidity('');
                 } else {
@@ -931,6 +975,90 @@ export function renderDynamicField(field: FieldDefinition, options: FieldRenderO
       }
       // Regular structured array field
       return renderStructuredArrayField(field, options, baseClasses, errorClasses)
+
+    case 'user': {
+      const idValue = typeof value === 'string' ? value : (value?.id || value || '')
+      // If value is object with name use it; if just an ID string, show ID now and replace on load
+      const displayValue = typeof value === 'object' && value?.name ? value.name : (typeof value === 'string' ? value : '')
+      fieldHTML = `
+        <div class="user-search-field-container" style="position:relative;">
+          <input
+            type="text"
+            id="${fieldId}-display"
+            name="q"
+            class="${baseClasses} ${errorClasses}"
+            placeholder="${opts.placeholder || 'Search by name...'}"
+            autocomplete="off"
+            value="${escapeHtml(displayValue)}"
+            hx-get="/admin/api/users/search-html?fieldId=${fieldId}"
+            hx-trigger="keyup delay:300ms"
+            hx-target="#${fieldId}-dropdown"
+            hx-swap="innerHTML"
+            hx-include="this"
+            ${disabled ? 'disabled' : ''}
+          >
+          <input
+            type="hidden"
+            id="${fieldId}"
+            name="${fieldName}"
+            value="${escapeHtml(idValue)}"
+            ${required}
+          >
+          <div
+            id="${fieldId}-dropdown"
+            class="user-search-dropdown"
+            style="position:absolute;z-index:50;top:100%;left:0;right:0;background:#27272a;border-radius:0.5rem;box-shadow:0 4px 12px rgba(0,0,0,0.4);max-height:200px;overflow-y:auto;"
+          ></div>
+        </div>
+        <script>
+          if (typeof sonicSelectUser === 'undefined') {
+            window.sonicSelectUser = function(fieldId, userId, userName) {
+              var d = document.getElementById(fieldId + '-display');
+              var h = document.getElementById(fieldId);
+              var dd = document.getElementById(fieldId + '-dropdown');
+              if (d) { d.value = userName; d.dataset.linkedName = userName; }
+              if (h) h.value = userId;
+              if (dd) dd.innerHTML = '';
+            };
+            document.addEventListener('click', function(e) {
+              document.querySelectorAll('.user-search-dropdown').forEach(function(dd) {
+                if (!dd.contains(e.target) && !dd.previousElementSibling?.contains(e.target)) {
+                  dd.innerHTML = '';
+                }
+              });
+            });
+            // Before form submit: if display was changed from linked user name, treat as custom text
+            document.addEventListener('submit', function(e) {
+              document.querySelectorAll('.user-search-field-container').forEach(function(container) {
+                var display = container.querySelector('input[type="text"]');
+                var hidden = container.querySelector('input[type="hidden"]');
+                if (!display || !hidden) return;
+                var linkedName = display.dataset.linkedName;
+                // Custom name: no linked user, or user cleared/changed the display value
+                if (!linkedName || display.value !== linkedName) {
+                  hidden.value = display.value;
+                }
+              });
+            }, true);
+          }
+          // On load: if hidden input has a user ID, fetch display name and mark as linked
+          (function() {
+            var userId = ${JSON.stringify(idValue)};
+            if (!userId) return;
+            fetch('/admin/api/users/' + encodeURIComponent(userId))
+              .then(function(r) { return r.json(); })
+              .then(function(data) {
+                if (data.name) {
+                  var d = document.getElementById(${JSON.stringify(fieldId + '-display')});
+                  if (d) { d.value = data.name; d.dataset.linkedName = data.name; }
+                }
+              })
+              .catch(function() {});
+          })();
+        </script>
+      `
+      break
+    }
 
     default:
       fieldHTML = `

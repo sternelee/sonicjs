@@ -1,6 +1,6 @@
 {
   "name": "@sonicjs-cms/core",
-  "version": "2.19.0",
+  "version": "3.0.0-beta.2",
   "description": "Core framework for SonicJS headless CMS - Edge-first, TypeScript-native CMS built for Cloudflare Workers",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -67,10 +67,11 @@
     "type-check": "tsc --noEmit",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
-    "test": "vitest --run",
-    "test:cov": "vitest --run --coverage",
+    "test": "vitest run",
+    "test:cov": "vitest run --coverage",
     "test:watch": "vitest",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "prepare": "npm run build"
   },
   "keywords": [
     "cms",
@@ -103,6 +104,8 @@
   },
   "dependencies": {
     "@cf-wasm/resvg": "^0.3.3",
+    "better-auth": "^1.6.13",
+    "better-auth-cloudflare": "^0.3.0",
     "csv-parse": "^6.2.1",
     "drizzle-zod": "^0.8.3",
     "highlight.js": "^11.11.1",
@@ -114,11 +117,13 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20251014.0",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^24.9.2",
     "@types/qrcode-svg": "^1.1.5",
     "@typescript-eslint/eslint-plugin": "^8.50.0",
     "@typescript-eslint/parser": "^8.50.0",
     "@vitest/coverage-v8": "^4.0.5",
+    "better-sqlite3": "^12.10.0",
     "drizzle-orm": "^0.45.2",
     "eslint": "^9.39.2",
     "glob": "^10.5.0",

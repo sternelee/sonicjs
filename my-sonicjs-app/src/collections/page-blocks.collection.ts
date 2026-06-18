@@ -1,243 +1,120 @@
-import type { CollectionConfig } from '@sonicjs-cms/core'
+import type { CollectionConfig } from "@sonicjs-cms/core";
 
-const heroBlock = {
-  label: 'Hero',
-  properties: {
-    heading: { type: 'string', title: 'Heading', required: true },
-    height: {
-      type: 'radio',
-      title: 'Height',
-      enum: ['small', 'medium', 'full'],
-      enumLabels: ['Small', 'Medium', 'Full'],
-      default: 'medium',
-      inline: true,
-    },
-    subheading: { type: 'textarea', title: 'Subheading', maxLength: 600 },
-    image: { type: 'media', title: 'Background/Image' },
-    imageAlt: { type: 'string', title: 'Image Alt' },
+export default {
+  name: "page_blocks",
+  displayName: "Page Blocks",
+  slug: "page-blocks",
+  description: "Page layouts built from block components",
+  icon: "🧱",
 
-    ctaPrimary: {
-      title: 'Primary CTA',
-      type: 'object',
-      properties: {
-        label: { type: 'string', title: 'Label' },
-        link: {
-          title: 'Link',
-          type: 'object',
-          properties: {
-            mode: {
-              type: 'select',
-              title: 'Link type',
-              enum: ['none', 'internal', 'external'],
-              enumLabels: ['None', 'Internal', 'External'],
-              default: 'none',
-            },
-            reference: { type: 'reference', title: 'Internal reference', collection: 'pages' },
-            url: { type: 'url', title: 'External URL' },
-          },
-        },
-        style: {
-          type: 'select',
-          title: 'Button style',
-          enum: ['primary', 'secondary'],
-          enumLabels: ['Primary', 'Secondary'],
-          default: 'primary',
-        },
-      },
-    },
-    ctaSecondary: {
-      title: 'Secondary CTA',
-      type: 'object',
-      properties: {
-        label: { type: 'string', title: 'Label' },
-        link: {
-          title: 'Link',
-          type: 'object',
-          properties: {
-            mode: {
-              type: 'select',
-              title: 'Type',
-              enum: ['none', 'internal', 'external'],
-              enumLabels: ['None', 'Internal', 'External'],
-              default: 'none',
-            },
-            reference: { type: 'reference', title: 'Internal reference', collection: 'pages' },
-            url: { type: 'url', title: 'External URL' },
-          },
-        },
-        style: {
-          type: 'select',
-          title: 'Button style',
-          enum: ['primary', 'secondary'],
-          enumLabels: ['Primary', 'Secondary'],
-          default: 'primary',
-        },
-      },
-    },
-  },
-}
-
-const pageBlocksCollection: CollectionConfig = {
-  name: 'page_blocks',
-  displayName: 'Page Blocks',
-  description: 'Pages with flexible content blocks',
-  managed: true,
   schema: {
-    type: 'object',
-    required: ['title', 'slug'],
+    type: "object",
     properties: {
       title: {
-        type: 'string',
-        title: 'Title',
+        type: "string",
+        title: "Title",
         required: true,
-        minLength: 3,
+        maxLength: 200,
       },
       slug: {
-        type: 'slug',
-        title: 'Slug',
+        type: "slug",
+        title: "URL Slug",
         required: true,
-      },
-      featuredPage: {
-        type: 'reference',
-        title: 'Featured Page',
-        collection: ['page_blocks', 'pages', 'blog_posts'],
+        maxLength: 200,
       },
       seo: {
-        type: 'object',
-        title: 'SEO',
-        objectLayout: 'flat',
+        type: "object",
+        title: "SEO",
+        objectLayout: "flat",
         properties: {
-          title: { type: 'string', title: 'SEO title' },
-          description: { type: 'textarea', title: 'SEO description' },
+          title: { type: "string", title: "SEO Title", maxLength: 60 },
+          description: { type: "textarea", title: "Description", maxLength: 160 },
+          keywords: { type: "string", title: "Keywords" },
         },
       },
-      team: {
-        type: 'object',
-        title: 'Team',
-        properties: {
-          heading: { type: 'string', title: 'Heading' },
-          members: {
-            type: 'array',
-            title: 'Members',
-            items: {
-              type: 'object',
-              properties: {
-                name: { type: 'string', title: 'Name', required: true },
-                role: { type: 'string', title: 'Role' },
-                photo: { type: 'media', title: 'Photo' },
-                children: {
-                  type: 'array',
-                  title: 'Children',
-                  items: {
-                    type: 'object',
-                    properties: {
-                      name: { type: 'string', title: 'Name', required: true },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-      openingHoursWeek: {
-        type: 'object',
-        title: 'Opening Hours',
-        properties: {
-          monday: {
-            type: 'object',
-            title: 'Monday',
-            objectLayout: 'flat',
-            properties: {
-              closed: { type: 'boolean', title: 'Closed', default: false },
-              opens: { type: 'string', title: 'Opens', pattern: '^([01]\\d|2[0-3]):(00|30)$' },
-              closes: { type: 'string', title: 'Closes', pattern: '^([01]\\d|2[0-3]):(00|30)$' },
-            },
-          },
-          tuesday: {
-            type: 'object',
-            title: 'Tuesday',
-            objectLayout: 'flat',
-            properties: {
-              closed: { type: 'boolean', title: 'Closed', default: false },
-              opens: { type: 'string', title: 'Opens', pattern: '^([01]\\d|2[0-3]):(00|30)$' },
-              closes: { type: 'string', title: 'Closes', pattern: '^([01]\\d|2[0-3]):(00|30)$' },
-            },
-          },
-          wednesday: {
-            type: 'object',
-            title: 'Wednesday',
-            objectLayout: 'flat',
-            properties: {
-              closed: { type: 'boolean', title: 'Closed', default: false },
-              opens: { type: 'string', title: 'Opens', pattern: '^([01]\\d|2[0-3]):(00|30)$' },
-              closes: { type: 'string', title: 'Closes', pattern: '^([01]\\d|2[0-3]):(00|30)$' },
-            },
-          },
-        },
-      },
-
       body: {
-        type: 'array',
-        title: 'Content Blocks',
+        type: "array",
+        title: "Body Blocks",
         items: {
-          type: 'object',
-          discriminator: 'blockType',
+          type: "object",
           blocks: {
-            hero: heroBlock,
-            text: {
-              label: 'Text',
+            hero: {
+              label: "Hero",
+              description: "Full-width hero section",
               properties: {
-                heading: { type: 'string', title: 'Heading', required: true },
-                body: { type: 'textarea', title: 'Body text', required: true },
-              },
-            },
-            longText: {
-              label: 'Long Text',
-              properties: {
-                body: { type: 'textarea', required: true },
-              },
-            },
-            imageText: {
-              label: 'Image + Text',
-              properties: {
-                title: { type: 'string', title: 'Title', required: true },
-                body: { type: 'textarea', title: 'Body text', required: true },
-                image: { type: 'media', title: 'Image', required: true },
-              },
-            },
-            gallery: {
-              label: 'Gallery',
-              properties: {
-                heading: { type: 'string', title: 'Heading' },
-                images: {
-                  type: 'array',
-                  title: 'Images',
-                  items: {
-                    type: 'object',
-                    properties: {
-                      image: { type: 'media', title: 'Image' },
-                      alt: { type: 'string', title: 'Alt' },
-                      caption: { type: 'string', title: 'Caption' },
+                heading: { type: "string", title: "Heading" },
+                subheading: { type: "string", title: "Subheading" },
+                ctaPrimary: {
+                  type: "object",
+                  title: "Primary CTA",
+                  objectLayout: "nested",
+                  collapsed: true,
+                  properties: {
+                    label: { type: "string", title: "Label" },
+                    mode: {
+                      type: "select",
+                      title: "Mode",
+                      enum: ["internal", "external"],
+                      enumLabels: ["Internal", "External"],
+                      default: "internal",
+                    },
+                    url: { type: "string", title: "URL" },
+                    style: {
+                      type: "select",
+                      title: "Style",
+                      enum: ["primary", "secondary", "outline"],
+                      enumLabels: ["Primary", "Secondary", "Outline"],
+                      default: "primary",
                     },
                   },
                 },
+                ctaSecondary: {
+                  type: "object",
+                  title: "Secondary CTA",
+                  objectLayout: "nested",
+                  collapsed: true,
+                  properties: {
+                    label: { type: "string", title: "Label" },
+                    mode: {
+                      type: "select",
+                      title: "Mode",
+                      enum: ["internal", "external"],
+                      enumLabels: ["Internal", "External"],
+                      default: "internal",
+                    },
+                    url: { type: "string", title: "URL" },
+                    style: {
+                      type: "select",
+                      title: "Style",
+                      enum: ["primary", "secondary", "outline"],
+                      enumLabels: ["Primary", "Secondary", "Outline"],
+                      default: "secondary",
+                    },
+                  },
+                },
+                backgroundImage: { type: "media", title: "Background Image" },
               },
             },
-            callToAction: {
-              label: 'Call To Action',
+            text: {
+              label: "Text",
+              description: "Rich text content section",
               properties: {
-                title: { type: 'string', title: 'Heading', required: true },
-                body: { type: 'textarea', title: 'Body text', required: true },
-                buttonLabel: { type: 'string', title: 'Button label', required: true },
-                buttonUrl: { type: 'url', title: 'Button link', required: true },
+                heading: { type: "string", title: "Heading" },
+                body: { type: "textarea", title: "Body" },
               },
             },
           },
         },
       },
     },
+    required: ["title", "slug"],
   },
-}
 
-export default pageBlocksCollection
+  listFields: ["title", "slug"],
+  searchFields: ["title"],
+  defaultSort: "createdAt",
+  defaultSortOrder: "desc",
+
+  managed: true,
+  isActive: true,
+} satisfies CollectionConfig;

@@ -5,18 +5,11 @@ import { escapeHtml } from '../../utils/sanitize'
 
 export interface UserProfileData {
   displayName?: string
-  bio?: string
-  company?: string
-  jobTitle?: string
-  website?: string
-  location?: string
-  dateOfBirth?: number
 }
 
 export interface UserEditData {
   id: string
   email: string
-  username: string
   firstName: string
   lastName: string
   phone?: string
@@ -35,12 +28,108 @@ export interface UserEditPageData {
   roles: Array<{ value: string; label: string }>
   error?: string
   success?: string
+  /** True only when developer has called defineUserProfile() in the app entry point. */
+  hasProfilePlugin?: boolean
   customProfileFieldsHtml?: string
+  /** When the multi-tenant plugin is active: inline membership matrix data. */
+  tenantMemberships?: {
+    memberships: Array<{ slug: string; name: string; role: string }>
+    availableTenants: Array<{ slug: string; name: string }>
+    memberRoles: string[]
+  }
   user?: {
     name: string
     email: string
     role: string
   }
+}
+
+function renderTenantMembershipsSection(
+  userId: string,
+  tm?: UserEditPageData['tenantMemberships'],
+): string {
+  if (!tm) return ''
+  const uid = escapeHtml(userId)
+  const redirectField = `<input type="hidden" name="_redirect" value="/admin/users/${uid}/edit">`
+  const count = tm.memberships.length
+
+  const rows = count
+    ? tm.memberships.map((m) => {
+        const slug = escapeHtml(m.slug)
+        const roleOpts = tm.memberRoles
+          .map((r) => `<option value="${r}" ${r === m.role ? 'selected' : ''}>${r}</option>`)
+          .join('')
+        return `
+        <tr data-membership-row="${slug}" class="border-b border-zinc-950/5 last:border-0 dark:border-white/5">
+          <td class="px-4 py-3">
+            <div class="font-medium text-zinc-950 dark:text-white">${escapeHtml(m.name)}</div>
+            <div class="font-mono text-xs text-zinc-500 dark:text-zinc-400">${slug}</div>
+          </td>
+          <td class="px-4 py-3">
+            <form method="POST" action="/admin/tenants/users/${uid}/memberships/${slug}/role" class="flex items-center gap-2">
+              ${redirectField}
+              <select name="role" onchange="this.form.requestSubmit ? this.form.requestSubmit() : this.form.submit()"
+                class="rounded-lg border border-zinc-950/10 bg-white px-2 py-1.5 text-sm text-zinc-950 dark:border-white/10 dark:bg-zinc-800 dark:text-white">
+                ${roleOpts}
+              </select>
+            </form>
+          </td>
+          <td class="px-4 py-3 text-right">
+            <form method="POST" action="/admin/tenants/users/${uid}/memberships/${slug}/delete" class="inline"
+              onsubmit="return confirm('Remove this user from ${slug}?')">
+              ${redirectField}
+              <button type="submit" data-remove-membership="${slug}" class="rounded-lg px-2.5 py-1.5 text-sm font-medium text-red-600 hover:bg-red-500/10 dark:text-red-400">Remove</button>
+            </form>
+          </td>
+        </tr>`
+      }).join('')
+    : `<tr><td colspan="3" class="px-4 py-6 text-sm text-zinc-500 text-center dark:text-zinc-400">Not a member of any tenant.</td></tr>`
+
+  const addForm = tm.availableTenants.length
+    ? `<div class="mt-4 border-t border-zinc-950/5 pt-4 dark:border-white/5">
+        <form method="POST" action="/admin/tenants/users/${uid}/memberships" class="flex flex-wrap items-end gap-3">
+          ${redirectField}
+          <div class="flex-1 min-w-[12rem]">
+            <label class="mb-1 block text-xs font-medium text-zinc-500 dark:text-zinc-400">Add to tenant</label>
+            <select name="slug" class="w-full rounded-lg border border-zinc-950/10 bg-white px-2 py-2 text-sm text-zinc-950 dark:border-white/10 dark:bg-zinc-800 dark:text-white">
+              ${tm.availableTenants.map((t) => `<option value="${escapeHtml(t.slug)}">${escapeHtml(t.name)}</option>`).join('')}
+            </select>
+          </div>
+          <div>
+            <label class="mb-1 block text-xs font-medium text-zinc-500 dark:text-zinc-400">Role</label>
+            <select name="role" class="rounded-lg border border-zinc-950/10 bg-white px-2 py-2 text-sm text-zinc-950 dark:border-white/10 dark:bg-zinc-800 dark:text-white">
+              ${tm.memberRoles.map((r) => `<option value="${r}" ${r === 'viewer' ? 'selected' : ''}>${r}</option>`).join('')}
+            </select>
+          </div>
+          <button type="submit" class="rounded-lg bg-zinc-950 px-3.5 py-2 text-sm font-semibold text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200">Add</button>
+        </form>
+      </div>`
+    : `<p class="mt-4 text-sm text-zinc-500 dark:text-zinc-400">Member of all tenants.</p>`
+
+  const defaultOpen = count <= 5
+  return `
+    <details class="group mt-6" ${defaultOpen ? 'open' : ''} data-tenant-memberships>
+      <summary class="flex cursor-pointer list-none items-center justify-between rounded-xl bg-white px-6 py-4 shadow-sm ring-1 ring-zinc-950/5 dark:bg-zinc-900 dark:ring-white/10 select-none">
+        <div class="flex items-center gap-3">
+          <svg class="h-4 w-4 text-zinc-400 transition-transform group-open:rotate-90 dark:text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          <h3 class="text-base font-semibold text-zinc-950 dark:text-white">Tenant memberships</h3>
+        </div>
+        <span class="text-sm font-normal text-zinc-500 dark:text-zinc-400">${count} tenant${count !== 1 ? 's' : ''}</span>
+      </summary>
+      <div class="mt-1 rounded-xl bg-white shadow-sm ring-1 ring-zinc-950/5 dark:bg-zinc-900 dark:ring-white/10">
+        <table class="w-full text-left">
+          <thead>
+            <tr class="border-b border-zinc-950/5 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:border-white/5 dark:text-zinc-400">
+              <th class="px-4 py-3">Tenant</th>
+              <th class="px-4 py-3">Role</th>
+              <th class="px-4 py-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+        <div class="px-4 pb-4">${addForm}</div>
+      </div>
+    </details>`
 }
 
 export function renderUserEditPage(data: UserEditPageData): string {
@@ -80,7 +169,7 @@ export function renderUserEditPage(data: UserEditPageData): string {
       </div>
 
       <!-- Alert Messages -->
-      <div id="form-messages">
+      <div id="form-messages" class="mb-6 empty:mb-0">
         ${data.error ? renderAlert({ type: 'error', message: data.error, dismissible: true }) : ''}
         ${data.success ? renderAlert({ type: 'success', message: data.success, dismissible: true }) : ''}
       </div>
@@ -112,17 +201,6 @@ export function renderUserEditPage(data: UserEditPageData): string {
                       type="text"
                       name="last_name"
                       value="${escapeHtml(data.userToEdit.lastName || '')}"
-                      class="w-full rounded-lg bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-zinc-950 dark:text-white shadow-sm ring-1 ring-inset ring-zinc-950/10 dark:ring-white/10 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-950 dark:focus:ring-white transition-shadow"
-                    />
-                  </div>
-
-                  <div>
-                    <label class="block text-sm font-medium text-zinc-950 dark:text-white mb-2">Username</label>
-                    <input
-                      type="text"
-                      name="username"
-                      value="${escapeHtml(data.userToEdit.username || '')}"
-                      required
                       class="w-full rounded-lg bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-zinc-950 dark:text-white shadow-sm ring-1 ring-inset ring-zinc-950/10 dark:ring-white/10 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-950 dark:focus:ring-white transition-shadow"
                     />
                   </div>
@@ -168,89 +246,24 @@ export function renderUserEditPage(data: UserEditPageData): string {
                 </div>
               </div>
 
-              <!-- Profile Information -->
+              ${data.hasProfilePlugin ? `
+              <!-- Profile Information (shown when defineUserProfile() is configured) -->
               <div class="mb-8">
                 <h3 class="text-base font-semibold text-zinc-950 dark:text-white mb-4">Profile Information</h3>
-                <p class="text-sm text-zinc-500 dark:text-zinc-400 mb-4">Extended profile data for this user</p>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label class="block text-sm font-medium text-zinc-950 dark:text-white mb-2">Display Name</label>
-                    <input
-                      type="text"
-                      name="profile_display_name"
-                      value="${escapeHtml(data.userToEdit.profile?.displayName || '')}"
-                      placeholder="Public display name"
-                      class="w-full rounded-lg bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-zinc-950 dark:text-white shadow-sm ring-1 ring-inset ring-zinc-950/10 dark:ring-white/10 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-950 dark:focus:ring-white transition-shadow"
-                    />
-                  </div>
-
-                  <div>
-                    <label class="block text-sm font-medium text-zinc-950 dark:text-white mb-2">Company</label>
-                    <input
-                      type="text"
-                      name="profile_company"
-                      value="${escapeHtml(data.userToEdit.profile?.company || '')}"
-                      placeholder="Company or organization"
-                      class="w-full rounded-lg bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-zinc-950 dark:text-white shadow-sm ring-1 ring-inset ring-zinc-950/10 dark:ring-white/10 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-950 dark:focus:ring-white transition-shadow"
-                    />
-                  </div>
-
-                  <div>
-                    <label class="block text-sm font-medium text-zinc-950 dark:text-white mb-2">Job Title</label>
-                    <input
-                      type="text"
-                      name="profile_job_title"
-                      value="${escapeHtml(data.userToEdit.profile?.jobTitle || '')}"
-                      placeholder="Job title or role"
-                      class="w-full rounded-lg bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-zinc-950 dark:text-white shadow-sm ring-1 ring-inset ring-zinc-950/10 dark:ring-white/10 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-950 dark:focus:ring-white transition-shadow"
-                    />
-                  </div>
-
-                  <div>
-                    <label class="block text-sm font-medium text-zinc-950 dark:text-white mb-2">Website</label>
-                    <input
-                      type="url"
-                      name="profile_website"
-                      value="${escapeHtml(data.userToEdit.profile?.website || '')}"
-                      placeholder="https://example.com"
-                      class="w-full rounded-lg bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-zinc-950 dark:text-white shadow-sm ring-1 ring-inset ring-zinc-950/10 dark:ring-white/10 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-950 dark:focus:ring-white transition-shadow"
-                    />
-                  </div>
-
-                  <div>
-                    <label class="block text-sm font-medium text-zinc-950 dark:text-white mb-2">Location</label>
-                    <input
-                      type="text"
-                      name="profile_location"
-                      value="${escapeHtml(data.userToEdit.profile?.location || '')}"
-                      placeholder="City, Country"
-                      class="w-full rounded-lg bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-zinc-950 dark:text-white shadow-sm ring-1 ring-inset ring-zinc-950/10 dark:ring-white/10 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-950 dark:focus:ring-white transition-shadow"
-                    />
-                  </div>
-
-                  <div>
-                    <label class="block text-sm font-medium text-zinc-950 dark:text-white mb-2">Date of Birth</label>
-                    <input
-                      type="date"
-                      name="profile_date_of_birth"
-                      value="${data.userToEdit.profile?.dateOfBirth ? new Date(data.userToEdit.profile.dateOfBirth).toISOString().split('T')[0] : ''}"
-                      class="w-full rounded-lg bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-zinc-950 dark:text-white shadow-sm ring-1 ring-inset ring-zinc-950/10 dark:ring-white/10 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-950 dark:focus:ring-white transition-shadow"
-                    />
-                  </div>
-                </div>
-
-                <div class="mt-6">
-                  <label class="block text-sm font-medium text-zinc-950 dark:text-white mb-2">Bio</label>
-                  <textarea
-                    name="profile_bio"
-                    rows="3"
-                    placeholder="Short bio or description"
+                <div class="mb-4">
+                  <label class="block text-sm font-medium text-zinc-950 dark:text-white mb-2">Display Name</label>
+                  <input
+                    type="text"
+                    name="profile_display_name"
+                    value="${escapeHtml(data.userToEdit.profile?.displayName || '')}"
+                    placeholder="Public display name"
                     class="w-full rounded-lg bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-zinc-950 dark:text-white shadow-sm ring-1 ring-inset ring-zinc-950/10 dark:ring-white/10 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-950 dark:focus:ring-white transition-shadow"
-                  >${escapeHtml(data.userToEdit.profile?.bio || '')}</textarea>
+                  />
                 </div>
+                ${data.customProfileFieldsHtml || ''}
               </div>
+              ` : ''}
 
-              ${data.customProfileFieldsHtml || ''}
 
               <!-- Set Password -->
               <div class="mb-8">
@@ -416,6 +429,8 @@ export function renderUserEditPage(data: UserEditPageData): string {
         </div>
       </div>
     </div>
+
+    ${renderTenantMembershipsSection(data.userToEdit.id, data.tenantMemberships)}
 
     <script>
       let userIdToDelete = null;

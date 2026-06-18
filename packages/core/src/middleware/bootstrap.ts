@@ -1,8 +1,10 @@
 import { Context, Next } from "hono";
-import { syncCollections } from "../services/collection-sync";
-import { syncAllFormCollections } from "../services/form-collection-sync";
+import { loadCollectionConfigs } from "../services/collection-loader";
+import { getCollectionRegistry } from "../services/collection-registry";
 import { MigrationService } from "../services/migrations";
 import { PluginBootstrapService } from "../services/plugin-bootstrap";
+import { bootstrapDocumentTypes, autoRegisterCollectionDocumentTypes } from "../services/document-types-seed";
+import { getHookSystem, hasHookSystem } from "../plugins/hooks/hook-system-singleton";
 import type { SonicJSConfig } from "../app";
 
 type Bindings = {
@@ -78,7 +80,17 @@ export function verifySecurityConfig(env: Bindings): void {
  * Runs once per worker instance
  */
 export function bootstrapMiddleware(config: SonicJSConfig = {}) {
-  return async (c: Context<{ Bindings: Bindings }>, next: Next) => {
+  return async (c: Context<{ Bindings: Bindings; Variables: { hookSystem?: unknown } }>, next: Next) => {
+    // Attach the hook system to the request BEFORE any heavy bootstrap work
+    // runs, so anything that emits a hook during bootstrap (cron cold starts,
+    // RBAC seed, document-type registration, plugin onBoot via createPluginWirer)
+    // sees a live bus instead of a no-op. The process singleton was published at
+    // app-factory time (app.ts); we only forward it onto the request here.
+    if (hasHookSystem()) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Variables typed loosely here; concrete type lives in app.ts
+      (c as any).set("hookSystem", getHookSystem());
+    }
+
     // Skip if already bootstrapped in this worker instance
     if (bootstrapComplete) {
       return next();
@@ -102,29 +114,72 @@ export function bootstrapMiddleware(config: SonicJSConfig = {}) {
     try {
       console.log("[Bootstrap] Starting system initialization...");
 
-      // 1. Run database migrations first
-      console.log("[Bootstrap] Running database migrations...");
+      // 1. Run idempotent schema compatibility repairs. Migration state and
+      // migration execution are owned by Cloudflare D1/Wrangler.
+      console.log("[Bootstrap] Checking schema compatibility...");
       const migrationService = new MigrationService(c.env.DB);
-      await migrationService.runPendingMigrations();
+      await migrationService.ensureSchemaCompatibility();
 
-      // 2. Sync collection configurations
-      console.log("[Bootstrap] Syncing collection configurations...");
+      // 1a. Wire the CACHE_KV binding into the cache plugin's singleton store so
+      // cache writes survive isolate evictions. Memory-only cache is per-isolate
+      // and ephemeral, which makes /admin/cache appear "empty" after restarts.
       try {
-        await syncCollections(c.env.DB);
+        const kv = (c.env as any).CACHE_KV;
+        if (kv) {
+          const { setGlobalKVNamespace } = await import(
+            "../plugins/cache/services/cache"
+          );
+          setGlobalKVNamespace(kv);
+        }
       } catch (error) {
-        console.error("[Bootstrap] Error syncing collections:", error);
-        // Continue bootstrap even if collection sync fails
+        console.error("[Bootstrap] Error wiring CACHE_KV namespace:", error);
       }
 
-      // 2b. Sync form-derived shadow collections
-      console.log("[Bootstrap] Syncing form collections...");
+      // 2. Populate the in-memory collection registry from code-defined configs.
+      // This is the source of truth going forward; the DB `collections` table is
+      // being decommissioned (see docs/ai/plans/drop-db-collections-plan.md).
+      console.log("[Bootstrap] Populating collection registry...");
       try {
-        await syncAllFormCollections(c.env.DB);
+        const configs = await loadCollectionConfigs();
+        getCollectionRegistry().register(configs);
+        console.log(`[Bootstrap] Registry populated with ${configs.length} collection(s)`);
       } catch (error) {
-        console.error("[Bootstrap] Error syncing form collections:", error);
+        console.error("[Bootstrap] Error populating collection registry:", error);
       }
 
-      // 3. Bootstrap core plugins (unless disableAll is set)
+      // 3. Register document types (idempotent)
+      console.log("[Bootstrap] Registering document types...");
+      try {
+        await bootstrapDocumentTypes(c.env.DB);
+      } catch (error) {
+        console.error("[Bootstrap] Error registering document types:", error);
+      }
+
+      // 2c. Repair legacy users that have password_hash in auth_user but no
+      // auth_account credential row (registered before Better Auth migration).
+      try {
+        await repairMissingCredentialAccounts(c.env.DB)
+      } catch (error) {
+        console.error('[Bootstrap] Error repairing credential accounts:', error)
+      }
+
+      // 3a. Seed system RBAC roles/verbs/grants as documents (idempotent).
+      try {
+        const { RbacService } = await import("../services/rbac");
+        await new RbacService(c.env.DB, (c.env as any).CACHE_KV).ensureSystemRbacSeed();
+      } catch (error) {
+        console.error("[Bootstrap] Error seeding RBAC documents:", error);
+      }
+
+      // 3b. Make every content collection document-backed (so all new content goes to `documents`).
+      try {
+        const auto = await autoRegisterCollectionDocumentTypes(c.env.DB);
+        if (auto.length) console.log(`[Bootstrap] Document-backed collections registered: ${auto.join(", ")}`);
+      } catch (error) {
+        console.error("[Bootstrap] Error auto-registering collection document types:", error);
+      }
+
+      // 4. Bootstrap core plugins (unless disableAll is set)
       if (!config.plugins?.disableAll) {
         console.log("[Bootstrap] Bootstrapping core plugins...");
         const bootstrapService = new PluginBootstrapService(c.env.DB);
@@ -159,4 +214,33 @@ export function bootstrapMiddleware(config: SonicJSConfig = {}) {
  */
 export function resetBootstrap() {
   bootstrapComplete = false;
+}
+
+/**
+ * Find auth_user rows that have a password_hash but no auth_account credential
+ * row (created before Better Auth migration) and repair them. Idempotent —
+ * INSERT OR IGNORE means re-runs are safe.
+ */
+async function repairMissingCredentialAccounts(db: D1Database): Promise<void> {
+  const { results } = await db.prepare(`
+    SELECT u.id, u.password_hash
+    FROM auth_user u
+    WHERE u.password_hash IS NOT NULL AND u.password_hash != ''
+    AND NOT EXISTS (
+      SELECT 1 FROM auth_account a
+      WHERE a.user_id = u.id AND a.provider_id = 'credential'
+    )
+  `).all()
+
+  if (!results.length) return
+
+  console.log(`[Bootstrap] Repairing ${results.length} user(s) missing credential auth_account rows`)
+  const nowSec = Math.floor(Date.now() / 1000)
+  for (const user of results as Array<{ id: string; password_hash: string }>) {
+    await db.prepare(`
+      INSERT OR IGNORE INTO auth_account (id, user_id, account_id, provider_id, password, created_at, updated_at)
+      VALUES (?, ?, ?, 'credential', ?, ?, ?)
+    `).bind(`cred-${user.id}`, user.id, user.id, user.password_hash, nowSec, nowSec).run()
+  }
+  console.log(`[Bootstrap] Credential account repair complete (${results.length} repaired)`)
 }

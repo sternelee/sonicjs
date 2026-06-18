@@ -8,14 +8,16 @@
 import { Hono } from 'hono'
 import { setCookie } from 'hono/cookie'
 import { z } from 'zod'
-import { PluginBuilder } from '../../sdk/plugin-builder'
-import type { Plugin } from '@sonicjs-cms/core'
+import { definePlugin } from '../../sdk/define-plugin'
+import type { DefinedPlugin } from '../../sdk/define-plugin'
 import { OTPService, type OTPSettings } from './otp-service'
 import { renderOTPEmail } from './email-templates'
 import { AuthManager } from '../../../middleware'
+import { getEmailService, hasEmailService } from '../../../services/email/email-service-singleton'
 import { getJwtExpirySecondsFromDb } from '../../../middleware/auth'
 import { SettingsService } from '../../../services/settings'
 import { getCustomData } from '../user-profiles'
+import { dispatchHookEvent } from '../../hooks/dispatch-event'
 
 // Validation schemas
 const otpRequestSchema = z.object({
@@ -42,24 +44,7 @@ const DEFAULT_SETTINGS: OTPSettings = {
   loginButtonText: ''
 }
 
-export function createOTPLoginPlugin(): Plugin {
-  const builder = PluginBuilder.create({
-    name: 'otp-login',
-    version: '1.0.0-beta.1',
-    description: 'Passwordless authentication via email one-time codes'
-  })
-
-  builder.metadata({
-    author: {
-      name: 'SonicJS Team',
-      email: 'team@sonicjs.com'
-    },
-    license: 'MIT',
-    compatibility: '^2.0.0'
-  })
-
-  // ==================== API Routes ====================
-
+function buildOtpApi(): Hono {
   const otpAPI = new Hono()
 
   // POST /auth/otp/request - Request OTP code
@@ -110,7 +95,7 @@ export function createOTPLoginPlugin(): Plugin {
       // Check if user exists
       const user = await db.prepare(`
         SELECT id, email, role, is_active
-        FROM users
+        FROM auth_user
         WHERE email = ?
       `).bind(normalizedEmail).first() as any
 
@@ -166,44 +151,26 @@ export function createOTPLoginPlugin(): Plugin {
           loginButtonText: settings.loginButtonText || ''
         })
 
-        // Load email plugin settings from database
-        // Note: We don't check status='active' because the email plugin's
-        // settings UI works regardless of status, so we follow the same pattern
-        const emailPlugin = await db.prepare(`
-          SELECT settings FROM plugins WHERE id = 'email'
-        `).first() as { settings: string | null } | null
-
-        if (emailPlugin?.settings) {
-          const emailSettings = JSON.parse(emailPlugin.settings)
-
-          if (emailSettings.apiKey && emailSettings.fromEmail && emailSettings.fromName) {
-            // Send email via Resend API
-            const emailResponse = await fetch('https://api.resend.com/emails', {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${emailSettings.apiKey}`,
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                from: `${emailSettings.fromName} <${emailSettings.fromEmail}>`,
-                to: [normalizedEmail],
-                subject: `Your login code for ${siteName}`,
-                html: emailContent.html,
-                text: emailContent.text,
-                reply_to: emailSettings.replyTo || emailSettings.fromEmail
-              })
-            })
-
-            if (!emailResponse.ok) {
-              const errorData = await emailResponse.json() as { message?: string }
-              console.error('Failed to send OTP email via Resend:', errorData)
-              // Don't expose error to user for security - just log it
-            }
-          } else {
-            console.warn('Email plugin is not fully configured (missing apiKey, fromEmail, or fromName)')
+        // Send via the shared, provider-agnostic EmailService. This stays
+        // synchronous (caller-direct): the user can't proceed without the code,
+        // so a fire-and-forget send would silently fail them. The send is logged
+        // to email_log like every other flow. (Previously this read plugins.settings
+        // and called Resend directly; the EmailService now owns provider selection,
+        // including honoring those same admin-UI settings.)
+        if (hasEmailService()) {
+          const sent = await getEmailService().send({
+            to: normalizedEmail,
+            subject: `Your login code for ${siteName}`,
+            flow: 'otp',
+            html: emailContent.html,
+            text: emailContent.text,
+          })
+          if (!sent.ok) {
+            // Don't expose delivery errors to the user for security - just log it.
+            console.error('Failed to send OTP email:', sent.error)
           }
         } else {
-          console.warn('Email plugin is not active or has no settings configured')
+          console.warn('EmailService not initialized; OTP email not sent')
         }
 
         const response: any = {
@@ -278,8 +245,8 @@ export function createOTPLoginPlugin(): Plugin {
 
       // Code is valid - get user
       let user = await db.prepare(`
-        SELECT id, email, username, first_name, last_name, role, is_active, created_at
-        FROM users
+        SELECT id, email, first_name, last_name, role, is_active, created_at
+        FROM auth_user
         WHERE email = ?
       `).bind(normalizedEmail).first() as any
 
@@ -287,19 +254,17 @@ export function createOTPLoginPlugin(): Plugin {
         // Auto-create new user on first OTP verification
         const userId = crypto.randomUUID()
         const now = Date.now()
-        const username = normalizedEmail.split('@')[0] + '_' + userId.slice(0, 6)
 
         await db.prepare(`
-          INSERT INTO users (
-            id, email, username, first_name, last_name,
+          INSERT INTO auth_user (
+            id, email, first_name, last_name,
             password_hash, role, is_active, email_verified, created_at, updated_at
-          ) VALUES (?, ?, ?, '', '', NULL, 'viewer', 1, 1, ?, ?)
-        `).bind(userId, normalizedEmail, username, now, now).run()
+          ) VALUES (?, ?, '', '', NULL, 'viewer', 1, 1, ?, ?)
+        `).bind(userId, normalizedEmail, now, now).run()
 
         user = {
           id: userId,
           email: normalizedEmail,
-          username,
           first_name: '',
           last_name: '',
           role: 'viewer',
@@ -331,6 +296,14 @@ export function createOTPLoginPlugin(): Plugin {
         sameSite: 'Strict',
         maxAge: tokenTtl
       })
+
+      // Fire auth:otp:verified for audit/analytics plugins (fire-and-forget).
+      dispatchHookEvent(
+        c,
+        'auth:otp:verified',
+        { user: { id: user.id, email: user.email, role: user.role } },
+        'fire-and-forget'
+      )
 
       const customData = await getCustomData(db, user.id)
       const { is_active: _isActive, ...publicUser } = user
@@ -382,34 +355,30 @@ export function createOTPLoginPlugin(): Plugin {
     }
   })
 
-  // Register API routes
-  builder.addRoute('/auth/otp', otpAPI, {
-    description: 'OTP authentication endpoints',
-    requiresAuth: false,
-    priority: 100
-  })
-
-  // Note: Admin UI is now handled by the generic plugin settings page
-  // with custom component at admin-plugin-settings.template.ts
-
-  // Add menu item (points to generic plugin settings page)
-  builder.addMenuItem('OTP Login', '/admin/plugins/otp-login', {
-    icon: 'key',
-    order: 85,
-    permissions: ['otp:manage']
-  })
-
-  // Lifecycle hooks
-  builder.lifecycle({
-    activate: async () => {
-      console.info('✅ OTP Login plugin activated')
-    },
-    deactivate: async () => {
-      console.info('❌ OTP Login plugin deactivated')
-    }
-  })
-
-  return builder.build() as Plugin
+  return otpAPI
 }
 
-export const otpLoginPlugin = createOTPLoginPlugin()
+export const otpLoginPlugin: DefinedPlugin = definePlugin({
+  id: 'otp-login',
+  version: '1.0.0',
+  name: 'OTP Login',
+  description: 'Passwordless authentication via email one-time codes.',
+  sonicjsVersionRange: '^3.0.0',
+  author: { name: 'SonicJS Team', email: 'team@sonicjs.com' },
+  capabilities: ['email:send'],
+
+  register(app) {
+    app.route('/auth/otp', buildOtpApi())
+  },
+
+  menu: [
+    { label: 'OTP Login', path: '/admin/plugins/otp-login', icon: 'lock', order: 85, permissions: ['otp:manage'] },
+  ],
+
+  activate: async () => console.info('✅ OTP Login plugin activated'),
+  deactivate: async () => console.info('❌ OTP Login plugin deactivated'),
+})
+
+export function createOTPLoginPlugin() {
+  return otpLoginPlugin
+}

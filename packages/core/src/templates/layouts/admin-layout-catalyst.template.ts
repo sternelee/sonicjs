@@ -242,7 +242,10 @@ export function renderAdminLayoutCatalyst(
       transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
       transition-duration: 150ms;
     }
+    .plugins-closed [data-plugins-submenu] { display: none; }
   </style>
+  <!-- Restore plugins submenu state before first paint (no flash) -->
+  <script>(function(){try{var c=document.cookie.split(';').reduce(function(v,p){var t=p.trim().split('=');return t[0]==='plugins_menu_open'?t[1]:v;},null);if(c==='0'){document.documentElement.classList.add('plugins-closed');document.addEventListener('DOMContentLoaded',function(){var ch=document.querySelector('[data-plugins-chevron]');if(ch)ch.classList.remove('rotate-180');});};}catch(e){}})();</script>
 
   <!-- Scripts -->
   <script src="https://unpkg.com/htmx.org@2.0.3"></script>
@@ -353,7 +356,7 @@ export function renderAdminLayoutCatalyst(
           </svg>
         </button>
         <div class="ml-4 flex-1">
-          ${renderLogo({ size: "sm", showText: true, variant: "white", version: data.version, href: "/admin" })}
+          ${renderLogo({ size: "sm", showText: true, variant: "white", version: data.version, href: "/admin/content" })}
         </div>
       </header>
 
@@ -512,6 +515,49 @@ export function renderAdminLayoutCatalyst(
 
     // Check for pending migrations when the page loads
     document.addEventListener('DOMContentLoaded', checkPendingMigrations);
+
+    // Docs dropdown toggle
+    function toggleDocsDropdown() {
+      const dropDowns = document.querySelectorAll('.docsDropdown');
+      dropDowns.forEach(dropdown => {
+        dropdown.classList.toggle('hidden');
+      });
+    }
+
+    // Close docs dropdown when clicking outside
+    document.addEventListener('click', function(event) {
+      const dropdowns = document.querySelectorAll('.docsDropdown');
+      const button = event.target.closest('[data-docs-menu]');
+      if (!button) {
+        dropdowns.forEach(function(dropdown) {
+          if (!dropdown.contains(event.target)) {
+            dropdown.classList.add('hidden');
+          }
+        });
+      }
+    });
+
+    // Plugins accordion toggle
+    function togglePluginsMenu(btn) {
+      var isNowClosed = document.documentElement.classList.toggle('plugins-closed');
+      var chevron = btn.querySelector('[data-plugins-chevron]');
+      if (chevron) chevron.classList.toggle('rotate-180');
+      document.cookie = 'plugins_menu_open=' + (isNowClosed ? '0' : '1') + ';path=/;max-age=31536000';
+    }
+
+    // Auto-expand plugins submenu if a sub-item is currently active (overrides closed cookie)
+    document.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('[data-plugins-submenu]').forEach(function(submenu) {
+        if (submenu.querySelector('[data-current="true"]')) {
+          document.documentElement.classList.remove('plugins-closed');
+          var accordion = submenu.closest('[data-plugins-accordion]');
+          if (accordion) {
+            var chevron = accordion.querySelector('[data-plugins-chevron]');
+            if (chevron) chevron.classList.add('rotate-180');
+          }
+        }
+      });
+    });
   </script>
 </body>
 </html>`;
@@ -519,18 +565,23 @@ export function renderAdminLayoutCatalyst(
 
 function renderCatalystSidebar(
   currentPath: string = "",
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- user shape varies across admin pages; permissions read narrowly below
   user?: any,
   dynamicMenuItems?: Array<{ label: string; path: string; icon: string }>,
   isMobile: boolean = false,
   version?: string,
   enableExperimentalFeatures?: boolean
 ): string {
+  // Fall back to the declarative plugin menu singleton when no explicit
+  // Active plugin nav items injected by pluginMenuMiddleware via dynamicMenuItems.
+  // When not provided, the marker below is replaced by the middleware post-render.
+  const resolvedMenuItems = dynamicMenuItems ?? [];
   let baseMenuItems = [
     {
-      label: "Dashboard",
-      path: "/admin",
+      label: "Content",
+      path: "/admin/content",
       icon: `<svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-        <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
+        <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"/>
       </svg>`,
     },
     {
@@ -541,48 +592,17 @@ function renderCatalystSidebar(
       </svg>`,
     },
     {
-      label: "Forms",
-      path: "/admin/forms",
-      icon: `<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-      </svg>`,
-    },
-    {
-      label: "Content",
-      path: "/admin/content",
-      icon: `<svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-        <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"/>
-      </svg>`,
-    },
-    {
-      label: "Media",
-      path: "/admin/media",
-      icon: `<svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-        <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/>
-      </svg>`,
-    },
-    {
       label: "Users",
       path: "/admin/users",
       icon: `<svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
         <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
       </svg>`,
     },
-    {
-      label: "Plugins",
-      path: "/admin/plugins",
-      icon: `<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
-      </svg>`,
-    },
-    {
-      label: "Cache",
-      path: "/admin/cache",
-      icon: `<svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-        <path fill-rule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm14 1a1 1 0 11-2 0 1 1 0 012 0zM2 13a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2v-2zm14 1a1 1 0 11-2 0 1 1 0 012 0z" clip-rule="evenodd"/>
-      </svg>`,
-    },
   ];
+
+  const pluginsIcon = `<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+  </svg>`;
 
   const settingsMenuItem = {
     label: "Settings",
@@ -592,22 +612,40 @@ function renderCatalystSidebar(
     </svg>`,
   };
 
-  // Combine base menu items with dynamic menu items
   const allMenuItems = [...baseMenuItems];
-  if (dynamicMenuItems && dynamicMenuItems.length > 0) {
-    // Insert dynamic menu items after Users menu item
-    const usersIndex = allMenuItems.findIndex(
-      (item) => item.path === "/admin/users"
-    );
-    if (usersIndex !== -1) {
-      allMenuItems.splice(usersIndex + 1, 0, ...dynamicMenuItems);
-    } else {
-      // Fallback: add to end if Users not found
-      allMenuItems.push(...dynamicMenuItems);
-    }
-  }
-  // Marker for middleware-injected plugin menu items (used when dynamicMenuItems is not passed explicitly)
-  const pluginMenuMarker = (!dynamicMenuItems || dynamicMenuItems.length === 0) ? '<!-- DYNAMIC_PLUGIN_MENU -->' : '';
+
+  const isPluginsActive =
+    currentPath === "/admin/plugins" ||
+    (currentPath?.startsWith("/admin/plugins") ?? false);
+
+  const pluginsSubItems =
+    resolvedMenuItems && resolvedMenuItems.length > 0
+      ? resolvedMenuItems
+          .map((item) => {
+            const isActive =
+              currentPath === item.path ||
+              (item.path !== "/admin" && currentPath?.startsWith(item.path));
+            return `
+              <span class="relative">
+                ${isActive ? '<span class="absolute inset-y-2 -left-4 w-0.5 rounded-full bg-cyan-500 dark:bg-cyan-400"></span>' : ""}
+                <a
+                  href="${item.path}"
+                  class="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left text-sm/5 font-medium ${
+                    isActive
+                      ? "text-zinc-950 dark:text-white"
+                      : "text-zinc-600 hover:bg-zinc-950/5 dark:text-zinc-400 dark:hover:bg-white/5"
+                  }"
+                  ${isActive ? 'data-current="true"' : ""}
+                >
+                  <span class="shrink-0 ${isActive ? "fill-zinc-950 dark:fill-white" : "fill-zinc-500 dark:fill-zinc-400"}">
+                    ${item.icon}
+                  </span>
+                  <span class="truncate">${item.label}</span>
+                </a>
+              </span>`;
+          })
+          .join("")
+      : "<!-- DYNAMIC_PLUGIN_MENU -->";
 
   const closeButton = isMobile
     ? `
@@ -629,9 +667,12 @@ function renderCatalystSidebar(
       ${closeButton}
 
       <!-- Sidebar Header -->
-      <div class="flex flex-col border-b border-zinc-950/5 p-4 dark:border-white/5">
-        ${renderLogo({ size: "md", showText: true, variant: "white", version, href: "/admin" })}
+      <div class="flex w-full flex-col border-b border-zinc-950/5 p-4 dark:border-white/5">
+        ${renderLogo({ size: "md", showText: true, variant: "white", version, href: "/admin/content" })}
       </div>
+
+      <!-- Tenant switcher (injected by tenantMiddleware when the multi-tenant plugin is active) -->
+      <!-- TENANT_SWITCHER -->
 
       <!-- Sidebar Body -->
       <div class="flex flex-1 flex-col overflow-y-auto p-4">
@@ -672,7 +713,79 @@ function renderCatalystSidebar(
             `;
             })
             .join("")}
-          ${pluginMenuMarker}
+          <!-- Plugins accordion -->
+          <div data-plugins-accordion class="relative">
+            ${isPluginsActive ? '<span class="absolute inset-y-2 -left-4 w-0.5 rounded-full bg-cyan-500 dark:bg-cyan-400"></span>' : ""}
+            <div class="flex w-full items-center">
+              <a
+                href="/admin/plugins"
+                class="flex flex-1 items-center gap-3 rounded-lg px-2 py-2.5 text-left text-sm/5 font-medium ${
+                  isPluginsActive
+                    ? "text-zinc-950 dark:text-white"
+                    : "text-zinc-950 hover:bg-zinc-950/5 dark:text-white dark:hover:bg-white/5"
+                }"
+                ${isPluginsActive ? 'data-current="true"' : ""}
+              >
+                <span class="shrink-0 ${isPluginsActive ? "fill-zinc-950 dark:fill-white" : "fill-zinc-500 dark:fill-zinc-400"}">
+                  ${pluginsIcon}
+                </span>
+                <span class="truncate">Plugins</span>
+              </a>
+              <button
+                onclick="togglePluginsMenu(this)"
+                class="flex items-center justify-center rounded-lg p-2 text-zinc-500 hover:bg-zinc-950/5 dark:text-zinc-400 dark:hover:bg-white/5 flex-shrink-0"
+                aria-label="Toggle plugins submenu"
+              >
+                <svg data-plugins-chevron class="h-4 w-4 rotate-180 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+              </button>
+            </div>
+            <div data-plugins-submenu class="pl-6 mt-0.5 flex flex-col gap-0.5">
+              ${pluginsSubItems}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Docs menu -->
+      <div class="border-t border-zinc-950/5 p-4 dark:border-white/5">
+        <div class="relative">
+          <button
+            data-docs-menu
+            onclick="toggleDocsDropdown()"
+            class="flex w-full items-center gap-3 rounded-lg px-2 py-2.5 text-left text-sm/5 font-medium text-zinc-950 hover:bg-zinc-950/5 dark:text-white dark:hover:bg-white/5"
+          >
+            <svg class="h-5 w-5 shrink-0 fill-zinc-500 dark:fill-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/>
+            </svg>
+            <span class="flex-1 truncate">Docs</span>
+            <svg class="h-4 w-4 shrink-0 fill-zinc-500 dark:fill-zinc-400" viewBox="0 0 20 20">
+              <path d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" />
+            </svg>
+          </button>
+          <div class="docsDropdown hidden absolute bottom-full mb-2 left-0 right-0 mx-2 rounded-xl bg-white shadow-lg ring-1 ring-zinc-950/10 dark:bg-zinc-800 dark:ring-white/10 z-50">
+            <div class="p-2">
+              <a href="/admin/api-reference" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-950 hover:bg-zinc-950/5 dark:text-white dark:hover:bg-white/5">
+                <svg class="h-4 w-4 shrink-0 text-zinc-500 dark:text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/>
+                </svg>
+                API Docs
+              </a>
+              <a href="https://sonicjs.com" target="_blank" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-950 hover:bg-zinc-950/5 dark:text-white dark:hover:bg-white/5">
+                <svg class="h-4 w-4 shrink-0 text-zinc-500 dark:text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5"/>
+                </svg>
+                Developer Docs
+              </a>
+              <a href="/api" target="_blank" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-950 hover:bg-zinc-950/5 dark:text-white dark:hover:bg-white/5">
+                <svg class="h-4 w-4 shrink-0 text-zinc-500 dark:text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5"/>
+                </svg>
+                OpenAPI
+              </a>
+            </div>
+          </div>
         </div>
       </div>
 
