@@ -515,51 +515,47 @@ Join thousands of developers building the future of web APIs
       </div>
     </div>
 
-    {/* v2.19.0 */}
+    {/* v3.0.0-beta.5 */}
     <div className="border-l-4 border-emerald-500 dark:border-emerald-400 pl-4 py-1">
       <div className="flex items-center gap-2 mb-2">
-        <span className="text-xs font-bold px-2 py-1 rounded bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300">v3.0.0-beta.4</span>
+        <span className="text-xs font-bold px-2 py-1 rounded bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300">v3.0.0-beta.5</span>
         <span className="text-xs px-2 py-1 rounded bg-gradient-to-r from-orange-100 to-red-100 dark:from-orange-900/30 dark:to-red-900/30 border border-orange-300 dark:border-orange-700 text-orange-800 dark:text-orange-300 font-bold">LATEST</span>
         <span className="text-sm text-gray-500 dark:text-gray-400">2026-06-18</span>
       </div>
       <div className="text-sm space-y-1">
         <div className="flex items-start gap-2">
           <span className="text-emerald-600 dark:text-emerald-400 mt-0.5">✓</span>
-          <span className="text-gray-700 dark:text-gray-300">**fix**: Admin seeding now works — rewrote generated seed to use raw SQL (Drizzle was injecting schema columns missing from the migration, causing `auth_user has no column named password_reset_token`)</span>
+          <span className="text-gray-700 dark:text-gray-300">**feat**: Versioning plugin registered in manifest registry</span>
         </div>
         <div className="flex items-start gap-2">
           <span className="text-emerald-600 dark:text-emerald-400 mt-0.5">✓</span>
-          <span className="text-gray-700 dark:text-gray-300">**fix**: Admin login now works — seed now creates `auth_account` record that Better Auth needs for credential verification</span>
-        </div>
-        <div className="flex items-start gap-2">
-          <span className="text-emerald-600 dark:text-emerald-400 mt-0.5">✓</span>
-          <span className="text-gray-700 dark:text-gray-300">**fix**: Auto-generate `.dev.vars` with `BETTER_AUTH_SECRET` on project creation (was causing 500 on every auth request)</span>
-        </div>
-        <div className="flex items-start gap-2">
-          <span className="text-emerald-600 dark:text-emerald-400 mt-0.5">✓</span>
-          <span className="text-gray-700 dark:text-gray-300">**fix**: Password hashed with PBKDF2 matching the auth system's expected format</span>
+          <span className="text-gray-700 dark:text-gray-300">**chore**: `.claude/settings.local.json` now gitignored — per-developer Claude Code settings stay local</span>
         </div>
       </div>
     </div>
 
+    {/* v3.0.0-beta.4 */}
     <div className="border-l-4 border-blue-500 dark:border-blue-400 pl-4 py-1">
       <div className="flex items-center gap-2 mb-2">
-        <span className="text-xs font-bold px-2 py-1 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">v3.0.0-beta.3</span>
-        
+        <span className="text-xs font-bold px-2 py-1 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">v3.0.0-beta.4</span>
         <span className="text-sm text-gray-500 dark:text-gray-400">2026-06-18</span>
       </div>
       <div className="text-sm space-y-1">
         <div className="flex items-start gap-2">
           <span className="text-blue-600 dark:text-blue-400 mt-0.5">✓</span>
-          <span className="text-gray-700 dark:text-gray-300">**fix**: Blog collection included by default — no prompt during `npx create-sonicjs`</span>
+          <span className="text-gray-700 dark:text-gray-300">**fix**: Admin seeding now works — rewrote generated seed to use raw SQL (Drizzle was injecting schema columns missing from the migration, causing `auth_user has no column named password_reset_token`)</span>
         </div>
         <div className="flex items-start gap-2">
           <span className="text-blue-600 dark:text-blue-400 mt-0.5">✓</span>
-          <span className="text-gray-700 dark:text-gray-300">**fix**: Admin seed crash resolved — `Date.now()` → `new Date()` for Drizzle `timestamp_ms` columns (`value.getTime is not a function`)</span>
+          <span className="text-gray-700 dark:text-gray-300">**fix**: Admin login now works — seed now creates `auth_account` record that Better Auth needs for credential verification</span>
         </div>
         <div className="flex items-start gap-2">
           <span className="text-blue-600 dark:text-blue-400 mt-0.5">✓</span>
-          <span className="text-gray-700 dark:text-gray-300">**fix**: Post-install output simplified — Cloudflare resource creation moved to optional "Deploy to Cloudflare" section; migration/seed steps only shown when they actually failed</span>
+          <span className="text-gray-700 dark:text-gray-300">**fix**: Auto-generate `.dev.vars` with `BETTER_AUTH_SECRET` on project creation (was causing 500 on every auth request)</span>
+        </div>
+        <div className="flex items-start gap-2">
+          <span className="text-blue-600 dark:text-blue-400 mt-0.5">✓</span>
+          <span className="text-gray-700 dark:text-gray-300">**fix**: Password hashed with PBKDF2 matching the auth system's expected format</span>
         </div>
       </div>
     </div>
