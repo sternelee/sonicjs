@@ -589,11 +589,19 @@ Or they should be automatically available after installation.
 }
 
 async function createCloudflareResources(databaseName, bucketName, targetDir) {
-  // Check if wrangler is installed
+  // Resolve wrangler binary — prefer global, fall back to npx
+  let wranglerCmd = 'wrangler'
+  let wranglerArgs = []
   try {
     await execa('wrangler', ['--version'], { cwd: targetDir })
   } catch {
-    throw new Error('wrangler is not installed. Install with: npm install -g wrangler')
+    try {
+      await execa('npx', ['--yes', 'wrangler', '--version'], { cwd: targetDir })
+      wranglerCmd = 'npx'
+      wranglerArgs = ['wrangler']
+    } catch {
+      throw new Error('wrangler is not installed. Install with: npm install -g wrangler')
+    }
   }
 
   let databaseId
@@ -602,7 +610,7 @@ async function createCloudflareResources(databaseName, bucketName, targetDir) {
 
   // Create D1 database
   try {
-    const { stdout, stderr } = await execa('wrangler', ['d1', 'create', databaseName], {
+    const { stdout, stderr } = await execa(wranglerCmd, [...wranglerArgs, 'd1', 'create', databaseName], {
       cwd: targetDir
     })
 
@@ -630,7 +638,7 @@ async function createCloudflareResources(databaseName, bucketName, targetDir) {
 
   // Create R2 bucket
   try {
-    await execa('wrangler', ['r2', 'bucket', 'create', bucketName], {
+    await execa(wranglerCmd, [...wranglerArgs, 'r2', 'bucket', 'create', bucketName], {
       cwd: targetDir
     })
     bucketCreated = true
