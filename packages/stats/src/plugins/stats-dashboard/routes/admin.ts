@@ -63,6 +63,9 @@ adminRoutes.get('/', async (c) => {
     snapshotCollectionsR,
     snapshotPluginsR,
     snapshotFieldTypesR,
+    snapshotVersionR,
+    snapshotDocVolumeR,
+    snapshotCountR,
   ] = await Promise.all([
     // 1. Weekly funnel: started/completed/failed counts per week (keyed to Monday date)
     db.prepare(
@@ -162,6 +165,35 @@ adminRoutes.get('/', async (c) => {
        WHERE ${EVENTS_WHERE} AND json_extract(data,'$.event_type')='project_snapshot'
        GROUP BY key ORDER BY total_fields DESC`
     ).all(),
+    // 14. SonicJS version distribution across reporting installations
+    db.prepare(
+      `SELECT COALESCE(json_extract(data,'$.properties.sonicjs_version'),'unknown') AS version,
+              COUNT(DISTINCT json_extract(data,'$.properties.installation_id')) AS installations
+       FROM documents WHERE ${EVENTS_WHERE} AND json_extract(data,'$.event_type')='project_snapshot'
+       GROUP BY version ORDER BY installations DESC LIMIT 15`
+    ).all(),
+    // 15. Doc volume distribution (latest snapshot per installation, bucketed)
+    db.prepare(
+      `SELECT bucket, COUNT(*) AS count FROM (
+         SELECT CASE
+           WHEN n IS NULL OR n = 0 THEN 'Empty'
+           WHEN n <= 10 THEN '1–10'
+           WHEN n <= 100 THEN '11–100'
+           WHEN n <= 1000 THEN '101–1k'
+           ELSE '1k+' END AS bucket
+         FROM (
+           SELECT CAST(json_extract(data,'$.properties.doc_total') AS INTEGER) AS n
+           FROM documents WHERE ${EVENTS_WHERE} AND json_extract(data,'$.event_type')='project_snapshot'
+           GROUP BY json_extract(data,'$.properties.installation_id')
+           HAVING created_at = MAX(created_at)
+         )
+       ) GROUP BY bucket ORDER BY CASE bucket WHEN 'Empty' THEN 1 WHEN '1–10' THEN 2 WHEN '11–100' THEN 3 WHEN '101–1k' THEN 4 ELSE 5 END`
+    ).all(),
+    // 16. Distinct installations reporting via project_snapshot
+    db.prepare(
+      `SELECT COUNT(DISTINCT json_extract(data,'$.properties.installation_id')) AS count
+       FROM documents WHERE ${EVENTS_WHERE} AND json_extract(data,'$.event_type')='project_snapshot'`
+    ).first(),
   ])
 
   // ── Funnel aggregation ──────────────────────────────────────────────────
@@ -233,7 +265,10 @@ adminRoutes.get('/', async (c) => {
   const snapshotCollectionRows = rowsOf(snapshotCollectionsR) as { collection: string; total_docs: number; installations: number }[]
   const snapshotPluginRows = rowsOf(snapshotPluginsR) as { plugin: string; installations: number }[]
   const snapshotFieldTypeRows = rowsOf(snapshotFieldTypesR) as { field_type: string; total_fields: number }[]
-  const hasSnapshotData = snapshotCollectionRows.length > 0 || snapshotPluginRows.length > 0
+  const snapshotVersionRows = rowsOf(snapshotVersionR) as { version: string; installations: number }[]
+  const snapshotDocVolumeRows = rowsOf(snapshotDocVolumeR) as { bucket: string; count: number }[]
+  const snapshotInstallations = Number((snapshotCountR as Row | null)?.count ?? 0)
+  const hasSnapshotData = snapshotInstallations > 0
 
   // ── Chart datasets (serialized) ─────────────────────────────────────────
   const charts = {
@@ -247,6 +282,8 @@ adminRoutes.get('/', async (c) => {
     collections: { labels: snapshotCollectionRows.map((r) => r.collection), docs: snapshotCollectionRows.map((r) => Number(r.total_docs)), installs: snapshotCollectionRows.map((r) => Number(r.installations)) },
     plugins: { labels: snapshotPluginRows.map((r) => r.plugin), data: snapshotPluginRows.map((r) => Number(r.installations)) },
     fieldTypes: { labels: snapshotFieldTypeRows.map((r) => r.field_type), data: snapshotFieldTypeRows.map((r) => Number(r.total_fields)) },
+    versions: { labels: snapshotVersionRows.map((r) => r.version), data: snapshotVersionRows.map((r) => Number(r.installations)) },
+    docVolume: { labels: snapshotDocVolumeRows.map((r) => r.bucket), data: snapshotDocVolumeRows.map((r) => Number(r.count)) },
   }
 
   // ── KPI card markup ─────────────────────────────────────────────────────
@@ -346,35 +383,47 @@ adminRoutes.get('/', async (c) => {
   </div>
 
   <!-- What people build (project_snapshot data) -->
-  ${hasSnapshotData ? `
-  <div>
-    <h2 class="text-xl font-semibold text-zinc-950 dark:text-white">What People Build</h2>
-    <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Aggregated from <code>project_snapshot</code> events — requires running SonicJS instances with v3 telemetry</p>
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-xl font-semibold text-zinc-950 dark:text-white">What People Build</h2>
+      <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">From <code>project_snapshot</code> heartbeats — emitted on every SonicJS cold start (v3.0.0-beta.8+)</p>
+    </div>
+    <div class="text-right">
+      <p class="text-2xl font-semibold text-indigo-600 dark:text-indigo-400">${snapshotInstallations.toLocaleString()}</p>
+      <p class="text-xs text-zinc-500 dark:text-zinc-400">reporting installations</p>
+    </div>
   </div>
+
+  ${!hasSnapshotData ? `
+  <div class="rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-4 text-sm text-amber-800 dark:text-amber-300">
+    Waiting for first <code>project_snapshot</code> — charts will populate once installations running v3.0.0-beta.8+ report in.
+  </div>` : ''}
+
   <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-    ${card('Top Collections', 'Total docs across all installations reporting this collection', '<canvas id="chartCollections" height="280"></canvas>')}
-    ${card('Active Plugins', 'Installations using each plugin', '<canvas id="chartPlugins" height="280"></canvas>')}
+    ${card('Top Collections', `Total docs across all ${snapshotInstallations} reporting installations`, hasSnapshotData ? '<canvas id="chartCollections" height="300"></canvas>' : '<div class="py-12 text-center text-sm text-zinc-400 dark:text-zinc-500">No data yet</div>')}
+    ${card('Active Plugins', `Plugin adoption rate across ${snapshotInstallations} installations`, hasSnapshotData ? '<canvas id="chartPlugins" height="300"></canvas>' : '<div class="py-12 text-center text-sm text-zinc-400 dark:text-zinc-500">No data yet</div>')}
   </div>
-  <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-    ${card('Field Types Used', 'Aggregate field type count across all schemas', '<canvas id="chartFieldTypes" height="260"></canvas>')}
-    ${card('Top Collections by Installs', 'Which collections appear most across projects', `
-      <div class="overflow-x-auto"><table class="w-full text-sm">
-        <thead class="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-          <tr><th class="py-2 text-left font-medium">Collection</th><th class="py-2 text-right font-medium">Total Docs</th><th class="py-2 text-right font-medium">Installations</th></tr>
-        </thead>
-        <tbody class="divide-y divide-zinc-950/5 dark:divide-white/5">
-        ${snapshotCollectionRows.slice(0, 15).map((r) => `<tr>
-          <td class="py-2 font-mono text-zinc-700 dark:text-zinc-300">${esc(r.collection)}</td>
-          <td class="py-2 text-right font-semibold text-zinc-900 dark:text-white">${Number(r.total_docs).toLocaleString()}</td>
-          <td class="py-2 text-right text-zinc-500 dark:text-zinc-400">${Number(r.installations).toLocaleString()}</td>
-        </tr>`).join('')}
-        </tbody>
-      </table></div>
-    `)}
-  </div>` : `
-  <div class="rounded-lg bg-white dark:bg-zinc-800 p-8 ring-1 ring-zinc-950/5 dark:ring-white/10 text-center">
-    <p class="text-zinc-500 dark:text-zinc-400 text-sm">No <code>project_snapshot</code> data yet — requires SonicJS installations running v3 with telemetry enabled</p>
-  </div>`}
+
+  <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+    ${card('Field Types Used', 'Aggregate field type count across all schemas', hasSnapshotData ? '<canvas id="chartFieldTypes" height="240"></canvas>' : '<div class="py-12 text-center text-sm text-zinc-400 dark:text-zinc-500">No data yet</div>')}
+    ${card('SonicJS Versions', 'Which version are installations running', hasSnapshotData ? '<canvas id="chartVersions" height="240"></canvas>' : '<div class="py-12 text-center text-sm text-zinc-400 dark:text-zinc-500">No data yet</div>')}
+    ${card('Content Volume', 'Distribution of total doc counts per installation', hasSnapshotData ? '<canvas id="chartDocVolume" height="240"></canvas>' : '<div class="py-12 text-center text-sm text-zinc-400 dark:text-zinc-500">No data yet</div>')}
+  </div>
+
+  ${hasSnapshotData ? card('Collections Detail', 'Collections appearing across projects — doc count + number of installs using it', `
+    <div class="overflow-x-auto"><table class="w-full text-sm">
+      <thead class="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+        <tr><th class="py-2 text-left font-medium">Collection</th><th class="py-2 text-right font-medium">Total Docs</th><th class="py-2 text-right font-medium">Installations</th></tr>
+      </thead>
+      <tbody class="divide-y divide-zinc-950/5 dark:divide-white/5">
+      ${snapshotCollectionRows.slice(0, 15).map((r) => `<tr>
+        <td class="py-2 font-mono text-zinc-700 dark:text-zinc-300">${esc(r.collection)}</td>
+        <td class="py-2 text-right font-semibold text-zinc-900 dark:text-white">${Number(r.total_docs).toLocaleString()}</td>
+        <td class="py-2 text-right text-zinc-500 dark:text-zinc-400">${Number(r.installations).toLocaleString()}</td>
+      </tr>`).join('')}
+      </tbody>
+    </table></div>
+  `) : ''}
 </div>
 
 <script>
@@ -441,7 +490,7 @@ adminRoutes.get('/', async (c) => {
   // Node version horizontal bar
   bar('chartNode', D.node.labels, [{ label: 'Installs', data: D.node.data, backgroundColor: P[5] }], { horizontal: true, legend: false });
 
-  // What people build — project_snapshot charts (only rendered when data exists)
+  // What people build — project_snapshot charts
   if (D.collections && D.collections.labels.length) {
     bar('chartCollections', D.collections.labels, [
       { label: 'Total Docs', data: D.collections.docs, backgroundColor: P[0] },
@@ -455,6 +504,14 @@ adminRoutes.get('/', async (c) => {
   }
   if (D.fieldTypes && D.fieldTypes.labels.length) {
     doughnut('chartFieldTypes', D.fieldTypes.labels, D.fieldTypes.data);
+  }
+  if (D.versions && D.versions.labels.length) {
+    doughnut('chartVersions', D.versions.labels, D.versions.data);
+  }
+  if (D.docVolume && D.docVolume.labels.length) {
+    bar('chartDocVolume', D.docVolume.labels, [
+      { label: 'Installations', data: D.docVolume.data, backgroundColor: P[2] }
+    ], { legend: false });
   }
 })();
 </script>`
