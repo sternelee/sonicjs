@@ -301,6 +301,23 @@ authRoutes.post('/login',
       const baBody = await baRes.json() as any
       const user = baBody.user ?? {}
 
+      // Mint a JWT so API callers can use Bearer token auth (same as /register)
+      const tokenTtl = await getJwtExpirySecondsFromDb(c.env.DB, c.env)
+      const token = await AuthManager.generateToken(
+        user.id,
+        user.email,
+        user.role ?? 'viewer',
+        c.env.JWT_SECRET,
+        tokenTtl
+      )
+
+      setCookie(c, 'auth_token', token, {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'Strict',
+        maxAge: tokenTtl,
+      })
+
       return c.json({
         user: {
           id: user.id,
@@ -308,7 +325,8 @@ authRoutes.post('/login',
           firstName: user.name?.split(' ')[0] ?? '',
           lastName: user.name?.split(' ').slice(1).join(' ') ?? '',
           role: user.role ?? 'viewer',
-        }
+        },
+        token,
       })
     } catch (error) {
       console.error('Login error:', error)
