@@ -179,4 +179,8 @@ export default {
 
   managed: true,
   isActive: true,
+
+  access: {
+    public: ['read'],
+  },
 } satisfies CollectionConfig;
