@@ -75,8 +75,8 @@ app.post('/v1/events', async (c) => {
   }
 })
 
-// Lightweight health check — confirms worker is live and D1 is reachable
-app.get('/health', async (c) => {
+// Stats-specific health check — /health taken by core, /v1/* taken by API routes
+app.get('/stats-health', async (c) => {
   try {
     const db = c.env.DB as D1Database
     const result = await db.prepare('SELECT COUNT(*) AS n FROM documents WHERE type_id = ?').bind('events').first<{ n: number }>()
