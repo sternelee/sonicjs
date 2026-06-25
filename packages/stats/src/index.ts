@@ -28,7 +28,8 @@ const config: SonicJSConfig = {
   },
   plugins: {
     autoLoad: false,
-    register: [statsDashboardPlugin],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- DefinedPlugin is structurally compatible; type mismatch is dist/src version skew
+    register: [statsDashboardPlugin as any],
   }
 }
 
@@ -67,9 +68,22 @@ app.post('/v1/events', async (c) => {
     ).run()
 
     return c.json({ success: true }, 201)
-  } catch (_err) {
-    // Telemetry must never block callers
+  } catch (err) {
+    // Log so CF Worker logs surface the failure — callers still see success
+    console.error('[stats] /v1/events insert failed:', err)
     return c.json({ success: true }, 201)
+  }
+})
+
+// Lightweight health check — confirms worker is live and D1 is reachable
+app.get('/health', async (c) => {
+  try {
+    const db = c.env.DB as D1Database
+    const result = await db.prepare('SELECT COUNT(*) AS n FROM documents WHERE type_id = ?').bind('events').first<{ n: number }>()
+    return c.json({ ok: true, event_count: result?.n ?? 0 })
+  } catch (err) {
+    console.error('[stats] /health D1 check failed:', err)
+    return c.json({ ok: false, error: String(err) }, 500)
   }
 })
 
