@@ -1504,18 +1504,33 @@ if (shouldRotate) {
 
 ### 11. CORS Configuration
 
-Configure CORS properly:
+SonicJS reads `CORS_ORIGINS` from `wrangler.toml` (comma-separated list of allowed origins). The middleware is applied globally — including `/auth/login`, `/auth/register`, and all `/v1/*` API routes — so cross-origin frontends (Astro, Next.js, SvelteKit, etc.) can reach every endpoint.
 
-```typescript
-import { cors } from 'hono/cors'
-
-app.use('*', cors({
-  origin: ['https://yourdomain.com'],
-  allowMethods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
-}))
+**wrangler.toml:**
+```toml
+[vars]
+# Comma-separated list — add every frontend origin that needs API access.
+# Both localhost ports (dev) and production domain(s) must be listed.
+CORS_ORIGINS = "http://localhost:8787,http://localhost:4321,https://yourdomain.com"
 ```
+
+**Astro (or any frontend) fetch example:**
+```typescript
+// Always include credentials so the session cookie is sent back
+const res = await fetch('http://localhost:8787/auth/login', {
+  method: 'POST',
+  credentials: 'include',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ email, password }),
+})
+```
+
+`credentials: 'include'` is required because the session cookie is `HttpOnly` and must be forwarded by the browser on subsequent requests.
+
+**Troubleshooting:** If you still hit CORS errors after setting `CORS_ORIGINS`:
+1. Confirm the exact origin (protocol + host + port) matches — `http://localhost:4321` ≠ `http://localhost:4321/`.
+2. Add your production URL to `CORS_ORIGINS` in the production environment section of `wrangler.toml`.
+3. Restart the dev server after changing `wrangler.toml`.
 
 ### 12. Input Validation
 
