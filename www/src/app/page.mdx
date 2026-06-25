@@ -525,11 +525,15 @@ Join thousands of developers building the future of web APIs
       <div className="text-sm space-y-1">
         <div className="flex items-start gap-2">
           <span className="text-emerald-600 dark:text-emerald-400 mt-0.5">✓</span>
-          <span className="text-gray-700 dark:text-gray-300">**fix(cors)**: `/auth/login` and all auth endpoints now work cross-origin from Astro, Next.js, and other frontend frameworks</span>
+          <span className="text-gray-700 dark:text-gray-300">**fix(cors)**: apply CORS middleware globally so `/auth/*` routes work from Astro/Next.js/frontend frameworks</span>
         </div>
         <div className="flex items-start gap-2">
           <span className="text-emerald-600 dark:text-emerald-400 mt-0.5">✓</span>
-          <span className="text-gray-700 dark:text-gray-300">**fix(forms)**: Forms plugin shows empty state instead of 500 error when `forms` table hasn't been migrated</span>
+          <span className="text-gray-700 dark:text-gray-300">**fix(forms)**: forms plugin no longer returns 500 when `forms` table hasn't been migrated — shows empty state instead</span>
+        </div>
+        <div className="flex items-start gap-2">
+          <span className="text-emerald-600 dark:text-emerald-400 mt-0.5">✓</span>
+          <span className="text-gray-700 dark:text-gray-300">**docs**: added CORS configuration section to authentication.md and getting-started.md troubleshooting guide</span>
         </div>
       </div>
     </div>
