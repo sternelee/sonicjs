@@ -68,11 +68,13 @@ const authRoutes = new Hono<{ Bindings: Bindings; Variables: Variables }>()
 authRoutes.get('/login', async (c) => {
   const error = c.req.query('error')
   const message = c.req.query('message')
-  
+  const redirect = c.req.query('redirect')
+
   const pageData: LoginPageData = {
     error: error || undefined,
     message: message || undefined,
-    version: c.get('appVersion')
+    version: c.get('appVersion'),
+    redirect: redirect && redirect.startsWith('/') ? redirect : undefined,
   }
   
   // Check if demo login plugin is active
@@ -675,6 +677,9 @@ authRoutes.post('/login/form',
 
     await setCsrfCookie(c)
 
+    const rawRedirect = c.req.query('redirect')
+    const redirectUrl = rawRedirect && rawRedirect.startsWith('/') ? rawRedirect : '/admin/content'
+
     return c.html(html`
       <div id="form-response">
         <div class="rounded-lg bg-green-100 dark:bg-lime-500/10 p-4 ring-1 ring-green-400 dark:ring-lime-500/20">
@@ -687,7 +692,7 @@ authRoutes.post('/login/form',
             </div>
           </div>
           <script>
-            setTimeout(() => { window.location.href = '/admin/content'; }, 500);
+            setTimeout(() => { window.location.href = '${redirectUrl}'; }, 500);
           </script>
         </div>
       </div>

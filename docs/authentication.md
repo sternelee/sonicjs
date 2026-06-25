@@ -615,6 +615,7 @@ export class PermissionManager {
 Renders the login HTML form. Supports query parameters:
 - `?error=<message>` - Display error message
 - `?message=<message>` - Display info message
+- `?redirect=<path>` - Redirect to this path after successful login (must start with `/`; external URLs are ignored and fall back to `/admin/content`)
 
 ### Registration Page
 
@@ -657,6 +658,8 @@ Renders the registration HTML form.
 **POST** `/auth/login/form`
 
 Handles HTML form submissions. Returns HTMX-compatible HTML response.
+
+Supports `?redirect=<path>` query parameter — same rules as the GET page above. Example: link customers to `/auth/login?redirect=/dash` to land them on `/dash` after login.
 
 ### Register (API)
 
