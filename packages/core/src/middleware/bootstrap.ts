@@ -5,7 +5,8 @@ import { MigrationService } from "../services/migrations";
 import { PluginBootstrapService } from "../services/plugin-bootstrap";
 import { bootstrapDocumentTypes, autoRegisterCollectionDocumentTypes } from "../services/document-types-seed";
 import { getHookSystem, hasHookSystem } from "../plugins/hooks/hook-system-singleton";
-import { getTelemetryService } from "../services/telemetry-service";
+import { getTelemetryService } from "../services/telemetry-service"
+import { SONICJS_VERSION } from "../utils/version";
 import type { SonicJSConfig } from "../app";
 import { setBranchLabel } from "../templates/layouts/admin-layout-catalyst.template";
 
@@ -256,7 +257,7 @@ export function bootstrapMiddleware(config: SonicJSConfig = {}) {
           active_plugins: activePlugins,
           field_type_histogram: fieldTypeHistogram,
           doc_total: docTotal,
-          sonicjs_version: (c.env as any).SONICJS_VERSION ?? 'unknown',
+          sonicjs_version: SONICJS_VERSION,
         });
       } catch { /* silent — telemetry must never break boot */ }
     } catch (error) {

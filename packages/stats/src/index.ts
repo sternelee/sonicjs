@@ -56,6 +56,8 @@ app.post('/v1/events', async (c) => {
     const now = Math.floor(Date.now() / 1000)
     const id = crypto.randomUUID()
     const title = `${installation_id} - ${event_type}`
+    // CF-IPCountry is a 2-letter ISO code injected by Cloudflare — no geo lookup needed, non-PII
+    const country = c.req.header('CF-IPCountry') ?? null
 
     await db.prepare(
       `INSERT INTO documents
@@ -63,7 +65,7 @@ app.post('/v1/events', async (c) => {
        VALUES (?, ?, 'events', 1, 'published', ?, ?, ?, ?, ?)`
     ).bind(
       id, id, title,
-      JSON.stringify({ installation_id, event_type, properties: properties ?? {}, timestamp: timestamp ?? new Date().toISOString() }),
+      JSON.stringify({ installation_id, event_type, properties: properties ?? {}, timestamp: timestamp ?? new Date().toISOString(), country }),
       now, now, now
     ).run()
 
