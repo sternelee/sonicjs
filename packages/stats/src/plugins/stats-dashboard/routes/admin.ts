@@ -66,6 +66,7 @@ adminRoutes.get('/', async (c) => {
     snapshotVersionR,
     snapshotDocVolumeR,
     snapshotCountR,
+    countryR,
   ] = await Promise.all([
     // 1. Weekly funnel: started/completed/failed counts per week (keyed to Monday date)
     db.prepare(
@@ -147,21 +148,21 @@ adminRoutes.get('/', async (c) => {
     // 11. Top collections from project_snapshot (aggregate doc counts across installations)
     db.prepare(
       `SELECT key AS collection, SUM(CAST(value AS INTEGER)) AS total_docs, COUNT(DISTINCT json_extract(data,'$.properties.installation_id')) AS installations
-       FROM documents, json_each(json_extract(data,'$.properties.collection_counts'))
+       FROM documents, json_each(json(json_extract(data,'$.properties.collection_counts')))
        WHERE ${EVENTS_WHERE} AND json_extract(data,'$.event_type')='project_snapshot'
        GROUP BY key ORDER BY total_docs DESC LIMIT 20`
     ).all(),
     // 12. Top plugins from project_snapshot (count appearances across installations)
     db.prepare(
       `SELECT value AS plugin, COUNT(DISTINCT json_extract(data,'$.properties.installation_id')) AS installations
-       FROM documents, json_each(json_extract(data,'$.properties.active_plugins'))
+       FROM documents, json_each(json(json_extract(data,'$.properties.active_plugins')))
        WHERE ${EVENTS_WHERE} AND json_extract(data,'$.event_type')='project_snapshot'
        GROUP BY value ORDER BY installations DESC LIMIT 20`
     ).all(),
     // 13. Field type histogram aggregated across all snapshots
     db.prepare(
       `SELECT key AS field_type, SUM(CAST(value AS INTEGER)) AS total_fields
-       FROM documents, json_each(json_extract(data,'$.properties.field_type_histogram'))
+       FROM documents, json_each(json(json_extract(data,'$.properties.field_type_histogram')))
        WHERE ${EVENTS_WHERE} AND json_extract(data,'$.event_type')='project_snapshot'
        GROUP BY key ORDER BY total_fields DESC`
     ).all(),
@@ -194,6 +195,12 @@ adminRoutes.get('/', async (c) => {
       `SELECT COUNT(DISTINCT json_extract(data,'$.properties.installation_id')) AS count
        FROM documents WHERE ${EVENTS_WHERE} AND json_extract(data,'$.event_type')='project_snapshot'`
     ).first(),
+    // 17. Country distribution (CF-IPCountry) across all events
+    db.prepare(
+      `SELECT COALESCE(json_extract(data,'$.country'),'unknown') AS country, COUNT(DISTINCT json_extract(data,'$.installation_id')) AS installs
+       FROM documents WHERE ${EVENTS_WHERE}
+       GROUP BY country ORDER BY installs DESC LIMIT 30`
+    ).all(),
   ])
 
   // ── Funnel aggregation ──────────────────────────────────────────────────
@@ -270,6 +277,9 @@ adminRoutes.get('/', async (c) => {
   const snapshotInstallations = Number((snapshotCountR as Row | null)?.count ?? 0)
   const hasSnapshotData = snapshotInstallations > 0
 
+  // ── Country breakdown ────────────────────────────────────────────────────
+  const countryRows = (rowsOf(countryR) as { country: string; installs: number }[]).filter((r) => r.country !== 'unknown')
+
   // ── Chart datasets (serialized) ─────────────────────────────────────────
   const charts = {
     trend: { labels: trendLabels.map(fmtWeekDate), weekly: trendCounts, cumulative: trendCumulative },
@@ -284,6 +294,7 @@ adminRoutes.get('/', async (c) => {
     fieldTypes: { labels: snapshotFieldTypeRows.map((r) => r.field_type), data: snapshotFieldTypeRows.map((r) => Number(r.total_fields)) },
     versions: { labels: snapshotVersionRows.map((r) => r.version), data: snapshotVersionRows.map((r) => Number(r.installations)) },
     docVolume: { labels: snapshotDocVolumeRows.map((r) => r.bucket), data: snapshotDocVolumeRows.map((r) => Number(r.count)) },
+    country: { labels: countryRows.map((r) => r.country), data: countryRows.map((r) => Number(r.installs)) },
   }
 
   // ── KPI card markup ─────────────────────────────────────────────────────
@@ -352,6 +363,11 @@ adminRoutes.get('/', async (c) => {
     ${card('Operating System', '', '<canvas id="chartOs" height="220"></canvas>')}
     ${card('Template', '', '<canvas id="chartTemplate" height="220"></canvas>')}
     ${card('Node Version', 'Top 12', '<canvas id="chartNode" height="220"></canvas>')}
+  </div>
+
+  <!-- Geography -->
+  <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+    ${card('Country', 'Unique installs by country (CF-IPCountry, no PII)', countryRows.length > 0 ? '<canvas id="chartCountry" height="280"></canvas>' : '<div class="py-8 text-center text-sm text-zinc-500 dark:text-zinc-400">No country data yet — will populate for new events.</div>')}
   </div>
 
   <!-- Weekly table -->
@@ -489,6 +505,11 @@ adminRoutes.get('/', async (c) => {
 
   // Node version horizontal bar
   bar('chartNode', D.node.labels, [{ label: 'Installs', data: D.node.data, backgroundColor: P[5] }], { horizontal: true, legend: false });
+
+  // Country
+  if (D.country && D.country.labels.length) {
+    bar('chartCountry', D.country.labels, [{ label: 'Installs', data: D.country.data, backgroundColor: P[0] }], { horizontal: true, legend: false });
+  }
 
   // What people build — project_snapshot charts
   if (D.collections && D.collections.labels.length) {

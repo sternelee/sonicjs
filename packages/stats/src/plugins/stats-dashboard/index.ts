@@ -18,9 +18,9 @@ export const statsDashboardPlugin = definePlugin({
     // This middleware runs inside pluginMenuMiddleware's next(), so the
     // context var is already initialised when we prepend our item.
     app.use('/admin/*', async (c, next) => {
-      const existing = (c.get('pluginMenuItems') ?? []) as Array<{ label: string; path: string; icon: string }>
+      const existing = ((c as any).get('pluginMenuItems') ?? []) as Array<{ label: string; path: string; icon: string }>
       if (!existing.some((m) => m.path === '/admin/dashboard')) {
-        c.set('pluginMenuItems', [
+        (c as any).set('pluginMenuItems', [
           { label: 'Dashboard', path: '/admin/dashboard', icon: DASHBOARD_ICON },
           ...existing,
         ] as any)
