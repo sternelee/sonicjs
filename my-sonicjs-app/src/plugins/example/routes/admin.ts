@@ -1,5 +1,5 @@
 /**
- * Hello Cruel World — Admin Routes
+ * Example Plugin — Admin Routes
  *
  * Renders inside the shared admin layout (sidebar, nav, header) by calling
  * renderAdminLayoutCatalyst from @sonicjs-cms/core. This is the DEFAULT
@@ -28,7 +28,7 @@ import { Hono } from 'hono'
 import { renderAdminLayoutCatalyst, escapeHtml } from '@sonicjs-cms/core'
 import type { AdminLayoutCatalystData } from '@sonicjs-cms/core'
 
-export function createHelloCruelWorldAdminRoutes(options: { greeting?: string; defaultName?: string } = {}): Hono {
+export function createExampleAdminRoutes(options: { greeting?: string; defaultName?: string } = {}): Hono {
   const router = new Hono<any>()
 
   router.get('/', (c) => {
@@ -42,13 +42,13 @@ export function createHelloCruelWorldAdminRoutes(options: { greeting?: string; d
 
         <div class="flex items-center justify-between mb-6">
           <div>
-            <h1 class="text-2xl/8 font-semibold text-zinc-950 dark:text-white sm:text-xl/8">Hello Cruel World</h1>
+            <h1 class="text-2xl/8 font-semibold text-zinc-950 dark:text-white sm:text-xl/8">Example Plugin</h1>
             <p class="mt-1 text-sm/6 text-zinc-500 dark:text-zinc-400">
               A demo plugin for understanding the SonicJS v3 plugin system.
             </p>
           </div>
           <a
-            href="/admin/plugins/hello-cruel-world#settings"
+            href="/admin/plugins/example#settings"
             title="Plugin settings"
             class="inline-flex items-center gap-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 px-3 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
           >
@@ -74,8 +74,37 @@ export function createHelloCruelWorldAdminRoutes(options: { greeting?: string; d
             </div>
           </dl>
           <p class="text-xs text-gray-500 mt-3">
-            Try: <a href="/hello-cruel-world" class="text-blue-400 hover:text-blue-300 font-mono">/hello-cruel-world</a>
+            Try: <a href="/example" class="text-blue-400 hover:text-blue-300 font-mono">/example</a>
             → greets <span class="text-green-400 font-mono">${escapeHtml(defaultName)}</span>
+          </p>
+        </div>
+
+        <!-- Moods Collection ─────────────────────────────────────────────────
+             Shows how a plugin contributes a collection to the document repo.
+             The core /admin/content/:collection route provides full CRUD for free —
+             the plugin just links to it. -->
+        <div class="backdrop-blur-md bg-black/20 rounded-xl border border-white/10 shadow-xl p-6 mb-6">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h2 class="text-lg font-semibold text-white">😈 Moods</h2>
+              <p class="text-xs text-gray-400 mt-0.5">
+                A random published mood is included in every API response.
+                Add, edit, or remove moods below.
+              </p>
+            </div>
+            <a
+              href="/admin/content?model=example&page=1"
+              class="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 px-3 py-2 text-sm font-semibold text-white shadow-sm transition-all duration-200"
+            >
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+              </svg>
+              Manage Moods
+            </a>
+          </div>
+          <p class="text-xs text-gray-500">
+            Try: <a href="/example" class="text-blue-400 hover:text-blue-300 font-mono">/example</a>
+            → response includes a random <code class="text-purple-400">mood</code> field from this collection.
           </p>
         </div>
 
@@ -84,13 +113,13 @@ export function createHelloCruelWorldAdminRoutes(options: { greeting?: string; d
           <dl class="space-y-3 text-sm">
             <div>
               <dt class="text-gray-400 font-medium">Public API</dt>
-              <dd><a href="/hello-cruel-world" class="text-blue-400 hover:text-blue-300 font-mono">GET /hello-cruel-world</a></dd>
-              <dd><a href="/hello-cruel-world/traveller" class="text-blue-400 hover:text-blue-300 font-mono">GET /hello-cruel-world/traveller</a></dd>
-              <dd class="text-gray-500 text-xs mt-1">Routes at /hello-cruel-world/* not /api/* — user plugins mount after the core /:collection catch-all.</dd>
+              <dd><a href="/example" class="text-blue-400 hover:text-blue-300 font-mono">GET /example</a></dd>
+              <dd><a href="/example/traveller" class="text-blue-400 hover:text-blue-300 font-mono">GET /example/traveller</a></dd>
+              <dd class="text-gray-500 text-xs mt-1">Routes at /example/* not /api/* — user plugins mount after the core /:collection catch-all.</dd>
             </div>
             <div>
               <dt class="text-gray-400 font-medium">Admin page</dt>
-              <dd class="text-gray-200 font-mono">GET /admin/hello-cruel-world</dd>
+              <dd class="text-gray-200 font-mono">GET /admin/example</dd>
             </div>
             <div>
               <dt class="text-gray-400 font-medium">Hook subscriptions</dt>
@@ -99,7 +128,7 @@ export function createHelloCruelWorldAdminRoutes(options: { greeting?: string; d
             </div>
             <div>
               <dt class="text-gray-400 font-medium">Settings</dt>
-              <dd><a href="/admin/plugins/hello-cruel-world#settings" class="text-blue-400 hover:text-blue-300 font-mono">/admin/plugins/hello-cruel-world#settings</a></dd>
+              <dd><a href="/admin/plugins/example#settings" class="text-blue-400 hover:text-blue-300 font-mono">/admin/plugins/example#settings</a></dd>
             </div>
           </dl>
         </div>
@@ -115,9 +144,9 @@ export function createHelloCruelWorldAdminRoutes(options: { greeting?: string; d
     `
 
     const layoutData: AdminLayoutCatalystData = {
-      title: 'Hello Cruel World',
-      pageTitle: 'Hello Cruel World',
-      currentPath: '/admin/hello-cruel-world',
+      title: 'Example Plugin',
+      pageTitle: 'Example Plugin',
+      currentPath: '/admin/example',
       content,
       ...(user ? { user: { name: user.email, email: user.email, role: user.role } } : {}),
       ...(dynamicMenuItems ? { dynamicMenuItems } : {}),

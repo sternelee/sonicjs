@@ -81,6 +81,10 @@ export type { PluginMenuEntry, ResolvedPluginMenuEntry } from './services/plugin
 export { RbacService } from './services/rbac'
 export { bootstrapDocumentTypes } from './services/document-types-seed'
 
+// Document repository + service — re-exported for user plugins that read/write documents
+export { DocumentRepository } from './services/document-repository'
+export { DocumentsService } from './services/documents'
+
 // Cloudflare email provider
 export { CloudflareEmailProvider } from './services/email/providers/cloudflare'
 export type { CloudflareEmailProviderOptions, CFSendEmailBinding } from './services/email/providers/cloudflare'

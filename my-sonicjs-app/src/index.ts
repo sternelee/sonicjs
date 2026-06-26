@@ -16,7 +16,8 @@ import {
   redirectPlugin,
   registerCollections,
 } from '@sonicjs-cms/core';
-import { helloCruelWorldPlugin } from './plugins/hello-cruel-world';
+import { examplePlugin } from './plugins/example';
+import { moodsCollection } from './plugins/example/collections/moods.collection';
 
 // User profile model — uncomment defineUserProfile() in this file to add custom fields
 import './user-profile.model';
@@ -27,13 +28,13 @@ import blogPostsCollection from './collections/blog-posts.collection';
 import e2eTestCollection from './collections/e2e-test.collection';
 
 // Register collections so they appear in admin UI
-registerCollections([siteSettingsCollection, blogPostsCollection, e2eTestCollection]);
+registerCollections([siteSettingsCollection, blogPostsCollection, e2eTestCollection, moodsCollection]);
 
 const config: SonicJSConfig = {
   plugins: {
     // Add plugins to this array to activate them. Each plugin's register()
     // runs synchronously at startup; onBoot() runs async on first request.
-    register: [redirectPlugin, helloCruelWorldPlugin],
+    register: [redirectPlugin, examplePlugin],
     disableAll: false,
   },
 };

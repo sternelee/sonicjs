@@ -664,8 +664,8 @@ function renderInformationTab(plugin: any): string {
             : r.method === 'DELETE'
             ? 'bg-red-500/20 text-red-300 border border-red-500/30'
             : 'bg-white/10 text-gray-300 border border-white/20'
-          const pathHtml = r.method === 'GET' && !r.requiresAuth
-            ? `<a href="${r.path}" target="_blank" class="font-mono text-sm text-blue-400 hover:text-blue-300 hover:underline">${r.path}</a>`
+          const pathHtml = r.method === 'GET'
+            ? `<a href="${r.path}" class="font-mono text-sm text-blue-400 hover:text-blue-300 hover:underline">${r.path}</a>`
             : `<span class="font-mono text-sm text-gray-200">${r.path}</span>`
           const authBadge = r.requiresAuth
             ? `<span class="ml-2 text-xs text-amber-400/80">🔒 auth</span>`

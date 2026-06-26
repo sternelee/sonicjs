@@ -45,9 +45,9 @@
  * TypeScript type is `never` and the runtime throws. This plugin needs none.
  */
 
-import { definePlugin, PluginServiceClass as PluginService } from '@sonicjs-cms/core'
-import { createHelloCruelWorldApiRoutes } from './routes/api'
-import { createHelloCruelWorldAdminRoutes } from './routes/admin'
+import { definePlugin, PluginServiceClass as PluginService, DocumentRepository, DocumentsService } from '@sonicjs-cms/core'
+import { createExampleApiRoutes } from './routes/api'
+import { createExampleAdminRoutes } from './routes/admin'
 
 // Shared mutable options object — register() passes a reference to the routes;
 // onBoot() mutates it after loading DB settings so route handlers see live values.
@@ -56,6 +56,16 @@ const pluginOptions: { greeting: string; defaultName: string } = {
   defaultName: 'Stranger',
 }
 
+// Type ID for the moods collection — matches the collection name.
+const MOODS_TYPE_ID = 'example'
+
+// Default moods seeded on first boot if the collection is empty.
+const DEFAULT_MOODS = [
+  { name: 'Cruel', emoji: '😈', description: 'Classic flavour — cold, merciless, unapologetic.' },
+  { name: 'Melancholy', emoji: '🌧️', description: 'The world is grey and damp and vaguely disappointing.' },
+  { name: 'Chaotic', emoji: '🌀', description: 'Nothing makes sense and that is perfectly fine.' },
+]
+
 // ── Plugin definition ─────────────────────────────────────────────────────────
 //
 // definePlugin<Caps>() is generic. The `Caps` type parameter captures the
@@ -63,16 +73,16 @@ const pluginOptions: { greeting: string; defaultName: string } = {
 // We omit capabilities entirely (defaults to readonly []) since this plugin
 // needs no optional services.
 
-export const helloCruelWorldPlugin = definePlugin({
+export const examplePlugin = definePlugin({
   // ── Identity fields ─────────────────────────────────────────────────────────
   //
   // `id` is the stable machine key — used as the DB key for settings, the
   // settings URL segment (/admin/settings/plugins/:id), and dependency keys.
   // Use kebab-case. Never change this once the plugin ships.
-  id: 'hello-cruel-world',
+  id: 'example',
 
   // `name` is the human-readable display name in the admin UI.
-  name: 'Hello Cruel World',
+  name: 'Example',
 
   // `version` must be valid semver (X.Y.Z). definePlugin warns if it isn't.
   version: '1.0.0',
@@ -115,11 +125,11 @@ export const helloCruelWorldPlugin = definePlugin({
     //
     // The public API is at /hello-cruel-world/* (no /api/ prefix).
     // Pass pluginOptions by reference — onBoot() mutates it after loading DB settings.
-    app.route('/hello-cruel-world', createHelloCruelWorldApiRoutes(pluginOptions) as any)
+    app.route('/example', createExampleApiRoutes(pluginOptions) as any)
 
     // Admin routes live under /admin/*, which also has a catch-all, but user
     // plugins are mounted BEFORE the /admin catch-all, so this works fine.
-    app.route('/admin/hello-cruel-world', createHelloCruelWorldAdminRoutes(pluginOptions) as any)
+    app.route('/admin/example', createExampleAdminRoutes(pluginOptions) as any)
   },
 
   // ── Admin sidebar menu ────────────────────────────────────────────────────
@@ -136,8 +146,8 @@ export const helloCruelWorldPlugin = definePlugin({
   //   permissions — roles that can see this entry (admin, editor, etc.)
   menu: [
     {
-      label: 'Hello Cruel World',
-      path: '/admin/hello-cruel-world',
+      label: 'Example',
+      path: '/admin/example',
       // 'globe-alt' is one of the Heroicons names available in the catalyst UI.
       icon: 'globe-alt',
       // 90 puts this near the bottom of the sidebar, above the Settings item.
@@ -168,7 +178,7 @@ export const helloCruelWorldPlugin = definePlugin({
     'content:after:create': (payload) => {
       // `payload` is typed: { collection, id, data, user? }
       console.log(
-        `[hello-cruel-world] New content created in collection "${payload.collection}"`,
+        `[example] New content created in collection "${payload.collection}"`,
         { id: payload.id, user: payload.user?.email ?? 'anonymous' }
       )
       // Returning void (or the payload unchanged) passes control to the next
@@ -180,7 +190,7 @@ export const helloCruelWorldPlugin = definePlugin({
     // payload is typed: { user: { id, email, role? } }
     'auth:registration:completed': (payload) => {
       console.log(
-        `[hello-cruel-world] Welcome to the cruel world, ${payload.user.email}!`
+        `[example] Welcome to the cruel world, ${payload.user.email}!`
       )
     },
   },
@@ -203,7 +213,7 @@ export const helloCruelWorldPlugin = definePlugin({
   async onBoot(ctx) {
     // Logging here goes to the Wrangler console (local dev) or Cloudflare
     // Logpush in production. Use console.log sparingly in hot paths.
-    console.log('[hello-cruel-world] Plugin booting...')
+    console.log('[example] Plugin booting...')
 
     // ── Self-register in the DB so /admin/plugins shows this plugin ────────
     //
@@ -225,8 +235,8 @@ export const helloCruelWorldPlugin = definePlugin({
         const svc = new PluginService(db)
 
         // Ensure the plugin record exists (no-op if already present).
-        await svc.ensurePlugin('hello-cruel-world', {
-          displayName: 'Hello Cruel World',
+        await svc.ensurePlugin('example', {
+          displayName: 'Example',
           description: 'A demo plugin that explains the SonicJS v3 plugin system.',
           author: 'You',
           version: '1.0.0',
@@ -247,7 +257,7 @@ export const helloCruelWorldPlugin = definePlugin({
         //   path        — full path as mounted on the root app
         //   description — what the route does
         //   requiresAuth — true = admin/session required; false = public
-        const existing = await svc.getPlugin('hello-cruel-world')
+        const existing = await svc.getPlugin('example')
         const existingSettings = (existing?.settings as Record<string, unknown>) ?? {}
 
         // Seed configSchema defaults on first boot so user-configurable keys exist
@@ -264,33 +274,81 @@ export const helloCruelWorldPlugin = definePlugin({
         if (typeof mergedSettings.greeting === 'string') pluginOptions.greeting = mergedSettings.greeting
         if (typeof mergedSettings.defaultName === 'string') pluginOptions.defaultName = mergedSettings.defaultName
 
-        await svc.updatePluginSettings('hello-cruel-world', {
+        await svc.updatePluginSettings('example', {
           ...mergedSettings,
-          _adminPath: '/admin/hello-cruel-world',
+          _adminPath: '/admin/example',
           _routes: [
             {
               method: 'GET',
-              path: '/hello-cruel-world',
+              path: '/example',
               description: 'Returns a JSON greeting message',
               requiresAuth: false,
             },
             {
               method: 'GET',
-              path: '/hello-cruel-world/:name',
+              path: '/example/:name',
               description: 'Returns a personalised greeting for :name',
               requiresAuth: false,
             },
             {
               method: 'GET',
-              path: '/admin/hello-cruel-world',
+              path: '/example/moods',
+              description: 'Lists all published moods as JSON',
+              requiresAuth: false,
+            },
+            {
+              method: 'GET',
+              path: '/admin/example',
               description: 'Admin dashboard page for this plugin',
+              requiresAuth: true,
+            },
+            {
+              method: 'GET',
+              path: '/admin/content?model=example&page=1',
+              description: 'CRUD admin for the moods collection (core-provided)',
               requiresAuth: true,
             },
           ],
         })
       } catch (e) {
         // Non-fatal — plugin still works, just won't show in the list.
-        console.warn('[hello-cruel-world] Could not self-register in DB:', e)
+        console.warn('[example] Could not self-register in DB:', e)
+      }
+
+      // ── Seed default moods ─────────────────────────────────────────────────
+      //
+      // On first boot the moods collection is empty. We use DocumentsService to
+      // create + immediately publish 3 default moods so the API has data to serve.
+      //
+      // DocumentsService.create() with publishOnCreate:true is the idiomatic
+      // one-step pattern for seeding reference data that should be live immediately.
+      //
+      // We guard with a COUNT query to stay idempotent — subsequent warm-ups skip
+      // seeding if any mood documents already exist.
+      try {
+        const countRow = await db!
+          .prepare(`SELECT COUNT(*) as n FROM documents WHERE type_id = ? AND tenant_id = ? AND deleted_at IS NULL`)
+          .bind(MOODS_TYPE_ID, 'default')
+          .first<{ n: number }>()
+
+        if ((countRow?.n ?? 0) === 0) {
+          console.log('[example] Seeding default moods...')
+          const svc = new DocumentsService(db as any)
+          for (const mood of DEFAULT_MOODS) {
+            await svc.create(
+              {
+                typeId: MOODS_TYPE_ID,
+                title: mood.name,
+                data: mood,
+                publishOnCreate: true,
+              },
+              'system',
+            )
+          }
+          console.log(`[example] Seeded ${DEFAULT_MOODS.length} moods.`)
+        }
+      } catch (e) {
+        console.warn('[example] Could not seed moods:', e)
       }
     }
 
@@ -302,15 +360,13 @@ export const helloCruelWorldPlugin = definePlugin({
     //   binding = "DB"
     //   database_name = "sonicjs"
     //
-    // This plugin doesn't need DB access (no document type, no table), so we
-    // just demonstrate how to safely read an env var.
-    const greetingEnvOverride = ctx.env?.HELLO_CRUEL_WORLD_GREETING as string | undefined
+    const greetingEnvOverride = ctx.env?.EXAMPLE_GREETING as string | undefined
 
     if (greetingEnvOverride) {
       // An environment variable can override the plugin's default greeting.
       // In production this might come from a Workers secret or plain env var.
       console.log(
-        `[hello-cruel-world] Greeting overridden by env var: "${greetingEnvOverride}"`
+        `[example] Greeting overridden by env var: "${greetingEnvOverride}"`
       )
     }
 
@@ -324,11 +380,11 @@ export const helloCruelWorldPlugin = definePlugin({
     ctx.hooks.on('content:after:update', (payload) => {
       // This fires on every content update. payload: ContentEventPayload
       console.log(
-        `[hello-cruel-world] Content updated in "${payload.collection}" (id: ${payload.id})`
+        `[example] Content updated in "${payload.collection}" (id: ${payload.id})`
       )
     })
 
-    console.log('[hello-cruel-world] Plugin ready.')
+    console.log('[example] Plugin ready.')
   },
 
   // ── configSchema — auto-rendered settings form ────────────────────────────
@@ -345,7 +401,7 @@ export const helloCruelWorldPlugin = definePlugin({
     greeting: {
       type: 'string',
       label: 'Custom Greeting',
-      description: 'The message returned by the /hello-cruel-world endpoint.',
+      description: 'The message returned by the /example endpoint.',
       default: 'Hello, Cruel World!',
       placeholder: 'Hello, Cruel World!',
     },
@@ -392,28 +448,28 @@ export const helloCruelWorldPlugin = definePlugin({
     // Called once when an admin installs the plugin.
     // For a plugin with its own DB table you'd run migrations here.
     // This plugin stores nothing — the greeting lives in plugin config.
-    console.log('[hello-cruel-world] Installed. No DB migrations needed.')
+    console.log('[example] Installed. No DB migrations needed.')
   },
 
   activate: async () => {
     // Called each time the plugin is activated (e.g. re-enabled after being
     // disabled). A good place to warm caches or start background jobs.
-    console.log('[hello-cruel-world] Activated.')
+    console.log('[example] Activated.')
   },
 
   deactivate: async () => {
     // Called when an admin disables the plugin. Routes stay mounted (the
     // Worker binary doesn't change at runtime), but you can stop background
     // work and invalidate caches here.
-    console.log('[hello-cruel-world] Deactivated.')
+    console.log('[example] Deactivated.')
   },
 
   uninstall: async () => {
     // Called when an admin removes the plugin entirely.
     // For a plugin with its own DB table you'd DROP TABLE here.
-    console.log('[hello-cruel-world] Uninstalled.')
+    console.log('[example] Uninstalled.')
   },
 })
 
 // Re-export for consumers that import directly from this file (e.g. tests).
-export default helloCruelWorldPlugin
+export default examplePlugin
