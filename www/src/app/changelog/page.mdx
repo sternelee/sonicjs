@@ -99,15 +99,15 @@ export const sections = [
 
 
 
-{/* Version 3.0.0-beta.15 */}
+{/* Version 3.0.0-beta.16 */}
 <div className="relative pl-8 pb-8 border-l-2 border-emerald-200 dark:border-emerald-800">
   <div className="absolute -left-3 top-0 w-6 h-6 rounded-full bg-emerald-500 border-4 border-white dark:border-gray-900 shadow-lg"></div>
 
   <div className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-xl p-6 border border-emerald-200 dark:border-emerald-800 shadow-md hover:shadow-xl transition-shadow">
     <div className="flex items-center gap-3 mb-4">
-      <span className="px-3 py-1 bg-emerald-500 text-white text-sm font-bold rounded-lg">v3.0.0-beta.15</span>
+      <span className="px-3 py-1 bg-emerald-500 text-white text-sm font-bold rounded-lg">v3.0.0-beta.16</span>
       <span className="text-sm text-gray-600 dark:text-gray-400">June 26, 2026</span>
-      
+      <span className="px-2 py-1 bg-gradient-to-r from-orange-100 to-red-100 dark:from-orange-900/30 dark:to-red-900/30 border border-orange-300 dark:border-orange-700 text-orange-800 dark:text-orange-300 text-xs font-bold rounded uppercase">Latest</span>
     </div>
 
     <div className="space-y-3">
@@ -116,10 +116,9 @@ export const sections = [
           <span>✨</span> Highlights
         </h4>
         <ul className="space-y-1.5 ml-6 text-sm text-gray-700 dark:text-gray-300">
-          <li className="flex items-start gap-2"><span className="text-emerald-500">▸</span><strong>feat(plugins)</strong>: <code>helloWorldPlugin</code> and <code>createHelloWorldPlugin</code> now exported from <code>@sonicjs-cms/core</code> — importable directly without a relative path into the monorepo</li>
-          <li className="flex items-start gap-2"><span className="text-emerald-500">▸</span><strong>feat(auth)</strong>: API keys plugin + closed auth test gaps vs Payload CMS baseline</li>
-          <li className="flex items-start gap-2"><span className="text-emerald-500">▸</span><strong>docs</strong>: New <em>Hello World From Scratch</em> plugin tutorial with configurable greeting; updated <code>v4-author-guide</code> with "Using built-in plugins" section and corrected import examples</li>
-          <li className="flex items-start gap-2"><span className="text-emerald-500">▸</span><strong>chore(www)</strong>: Upgraded <code>@opennextjs/cloudflare</code> to 1.20.0 — resolves esbuild bundling errors under Next.js 16.2.x</li>
+          <li className="flex items-start gap-2"><span className="text-emerald-500">▸</span><strong>feat(create-app)</strong>: Example plugin ships with every new install — demonstrates routes, admin UI, collections, hooks, and settings out of the box</li>
+          <li className="flex items-start gap-2"><span className="text-emerald-500">▸</span><strong>fix(plugins)</strong>: Saving plugin settings no longer wipes the Routes / Admin Path shown in the Info tab — merges form fields with existing settings instead of replacing them</li>
+          <li className="flex items-start gap-2"><span className="text-emerald-500">▸</span><strong>feat(plugins)</strong>: <code>hello-cruel-world</code> renamed to <code>example</code> plugin with improved UX, settings tab visibility, and moods collection</li>
         </ul>
       </div>
     </div>
