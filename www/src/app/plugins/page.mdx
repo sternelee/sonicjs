@@ -123,6 +123,34 @@ This plugin is **automatically disabled in production** for security.
 
 ---
 
+### Example Plugin
+
+**Status:** Bundled with new installs
+**Version:** 1.0.0
+
+A fully-featured reference plugin that ships with every new SonicJS app created via `npm create sonicjs@latest`. Demonstrates the complete plugin API: public routes, admin page, collections, configurable settings, and data seeding.
+
+**Public API Routes:**
+- `GET /example` — greeting with random mood
+- `GET /example/:name` — personalized greeting
+- `GET /example/moods` — list all published moods
+
+**Admin Page:** `/admin/example`
+
+**Features:**
+- Configurable greeting, name, and mood via plugin Settings tab
+- Moods collection (create/manage mood entries with emoji)
+- Admin page showing API links and collection management
+- Data seeding in `onBoot` (default moods seeded if none exist)
+
+**Access:** Navigate to **Admin** → **Example** (or **Admin** → **Plugins** → **Example**)
+
+<Callout>
+Remove this plugin (and its `moodsCollection` import) from `src/index.ts` when you're ready to build your own — it's there to learn from, not to keep.
+</Callout>
+
+---
+
 ## Authentication Plugins
 
 Extend authentication with passwordless login methods.
