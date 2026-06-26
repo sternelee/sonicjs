@@ -423,7 +423,7 @@ function renderSettingsTab(plugin: any): string {
 }
 
 function renderSettingsFields(settings: PluginSettings): string {
-  return Object.entries(settings).map(([key, value]) => {
+  return Object.entries(settings).filter(([key]) => !key.startsWith('_')).map(([key, value]) => {
     const fieldId = `setting_${key}`
     const displayName = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())
     
@@ -622,6 +622,48 @@ function renderActivityTab(activity: PluginActivity[]): string {
 
 function renderInformationTab(plugin: any): string {
   return `
+    ${plugin.description ? `
+    <!-- About -->
+    <div class="backdrop-blur-md bg-black/20 rounded-xl border border-white/10 shadow-xl p-6 mb-6">
+      <h2 class="text-xl font-semibold text-white mb-3">About</h2>
+      <p class="text-gray-300 leading-relaxed">${plugin.description}</p>
+    </div>
+    ` : ''}
+
+    ${(plugin.settings?._routes?.length ?? 0) > 0 ? `
+    <!-- Routes -->
+    <div class="backdrop-blur-md bg-black/20 rounded-xl border border-white/10 shadow-xl p-6 mb-6">
+      <h2 class="text-xl font-semibold text-white mb-4">Routes</h2>
+      <div class="space-y-2">
+        ${(plugin.settings._routes as Array<{ method: string; path: string; description?: string; requiresAuth?: boolean }>).map(r => {
+          const badge = r.method === 'GET'
+            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+            : r.method === 'POST'
+            ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+            : r.method === 'DELETE'
+            ? 'bg-red-500/20 text-red-300 border border-red-500/30'
+            : 'bg-white/10 text-gray-300 border border-white/20'
+          const pathHtml = r.method === 'GET' && !r.requiresAuth
+            ? `<a href="${r.path}" target="_blank" class="font-mono text-sm text-blue-400 hover:text-blue-300 hover:underline">${r.path}</a>`
+            : `<span class="font-mono text-sm text-gray-200">${r.path}</span>`
+          const authBadge = r.requiresAuth
+            ? `<span class="ml-2 text-xs text-amber-400/80">🔒 auth</span>`
+            : ''
+          return `
+          <div class="flex items-start gap-3 py-2 border-b border-white/5 last:border-0">
+            <span class="shrink-0 inline-block px-2 py-0.5 rounded text-xs font-bold ${badge}">${r.method}</span>
+            <div class="min-w-0">
+              <div class="flex items-center gap-1 flex-wrap">
+                ${pathHtml}${authBadge}
+              </div>
+              ${r.description ? `<p class="text-xs text-gray-400 mt-0.5">${r.description}</p>` : ''}
+            </div>
+          </div>`
+        }).join('')}
+      </div>
+    </div>
+    ` : ''}
+
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <!-- Plugin Details -->
       <div class="backdrop-blur-md bg-black/20 rounded-xl border border-white/10 shadow-xl p-6">
