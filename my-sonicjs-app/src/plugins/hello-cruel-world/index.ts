@@ -49,6 +49,13 @@ import { definePlugin, PluginServiceClass as PluginService } from '@sonicjs-cms/
 import { createHelloCruelWorldApiRoutes } from './routes/api'
 import { createHelloCruelWorldAdminRoutes } from './routes/admin'
 
+// Shared mutable options object — register() passes a reference to the routes;
+// onBoot() mutates it after loading DB settings so route handlers see live values.
+const pluginOptions: { greeting: string; defaultName: string } = {
+  greeting: 'Hello, Cruel World!',
+  defaultName: 'Stranger',
+}
+
 // ── Plugin definition ─────────────────────────────────────────────────────────
 //
 // definePlugin<Caps>() is generic. The `Caps` type parameter captures the
@@ -107,11 +114,12 @@ export const helloCruelWorldPlugin = definePlugin({
     //   c) POST to /api/forms or another dedicated catch-all (plugin-provided)
     //
     // The public API is at /hello-cruel-world/* (no /api/ prefix).
-    app.route('/hello-cruel-world', createHelloCruelWorldApiRoutes() as any)
+    // Pass pluginOptions by reference — onBoot() mutates it after loading DB settings.
+    app.route('/hello-cruel-world', createHelloCruelWorldApiRoutes(pluginOptions) as any)
 
     // Admin routes live under /admin/*, which also has a catch-all, but user
     // plugins are mounted BEFORE the /admin catch-all, so this works fine.
-    app.route('/admin/hello-cruel-world', createHelloCruelWorldAdminRoutes() as any)
+    app.route('/admin/hello-cruel-world', createHelloCruelWorldAdminRoutes(pluginOptions) as any)
   },
 
   // ── Admin sidebar menu ────────────────────────────────────────────────────
@@ -241,8 +249,24 @@ export const helloCruelWorldPlugin = definePlugin({
         //   requiresAuth — true = admin/session required; false = public
         const existing = await svc.getPlugin('hello-cruel-world')
         const existingSettings = (existing?.settings as Record<string, unknown>) ?? {}
+
+        // Seed configSchema defaults on first boot so user-configurable keys exist
+        // in the DB and the Settings tab is visible in the admin UI.
+        const mergedSettings: Record<string, unknown> = {
+          greeting: 'Hello, Cruel World!',
+          defaultName: 'Stranger',
+          showTimestamp: true,
+          mood: 'cruel',
+          ...existingSettings,  // saved values win over defaults
+        }
+
+        // Apply resolved settings to pluginOptions so route handlers see them.
+        if (typeof mergedSettings.greeting === 'string') pluginOptions.greeting = mergedSettings.greeting
+        if (typeof mergedSettings.defaultName === 'string') pluginOptions.defaultName = mergedSettings.defaultName
+
         await svc.updatePluginSettings('hello-cruel-world', {
-          ...existingSettings,  // preserve configSchema values (greeting, mood, etc.)
+          ...mergedSettings,
+          _adminPath: '/admin/hello-cruel-world',
           _routes: [
             {
               method: 'GET',
@@ -321,9 +345,16 @@ export const helloCruelWorldPlugin = definePlugin({
     greeting: {
       type: 'string',
       label: 'Custom Greeting',
-      description: 'The message returned by the /api/hello-cruel-world endpoint.',
+      description: 'The message returned by the /hello-cruel-world endpoint.',
       default: 'Hello, Cruel World!',
       placeholder: 'Hello, Cruel World!',
+    },
+    defaultName: {
+      type: 'string',
+      label: 'Default Name',
+      description: 'Name used in the greeting when no :name is provided in the URL.',
+      default: 'Stranger',
+      placeholder: 'Stranger',
     },
     showTimestamp: {
       type: 'boolean',

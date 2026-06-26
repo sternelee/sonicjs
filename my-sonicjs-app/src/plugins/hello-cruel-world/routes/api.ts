@@ -24,7 +24,7 @@ import { Hono } from 'hono'
  * the plugin into the routes without module-level globals. For this simple plugin
  * we just accept the optional `greeting` setting.
  */
-export function createHelloCruelWorldApiRoutes(options: { greeting?: string } = {}): Hono {
+export function createHelloCruelWorldApiRoutes(options: { greeting?: string; defaultName?: string } = {}): Hono {
   // A Hono instance is a mini router. We'll mount it at `/api/hello-cruel-world`
   // in the plugin's register() call, so the paths here are relative to that prefix.
   const router = new Hono()
@@ -33,20 +33,20 @@ export function createHelloCruelWorldApiRoutes(options: { greeting?: string } = 
   // Returns a JSON greeting. c = Hono "Context" — wraps the raw Request and
   // provides helpers for building responses (c.json, c.text, c.html, etc.).
   router.get('/', (c) => {
-    // c.req.raw is the underlying Web API Request if you ever need it.
-    // c.json() serialises the object and sets Content-Type: application/json.
+    // options is read at request time so onBoot() mutations are visible here.
+    // defaultName is used when no :name appears in the URL.
+    const name = options.defaultName ?? 'Stranger'
     return c.json({
-      // The greeting comes from plugin configSchema settings (or a default).
-      message: options.greeting ?? 'Hello, Cruel World!',
-      // ISO timestamp so callers can see this is a fresh response, not cached.
+      message: `Hello, ${name}! The world is still quite cruel.`,
       timestamp: new Date().toISOString(),
-      // Metadata the caller can use to understand what plugin served this.
       plugin: 'hello-cruel-world',
     })
   })
 
-  // ── GET /api/hello-cruel-world/:name ────────────────────────────────────────
+  // ── GET /hello-cruel-world/:name ────────────────────────────────────────────
   // Demonstrates URL parameters. :name is a path segment captured by Hono.
+  // Falls back to options.defaultName when the URL param is absent (not possible
+  // here since the route requires :name, but defaultName is used on the root route).
   router.get('/:name', (c) => {
     // c.req.param('name') reads the :name capture from the URL.
     const name = c.req.param('name')

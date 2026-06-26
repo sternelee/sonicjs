@@ -60,7 +60,11 @@ export interface PluginSettingsPageData {
 
 export function renderPluginSettingsPage(data: PluginSettingsPageData): string {
   const { plugin, activity = [], user } = data
-  
+  // true only when the plugin has at least one user-configurable setting key
+  // (_-prefixed keys are internal metadata, not settings the user can edit)
+  const hasUserSettings = Object.keys(plugin.settings || {}).some(k => !k.startsWith('_'))
+  const defaultTab = 'info'
+
   const pageContent = `
     <div class="w-full px-4 sm:px-6 lg:px-8 py-6">
       <!-- Header with Back Button -->
@@ -71,13 +75,24 @@ export function renderPluginSettingsPage(data: PluginSettingsPageData): string {
             ${plugin.description}
           </p>
         </div>
-        <div class="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
+        <div class="mt-4 sm:mt-0 sm:ml-16 flex items-center gap-3">
           <a href="/admin/plugins" class="inline-flex items-center justify-center rounded-lg bg-white dark:bg-zinc-800 px-3.5 py-2.5 text-sm font-semibold text-zinc-950 dark:text-white ring-1 ring-inset ring-zinc-950/10 dark:ring-white/10 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors shadow-sm">
             <svg class="-ml-0.5 mr-1.5 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
             </svg>
             Back to Plugins
           </a>
+          ${plugin.settings?._adminPath ? `
+          <a
+            href="${plugin.settings._adminPath}"
+            class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200"
+          >
+            <svg class="-ml-0.5 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+            </svg>
+            View Page
+          </a>
+          ` : ''}
         </div>
       </div>
 
@@ -110,14 +125,16 @@ export function renderPluginSettingsPage(data: PluginSettingsPageData): string {
       <!-- Tabs -->
       <div class="mb-6">
         <nav class="flex space-x-8" aria-label="Tabs">
-          <a href="#settings" onclick="showTab('settings')" id="settings-tab" class="tab-button active border-b-2 border-blue-400 py-2 px-1 text-sm font-medium text-blue-400">
-            Settings
-          </a>
-          <a href="#activity" onclick="showTab('activity')" id="activity-tab" class="tab-button border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-400 hover:text-gray-300">
-            Activity Log
-          </a>
           <a href="#info" onclick="showTab('info')" id="info-tab" class="tab-button border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-400 hover:text-gray-300">
             Information
+          </a>
+          ${hasUserSettings ? `
+          <a href="#settings" onclick="showTab('settings')" id="settings-tab" class="tab-button border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-400 hover:text-gray-300">
+            Settings
+          </a>
+          ` : ''}
+          <a href="#activity" onclick="showTab('activity')" id="activity-tab" class="tab-button border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-400 hover:text-gray-300">
+            Activity Log
           </a>
         </nav>
       </div>
@@ -125,8 +142,8 @@ export function renderPluginSettingsPage(data: PluginSettingsPageData): string {
       <!-- Tab Content -->
       <div id="tab-content">
         <!-- Settings Tab -->
-        <div id="settings-content" class="tab-content">
-          ${renderSettingsTab(plugin)}
+        <div id="settings-content" class="tab-content hidden">
+          ${hasUserSettings ? renderSettingsTab(plugin) : ''}
         </div>
 
         <!-- Activity Tab -->
@@ -142,10 +159,10 @@ export function renderPluginSettingsPage(data: PluginSettingsPageData): string {
     </div>
 
     <script>
-      const VALID_TABS = ['settings', 'activity', 'info'];
+      const VALID_TABS = [${hasUserSettings ? "'settings', " : ""}'activity', 'info'];
 
       function showTab(tabName) {
-        if (!VALID_TABS.includes(tabName)) tabName = 'settings';
+        if (!VALID_TABS.includes(tabName)) tabName = '${defaultTab}';
 
         document.querySelectorAll('.tab-content').forEach(content => {
           content.classList.add('hidden');
@@ -156,11 +173,14 @@ export function renderPluginSettingsPage(data: PluginSettingsPageData): string {
           tab.classList.add('border-transparent', 'text-gray-400');
         });
 
-        document.getElementById(tabName + '-content').classList.remove('hidden');
+        const contentEl = document.getElementById(tabName + '-content');
+        if (contentEl) contentEl.classList.remove('hidden');
 
         const activeTab = document.getElementById(tabName + '-tab');
-        activeTab.classList.add('active', 'border-blue-400', 'text-blue-400');
-        activeTab.classList.remove('border-transparent', 'text-gray-400');
+        if (activeTab) {
+          activeTab.classList.add('active', 'border-blue-400', 'text-blue-400');
+          activeTab.classList.remove('border-transparent', 'text-gray-400');
+        }
 
         if (window.location.hash !== '#' + tabName) {
           history.replaceState(null, '', '#' + tabName);
@@ -169,7 +189,7 @@ export function renderPluginSettingsPage(data: PluginSettingsPageData): string {
 
       function initTabFromHash() {
         const hash = window.location.hash.replace('#', '');
-        showTab(VALID_TABS.includes(hash) ? hash : 'settings');
+        showTab(VALID_TABS.includes(hash) ? hash : '${defaultTab}');
       }
 
       window.addEventListener('hashchange', initTabFromHash);
@@ -357,6 +377,7 @@ function renderToggleButton(plugin: any): string {
 function renderSettingsTab(plugin: any): string {
   const settings = plugin.settings || {}
   const pluginId = plugin.id || plugin.name
+  const hasUserKeys = Object.keys(settings).some(k => !k.startsWith('_'))
 
   // Check for custom settings component first
   const customRenderer = pluginSettingsComponents[pluginId]
@@ -396,16 +417,16 @@ function renderSettingsTab(plugin: any): string {
       `}
 
       <form id="settings-form" class="space-y-6">
-        ${isAuthPlugin && Object.keys(settings).length > 0
+        ${isAuthPlugin && hasUserKeys
           ? renderAuthSettingsForm(settings as AuthSettings)
-          : isTurnstilePlugin && Object.keys(settings).length > 0
+          : isTurnstilePlugin && hasUserKeys
             ? renderTurnstileSettingsForm(settings)
-            : Object.keys(settings).length > 0
+            : hasUserKeys
               ? renderSettingsFields(settings)
               : renderNoSettings(plugin)
         }
 
-        ${Object.keys(settings).length > 0 ? `
+        ${hasUserKeys ? `
         <div class="flex items-center justify-end pt-6 border-t border-white/10">
           <button
             type="button"

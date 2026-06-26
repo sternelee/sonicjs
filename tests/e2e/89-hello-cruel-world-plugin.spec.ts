@@ -15,15 +15,16 @@ test.describe('Hello Cruel World plugin', () => {
 
   // Note: routes are at /hello-cruel-world/* (not /api/*) because user plugins
   // mount after the core /api/:collection catch-all — see plugin index.ts for why.
-  test('GET /hello-cruel-world returns JSON greeting', async ({ request }) => {
+  test('GET /hello-cruel-world returns JSON greeting using defaultName', async ({ request }) => {
     const res = await request.get(`${BASE}/hello-cruel-world`)
     expect(res.status()).toBe(200)
 
     const body = await res.json()
-    // The default greeting is "Hello, Cruel World!" unless overridden by config.
+    // Base route uses the defaultName setting (default: "Stranger") when no :name in URL.
     expect(body).toHaveProperty('message')
     expect(typeof body.message).toBe('string')
-    expect(body.message.length).toBeGreaterThan(0)
+    // Should include the default name somewhere in the message.
+    expect(body.message.toLowerCase()).toMatch(/stranger|hello/i)
     // Plugin field confirms this response came from the right handler.
     expect(body.plugin).toBe('hello-cruel-world')
   })
@@ -69,6 +70,15 @@ test.describe('Hello Cruel World plugin', () => {
   })
 
   // ── Sidebar nav ────────────────────────────────────────────────────────────
+
+  test('plugin settings page has View Page link to admin page', async ({ page }) => {
+    await loginAsAdmin(page)
+    await page.goto('/admin/plugins/hello-cruel-world')
+    // _adminPath stored in settings on first boot → "View Page" button appears in header
+    const viewLink = page.getByRole('link', { name: /view page/i })
+    await expect(viewLink).toBeVisible()
+    await expect(viewLink).toHaveAttribute('href', '/admin/hello-cruel-world')
+  })
 
   test('plugin menu entry appears in admin sidebar', async ({ page }) => {
     await loginAsAdmin(page)
