@@ -110,15 +110,15 @@ export function renderPluginSettingsPage(data: PluginSettingsPageData): string {
       <!-- Tabs -->
       <div class="mb-6">
         <nav class="flex space-x-8" aria-label="Tabs">
-          <button onclick="showTab('settings')" id="settings-tab" class="tab-button active border-b-2 border-blue-400 py-2 px-1 text-sm font-medium text-blue-400">
+          <a href="#settings" onclick="showTab('settings')" id="settings-tab" class="tab-button active border-b-2 border-blue-400 py-2 px-1 text-sm font-medium text-blue-400">
             Settings
-          </button>
-          <button onclick="showTab('activity')" id="activity-tab" class="tab-button border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-400 hover:text-gray-300">
+          </a>
+          <a href="#activity" onclick="showTab('activity')" id="activity-tab" class="tab-button border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-400 hover:text-gray-300">
             Activity Log
-          </button>
-          <button onclick="showTab('info')" id="info-tab" class="tab-button border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-400 hover:text-gray-300">
+          </a>
+          <a href="#info" onclick="showTab('info')" id="info-tab" class="tab-button border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-400 hover:text-gray-300">
             Information
-          </button>
+          </a>
         </nav>
       </div>
 
@@ -142,26 +142,38 @@ export function renderPluginSettingsPage(data: PluginSettingsPageData): string {
     </div>
 
     <script>
+      const VALID_TABS = ['settings', 'activity', 'info'];
+
       function showTab(tabName) {
-        // Hide all tab contents
+        if (!VALID_TABS.includes(tabName)) tabName = 'settings';
+
         document.querySelectorAll('.tab-content').forEach(content => {
           content.classList.add('hidden');
         });
-        
-        // Remove active class from all tabs
+
         document.querySelectorAll('.tab-button').forEach(tab => {
           tab.classList.remove('active', 'border-blue-400', 'text-blue-400');
           tab.classList.add('border-transparent', 'text-gray-400');
         });
-        
-        // Show selected tab content
+
         document.getElementById(tabName + '-content').classList.remove('hidden');
-        
-        // Add active class to selected tab
+
         const activeTab = document.getElementById(tabName + '-tab');
         activeTab.classList.add('active', 'border-blue-400', 'text-blue-400');
         activeTab.classList.remove('border-transparent', 'text-gray-400');
+
+        if (window.location.hash !== '#' + tabName) {
+          history.replaceState(null, '', '#' + tabName);
+        }
       }
+
+      function initTabFromHash() {
+        const hash = window.location.hash.replace('#', '');
+        showTab(VALID_TABS.includes(hash) ? hash : 'settings');
+      }
+
+      window.addEventListener('hashchange', initTabFromHash);
+      initTabFromHash();
 
       async function togglePlugin(pluginId, action) {
         const button = event.target;
