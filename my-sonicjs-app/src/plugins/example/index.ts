@@ -326,6 +326,17 @@ export const examplePlugin = definePlugin({
       // We guard with a COUNT query to stay idempotent — subsequent warm-ups skip
       // seeding if any mood documents already exist.
       try {
+        // Ensure the document type row exists before seeding. plugin onBoot can
+        // race bootstrapMiddleware on the very first request (e.g. a static-asset
+        // or favicon hits wirePlugins before bootstrap has run
+        // autoRegisterCollectionDocumentTypes). D1 local enforces the FK on
+        // documents.type_id, so the seed insert would fail silently. INSERT OR
+        // IGNORE here is idempotent and harmless when the row already exists.
+        await db!.prepare(
+          `INSERT OR IGNORE INTO document_types (id, name, display_name, source, settings, created_at, updated_at)
+           VALUES (?, ?, ?, 'system', '{"baseGrants":{"public":["read"],"admin":["read","create","update","delete","publish","manage"]}}', strftime('%s','now'), strftime('%s','now'))`
+        ).bind(MOODS_TYPE_ID, MOODS_TYPE_ID, 'Example').run()
+
         const countRow = await db!
           .prepare(`SELECT COUNT(*) as n FROM documents WHERE type_id = ? AND tenant_id = ? AND deleted_at IS NULL`)
           .bind(MOODS_TYPE_ID, 'default')
