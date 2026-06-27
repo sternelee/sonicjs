@@ -63,7 +63,7 @@ export function renderPluginSettingsPage(data: PluginSettingsPageData): string {
   // true only when the plugin has at least one user-configurable setting key
   // (_-prefixed keys are internal metadata, not settings the user can edit)
   const hasUserSettings = Object.keys(plugin.settings || {}).some(k => !k.startsWith('_'))
-  const defaultTab = 'info'
+  const defaultTab = hasUserSettings ? 'settings' : 'info'
 
   const pageContent = `
     <div class="w-full px-4 sm:px-6 lg:px-8 py-6">
@@ -125,14 +125,14 @@ export function renderPluginSettingsPage(data: PluginSettingsPageData): string {
       <!-- Tabs -->
       <div class="mb-6">
         <nav class="flex space-x-8" aria-label="Tabs">
-          <a href="#info" onclick="showTab('info')" id="info-tab" class="tab-button border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-400 hover:text-gray-300">
-            Information
-          </a>
           ${hasUserSettings ? `
           <a href="#settings" onclick="showTab('settings')" id="settings-tab" class="tab-button border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-400 hover:text-gray-300">
             Settings
           </a>
           ` : ''}
+          <a href="#info" onclick="showTab('info')" id="info-tab" class="tab-button border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-400 hover:text-gray-300">
+            Information
+          </a>
           <a href="#activity" onclick="showTab('activity')" id="activity-tab" class="tab-button border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-400 hover:text-gray-300">
             Activity Log
           </a>
