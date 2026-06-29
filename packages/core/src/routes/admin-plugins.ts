@@ -193,16 +193,6 @@ adminPluginRoutes.get('/:id', async (c) => {
       }
     }
 
-    // If the plugin declares a configSchema, filter the displayed settings to only schema-defined
-    // keys (+ _-prefixed internal keys). This prevents stale removed fields from showing in the UI.
-    const defForFilter = getPluginDefinition(pluginId)
-    if (defForFilter?.configSchema) {
-      const allowedKeys = new Set(Object.keys(defForFilter.configSchema))
-      enrichedSettings = Object.fromEntries(
-        Object.entries(enrichedSettings).filter(([k]) => k.startsWith('_') || allowedKeys.has(k))
-      )
-    }
-
     // For User Profiles plugin, surface the code-defined field config (defineUserProfile()).
     let profileConfig: PluginSettingsPageData['plugin']['profileConfig'] = undefined
     if (pluginId === 'user-profiles') {
@@ -337,15 +327,10 @@ adminPluginRoutes.post('/:id/configure', async (c) => {
         ? (def as any).author?.name
         : (def as any).author,
     })
-    // Preserve non-schema keys (_routes, _adminPath, etc.) but prune stale schema keys so
-    // that removing a field from configSchema actually removes it from stored settings.
+    // Merge with existing settings so non-configSchema keys (_routes, _adminPath, etc.) are preserved.
     const existingPlugin = await pluginService.getPlugin(pluginId)
     const existingSettings = (existingPlugin?.settings as Record<string, unknown>) ?? {}
-    const schemaKeys = new Set(Object.keys(def.configSchema))
-    const preserved = Object.fromEntries(
-      Object.entries(existingSettings).filter(([k]) => !schemaKeys.has(k))
-    )
-    await pluginService.updatePluginSettings(pluginId, { ...preserved, ...parsed })
+    await pluginService.updatePluginSettings(pluginId, { ...existingSettings, ...parsed })
 
     return c.redirect(`/admin/plugins/${encodeURIComponent(pluginId)}/configure`)
   } catch (error) {

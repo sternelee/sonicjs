@@ -1,6 +1,6 @@
 {
   "name": "sonicjs",
-  "version": "3.0.0-beta.17",
+  "version": "3.0.0-beta.18",
   "private": true,
   "type": "module",
   "workspaces": [
@@ -30,6 +30,7 @@
     "prepare": "husky",
     "type-check": "npm run type-check --workspace=@sonicjs-cms/core",
     "lint": "npm run type-check",
+    "version:beta": "npm version prerelease --preid=beta --workspace=@sonicjs-cms/core --no-git-tag-version && node scripts/sync-versions.js",
     "version:patch": "npm version patch --workspace=@sonicjs-cms/core --no-git-tag-version && node scripts/sync-versions.js",
     "version:minor": "npm version minor --workspace=@sonicjs-cms/core --no-git-tag-version && node scripts/sync-versions.js",
     "version:major": "npm version major --workspace=@sonicjs-cms/core --no-git-tag-version && node scripts/sync-versions.js",
