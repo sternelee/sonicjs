@@ -73,6 +73,7 @@ import { CloudflareEmailProvider } from './plugins/core-plugins/email-plugin/ser
 import { faviconSvg } from './assets/favicon'
 import { setAppInstance } from './services/route-metadata'
 import { setPluginMenu } from './services/plugin-menu-singleton'
+import { PLUGIN_REGISTRY } from './plugins/manifest-registry'
 import { setPluginDefinitions } from './services/plugin-definition-registry'
 
 // ============================================================================
@@ -665,7 +666,14 @@ export function createSonicJSApp(config: SonicJSConfig = {}): SonicJSApp {
       ...corePluginsAfterCatchAll,
       ...(config.plugins?.register ?? []),
     ]
-    setPluginMenu(allMountedPlugins.flatMap((p) => (p.menu ?? [])))
+    // Only user plugins that are NOT in the manifest registry go into the singleton.
+    // Registry plugins (have manifest.json) use the DB active-status check in
+    // pluginMenuMiddleware. A user plugin that ships a manifest (e.g. redirects)
+    // is treated as a registry plugin and excluded from the singleton.
+    const userPlugins = (config.plugins?.register ?? []).filter(
+      (p: any) => !PLUGIN_REGISTRY[p.id]
+    )
+    setPluginMenu(userPlugins.flatMap((p: any) => (p.menu ?? [])))
     setPluginDefinitions(allMountedPlugins)
   }
 
