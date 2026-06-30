@@ -10,6 +10,7 @@ export const sections = [
   { title: 'Hooks', id: 'hooks' },
   { title: 'Data Seeding', id: 'data-seeding' },
   { title: 'Customizing', id: 'customizing' },
+  { title: 'Updating', id: 'updating' },
   { title: 'Removing', id: 'removing' },
 ]
 
@@ -464,6 +465,45 @@ export const examplePlugin = definePlugin({
 ```
 
 Or configure via the admin UI without touching code: **Admin → Plugins → Example → Settings**.
+
+---
+
+## Updating
+
+Plugin files are copied into your project when you run `npm create sonicjs@latest`. Unlike `@sonicjs-cms/core`, they are **your code** — `npm install` won't update them. To pull the latest version of the example plugin from the SonicJS main branch:
+
+```bash
+npm run update:plugin
+# or specify the plugin name explicitly:
+npm run update:plugin -- example
+```
+
+Preview what would change without writing files:
+
+```bash
+npm run update:plugin -- example --dry-run
+```
+
+The script downloads each file listed in its manifest from `github.com/SonicJs-Org/sonicjs` and overwrites your local copies.
+
+<Callout type="warning">
+**Commit or stash local changes first.** `update:plugin` overwrites files — any custom modifications to the example plugin will be lost.
+</Callout>
+
+After running:
+
+```bash
+# Review the diff
+git diff src/plugins/example
+
+# Verify types still compile
+npm run type-check
+
+# Commit if happy
+git add src/plugins/example && git commit -m "chore(plugins): update example plugin"
+```
+
+To add new plugins to the manifest (for when additional bundled plugins are released), edit `scripts/update-plugin.ts` and add an entry to `PLUGIN_MANIFEST`.
 
 ---
 
