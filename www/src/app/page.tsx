@@ -77,7 +77,7 @@ export default function HomePage() {
               </Link>
             </div>
             <h1 className="mt-10 text-pretty text-5xl font-semibold tracking-tight text-white sm:text-7xl">
-              The headless CMS that runs on the edge.
+              The only headless CMS born on the edge.
             </h1>
             <p className="mt-8 text-pretty text-lg font-medium text-gray-400 sm:text-xl/8">
               Zero cold starts, anywhere on Earth. 100% MIT open source, every feature free. Built
