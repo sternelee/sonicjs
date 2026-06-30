@@ -1,0 +1,85 @@
+import { test, expect } from '@playwright/test'
+
+test.describe('Marketing Home Page', () => {
+  test('no docs sidebar on home, full-width layout', async ({ page }) => {
+    await page.goto('/')
+
+    // Marketing nav present
+    await expect(page.locator('[data-marketing-nav]')).toBeVisible()
+
+    // No docs sidebar (the lg:ml-72 sidebar element)
+    await expect(page.locator('.lg\\:w-72')).not.toBeVisible()
+
+    // Hero headline present
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
+    const h1Text = await page.getByRole('heading', { level: 1 }).textContent()
+    expect(h1Text).toContain('Cold-Starts in 0ms')
+  })
+
+  test('hero admin screenshot visible', async ({ page }) => {
+    await page.goto('/')
+    const screenshot = page.getByAltText('SonicJS admin content management interface')
+    await expect(screenshot).toBeVisible()
+  })
+
+  test('primary CTA links to /quickstart', async ({ page }) => {
+    await page.goto('/')
+
+    const gettingStartedLinks = page.getByRole('link', { name: /Getting Started/i })
+    await expect(gettingStartedLinks.first()).toBeVisible()
+    const href = await gettingStartedLinks.first().getAttribute('href')
+    expect(href).toBe('/quickstart')
+  })
+
+  test('marketing nav sticky with correct links', async ({ page }) => {
+    await page.goto('/')
+
+    const nav = page.locator('[data-marketing-nav]')
+    await expect(nav).toBeVisible()
+
+    // Nav has Docs, Blog, Compare links
+    await expect(nav.getByRole('link', { name: 'Docs' })).toBeVisible()
+    await expect(nav.getByRole('link', { name: 'Blog' })).toBeVisible()
+    await expect(nav.getByRole('link', { name: 'Compare' })).toBeVisible()
+
+    // Version badge visible
+    await expect(nav.getByText(/^v\d/)).toBeVisible()
+  })
+
+  test('benchmark strip shows all 4 metrics', async ({ page }) => {
+    await page.goto('/')
+    await expect(page.getByText('0-5ms')).toBeVisible()
+    await expect(page.getByText('15-50ms')).toBeVisible()
+    await expect(page.getByText('300+')).toBeVisible()
+    await expect(page.getByText('$0')).toBeVisible()
+  })
+
+  test('changelog link points to /changelog', async ({ page }) => {
+    await page.goto('/')
+    const changelogLink = page.getByRole('link', { name: /full changelog/i })
+    await expect(changelogLink).toBeVisible()
+    const href = await changelogLink.getAttribute('href')
+    expect(href).toBe('/changelog')
+  })
+
+  test('docs route still has sidebar (regression check)', async ({ page }) => {
+    await page.goto('/quickstart')
+
+    // Docs sidebar element present
+    const sidebar = page.locator('.lg\\:block.lg\\:w-72, [class*="lg:w-72"]')
+    // At least verify the marketing nav is NOT present (docs layout)
+    await expect(page.locator('[data-marketing-nav]')).not.toBeVisible()
+  })
+
+  test('comparison table present on home', async ({ page }) => {
+    await page.goto('/')
+    await expect(page.getByText('How SonicJS Compares')).toBeVisible()
+    await expect(page.getByRole('table')).toBeVisible()
+  })
+
+  test('final CTA band has install command and join discord', async ({ page }) => {
+    await page.goto('/')
+    const discordLinks = page.getByRole('link', { name: /Join Discord/i })
+    await expect(discordLinks.first()).toBeVisible()
+  })
+})

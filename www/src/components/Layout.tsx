@@ -8,6 +8,7 @@ import { Breadcrumbs } from '@/components/Breadcrumbs'
 import { Footer } from '@/components/Footer'
 import { Header } from '@/components/Header'
 import { Logo } from '@/components/Logo'
+import { MarketingNav } from '@/components/MarketingNav'
 import { Navigation } from '@/components/Navigation'
 import { SectionProvider, type Section } from '@/components/SectionProvider'
 import { VERSION } from '@/lib/version'
@@ -20,6 +21,16 @@ export function Layout({
   allSections: Record<string, Array<Section>>
 }) {
   let pathname = usePathname()
+
+  if (pathname === '/') {
+    return (
+      <div className="flex min-h-full flex-col">
+        <MarketingNav />
+        <main className="flex-auto">{children}</main>
+        <Footer />
+      </div>
+    )
+  }
 
   return (
     <SectionProvider sections={allSections[pathname] ?? []}>
