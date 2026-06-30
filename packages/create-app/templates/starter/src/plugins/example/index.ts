@@ -85,7 +85,7 @@ export const examplePlugin = definePlugin({
   name: 'Example',
 
   // `version` must be valid semver (X.Y.Z). definePlugin warns if it isn't.
-  version: '1.0.0',
+  version: '1.0.1',
 
   // `description` shows up in the plugin list and settings page header.
   description: 'A demo plugin that explains the SonicJS v3 plugin system.',
@@ -239,7 +239,7 @@ export const examplePlugin = definePlugin({
           displayName: 'Example',
           description: 'A demo plugin that explains the SonicJS v3 plugin system.',
           author: 'You',
-          version: '1.0.0',
+          version: '1.0.1',
         })
 
         // ── Sync route metadata into plugin settings ───────────────────────
