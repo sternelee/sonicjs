@@ -77,18 +77,18 @@ export default function HomePage() {
               </Link>
             </div>
             <h1 className="mt-10 text-pretty text-5xl font-semibold tracking-tight text-white sm:text-7xl">
-              The Headless CMS That Cold-Starts in 0ms
+              The headless CMS that runs on the edge.
             </h1>
             <p className="mt-8 text-pretty text-lg font-medium text-gray-400 sm:text-xl/8">
-              Edge-native. Free tier. No paywalls. SonicJS runs on Cloudflare Workers — 300+ edge
-              locations, 100k requests/day free, and a cold start competitors can&apos;t touch.
+              Zero cold starts, anywhere on Earth. 100% MIT open source, every feature free. Built
+              on Cloudflare Workers — TypeScript end to end.
             </p>
             <div className="mt-10 flex items-center gap-x-6">
               <Link
                 href="/quickstart"
                 className="rounded-md bg-indigo-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 no-underline"
               >
-                Get started
+                Get started free
               </Link>
               <Link
                 href="https://github.com/lane711/sonicjs"
@@ -98,6 +98,18 @@ export default function HomePage() {
               >
                 Star on GitHub <span aria-hidden="true">→</span>
               </Link>
+            </div>
+            <div className="mt-8 rounded-lg bg-white/5 px-4 py-3 font-mono text-sm text-gray-300 ring-1 ring-white/10">
+              $ npx create-sonicjs@latest my-app
+            </div>
+            <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-gray-500">
+              <span>MIT licensed</span>
+              <span aria-hidden="true">·</span>
+              <span>330+ edge cities</span>
+              <span aria-hidden="true">·</span>
+              <span>$0 to start</span>
+              <span aria-hidden="true">·</span>
+              <span>TypeScript-first</span>
             </div>
           </div>
           <div className="mx-auto mt-16 flex max-w-2xl sm:mt-24 lg:ml-10 lg:mr-0 lg:mt-0 lg:max-w-none lg:flex-none xl:ml-32">
@@ -146,6 +158,51 @@ export default function HomePage() {
             <div className="text-base font-bold mb-1 text-gray-900 dark:text-white">To Start</div>
             <div className="text-xs text-gray-500 dark:text-gray-400">100k requests/day free</div>
           </div>
+        </div>
+      </div>
+
+      {/* ── Four pillars ── */}
+      <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-black tracking-tight text-gray-900 dark:text-white mb-4">
+            Fast because edge-native. Free because truly open.
+          </h2>
+          <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+            Speed and freedom are the two things every competitor makes you choose between. SonicJS refuses the trade.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[
+            {
+              icon: '🌐',
+              title: 'Edge-native, zero cold start',
+              desc: 'Runs in 300+ Cloudflare cities. 0–5ms cold start vs 100–2000ms on Node.js. No regions to configure — global by default.',
+            },
+            {
+              icon: '🔓',
+              title: '100% MIT, every feature free',
+              desc: 'Version history, SSO, RBAC, workflows — all included, forever. No open-core bait. No per-seat pricing. No Enterprise gate.',
+            },
+            {
+              icon: '🤝',
+              title: 'Independent & community-owned',
+              desc: 'No VC clock. No monetization pressure. No license rug-pull. Every rival is VC-backed and tightening the screws. SonicJS won\'t.',
+            },
+            {
+              icon: '⚡',
+              title: 'Code-first DX + AI-ready',
+              desc: 'TypeScript end-to-end, schema-as-code, auto-generated REST API. MCP support so AI agents understand your content layer.',
+            },
+          ].map((pillar) => (
+            <div
+              key={pillar.title}
+              className="p-6 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 hover:shadow-lg transition-all duration-200"
+            >
+              <div className="text-4xl mb-4">{pillar.icon}</div>
+              <h3 className="text-base font-bold text-gray-900 dark:text-white mb-2">{pillar.title}</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">{pillar.desc}</p>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -313,13 +370,68 @@ GET /api/products?category=electronics&sort=-price&limit=20`}</pre>
         </div>
       </div>
 
+      {/* ── AI section ── */}
+      <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+        <div className="rounded-2xl bg-gradient-to-br from-violet-900/40 via-indigo-900/40 to-blue-900/40 border border-indigo-700/50 p-10">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:gap-16">
+            <div className="flex-1">
+              <div className="inline-flex items-center gap-2 rounded-full bg-indigo-500/10 px-3 py-1 text-sm font-semibold text-indigo-400 ring-1 ring-inset ring-indigo-500/25 mb-4">
+                AI-Ready
+              </div>
+              <h2 className="text-3xl md:text-4xl font-black tracking-tight text-white mb-4">
+                Your content layer, speaking AI.
+              </h2>
+              <p className="text-lg text-gray-300 mb-6">
+                In 2026 every CMS claims AI. SonicJS ships it: RAG-powered semantic search,
+                Model Context Protocol (MCP) support for agent integration, and an AI-friendly
+                API structure your LLM tools already understand.
+              </p>
+              <ul className="space-y-3 text-sm text-gray-300">
+                <li className="flex items-start gap-3">
+                  <span className="text-indigo-400 mt-0.5">✦</span>
+                  <span><strong className="text-white">Semantic search</strong> — RAG-powered via Cloudflare Vectorize. Natural language queries, zero extra infra.</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-indigo-400 mt-0.5">✦</span>
+                  <span><strong className="text-white">MCP support</strong> — expose your content to AI agents with Model Context Protocol. Cursor, Claude, Copilot can query it directly.</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-indigo-400 mt-0.5">✦</span>
+                  <span><strong className="text-white">Agent-ready API</strong> — structured schema, consistent REST surface, auto-generated docs. LLMs understand it out of the box.</span>
+                </li>
+              </ul>
+              <div className="mt-8">
+                <Button href="/plugins/ai-search" variant="outline" arrow="right">
+                  Explore AI features
+                </Button>
+              </div>
+            </div>
+            <div className="mt-10 lg:mt-0 lg:w-80 shrink-0">
+              <div className="rounded-xl overflow-hidden border border-indigo-700/50 bg-black/30">
+                <div className="flex items-center gap-2 px-4 py-3 bg-white/5 border-b border-indigo-700/30">
+                  <span className="text-xs font-medium text-indigo-400">AI Semantic Search</span>
+                </div>
+                <pre className="p-5 text-xs text-indigo-200 overflow-x-auto m-0 leading-relaxed">{`// Natural language query
+GET /api/search?q=recent+blog+posts+about+edge+computing
+
+// Returns semantically relevant content
+// — no keyword matching required`}</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* ── Comparison table ── */}
       <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
         <div className="text-center mb-10">
           <h2 className="text-3xl md:text-4xl font-black tracking-tight text-gray-900 dark:text-white mb-4">
-            How SonicJS Compares
+            Honest numbers. No marketing spin.
           </h2>
-          <p className="text-lg text-gray-600 dark:text-gray-400">Real-world numbers, not marketing copy.</p>
+          <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+            Real benchmarks, real pricing. We also publish what SonicJS isn&apos;t great at yet — because devs who read the fine print are the ones worth earning.{' '}
+            <Link href="/compare" className="text-blue-600 dark:text-blue-400 hover:underline">Full comparison →</Link>
+          </p>
         </div>
         <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
           <table className="w-full text-sm border-collapse">
@@ -495,7 +607,7 @@ GET /api/products?category=electronics&sort=-price&limit=20`}</pre>
             Ready to Go Supersonic?
           </h2>
           <p className="text-lg text-blue-100 mb-8 max-w-xl mx-auto">
-            Join thousands of developers building on the edge. Free to start. No credit card.
+            MIT licensed. No credit card. No paywalls. Deploy globally in minutes.
           </p>
           <div className="mb-8 max-w-md mx-auto rounded-lg bg-black/30 px-6 py-4 text-left font-mono text-sm text-blue-100">
             $ npx create-sonicjs@latest my-app
