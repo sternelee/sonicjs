@@ -104,4 +104,15 @@ test.describe('Marketing Home Page', () => {
     const discordLinks = page.getByRole('link', { name: /Join Discord/i })
     await expect(discordLinks.first()).toBeVisible()
   })
+
+  test('AI section highlights native MCP server', async ({ page }) => {
+    await page.goto('/')
+    await expect(
+      page.getByRole('heading', { name: 'Your content layer, speaking AI.' }),
+    ).toBeVisible()
+    // Concrete MCP capability copy (agents read/create/publish)
+    await expect(page.getByText(/read, create, and publish/i)).toBeVisible()
+    // MCP connect snippet present
+    await expect(page.getByText(/mcpServers/)).toBeVisible()
+  })
 })

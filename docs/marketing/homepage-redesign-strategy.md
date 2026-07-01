@@ -73,14 +73,14 @@ SonicJS now runs outside Cloudflare — Docker, VPS, self-host, on-prem (see `do
 1. **Edge-native, zero cold start** — runs on Cloudflare Workers in 330+ cities; 0–5ms cold start vs 100–3000ms; no regions to choose, global by default. *Why you care: sub-50ms responses everywhere, zero DevOps.*
 2. **100% MIT, every feature free** — version history, auth/SSO, RBAC, workflows — all free, forever. No open-core bait, no per-seat, no Enterprise gate. *Why: the feature you need won't be paywalled the day you need it.*
 3. **Independent & portable** — no VC clock, no license rug-pull, no infra lock-in. Run the same code on Cloudflare, Docker, or your own VPS. *Why: every rival is VC-backed and tightening the screws (paywalls, license changes, cloud upsells) — and self-host rivals still can't match the edge. SonicJS gives you the escape hatch AND the edge.* ← **freshest 2026 wedge, now with teeth.**
-4. **Code-first DX + AI-ready** — TypeScript end-to-end, schema-as-code, auto-generated REST API, AI-agent-ready docs + MCP. *Why: define a model, get an API, ship — and your AI tools understand it.*
+4. **Code-first DX + AI-native** — TypeScript end-to-end, schema-as-code, auto-generated REST API, plus a **native MCP server** (`/api/mcp`, ships as the MCP plugin — see `docs/ai/plans/mcp-plugin-plan.md`). Point Claude Code, Cursor, or VS Code at your CMS; agents get auto-generated tools to read, create, and publish content through secure scoped API keys that respect existing ACL. *Why: define a model, get an API + an agent interface, ship — your AI tools operate your content directly, safely.*
 
 ### Messaging to Add (beyond existing 4 differentiators)
 
 - **Own your data / no lock-in** — D1 + self-host + MIT = a real escape hatch. (Fold into pillars 2/3.)
 - **Cost at scale** — runs on Cloudflare's free tier; near-zero cost even at scale; $0–5/mo vs $99–$300. Indie devs and startups care a lot.
 - **DX specifics** — time-to-first-API, local dev, migrations, schema-as-code. This is what makes a dev *lean in*.
-- **AI story (must be visible)** — in 2026 every competitor leads with AI. Surface AI search + agent-ready docs + MCP, or the page reads as dated.
+- **AI story (must be visible)** — in 2026 every competitor *claims* AI. SonicJS is **agent-operable**: a native MCP server lets AI tools read/write content directly (not just "AI-assisted authoring"). Lead the AI section with MCP; back it with semantic search + agent-ready API, or the page reads as dated.
 - **Modern-stack credibility** — Hono, Workers, D1, Drizzle, TypeScript. Signals "built the way I'd build it."
 - **Honesty/transparency** — the candid `/compare` (which names what SonicJS *isn't* good at yet) is a trust asset. Devs trust a vendor that names its own gaps.
 - **Maturity/velocity** — GitHub stars, release cadence (the changelog is an asset — proves it's alive), Discord, production users. **This closes the #1 objection for a younger CMS.**
@@ -110,7 +110,7 @@ SonicJS now runs outside Cloudflare — Docker, VPS, self-host, on-prem (see `do
 6. **Performance proof** — benchmark table (keep).
 7. **DX showcase** — schema → API → deploy 3-step (keep; strong).
 8. **Feature breadth grid** — answers "is it complete?" + link to `/compare`.
-9. **AI section** — AI search, agent-ready docs, MCP. *(Elevate — currently buried.)*
+9. **AI section** — lead with the **native MCP server** (now shipped): agents (Claude Code, Cursor, VS Code) read/create/publish content via auto-generated tools + secure scoped keys, ACL-respected. Show the `mcpServers` connect snippet. Then semantic search (Vectorize RAG) + agent-ready API. *(MCP is the freshest 2026 wedge — every rival claims AI; SonicJS is agent-operable.)*
 10. **Pricing / cost** — transparent table, "free forever, no paywalls" (keep, sharpen freedom angle).
 11. **Deploy anywhere** — "Born on the edge. Runs anywhere." Cloudflare = RECOMMENDED card; "Also runs on" grid (Docker · VPS · PaaS · homelab · on-prem · serverless). Pairs with Pricing as the two freedom proofs (cost + infra). Honesty footnote: "anywhere SQLite runs; Postgres on the roadmap." *(NEW — portability risk-reversal.)*
 12. **Honesty / comparison teaser** — link to `/compare`; lean into the candor.

@@ -194,8 +194,8 @@ export default function HomePage() {
             },
             {
               icon: '⚡',
-              title: 'Code-first DX + AI-ready',
-              desc: 'TypeScript end-to-end, schema-as-code, auto-generated REST API. MCP support so AI agents understand your content layer.',
+              title: 'Code-first DX + AI-native',
+              desc: 'TypeScript end-to-end, schema-as-code, auto-generated REST API — plus a native MCP server so Claude Code, Cursor & VS Code read and manage your content directly.',
             },
           ].map((pillar) => (
             <div
@@ -386,18 +386,18 @@ GET /api/products?category=electronics&sort=-price&limit=20`}</pre>
                 Your content layer, speaking AI.
               </h2>
               <p className="text-lg text-gray-300 mb-6">
-                In 2026 every CMS claims AI. SonicJS ships it: RAG-powered semantic search,
-                Model Context Protocol (MCP) support for agent integration, and an AI-friendly
-                API structure your LLM tools already understand.
+                In 2026 every CMS claims AI. SonicJS ships it: a native Model Context Protocol (MCP)
+                server your agents connect to directly, RAG-powered semantic search, and an
+                AI-friendly API structure your LLM tools already understand.
               </p>
               <ul className="space-y-3 text-sm text-gray-300">
                 <li className="flex items-start gap-3">
                   <span className="text-indigo-400 mt-0.5">✦</span>
-                  <span><strong className="text-white">Semantic search</strong> — RAG-powered via Cloudflare Vectorize. Natural language queries, zero extra infra.</span>
+                  <span><strong className="text-white">Native MCP server</strong> — auto-generated tools let Claude Code, Cursor &amp; VS Code read, create, and publish your content. Secure scoped API keys; respects your existing permissions.</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="text-indigo-400 mt-0.5">✦</span>
-                  <span><strong className="text-white">MCP support</strong> — expose your content to AI agents with Model Context Protocol. Cursor, Claude, Copilot can query it directly.</span>
+                  <span><strong className="text-white">Semantic search</strong> — RAG-powered via Cloudflare Vectorize. Natural language queries, zero extra infra.</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="text-indigo-400 mt-0.5">✦</span>
@@ -413,13 +413,19 @@ GET /api/products?category=electronics&sort=-price&limit=20`}</pre>
             <div className="mt-10 lg:mt-0 lg:w-80 shrink-0">
               <div className="rounded-xl overflow-hidden border border-indigo-700/50 bg-black/30">
                 <div className="flex items-center gap-2 px-4 py-3 bg-white/5 border-b border-indigo-700/30">
-                  <span className="text-xs font-medium text-indigo-400">AI Semantic Search</span>
+                  <span className="text-xs font-medium text-indigo-400">Connect Claude Code / Cursor</span>
                 </div>
-                <pre className="p-5 text-xs text-indigo-200 overflow-x-auto m-0 leading-relaxed">{`// Natural language query
-GET /api/search?q=recent+blog+posts+about+edge+computing
-
-// Returns semantically relevant content
-// — no keyword matching required`}</pre>
+                <pre className="p-5 text-xs text-indigo-200 overflow-x-auto m-0 leading-relaxed">{`// Point your agent at your CMS
+{
+  "mcpServers": {
+    "sonicjs": {
+      "url": "https://your-site.com/api/mcp",
+      "headers": {
+        "Authorization": "Bearer <mcp-key>"
+      }
+    }
+  }
+}`}</pre>
               </div>
             </div>
           </div>
