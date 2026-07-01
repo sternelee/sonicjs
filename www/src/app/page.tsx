@@ -230,7 +230,7 @@ export default function HomePage() {
               body: (
                 <>
                   &ldquo;Upgrading from Strapi v4 → v5 alone took approximately{' '}
-                  <strong className="text-red-600 dark:text-red-400">40 hours</strong>&rdquo; with
+                  <strong className="text-red-300">40 hours</strong>&rdquo; with
                   50+ breaking changes documented.
                 </>
               ),
@@ -243,7 +243,7 @@ export default function HomePage() {
               body: (
                 <>
                   Strapi&apos;s Live Preview requires the{' '}
-                  <strong className="text-red-600 dark:text-red-400">$99/month Growth plan</strong>.
+                  <strong className="text-red-300">$99/month Growth plan</strong>.
                   Roles capped at 3 on free tier. Every feature gated.
                 </>
               ),
@@ -256,7 +256,7 @@ export default function HomePage() {
               body: (
                 <>
                   Traditional CMS deploys to one region. Users in Asia hitting a US server see{' '}
-                  <strong className="text-red-600 dark:text-red-400">200-500ms latency</strong>{' '}
+                  <strong className="text-red-300">200-500ms latency</strong>{' '}
                   before your app even responds.
                 </>
               ),
@@ -269,7 +269,7 @@ export default function HomePage() {
               body: (
                 <>
                   Node.js cold starts on Strapi:{' '}
-                  <strong className="text-red-600 dark:text-red-400">500-2000ms</strong>. First user
+                  <strong className="text-red-300">500-2000ms</strong>. First user
                   after idle pays the full boot penalty. Every. Single. Time.
                 </>
               ),
@@ -278,20 +278,21 @@ export default function HomePage() {
           ].map((card) => (
             <div
               key={card.title}
-              className="group p-6 rounded-xl bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800/50 dark:to-slate-900/50 border border-slate-200/80 dark:border-slate-700/50 hover:shadow-xl transition-all duration-300"
+              className="group relative flex min-h-[22rem] flex-col justify-end overflow-hidden rounded-xl border border-slate-700/50 p-6 shadow-lg transition-all duration-300 hover:shadow-xl"
             >
-              <div className="mb-4 h-48 overflow-hidden rounded-lg">
-                <Image
-                  src={card.src}
-                  alt={card.alt}
-                  width={1792}
-                  height={1024}
-                  className="w-full h-full object-cover rounded-lg group-hover:scale-105 transition-transform duration-500"
-                />
+              <Image
+                src={card.src}
+                alt={card.alt}
+                fill
+                sizes="(min-width: 768px) 50vw, 100vw"
+                className="object-cover transition-transform duration-500 group-hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-black/25" />
+              <div className="relative">
+                <h3 className="text-xl font-bold text-white mb-2">{card.title}</h3>
+                <p className="text-gray-100 text-sm mb-2">{card.body}</p>
+                <p className="text-xs text-gray-200 italic">{card.footer}</p>
               </div>
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">{card.title}</h3>
-              <p className="text-gray-600 dark:text-gray-300 text-sm mb-2">{card.body}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 italic">{card.footer}</p>
             </div>
           ))}
         </div>

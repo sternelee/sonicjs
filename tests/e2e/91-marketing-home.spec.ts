@@ -105,6 +105,17 @@ test.describe('Marketing Home Page', () => {
     await expect(discordLinks.first()).toBeVisible()
   })
 
+  test('why-switch cards render with overlaid text on image background', async ({ page }) => {
+    await page.goto('/')
+    await expect(
+      page.getByRole('heading', { name: 'Why Developers Switch to SonicJS' }),
+    ).toBeVisible()
+    // Pain-card background image present (Next fill image keeps alt text)
+    await expect(page.getByAltText('Seamless migration visualization')).toBeVisible()
+    // Overlaid card title visible over the image
+    await expect(page.getByRole('heading', { name: 'No More Migration Hell' })).toBeVisible()
+  })
+
   test('AI section highlights native MCP server', async ({ page }) => {
     await page.goto('/')
     await expect(
