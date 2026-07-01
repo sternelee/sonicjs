@@ -29,6 +29,23 @@ What each rival leads with on their homepage today:
 
 Internal positioning statement: *SonicJS is the only headless CMS that runs entirely on the edge — global, zero-cold-start performance hosted SaaS can't match — while staying 100% MIT with every feature free, forever.*
 
+### Portability as risk-reversal (not repositioning)
+
+SonicJS now runs outside Cloudflare — Docker, VPS, self-host, on-prem (see `docs/ai/plans/portability-analysis.md`; Tier 1 Docker + SQLite-on-disk, Tier 1.5 Turso for serverless Node). **This does not change the wedge — it protects it.**
+
+- **Portability is not the headline.** "Runs anywhere" is a commodity claim — every Node CMS runs anywhere, and leading with it competes head-on with Strapi/Payload/Directus exactly where the edge angle is lost. Edge stays the differentiator rivals can't copy.
+- **Portability's job = kill the #1 objection to an edge bet: lock-in.** "If I build on SonicJS I'm married to Cloudflare" → dead. That objection-kill is worth more than a new headline.
+- **Organizing line:** *Born on the edge. Runs anywhere.* First half = the differentiator; second half = the escape hatch. Optimized-for-X, works-everywhere pattern.
+- **"Truly open" now has three legs:** free as in **price** (MIT, every feature) · free as in **governance** (no VC clock, community-owned) · free as in **leave** (no infra lock-in — run it anywhere). ← the third leg is new.
+
+**Competitive judo:** portability neutralizes rivals' one advantage without costing SonicJS its own.
+- vs **Strapi/Payload/Directus** (self-hostable but single-region Node, tightening licenses): takes away their one winning argument ("but I can self-host it"). SonicJS = everything they do (Docker, VPS, own-your-data) **plus** edge-native when you want it, **plus** still 100% MIT.
+- vs **Sanity/Contentful** (hosted-only SaaS): nuke. "Run it on your own hardware, even air-gapped" vs "$300/mo, locked in."
+
+**Honesty guardrail (protects the `/compare` candor asset):** Tier 1 (Docker + SQLite) is real; Postgres (Tier 2) is deferred/months out. Market the true surface:
+- ✅ "Runs anywhere SQLite runs" · ❌ "Runs on any database" / implying Postgres today.
+- Frame tiers plainly: **Cloudflare = first-class & recommended · Docker/self-host = fully supported · Postgres/managed-cloud = on the roadmap.** Overclaiming breadth burns the one trust asset the brand is built on.
+
 ## Hero Recommendation
 
 **Replace** "The Fastest Headless CMS" + competitor/price jab. Lead with the **mechanism** (edge / Cloudflare Workers — the one fact rivals can't copy or dispute) fused with the **freedom** hook.
@@ -55,7 +72,7 @@ Internal positioning statement: *SonicJS is the only headless CMS that runs enti
 
 1. **Edge-native, zero cold start** — runs on Cloudflare Workers in 330+ cities; 0–5ms cold start vs 100–3000ms; no regions to choose, global by default. *Why you care: sub-50ms responses everywhere, zero DevOps.*
 2. **100% MIT, every feature free** — version history, auth/SSO, RBAC, workflows — all free, forever. No open-core bait, no per-seat, no Enterprise gate. *Why: the feature you need won't be paywalled the day you need it.*
-3. **Independent & community-owned** — no VC clock, no monetization pressure, no license rug-pull. *Why: every rival is VC-backed and tightening the screws (paywalls, license changes, cloud upsells). SonicJS won't.* ← **freshest 2026 wedge.**
+3. **Independent & portable** — no VC clock, no license rug-pull, no infra lock-in. Run the same code on Cloudflare, Docker, or your own VPS. *Why: every rival is VC-backed and tightening the screws (paywalls, license changes, cloud upsells) — and self-host rivals still can't match the edge. SonicJS gives you the escape hatch AND the edge.* ← **freshest 2026 wedge, now with teeth.**
 4. **Code-first DX + AI-ready** — TypeScript end-to-end, schema-as-code, auto-generated REST API, AI-agent-ready docs + MCP. *Why: define a model, get an API, ship — and your AI tools understand it.*
 
 ### Messaging to Add (beyond existing 4 differentiators)
@@ -95,9 +112,10 @@ Internal positioning statement: *SonicJS is the only headless CMS that runs enti
 8. **Feature breadth grid** — answers "is it complete?" + link to `/compare`.
 9. **AI section** — AI search, agent-ready docs, MCP. *(Elevate — currently buried.)*
 10. **Pricing / cost** — transparent table, "free forever, no paywalls" (keep, sharpen freedom angle).
-11. **Honesty / comparison teaser** — link to `/compare`; lean into the candor.
-12. **Social proof + maturity** — testimonials, Discord, changelog velocity.
-13. **Final CTA** — demo + npx + GitHub + Discord. (Sponsor lives here, not the hero.)
+11. **Deploy anywhere** — "Born on the edge. Runs anywhere." Cloudflare = RECOMMENDED card; "Also runs on" grid (Docker · VPS · PaaS · homelab · on-prem · serverless). Pairs with Pricing as the two freedom proofs (cost + infra). Honesty footnote: "anywhere SQLite runs; Postgres on the roadmap." *(NEW — portability risk-reversal.)*
+12. **Honesty / comparison teaser** — link to `/compare`; lean into the candor.
+13. **Social proof + maturity** — testimonials, Discord, changelog velocity.
+14. **Final CTA** — demo + npx + GitHub + Discord. (Sponsor lives here, not the hero.)
 
 ## Demo Site Recommendation
 
@@ -136,6 +154,7 @@ Internal positioning statement: *SonicJS is the only headless CMS that runs enti
 - Surface AI — every competitor leads with AI now; burying it makes the page look dated
 - Close the trust gap: demo, stars, release velocity, candor
 - Keep CTAs friction-free and in commitment order (look → deploy-instant → local)
+- Frame portability as risk-reversal — it kills the "married to Cloudflare" lock-in fear, making the edge bet safe to take
 
 **Don't:**
 - Lead on "Fastest" alone — contestable, invites benchmark wars
@@ -143,6 +162,7 @@ Internal positioning statement: *SonicJS is the only headless CMS that runs enti
 - Bury AI or the demo below the changelog
 - Ask for money (Sponsor button) before earning the dev's interest
 - Hide tradeoffs — the honest `/compare` is a trust asset, not a weakness
+- Lead with "runs anywhere" / go generic — it's a commodity claim that surrenders the edge wedge; and never imply Postgres/managed-cloud ships today (Tier 2 is roadmap)
 
 ## Success Metrics
 

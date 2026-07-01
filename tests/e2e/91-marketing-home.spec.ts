@@ -13,7 +13,7 @@ test.describe('Marketing Home Page', () => {
     // Hero headline present
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
     const h1Text = await page.getByRole('heading', { level: 1 }).textContent()
-    expect(h1Text).toContain('Cold-Starts in 0ms')
+    expect(h1Text).toContain('born on the edge')
   })
 
   test('hero admin screenshot visible', async ({ page }) => {
@@ -73,8 +73,30 @@ test.describe('Marketing Home Page', () => {
 
   test('comparison table present on home', async ({ page }) => {
     await page.goto('/')
-    await expect(page.getByText('How SonicJS Compares')).toBeVisible()
+    await expect(page.getByText('Honest numbers. No marketing spin.')).toBeVisible()
     await expect(page.getByRole('table')).toBeVisible()
+  })
+
+  test('hero subhead mentions portability', async ({ page }) => {
+    await page.goto('/')
+    await expect(page.getByText(/anywhere SQLite runs/i).first()).toBeVisible()
+  })
+
+  test('trust strip includes "Runs anywhere"', async ({ page }) => {
+    await page.goto('/')
+    await expect(page.getByText('Runs anywhere', { exact: true })).toBeVisible()
+  })
+
+  test('deploy-anywhere section: Cloudflare recommended + self-host targets', async ({ page }) => {
+    await page.goto('/')
+    await expect(
+      page.getByRole('heading', { name: 'Born on the edge. Runs anywhere.' }),
+    ).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Cloudflare Workers' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Also runs on' })).toBeVisible()
+    await expect(page.getByText('docker run sonicjs')).toBeVisible()
+    // Honesty guardrail: Postgres framed as roadmap, not shipped today
+    await expect(page.getByText(/Postgres.*roadmap/i)).toBeVisible()
   })
 
   test('final CTA band has install command and join discord', async ({ page }) => {

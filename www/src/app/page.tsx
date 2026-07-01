@@ -81,7 +81,7 @@ export default function HomePage() {
             </h1>
             <p className="mt-8 text-pretty text-lg font-medium text-gray-400 sm:text-xl/8">
               Zero cold starts, anywhere on Earth. 100% MIT open source, every feature free. Built
-              on Cloudflare Workers — TypeScript end to end.
+              for Cloudflare Workers — and runs on Docker, your VPS, anywhere SQLite runs.
             </p>
             <div className="mt-10 flex items-center gap-x-6">
               <Link
@@ -110,6 +110,8 @@ export default function HomePage() {
               <span>$0 to start</span>
               <span aria-hidden="true">·</span>
               <span>TypeScript-first</span>
+              <span aria-hidden="true">·</span>
+              <span>Runs anywhere</span>
             </div>
           </div>
           <div className="mx-auto mt-16 flex max-w-2xl sm:mt-24 lg:ml-10 lg:mr-0 lg:mt-0 lg:max-w-none lg:flex-none xl:ml-32">
@@ -187,8 +189,8 @@ export default function HomePage() {
             },
             {
               icon: '🤝',
-              title: 'Independent & community-owned',
-              desc: 'No VC clock. No monetization pressure. No license rug-pull. Every rival is VC-backed and tightening the screws. SonicJS won\'t.',
+              title: 'Independent & portable',
+              desc: 'No VC clock. No license rug-pull. No infra lock-in — run the same code on Cloudflare, Docker, or your own VPS. Not captive to a vendor, including us.',
             },
             {
               icon: '⚡',
@@ -533,6 +535,59 @@ GET /api/search?q=recent+blog+posts+about+edge+computing
               <li className="flex items-center gap-2"><span className="text-emerald-500">✓</span> All features included</li>
               <li className="flex items-center gap-2"><span className="text-emerald-500">✓</span> 300+ edge locations</li>
             </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Deploy anywhere ── */}
+      <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+        <div className="text-center mb-10">
+          <h2 className="text-3xl md:text-4xl font-black tracking-tight text-gray-900 dark:text-white mb-4">
+            Born on the edge. Runs anywhere.
+          </h2>
+          <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+            Cloudflare is the flagship — edge-native, zero cold start, the fastest path. But you&apos;re
+            never locked in. Same code, your infrastructure, no rewrite.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Recommended: Cloudflare */}
+          <div className="relative p-6 rounded-xl bg-gradient-to-br from-orange-50 to-amber-100 dark:from-orange-900/30 dark:to-amber-900/20 border-2 border-orange-400 dark:border-orange-600">
+            <div className="absolute -top-3 left-6 bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+              RECOMMENDED
+            </div>
+            <div className="text-4xl mb-3">☁️</div>
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Cloudflare Workers</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Edge-native, zero cold start, 300+ cities. D1 + R2 + KV. The fastest way to run
+              SonicJS — and the default.
+            </p>
+          </div>
+          {/* Also runs on */}
+          <div className="lg:col-span-2 p-6 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Also runs on</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {[
+                { emoji: '🐳', label: 'Docker', desc: 'docker run sonicjs' },
+                { emoji: '🖥️', label: 'Any VPS', desc: 'DigitalOcean, Hetzner, Vultr' },
+                { emoji: '🚂', label: 'PaaS', desc: 'Railway, Render, Fly.io' },
+                { emoji: '🏠', label: 'Homelab', desc: 'Raspberry Pi, NAS, Unraid' },
+                { emoji: '🔒', label: 'On-prem', desc: 'Air-gapped & sovereign' },
+                { emoji: '▲', label: 'Serverless', desc: 'Vercel, Netlify, Lambda' },
+              ].map((target) => (
+                <div
+                  key={target.label}
+                  className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800"
+                >
+                  <div className="text-2xl mb-1">{target.emoji}</div>
+                  <div className="text-sm font-semibold text-gray-900 dark:text-white">{target.label}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">{target.desc}</div>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-4">
+              Runs anywhere SQLite runs. Managed Postgres + S3 for large-scale deploys is on the roadmap.
+            </p>
           </div>
         </div>
       </div>
