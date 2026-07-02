@@ -144,10 +144,18 @@ export default function HomePage() {
               Zero cold starts, anywhere on Earth. 100% MIT open source, every feature free. Built
               for Cloudflare Workers — and runs on Docker, your VPS, anywhere SQLite runs.
             </p>
-            <div className="mt-10 flex items-center gap-x-6">
+            <div className="mt-10 flex flex-wrap items-center gap-4">
+              <a
+                href="https://demo.sonicjs.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-md bg-cyan-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-cyan-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-500 no-underline"
+              >
+                Try live demo
+              </a>
               <Link
                 href="/quickstart"
-                className="rounded-md bg-cyan-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-cyan-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-500 no-underline"
+                className="rounded-md bg-white/10 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm ring-1 ring-inset ring-white/20 hover:bg-white/20 no-underline"
               >
                 Get started free
               </Link>
@@ -160,6 +168,9 @@ export default function HomePage() {
                 Star on GitHub <span aria-hidden="true">→</span>
               </Link>
             </div>
+            <p className="mt-3 text-xs text-gray-500">
+              No signup required — instant access to real admin
+            </p>
             <div className="mt-8 rounded-lg bg-white/5 px-4 py-3 font-mono text-sm text-gray-300 ring-1 ring-white/10">
               $ npx create-sonicjs@latest my-app
             </div>
