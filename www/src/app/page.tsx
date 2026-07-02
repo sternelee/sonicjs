@@ -209,7 +209,11 @@ export default function HomePage() {
             { value: '0-5ms', label: 'Cold start', context: 'vs 500–2000ms on Node.js CMSs' },
             { value: '15-50ms', label: 'API response', context: 'vs 1–4s with relations elsewhere' },
             { value: '300+', label: 'Edge locations', context: 'vs one region, one continent' },
-            { value: '$0', label: 'To start', context: '100k requests/day on the free tier' },
+            {
+              value: '$0',
+              label: 'To start',
+              context: "Cloudflare's free tier covers 100k requests/day",
+            },
           ].map((stat) => (
             <div key={stat.label} className="flex flex-col gap-y-2 border-l border-white/10 pl-6">
               <dt className="text-sm/6 font-semibold text-white">{stat.label}</dt>
@@ -245,47 +249,53 @@ export default function HomePage() {
                   changes documented.
                 </>
               ),
-              footer: 'SonicJS: Semantic versioning. No surprise breaking changes.',
+              footer:
+                'SonicJS: semantic versioning with automatic, versioned migrations — upgrades stay boring.',
             },
             {
               src: '/images/home/pain-pricing.png',
               alt: 'Cost efficiency visualization',
-              title: '$0 vs $99/mo — No Paywalls',
+              title: 'The Features You Need Are Paywalled',
               body: (
                 <>
-                  Strapi&apos;s Live Preview requires the{' '}
-                  <strong className="text-red-300">$99/month Growth plan</strong>. Roles capped at 3
-                  on free tier. Every feature gated.
+                  Strapi gates{' '}
+                  <strong className="text-red-300">
+                    version history, scheduled publishing, Live Preview, audit logs & SSO
+                  </strong>{' '}
+                  behind $99+/mo tiers. Contentful&apos;s real features start near $300/mo.
                 </>
               ),
-              footer: 'SonicJS: All features included. MIT licensed. No paywalls. Ever.',
+              footer:
+                'SonicJS: every feature in the MIT core. No Growth tier. No Enterprise gate. Ever.',
             },
             {
               src: '/images/home/pain-latency.png',
               alt: 'Low-latency global routing visualization',
-              title: 'Sub-50ms Globally, Not Just US-East',
+              title: '0ms Cold Start, Sub-50ms Worldwide',
               body: (
                 <>
-                  Traditional CMS deploys to one region. Users in Asia hitting a US server see{' '}
-                  <strong className="text-red-300">200-500ms latency</strong> before your app even
-                  responds.
+                  Single-region Node CMSs charge you twice:{' '}
+                  <strong className="text-red-300">500-2000ms</strong> cold boots after idle, then{' '}
+                  <strong className="text-red-300">200-500ms</strong> of round-trip for every user
+                  an ocean away from your server.
                 </>
               ),
               footer:
-                'SonicJS: 300+ edge locations. Requests routed to the nearest node automatically.',
+                'SonicJS: V8 isolates in 300+ edge cities — no boot penalty, responses served near the user.',
             },
             {
               src: '/images/home/pain-coldstart.png',
-              alt: 'Instant cold start visualization',
-              title: '0ms Cold Start, Not 2-Second Lag',
+              alt: 'Glowing AI circuitry stack visualization',
+              title: 'AI Included, Not Upsold',
               body: (
                 <>
-                  Node.js cold starts on Strapi:{' '}
-                  <strong className="text-red-300">500-2000ms</strong>. First user after idle pays
-                  the full boot penalty. Every. Single. Time.
+                  Strapi and Contentful gate AI behind{' '}
+                  <strong className="text-red-300">paid tiers</strong>; Payload and Directus
+                  don&apos;t ship it at all. In 2026 your CMS should talk to your agents.
                 </>
               ),
-              footer: 'SonicJS on Workers: isolate model — 0ms cold start, no boot penalty.',
+              footer:
+                'SonicJS: AI search + a native MCP server in the free core — Claude Code & Cursor connect directly.',
             },
           ].map((card) => (
             <div
@@ -643,7 +653,7 @@ GET /api/products?category=electronics&sort=-price&limit=20`}</pre>
         <SectionHeader
           eyebrow="Pricing"
           title="Stop overpaying for your CMS"
-          lede="Rivals gate features behind monthly plans. SonicJS runs on Cloudflare's free tier — all features, no seats, no gates."
+          lede="Rivals bill you monthly for their cloud. SonicJS isn't a hosting service — you deploy it to your own Cloudflare account (or your own server) and we never see a dollar. All features, no seats, no gates."
         />
         <div className="mx-auto mt-16 grid max-w-2xl grid-cols-1 gap-8 md:grid-cols-2 lg:max-w-none lg:grid-cols-4">
           {[
@@ -691,7 +701,9 @@ GET /api/products?category=electronics&sort=-price&limit=20`}</pre>
               RECOMMENDED
             </div>
             <div className="mb-6 text-center">
-              <div className="mb-1 text-base/7 font-semibold text-indigo-400">SonicJS</div>
+              <div className="mb-1 text-base/7 font-semibold text-indigo-400">
+                SonicJS on your Cloudflare account
+              </div>
               <div className="text-4xl font-semibold tracking-tight text-white">
                 $0-5<span className="text-base font-normal text-gray-500">/mo</span>
               </div>
@@ -718,6 +730,11 @@ GET /api/products?category=electronics&sort=-price&limit=20`}</pre>
             </ul>
           </div>
         </div>
+        <p className="mt-6 text-center text-xs text-gray-500">
+          SonicJS is software, not a hosting service — there&apos;s no SonicJS cloud and no bill
+          from us, ever. $0–5/mo is what Cloudflare charges for your own account at typical
+          traffic; self-hosting on Docker costs exactly $0 plus your hardware.
+        </p>
       </div>
 
       {/* ── Deploy anywhere ── */}

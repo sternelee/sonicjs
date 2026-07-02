@@ -116,8 +116,21 @@ test.describe('Marketing Home Page', () => {
     ).toBeVisible()
     // Pain-card background image present (Next fill image keeps alt text)
     await expect(page.getByAltText('Seamless migration visualization')).toBeVisible()
-    // Overlaid card title visible over the image
+    // All four card titles overlaid on the images
     await expect(page.getByRole('heading', { name: 'No More Migration Hell' })).toBeVisible()
+    await expect(
+      page.getByRole('heading', { name: 'The Features You Need Are Paywalled' }),
+    ).toBeVisible()
+    await expect(
+      page.getByRole('heading', { name: '0ms Cold Start, Sub-50ms Worldwide' }),
+    ).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'AI Included, Not Upsold' })).toBeVisible()
+  })
+
+  test('pricing clarifies SonicJS is software, not a hosting service', async ({ page }) => {
+    await page.goto('/')
+    await expect(page.getByText(/software, not a hosting service/i)).toBeVisible()
+    await expect(page.getByText('SonicJS on your Cloudflare account')).toBeVisible()
   })
 
   test('AI section highlights native MCP server', async ({ page }) => {
