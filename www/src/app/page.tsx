@@ -38,7 +38,7 @@ function GlowBlob({ className }: { className?: string }) {
           clipPath:
             'polygon(73.6% 51.7%, 91.7% 11.8%, 100% 46.4%, 97.4% 82.2%, 92.5% 84.9%, 75.7% 64%, 55.3% 47.5%, 46.5% 49.4%, 45% 62.9%, 50.3% 87.2%, 21.3% 64.1%, 0.1% 100%, 5.4% 51.1%, 21.4% 63.9%, 58.9% 0.2%, 73.6% 51.7%)',
         }}
-        className="aspect-[1108/632] w-[69.25rem] flex-none bg-gradient-to-r from-[#80caff] to-[#4f46e5] opacity-20"
+        className="aspect-[1108/632] w-[69.25rem] flex-none bg-gradient-to-r from-[#67e8f9] to-[#0891b2] opacity-20"
       />
     </div>
   )
@@ -76,7 +76,7 @@ function SectionHeader({
         align === 'center' ? 'mx-auto max-w-2xl text-center' : 'mx-auto max-w-2xl lg:mx-0'
       }
     >
-      <p className="text-base/7 font-semibold text-indigo-400">{eyebrow}</p>
+      <p className="text-base/7 font-semibold text-cyan-400">{eyebrow}</p>
       <h2 className="mt-2 text-pretty text-4xl font-semibold tracking-tight text-white sm:text-5xl">
         {title}
       </h2>
@@ -117,7 +117,7 @@ export default function HomePage() {
           <div className="mx-auto max-w-2xl shrink-0 lg:mx-0 lg:pt-8">
             <div className="mt-8 sm:mt-12 lg:mt-0">
               <Link href="/changelog" className="inline-flex space-x-6 no-underline">
-                <span className="rounded-full bg-indigo-500/10 px-3 py-1 text-sm/6 font-semibold text-indigo-400 ring-1 ring-inset ring-indigo-500/25">
+                <span className="rounded-full bg-cyan-500/10 px-3 py-1 text-sm/6 font-semibold text-cyan-400 ring-1 ring-inset ring-cyan-500/25">
                   What&apos;s new
                 </span>
                 <span className="inline-flex items-center space-x-2 text-sm/6 font-medium text-gray-300">
@@ -147,7 +147,7 @@ export default function HomePage() {
             <div className="mt-10 flex items-center gap-x-6">
               <Link
                 href="/quickstart"
-                className="rounded-md bg-indigo-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 no-underline"
+                className="rounded-md bg-cyan-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-cyan-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-500 no-underline"
               >
                 Get started free
               </Link>
@@ -195,7 +195,7 @@ export default function HomePage() {
       {/* ── Benchmark stats ── */}
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto max-w-2xl lg:mx-0 lg:max-w-xl">
-          <p className="text-base/7 font-semibold text-indigo-400">Performance by architecture</p>
+          <p className="text-base/7 font-semibold text-cyan-400">Performance by architecture</p>
           <h2 className="mt-2 text-pretty text-4xl font-semibold tracking-tight text-white sm:text-5xl">
             Numbers a single region can&apos;t match
           </h2>
@@ -353,7 +353,7 @@ export default function HomePage() {
             ].map((pillar) => (
               <div key={pillar.title} className="flex flex-col">
                 <dt className="text-base/7 font-semibold text-white">
-                  <div className="mb-6 flex size-10 items-center justify-center rounded-lg bg-indigo-500">
+                  <div className="mb-6 flex size-10 items-center justify-center rounded-lg bg-cyan-500">
                     <FeatureIcon d={pillar.icon} />
                   </div>
                   {pillar.title}
@@ -376,7 +376,7 @@ export default function HomePage() {
             <>
               Real benchmarks, real pricing. We also publish what SonicJS isn&apos;t great at yet —
               because devs who read the fine print are the ones worth earning.{' '}
-              <Link href="/compare" className="font-semibold text-indigo-400 hover:text-indigo-300">
+              <Link href="/compare" className="font-semibold text-cyan-400 hover:text-cyan-300">
                 Full comparison →
               </Link>
             </>
@@ -389,7 +389,7 @@ export default function HomePage() {
                 <th className="border-b border-white/10 p-4 text-left font-semibold text-white">
                   Metric
                 </th>
-                <th className="border-b border-white/10 p-4 text-center font-semibold text-indigo-400">
+                <th className="border-b border-white/10 p-4 text-center font-semibold text-cyan-400">
                   SonicJS
                 </th>
                 <th className="border-b border-white/10 p-4 text-center font-semibold text-gray-400">
@@ -416,7 +416,7 @@ export default function HomePage() {
                 return (
                   <tr key={metric} className="hover:bg-white/5">
                     <td className={`p-4 font-medium text-white ${border}`}>{metric}</td>
-                    <td className={`p-4 text-center font-semibold text-indigo-400 ${border}`}>
+                    <td className={`p-4 text-center font-semibold text-cyan-400 ${border}`}>
                       {sonic}
                     </td>
                     <td className={`p-4 text-center text-gray-400 ${border}`}>{strapi}</td>
@@ -551,12 +551,12 @@ GET /api/products?category=electronics&sort=-price&limit=20`}</pre>
               href={card.href}
               className="group flex flex-col rounded-2xl bg-white/5 p-8 ring-1 ring-white/10 transition hover:bg-white/10 hover:ring-white/20 no-underline"
             >
-              <div className="mb-6 flex size-10 items-center justify-center rounded-lg bg-indigo-500">
+              <div className="mb-6 flex size-10 items-center justify-center rounded-lg bg-cyan-500">
                 <FeatureIcon d={card.icon} />
               </div>
               <h3 className="text-base/7 font-semibold text-white">{card.title}</h3>
               <div className="mt-1 flex-auto text-sm/6 text-gray-400">{card.desc}</div>
-              <p className="mt-6 text-sm/6 font-semibold text-indigo-400 group-hover:text-indigo-300">
+              <p className="mt-6 text-sm/6 font-semibold text-cyan-400 group-hover:text-cyan-300">
                 Learn more <span aria-hidden="true">→</span>
               </p>
             </Link>
@@ -574,10 +574,10 @@ GET /api/products?category=electronics&sort=-price&limit=20`}</pre>
 
       {/* ── AI section ── */}
       <div className="mx-auto mt-24 max-w-7xl px-6 sm:mt-40 lg:px-8">
-        <div className="rounded-3xl bg-gradient-to-br from-indigo-950/80 via-gray-900 to-gray-900 p-8 ring-1 ring-indigo-500/30 sm:p-12">
+        <div className="rounded-3xl bg-gradient-to-br from-cyan-950/80 via-gray-900 to-gray-900 p-8 ring-1 ring-cyan-500/30 sm:p-12">
           <div className="flex flex-col lg:flex-row lg:items-center lg:gap-16">
             <div className="flex-1">
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-indigo-500/10 px-3 py-1 text-sm font-semibold text-indigo-400 ring-1 ring-inset ring-indigo-500/25">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-cyan-500/10 px-3 py-1 text-sm font-semibold text-cyan-400 ring-1 ring-inset ring-cyan-500/25">
                 AI-native
               </div>
               <h2 className="text-pretty text-4xl font-semibold tracking-tight text-white sm:text-5xl">
@@ -590,7 +590,7 @@ GET /api/products?category=electronics&sort=-price&limit=20`}</pre>
               </p>
               <ul className="mt-8 space-y-4 text-sm/6 text-gray-300">
                 <li className="flex items-start gap-3">
-                  <span aria-hidden="true" className="mt-0.5 text-indigo-400">✦</span>
+                  <span aria-hidden="true" className="mt-0.5 text-cyan-400">✦</span>
                   <span>
                     <strong className="font-semibold text-white">Native MCP server</strong> —
                     auto-generated tools let Claude Code, Cursor &amp; VS Code read, create, and
@@ -599,7 +599,7 @@ GET /api/products?category=electronics&sort=-price&limit=20`}</pre>
                   </span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <span aria-hidden="true" className="mt-0.5 text-indigo-400">✦</span>
+                  <span aria-hidden="true" className="mt-0.5 text-cyan-400">✦</span>
                   <span>
                     <strong className="font-semibold text-white">Semantic search</strong> —
                     RAG-powered via Cloudflare Vectorize. Natural language queries, zero extra
@@ -607,7 +607,7 @@ GET /api/products?category=electronics&sort=-price&limit=20`}</pre>
                   </span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <span aria-hidden="true" className="mt-0.5 text-indigo-400">✦</span>
+                  <span aria-hidden="true" className="mt-0.5 text-cyan-400">✦</span>
                   <span>
                     <strong className="font-semibold text-white">Agent-ready API</strong> —
                     structured schema, consistent REST surface, auto-generated docs. LLMs
@@ -618,20 +618,20 @@ GET /api/products?category=electronics&sort=-price&limit=20`}</pre>
               <p className="mt-8">
                 <Link
                   href="/plugins/ai-search"
-                  className="text-sm/6 font-semibold text-indigo-400 hover:text-indigo-300 no-underline"
+                  className="text-sm/6 font-semibold text-cyan-400 hover:text-cyan-300 no-underline"
                 >
                   Explore AI features <span aria-hidden="true">→</span>
                 </Link>
               </p>
             </div>
             <div className="mt-10 shrink-0 lg:mt-0 lg:w-96">
-              <div className="overflow-hidden rounded-2xl bg-gray-950/60 ring-1 ring-indigo-500/30">
-                <div className="flex items-center gap-2 border-b border-indigo-500/20 bg-white/5 px-4 py-3">
-                  <span className="text-xs font-medium text-indigo-400">
+              <div className="overflow-hidden rounded-2xl bg-gray-950/60 ring-1 ring-cyan-500/30">
+                <div className="flex items-center gap-2 border-b border-cyan-500/20 bg-white/5 px-4 py-3">
+                  <span className="text-xs font-medium text-cyan-400">
                     Connect Claude Code / Cursor
                   </span>
                 </div>
-                <pre className="m-0 overflow-x-auto p-5 text-xs leading-relaxed text-indigo-200">{`// Point your agent at your CMS
+                <pre className="m-0 overflow-x-auto p-5 text-xs leading-relaxed text-cyan-200">{`// Point your agent at your CMS
 {
   "mcpServers": {
     "sonicjs": {
@@ -696,12 +696,12 @@ GET /api/products?category=electronics&sort=-price&limit=20`}</pre>
               </ul>
             </div>
           ))}
-          <div className="relative rounded-2xl bg-indigo-500/10 p-8 ring-2 ring-indigo-500">
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-indigo-500 px-3 py-1 text-xs font-semibold text-white">
+          <div className="relative rounded-2xl bg-cyan-500/10 p-8 ring-2 ring-cyan-500">
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-cyan-500 px-3 py-1 text-xs font-semibold text-white">
               RECOMMENDED
             </div>
             <div className="mb-6 text-center">
-              <div className="mb-1 text-base/7 font-semibold text-indigo-400">
+              <div className="mb-1 text-base/7 font-semibold text-cyan-400">
                 SonicJS on your Cloudflare account
               </div>
               <div className="text-4xl font-semibold tracking-tight text-white">
@@ -745,11 +745,11 @@ GET /api/products?category=electronics&sort=-price&limit=20`}</pre>
           lede="Cloudflare is the flagship — edge-native, zero cold start, the fastest path. But you're never locked in. Same code, your infrastructure, no rewrite."
         />
         <div className="mx-auto mt-16 grid max-w-2xl grid-cols-1 gap-8 lg:max-w-none lg:grid-cols-3">
-          <div className="relative rounded-2xl bg-indigo-500/10 p-8 ring-2 ring-indigo-500">
-            <div className="absolute -top-3 left-8 rounded-full bg-indigo-500 px-3 py-1 text-xs font-semibold text-white">
+          <div className="relative rounded-2xl bg-cyan-500/10 p-8 ring-2 ring-cyan-500">
+            <div className="absolute -top-3 left-8 rounded-full bg-cyan-500 px-3 py-1 text-xs font-semibold text-white">
               RECOMMENDED
             </div>
-            <div className="mb-6 flex size-10 items-center justify-center rounded-lg bg-indigo-500">
+            <div className="mb-6 flex size-10 items-center justify-center rounded-lg bg-cyan-500">
               <FeatureIcon d="M2.25 15a4.5 4.5 0 0 0 4.5 4.5H18a3.75 3.75 0 0 0 1.332-7.257 3 3 0 0 0-3.758-3.848 5.25 5.25 0 0 0-10.233 2.33A4.502 4.502 0 0 0 2.25 15Z" />
             </div>
             <h3 className="text-base/7 font-semibold text-white">Cloudflare Workers</h3>
@@ -794,7 +794,7 @@ GET /api/products?category=electronics&sort=-price&limit=20`}</pre>
               in public — releases land weekly.{' '}
               <Link
                 href="/changelog"
-                className="font-semibold text-indigo-400 hover:text-indigo-300"
+                className="font-semibold text-cyan-400 hover:text-cyan-300"
               >
                 View the full changelog →
               </Link>
@@ -861,7 +861,7 @@ GET /api/products?category=electronics&sort=-price&limit=20`}</pre>
           <div className="mt-6">
             <Link
               href="/quickstart"
-              className="inline-flex rounded-md bg-indigo-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 no-underline"
+              className="inline-flex rounded-md bg-cyan-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-cyan-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-500 no-underline"
             >
               Quickstart
             </Link>
