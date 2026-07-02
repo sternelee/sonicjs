@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation'
 
 import { Breadcrumbs } from '@/components/Breadcrumbs'
 import { Footer } from '@/components/Footer'
+import { MarketingFooter } from '@/components/MarketingFooter'
 import { Header } from '@/components/Header'
 import { Logo } from '@/components/Logo'
 import { MarketingNav } from '@/components/MarketingNav'
@@ -27,7 +28,7 @@ export function Layout({
       <div className="flex min-h-full flex-col">
         <MarketingNav />
         <main className="flex-auto">{children}</main>
-        <Footer />
+        <MarketingFooter />
       </div>
     )
   }
