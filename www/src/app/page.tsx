@@ -193,7 +193,7 @@ export default function HomePage() {
       </div>
 
       {/* ── AI section ── */}
-      <div className="mx-auto mt-12 mb-16 max-w-7xl px-6 sm:mt-16 sm:mb-24 lg:px-8">
+      <div className="mx-auto mt-0 mb-24 max-w-7xl px-6 sm:mb-32 lg:mb-40 lg:px-8">
         <div className="rounded-3xl bg-gradient-to-br from-cyan-950/80 via-gray-900 to-gray-900 p-8 ring-1 ring-cyan-500/30 sm:p-12">
           <div className="flex flex-col lg:flex-row lg:items-center lg:gap-16">
             <div className="flex-1">
