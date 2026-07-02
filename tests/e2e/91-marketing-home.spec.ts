@@ -46,12 +46,16 @@ test.describe('Marketing Home Page', () => {
     await expect(nav.getByText(/^v\d/)).toBeVisible()
   })
 
-  test('benchmark strip shows all 4 metrics', async ({ page }) => {
+  test('benchmark stats show all 4 metrics', async ({ page }) => {
     await page.goto('/')
-    await expect(page.getByText('0-5ms')).toBeVisible()
-    await expect(page.getByText('15-50ms')).toBeVisible()
-    await expect(page.getByText('300+')).toBeVisible()
-    await expect(page.getByText('$0')).toBeVisible()
+    await expect(
+      page.getByRole('heading', { name: /Numbers a single region/i }),
+    ).toBeVisible()
+    // Values also appear in the comparison table — assert the first occurrence
+    await expect(page.getByText('0-5ms').first()).toBeVisible()
+    await expect(page.getByText('15-50ms').first()).toBeVisible()
+    await expect(page.getByText('300+').first()).toBeVisible()
+    await expect(page.getByText('$0').first()).toBeVisible()
   })
 
   test('changelog link points to /changelog', async ({ page }) => {
@@ -125,5 +129,47 @@ test.describe('Marketing Home Page', () => {
     await expect(page.getByText(/read, create, and publish/i)).toBeVisible()
     // MCP connect snippet present
     await expect(page.getByText(/mcpServers/)).toBeVisible()
+  })
+
+  test('four pillars section shows the wedge heading', async ({ page }) => {
+    await page.goto('/')
+    await expect(
+      page.getByRole('heading', { name: /edge-native\. Free because/i }),
+    ).toBeVisible()
+    await expect(page.getByText('Independent & portable')).toBeVisible()
+  })
+
+  test('DX showcase shows schema and generated API panels', async ({ page }) => {
+    await page.goto('/')
+    await expect(
+      page.getByRole('heading', { name: /From schema to global API/i }),
+    ).toBeVisible()
+    await expect(page.getByText(/Auto-generated REST API/i).first()).toBeVisible()
+  })
+
+  test('plugin grid links to plugin pages', async ({ page }) => {
+    await page.goto('/')
+    await expect(
+      page.getByRole('heading', { name: /Lightweight core\. Powerful plugins\./i }),
+    ).toBeVisible()
+    const aiSearchCard = page.getByRole('link', { name: /AI Search/i }).first()
+    await expect(aiSearchCard).toBeVisible()
+    expect(await aiSearchCard.getAttribute('href')).toBe('/plugins/ai-search')
+  })
+
+  test('pricing shows SonicJS as recommended', async ({ page }) => {
+    await page.goto('/')
+    await expect(
+      page.getByRole('heading', { name: /Stop overpaying/i }),
+    ).toBeVisible()
+    await expect(page.getByText('RECOMMENDED').first()).toBeVisible()
+    await expect(page.getByText('All features included')).toBeVisible()
+  })
+
+  test('built-in-the-open band shows community links', async ({ page }) => {
+    await page.goto('/')
+    await expect(page.getByRole('heading', { name: 'Built in the open' })).toBeVisible()
+    await expect(page.getByText('Open Source · MIT License')).toBeVisible()
+    await expect(page.getByText('Discord Community')).toBeVisible()
   })
 })
