@@ -458,6 +458,22 @@ export const PLUGIN_REGISTRY: Record<string, PluginRegistryEntry> = {
     "adminMenu": null
   },
 
+  'menu': {
+    "id": "menu",
+    "codeName": "menu",
+    "displayName": "Menu Manager",
+    "description": "Manages the admin sidebar navigation. Admins can reorder, rename, hide built-in items, and add custom links.",
+    "version": "1.0.0",
+    "author": "SonicJS Team",
+    "category": "admin",
+    "iconEmoji": "📋",
+    "is_core": true,
+    "permissions": [],
+    "dependencies": [],
+    "defaultSettings": {},
+    "adminMenu": null
+  },
+
   'multi-tenant': {
     "id": "multi-tenant",
     "codeName": "multi-tenant",
