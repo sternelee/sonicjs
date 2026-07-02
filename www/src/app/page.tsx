@@ -192,6 +192,82 @@ export default function HomePage() {
         </div>
       </div>
 
+      {/* ── AI section ── */}
+      <div className="mx-auto mt-24 max-w-7xl px-6 sm:mt-40 lg:px-8">
+        <div className="rounded-3xl bg-gradient-to-br from-cyan-950/80 via-gray-900 to-gray-900 p-8 ring-1 ring-cyan-500/30 sm:p-12">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:gap-16">
+            <div className="flex-1">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-cyan-500/10 px-3 py-1 text-sm font-semibold text-cyan-400 ring-1 ring-inset ring-cyan-500/25">
+                AI-native
+              </div>
+              <h2 className="text-pretty text-4xl font-semibold tracking-tight text-white sm:text-5xl">
+                Your content layer, speaking AI.
+              </h2>
+              <p className="mt-6 text-lg/8 text-gray-300">
+                In 2026 every CMS claims AI. SonicJS ships it: a native Model Context Protocol
+                (MCP) server your agents connect to directly, RAG-powered semantic search, and an
+                AI-friendly API structure your LLM tools already understand.
+              </p>
+              <ul className="mt-8 space-y-4 text-sm/6 text-gray-300">
+                <li className="flex items-start gap-3">
+                  <span aria-hidden="true" className="mt-0.5 text-cyan-400">✦</span>
+                  <span>
+                    <strong className="font-semibold text-white">Native MCP server</strong> —
+                    auto-generated tools let Claude Code, Cursor &amp; VS Code read, create, and
+                    publish your content. Secure scoped API keys; respects your existing
+                    permissions.
+                  </span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span aria-hidden="true" className="mt-0.5 text-cyan-400">✦</span>
+                  <span>
+                    <strong className="font-semibold text-white">Semantic search</strong> —
+                    RAG-powered via Cloudflare Vectorize. Natural language queries, zero extra
+                    infra.
+                  </span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span aria-hidden="true" className="mt-0.5 text-cyan-400">✦</span>
+                  <span>
+                    <strong className="font-semibold text-white">Agent-ready API</strong> —
+                    structured schema, consistent REST surface, auto-generated docs. LLMs
+                    understand it out of the box.
+                  </span>
+                </li>
+              </ul>
+              <p className="mt-8">
+                <Link
+                  href="/plugins/ai-search"
+                  className="text-sm/6 font-semibold text-cyan-400 hover:text-cyan-300 no-underline"
+                >
+                  Explore AI features <span aria-hidden="true">→</span>
+                </Link>
+              </p>
+            </div>
+            <div className="mt-10 shrink-0 lg:mt-0 lg:w-96">
+              <div className="overflow-hidden rounded-2xl bg-gray-950/60 ring-1 ring-cyan-500/30">
+                <div className="flex items-center gap-2 border-b border-cyan-500/20 bg-white/5 px-4 py-3">
+                  <span className="text-xs font-medium text-cyan-400">
+                    Connect Claude Code / Cursor
+                  </span>
+                </div>
+                <pre className="m-0 overflow-x-auto p-5 text-xs leading-relaxed text-cyan-200">{`// Point your agent at your CMS
+{
+  "mcpServers": {
+    "sonicjs": {
+      "url": "https://your-site.com/api/mcp",
+      "headers": {
+        "Authorization": "Bearer <mcp-key>"
+      }
+    }
+  }
+}`}</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* ── Benchmark stats ── */}
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto max-w-2xl lg:mx-0 lg:max-w-xl">
@@ -569,82 +645,6 @@ GET /api/products?category=electronics&sort=-price&limit=20`}</pre>
           >
             See all plugins <span aria-hidden="true">→</span>
           </Link>
-        </div>
-      </div>
-
-      {/* ── AI section ── */}
-      <div className="mx-auto mt-24 max-w-7xl px-6 sm:mt-40 lg:px-8">
-        <div className="rounded-3xl bg-gradient-to-br from-cyan-950/80 via-gray-900 to-gray-900 p-8 ring-1 ring-cyan-500/30 sm:p-12">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:gap-16">
-            <div className="flex-1">
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-cyan-500/10 px-3 py-1 text-sm font-semibold text-cyan-400 ring-1 ring-inset ring-cyan-500/25">
-                AI-native
-              </div>
-              <h2 className="text-pretty text-4xl font-semibold tracking-tight text-white sm:text-5xl">
-                Your content layer, speaking AI.
-              </h2>
-              <p className="mt-6 text-lg/8 text-gray-300">
-                In 2026 every CMS claims AI. SonicJS ships it: a native Model Context Protocol
-                (MCP) server your agents connect to directly, RAG-powered semantic search, and an
-                AI-friendly API structure your LLM tools already understand.
-              </p>
-              <ul className="mt-8 space-y-4 text-sm/6 text-gray-300">
-                <li className="flex items-start gap-3">
-                  <span aria-hidden="true" className="mt-0.5 text-cyan-400">✦</span>
-                  <span>
-                    <strong className="font-semibold text-white">Native MCP server</strong> —
-                    auto-generated tools let Claude Code, Cursor &amp; VS Code read, create, and
-                    publish your content. Secure scoped API keys; respects your existing
-                    permissions.
-                  </span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span aria-hidden="true" className="mt-0.5 text-cyan-400">✦</span>
-                  <span>
-                    <strong className="font-semibold text-white">Semantic search</strong> —
-                    RAG-powered via Cloudflare Vectorize. Natural language queries, zero extra
-                    infra.
-                  </span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span aria-hidden="true" className="mt-0.5 text-cyan-400">✦</span>
-                  <span>
-                    <strong className="font-semibold text-white">Agent-ready API</strong> —
-                    structured schema, consistent REST surface, auto-generated docs. LLMs
-                    understand it out of the box.
-                  </span>
-                </li>
-              </ul>
-              <p className="mt-8">
-                <Link
-                  href="/plugins/ai-search"
-                  className="text-sm/6 font-semibold text-cyan-400 hover:text-cyan-300 no-underline"
-                >
-                  Explore AI features <span aria-hidden="true">→</span>
-                </Link>
-              </p>
-            </div>
-            <div className="mt-10 shrink-0 lg:mt-0 lg:w-96">
-              <div className="overflow-hidden rounded-2xl bg-gray-950/60 ring-1 ring-cyan-500/30">
-                <div className="flex items-center gap-2 border-b border-cyan-500/20 bg-white/5 px-4 py-3">
-                  <span className="text-xs font-medium text-cyan-400">
-                    Connect Claude Code / Cursor
-                  </span>
-                </div>
-                <pre className="m-0 overflow-x-auto p-5 text-xs leading-relaxed text-cyan-200">{`// Point your agent at your CMS
-{
-  "mcpServers": {
-    "sonicjs": {
-      "url": "https://your-site.com/api/mcp",
-      "headers": {
-        "Authorization": "Bearer <mcp-key>"
-      }
-    }
-  }
-}`}</pre>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
