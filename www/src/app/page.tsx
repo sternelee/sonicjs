@@ -245,7 +245,7 @@ export default function HomePage() {
               body: (
                 <>
                   &ldquo;Upgrading from Strapi v4 → v5 alone took approximately{' '}
-                  <strong className="text-red-300">40 hours</strong>&rdquo; with 50+ breaking
+                  <strong className="text-pink-300">40 hours</strong>&rdquo; with 50+ breaking
                   changes documented.
                 </>
               ),
@@ -259,7 +259,7 @@ export default function HomePage() {
               body: (
                 <>
                   Strapi gates{' '}
-                  <strong className="text-red-300">
+                  <strong className="text-pink-300">
                     version history, scheduled publishing, Live Preview, audit logs & SSO
                   </strong>{' '}
                   behind $99+/mo tiers. Contentful&apos;s real features start near $300/mo.
@@ -275,8 +275,8 @@ export default function HomePage() {
               body: (
                 <>
                   Single-region Node CMSs charge you twice:{' '}
-                  <strong className="text-red-300">500-2000ms</strong> cold boots after idle, then{' '}
-                  <strong className="text-red-300">200-500ms</strong> of round-trip for every user
+                  <strong className="text-pink-300">500-2000ms</strong> cold boots after idle, then{' '}
+                  <strong className="text-pink-300">200-500ms</strong> of round-trip for every user
                   an ocean away from your server.
                 </>
               ),
@@ -290,7 +290,7 @@ export default function HomePage() {
               body: (
                 <>
                   Strapi and Contentful gate AI behind{' '}
-                  <strong className="text-red-300">paid tiers</strong>; Payload and Directus
+                  <strong className="text-pink-300">paid tiers</strong>; Payload and Directus
                   don&apos;t ship it at all. In 2026 your CMS should talk to your agents.
                 </>
               ),
