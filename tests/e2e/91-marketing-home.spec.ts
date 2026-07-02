@@ -22,13 +22,20 @@ test.describe('Marketing Home Page', () => {
     await expect(screenshot).toBeVisible()
   })
 
-  test('primary CTA links to /quickstart', async ({ page }) => {
+  test('final CTA has Discord primary and Quickstart secondary', async ({ page }) => {
     await page.goto('/')
 
-    const gettingStartedLinks = page.getByRole('link', { name: /Getting Started/i })
-    await expect(gettingStartedLinks.first()).toBeVisible()
-    const href = await gettingStartedLinks.first().getAttribute('href')
-    expect(href).toBe('/quickstart')
+    // Primary: Discord
+    const discordLink = page.getByRole('link', { name: /Join Discord/i }).last()
+    await expect(discordLink).toBeVisible()
+    const discordHref = await discordLink.getAttribute('href')
+    expect(discordHref).toContain('discord.gg')
+
+    // Secondary: Quickstart button at bottom
+    const quickstartLink = page.getByRole('link', { name: /Quickstart/i })
+    await expect(quickstartLink).toBeVisible()
+    const quickstartHref = await quickstartLink.getAttribute('href')
+    expect(quickstartHref).toBe('/quickstart')
   })
 
   test('marketing nav sticky with correct links', async ({ page }) => {

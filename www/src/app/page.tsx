@@ -850,18 +850,20 @@ GET /api/products?category=electronics&sort=-price&limit=20`}</pre>
           </div>
           <div className="mt-10 flex items-center justify-center gap-x-6">
             <Link
-              href="/quickstart"
-              className="rounded-md bg-indigo-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 no-underline"
-            >
-              Getting Started
-            </Link>
-            <Link
               href="https://discord.gg/8bMy6bv3sZ"
               target="_blank"
               rel="noopener noreferrer"
               className="text-sm/6 font-semibold text-white no-underline"
             >
               Join Discord <span aria-hidden="true">→</span>
+            </Link>
+          </div>
+          <div className="mt-6">
+            <Link
+              href="/quickstart"
+              className="inline-flex rounded-md bg-indigo-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 no-underline"
+            >
+              Quickstart
             </Link>
           </div>
         </div>
