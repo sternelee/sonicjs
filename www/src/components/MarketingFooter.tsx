@@ -172,7 +172,7 @@ export function MarketingFooter() {
         {/* Bottom bar */}
         <div className="mt-16 border-t border-white/10 pt-8 sm:mt-20 lg:mt-24">
           <p className="text-sm/6 text-gray-400">
-            &copy; {new Date().getFullYear()} SonicJS. MIT Licensed. No rights reserved — fork it.
+            &copy; {new Date().getFullYear()} SonicJS. MIT Licensed. No rights reserved — 🍴 fork it today.
           </p>
         </div>
       </div>
