@@ -133,6 +133,34 @@ apiContentCrudRoutes.get('/:id', optionalAuth(), async (c) => {
       'fire-and-forget'
     )
 
+    // ?fields= projection: e.g. ?fields=id,title,data.excerpt
+    const fieldsParam = c.req.query('fields')
+    if (fieldsParam) {
+      const projFields = fieldsParam.split(',').map(s => s.trim()).filter(Boolean)
+      if (projFields.length > 0) {
+        const result: any = {}
+        const dataSubFields: string[] = []
+        for (const f of projFields) {
+          if (f === 'data') {
+            result.data = transformedContent.data
+          } else if (f.startsWith('data.')) {
+            dataSubFields.push(f.slice(5))
+          } else if (Object.prototype.hasOwnProperty.call(transformedContent, f)) {
+            result[f] = transformedContent[f]
+          }
+        }
+        if (dataSubFields.length > 0 && !result.data) {
+          result.data = {}
+          for (const sub of dataSubFields) {
+            if (transformedContent.data && Object.prototype.hasOwnProperty.call(transformedContent.data, sub)) {
+              result.data[sub] = transformedContent.data[sub]
+            }
+          }
+        }
+        return c.json({ data: result })
+      }
+    }
+
     return c.json({ data: transformedContent })
   } catch (error) {
     console.error('Error fetching content:', error)
