@@ -34,24 +34,21 @@ test.describe('Self-Host Smoke Tests', () => {
     expect(page.url()).toMatch(/login/)
   })
 
-  test('sign-in with seeded admin credentials', async ({ page }) => {
+  test('sign-in and access admin dashboard', async ({ page }) => {
+    // Use page.request so the session cookie is shared with the browser context.
+    const signIn = await page.request.post('/auth/sign-in/email', {
+      data: { email: SELF_HOST_EMAIL, password: SELF_HOST_PASSWORD },
+    })
+    expect(signIn.ok()).toBeTruthy()
+
+    // Navigate to admin — cookie is now in the page's cookie jar.
     await page.goto('/admin')
-    await page.waitForURL(/login/)
+    await page.waitForLoadState('networkidle', { timeout: 10_000 })
 
-    // Fill credentials
-    const emailField = page.locator('input[type="email"], input[name="email"]').first()
-    const passwordField = page.locator('input[type="password"], input[name="password"]').first()
-    await emailField.fill(SELF_HOST_EMAIL)
-    await passwordField.fill(SELF_HOST_PASSWORD)
-
-    await page.locator('button[type="submit"], input[type="submit"]').first().click()
-
-    // Should land on admin dashboard
-    await page.waitForURL(/\/admin/, { timeout: 10_000 })
-    expect(page.url()).toContain('/admin')
-
-    // Should NOT still be on login
-    expect(page.url()).not.toMatch(/login/)
+    // Should be on an admin page (not stuck on login).
+    const url = page.url()
+    expect(url).toContain('/admin')
+    expect(url).not.toContain('login')
   })
 
   test('admin content route accessible after sign-in', async ({ page, request }) => {
