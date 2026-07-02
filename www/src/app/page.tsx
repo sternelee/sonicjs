@@ -157,7 +157,7 @@ export default function HomePage() {
                 href="/quickstart"
                 className="rounded-md bg-white/10 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm ring-1 ring-inset ring-white/20 hover:bg-white/20 no-underline"
               >
-                Get started free
+                Start building
               </Link>
               <Link
                 href="https://github.com/lane711/sonicjs"
