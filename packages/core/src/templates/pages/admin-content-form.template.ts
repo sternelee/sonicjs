@@ -3,6 +3,7 @@ import { getTinyMCEInitScript, getTinyMCEScript } from '../../plugins/available/
 import { getQuillCDN, getQuillInitScript } from '../../plugins/core-plugins/quill-editor'
 import { getLexicalImportMap, getLexicalLoaderScript, getLexicalInitScript, getLexicalStyles } from '../../plugins/core-plugins/lexical-editor'
 import { renderAlert } from '../alert.template'
+import { escapeHtml } from '../../utils/sanitize'
 import { FieldDefinition, renderDynamicField, renderFieldGroup } from '../components/dynamic-field.template'
 import { getConfirmationDialogScript, renderConfirmationDialog } from '../confirmation-dialog.template'
 import { AdminLayoutCatalystData, renderAdminLayoutCatalyst } from '../layouts/admin-layout-catalyst.template'
@@ -71,6 +72,7 @@ export interface ContentFormData {
     role: string
   }
   version?: string
+  author_name?: string
 }
 
 export function renderContentFormPage(data: ContentFormData, opts?: { partialOnly?: boolean }): string {
@@ -288,20 +290,20 @@ export function renderContentFormPage(data: ContentFormData, opts?: { partialOnl
               <dl class="space-y-3 text-sm">
                 <div>
                   <dt class="text-zinc-500 dark:text-zinc-400">Created</dt>
-                  <dd class="mt-1 text-zinc-950 dark:text-white">${data.created_at ? new Date(data.created_at).toLocaleDateString() : 'Unknown'}</dd>
+                  <dd class="mt-1 text-zinc-950 dark:text-white">${data.created_at ? new Date(data.created_at * 1000).toLocaleDateString() : 'Unknown'}</dd>
                 </div>
                 <div>
                   <dt class="text-zinc-500 dark:text-zinc-400">Last Modified</dt>
-                  <dd class="mt-1 text-zinc-950 dark:text-white">${data.updated_at ? new Date(data.updated_at).toLocaleDateString() : 'Unknown'}</dd>
+                  <dd class="mt-1 text-zinc-950 dark:text-white">${data.updated_at ? new Date(data.updated_at * 1000).toLocaleDateString() : 'Unknown'}</dd>
                 </div>
                 <div>
                   <dt class="text-zinc-500 dark:text-zinc-400">Author</dt>
-                  <dd class="mt-1 text-zinc-950 dark:text-white">${data.data?.author || 'Unknown'}</dd>
+                  <dd class="mt-1 text-zinc-950 dark:text-white">${escapeHtml(String(data.data?.author || data.author_name || 'Unknown'))}</dd>
                 </div>
                 ${data.published_at ? `
                   <div>
                     <dt class="text-zinc-500 dark:text-zinc-400">Published</dt>
-                    <dd class="mt-1 text-zinc-950 dark:text-white">${new Date(data.published_at).toLocaleDateString()}</dd>
+                    <dd class="mt-1 text-zinc-950 dark:text-white">${new Date(data.published_at * 1000).toLocaleDateString()}</dd>
                   </div>
                 ` : ''}
               </dl>
