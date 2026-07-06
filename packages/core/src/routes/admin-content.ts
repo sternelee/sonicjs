@@ -1927,8 +1927,8 @@ adminContentRoutes.post('/bulk-action', async (c) => {
     }
     await cache.invalidate('content:list:*')
     const apiCache = getCacheService(CACHE_CONFIGS.api!)
-    await apiCache.invalidate('content-filtered:*')
-    await apiCache.invalidate('collection-content-filtered:*')
+    await apiCache.invalidate('api:content-filtered:*')
+    await apiCache.invalidate('api:collection-content-filtered:*')
 
     return c.json({ success: true, count: ids.length })
   } catch (error) {
