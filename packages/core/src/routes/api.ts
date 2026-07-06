@@ -1114,8 +1114,8 @@ apiRoutes.post('/:collection', requireAuth(), requireRole(['admin', 'editor', 'a
     const doc = await svc.create(createDocumentSchema.parse({ typeId: backing.coll.name, tenantId: 'default', locale: 'default', title, slug: finalSlug, data: hookData, publishOnCreate: (status || 'draft') === 'published' }), user?.userId)
 
     const cache = getCacheService(CACHE_CONFIGS.api!)
-    await cache.invalidate('content-filtered:*')
-    await cache.invalidate('collection-content-filtered:*')
+    await cache.invalidate('api:content-filtered:*')
+    await cache.invalidate(`api:collection-content-filtered:${backing.coll.name}:*`)
     dispatchHookEvent(c, 'content:after:create', { collection: backing.coll.name, id: doc.rootId, data: doc.data ?? {}, user: actor }, 'fire-and-forget')
 
     return c.json({ data: { id: doc.rootId, title: doc.title, slug: doc.slug, status: doc.status, collectionId: backing.coll.id, data: doc.data, created_at: documentSecondsToMs(doc.createdAt), updated_at: documentSecondsToMs(doc.updatedAt) } }, 201)
@@ -1168,8 +1168,8 @@ apiRoutes.put('/:collection/:id', requireAuth(), requireRole(['admin', 'editor',
     }
 
     const cache = getCacheService(CACHE_CONFIGS.api!)
-    await cache.invalidate('content-filtered:*')
-    await cache.invalidate('collection-content-filtered:*')
+    await cache.invalidate('api:content-filtered:*')
+    await cache.invalidate(`api:collection-content-filtered:${docRow.type_id}:*`)
     const coll = getCollectionRegistry().getByName(docRow.type_id)
     const saved = await db.prepare('SELECT * FROM documents WHERE id = ?').bind(newDraft.id).first() as any
     const savedData = saved?.data ? JSON.parse(saved.data) : {}
@@ -1208,8 +1208,8 @@ apiRoutes.delete('/:collection/:id', requireAuth(), requireRole(['admin', 'edito
     const now = Math.floor(Date.now() / 1000)
     await db.prepare("UPDATE documents SET deleted_at = ?, updated_at = ? WHERE root_id = ? AND tenant_id = 'default'").bind(now, now, id).run()
     const cache = getCacheService(CACHE_CONFIGS.api!)
-    await cache.invalidate('content-filtered:*')
-    await cache.invalidate('collection-content-filtered:*')
+    await cache.invalidate('api:content-filtered:*')
+    await cache.invalidate(`api:collection-content-filtered:${docRow.type_id}:*`)
     dispatchHookEvent(c, 'content:after:delete', { collection: docRow.type_id, id, data: {}, user: actor }, 'fire-and-forget')
 
     return c.json({ success: true })
