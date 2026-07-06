@@ -236,6 +236,18 @@ export class RbacService {
     return out
   }
 
+  /**
+   * Does the role (matched by document slug OR data.name) have a grant for resource+verb?
+   * Matches the role principal id from the request context, which can be either the RBAC slug
+   * (e.g. 'role-public') or the legacy role name (e.g. 'public').
+   */
+  async isGrantedForRole(roleNameOrSlug: string, resource: string, verb: string): Promise<boolean> {
+    const roles = await this.listDocs<RoleData>(T_ROLE)
+    const role = roles.find((r) => r.slug === roleNameOrSlug || r.data.name === roleNameOrSlug)
+    if (!role) return false
+    return (role.data.grants ?? []).some((g) => this.grantMatches(g, resource, verb))
+  }
+
   /** Does a single grant row satisfy the requested (resource, verb)? */
   private grantMatches(g: { resource: string; verb: string }, resource: string, verb: string): boolean {
     const resourceOk =
