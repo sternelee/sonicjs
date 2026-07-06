@@ -403,7 +403,7 @@ export function renderContentFormPage(data: ContentFormData, opts?: { partialOnl
               Save & close
             </button>
 
-            ${data.user?.role !== 'viewer' ? `
+            ${data.user?.role !== 'viewer' && data.versioningEnabled ? `
               <button
                 type="submit"
                 form="content-form"
