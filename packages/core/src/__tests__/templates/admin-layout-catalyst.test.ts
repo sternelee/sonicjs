@@ -275,7 +275,10 @@ describe('renderAdminLayoutCatalyst', () => {
     });
 
     it('should render default menu items', () => {
-      const html = renderAdminLayoutCatalyst(baseData);
+      const html = renderAdminLayoutCatalyst({
+        ...baseData,
+        user: { name: 'Admin', email: 'admin@test.com', role: 'admin' },
+      });
 
       expect(html).toContain('Content');
       expect(html).toContain('Collections');
@@ -319,6 +322,7 @@ describe('renderAdminLayoutCatalyst', () => {
     it('should render dynamic menu items', () => {
       const html = renderAdminLayoutCatalyst({
         ...baseData,
+        user: { name: 'Admin', email: 'admin@test.com', role: 'admin' },
         dynamicMenuItems: [
           {
             label: 'Custom Page',
