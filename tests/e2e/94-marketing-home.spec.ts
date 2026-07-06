@@ -116,14 +116,14 @@ test.describe('Marketing Home Page', () => {
     await expect(discordLinks.first()).toBeVisible()
   })
 
-  test('why-switch cards render with overlaid text on image background', async ({ page }) => {
+  test('why-switch cards render as icon cards (no background images)', async ({ page }) => {
     await page.goto('/')
     await expect(
       page.getByRole('heading', { name: 'Why Developers Switch to SonicJS' }),
     ).toBeVisible()
-    // Pain-card background image present (Next fill image keeps alt text)
-    await expect(page.getByAltText('Seamless migration visualization')).toBeVisible()
-    // All four card titles overlaid on the images
+    // AI-generated pain images removed — assets 404 and no alt text remains
+    await expect(page.getByAltText('Seamless migration visualization')).toHaveCount(0)
+    // All four card titles still render
     await expect(page.getByRole('heading', { name: 'No More Migration Hell' })).toBeVisible()
     await expect(
       page.getByRole('heading', { name: 'The Features You Need Are Paywalled' }),
@@ -149,6 +149,26 @@ test.describe('Marketing Home Page', () => {
     await expect(page.getByText(/read, create, and publish/i)).toBeVisible()
     // MCP connect snippet present
     await expect(page.getByText(/mcpServers/)).toBeVisible()
+  })
+
+  test('hero install command is copyable to clipboard', async ({ page, context }) => {
+    await context.grantPermissions(['clipboard-read', 'clipboard-write'])
+    await page.goto('/')
+
+    // Command text visible in hero
+    await expect(page.getByText('npx create-sonicjs@latest my-app').first()).toBeVisible()
+
+    // Click the first Copy button (hero)
+    const copyButton = page.getByRole('button', { name: /copy command/i }).first()
+    await expect(copyButton).toBeVisible()
+    await copyButton.click()
+
+    // Button flips to "Copied" confirmation
+    await expect(page.getByRole('button', { name: /copied/i }).first()).toBeVisible()
+
+    // Clipboard holds the install command
+    const clip = await page.evaluate(() => navigator.clipboard.readText())
+    expect(clip).toBe('npx create-sonicjs@latest my-app')
   })
 
   test('four pillars section shows the wedge heading', async ({ page }) => {

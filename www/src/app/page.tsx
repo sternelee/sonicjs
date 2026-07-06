@@ -1,5 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import { CopyCommand } from '@/components/CopyCommand'
 
 function GridBackdrop({ patternId }: { patternId: string }) {
   return (
@@ -171,9 +172,7 @@ export default function HomePage() {
             <p className="mt-3 text-xs text-gray-500">
               No signup required — instant access to real admin
             </p>
-            <div className="mt-8 rounded-lg bg-white/5 px-4 py-3 font-mono text-sm text-gray-300 ring-1 ring-white/10">
-              $ npx create-sonicjs@latest my-app
-            </div>
+            <CopyCommand command="npx create-sonicjs@latest my-app" className="mt-8" />
             <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-gray-500">
               <span>MIT licensed</span>
               <span aria-hidden="true">·</span>
@@ -326,8 +325,8 @@ export default function HomePage() {
         <div className="mx-auto mt-16 grid max-w-2xl grid-cols-1 gap-8 md:grid-cols-2 lg:max-w-none">
           {[
             {
-              src: '/images/home/pain-migration.png',
-              alt: 'Seamless migration visualization',
+              icon: ICONS.arrowsRightLeft,
+              accent: 'text-cyan-400',
               title: 'No More Migration Hell',
               body: (
                 <>
@@ -340,8 +339,8 @@ export default function HomePage() {
                 'SonicJS: semantic versioning with automatic, versioned migrations — upgrades stay boring.',
             },
             {
-              src: '/images/home/pain-pricing.png',
-              alt: 'Cost efficiency visualization',
+              icon: ICONS.lockOpen,
+              accent: 'text-emerald-400',
               title: 'The Features You Need Are Paywalled',
               body: (
                 <>
@@ -356,8 +355,8 @@ export default function HomePage() {
                 'SonicJS: every feature in the MIT core. No Growth tier. No Enterprise gate. Ever.',
             },
             {
-              src: '/images/home/pain-latency.png',
-              alt: 'Low-latency global routing visualization',
+              icon: ICONS.bolt,
+              accent: 'text-amber-400',
               title: '0ms Cold Start, Sub-50ms Worldwide',
               body: (
                 <>
@@ -371,8 +370,8 @@ export default function HomePage() {
                 'SonicJS: V8 isolates in 300+ edge cities — no boot penalty, responses served near the user.',
             },
             {
-              src: '/images/home/pain-coldstart.png',
-              alt: 'Glowing AI circuitry stack visualization',
+              icon: ICONS.sparkles,
+              accent: 'text-fuchsia-400',
               title: 'AI Included, Not Upsold',
               body: (
                 <>
@@ -387,21 +386,18 @@ export default function HomePage() {
           ].map((card) => (
             <div
               key={card.title}
-              className="group relative flex min-h-[22rem] flex-col justify-end overflow-hidden rounded-2xl p-6 ring-1 ring-white/10 transition-shadow duration-300 hover:shadow-2xl"
+              className="group relative flex min-h-[18rem] flex-col overflow-hidden rounded-2xl bg-white/[0.02] p-8 ring-1 ring-white/10 transition-all duration-300 hover:bg-white/[0.04] hover:ring-white/20"
             >
-              <Image
-                src={card.src}
-                alt={card.alt}
-                fill
-                sizes="(min-width: 768px) 50vw, 100vw"
-                className="object-cover transition-transform duration-500 group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-black/25" />
-              <div className="relative">
-                <h3 className="mb-2 text-xl font-semibold text-white">{card.title}</h3>
-                <p className="mb-2 text-sm text-gray-100">{card.body}</p>
-                <p className="text-xs italic text-gray-200">{card.footer}</p>
+              <div
+                className={`mb-6 flex size-11 items-center justify-center rounded-xl bg-white/5 ring-1 ring-white/10 ${card.accent}`}
+              >
+                <FeatureIcon d={card.icon} />
               </div>
+              <h3 className="mb-3 text-xl font-semibold text-white">{card.title}</h3>
+              <p className="mb-4 flex-auto text-sm/6 text-gray-300">{card.body}</p>
+              <p className="border-t border-white/10 pt-4 text-sm/6 font-medium text-cyan-300">
+                {card.footer}
+              </p>
             </div>
           ))}
         </div>
@@ -856,9 +852,10 @@ GET /api/products?category=electronics&sort=-price&limit=20`}</pre>
           <p className="mx-auto mt-6 max-w-xl text-pretty text-lg/8 text-gray-300">
             MIT licensed. No credit card. No paywalls. Your first global deploy is minutes away.
           </p>
-          <div className="mx-auto mt-8 max-w-md rounded-lg bg-white/5 px-6 py-4 text-left font-mono text-sm text-gray-300 ring-1 ring-white/10">
-            $ npx create-sonicjs@latest my-app
-          </div>
+          <CopyCommand
+            command="npx create-sonicjs@latest my-app"
+            className="mx-auto mt-8 max-w-md"
+          />
           <div className="mt-10 flex items-center justify-center gap-x-6">
             <Link
               href="https://discord.gg/8bMy6bv3sZ"
