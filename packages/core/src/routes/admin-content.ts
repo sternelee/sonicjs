@@ -1262,6 +1262,9 @@ adminContentRoutes.post('/', async (c) => {
       }), user?.userId)
       const cache = getCacheService(CACHE_CONFIGS.content!)
       await cache.invalidate(`content:list:${collectionId}:*`)
+      const apiCacheCreate = getCacheService(CACHE_CONFIGS.api!)
+      await apiCacheCreate.invalidate('api:content-filtered:*')
+      await apiCacheCreate.invalidate(`api:collection-content-filtered:${createDocType.id}:*`)
       const redirectUrl = `/admin/content/${doc.rootId}/edit?success=Content created successfully!`
       return c.req.header('HX-Request') === 'true'
         ? c.text('', 200, { 'HX-Redirect': redirectUrl })
@@ -1412,6 +1415,9 @@ adminContentRoutes.put('/:id', async (c) => {
         else if (pub) await svc.unpublish(pub.id)
 
         await getCacheService(CACHE_CONFIGS.content!).invalidate(`content:list:*`)
+        const apiCacheEdit = getCacheService(CACHE_CONFIGS.api!)
+        await apiCacheEdit.invalidate('api:content-filtered:*')
+        await apiCacheEdit.invalidate(`api:collection-content-filtered:${docRowU.type_id}:*`)
 
         const isHTMX = c.req.header('HX-Request') === 'true'
         const referrerParams = formData.get('referrer_params') as string | null
@@ -1953,6 +1959,9 @@ adminContentRoutes.delete('/:id', async (c) => {
       const now = Math.floor(Date.now() / 1000)
       await db.prepare("UPDATE documents SET deleted_at = ?, updated_at = ? WHERE root_id = ? AND tenant_id = ?").bind(now, now, id, tenantId).run()
       await getCacheService(CACHE_CONFIGS.content!).invalidate('content:list:*')
+      const apiCacheDel = getCacheService(CACHE_CONFIGS.api!)
+      await apiCacheDel.invalidate('api:content-filtered:*')
+      await apiCacheDel.invalidate(`api:collection-content-filtered:${docDel.type_id}:*`)
       return c.html(`
         <div id="content-list" hx-get="/admin/content?model=${docDel.type_id}" hx-trigger="load" hx-swap="outerHTML">
           <div class="flex items-center justify-center p-8"><span class="text-zinc-500">Deleting…</span></div>
