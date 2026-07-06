@@ -289,12 +289,13 @@ authRoutes.post('/login',
       }
 
       // Forward BA session cookie(s) to client.
+      // Use c.header() so headers survive into the c.json() response (c.res.headers mutations are discarded).
       const rawSetCookie = baRes.headers.get('set-cookie')
       if (rawSetCookie) {
-        c.res.headers.append('Set-Cookie', rawSetCookie)
+        c.header('Set-Cookie', rawSetCookie, { append: true })
       } else if ((baRes.headers as any).getSetCookie) {
         for (const sc of (baRes.headers as any).getSetCookie()) {
-          c.res.headers.append('Set-Cookie', sc)
+          c.header('Set-Cookie', sc, { append: true })
         }
       }
 
@@ -664,14 +665,14 @@ authRoutes.post('/login/form',
     // Forward BA's Set-Cookie header(s) to the browser.
     // BA sets better-auth.session_token as token.signature (signed). Using the
     // raw JSON .token field would break session lookup — must use the full cookie value.
+    // Use c.header() (not c.res.headers.append) — Hono's c.html() creates a new Response
+    // from c's internal header store; mutations to c.res.headers are discarded.
     const rawSetCookie = baRes.headers.get('set-cookie')
     if (rawSetCookie) {
-      // Workers may join multiple Set-Cookie values; for BA there is normally one.
-      // Append each cookie directive as-is.
-      c.res.headers.append('Set-Cookie', rawSetCookie)
+      c.header('Set-Cookie', rawSetCookie, { append: true })
     } else if ((baRes.headers as any).getSetCookie) {
       for (const sc of (baRes.headers as any).getSetCookie()) {
-        c.res.headers.append('Set-Cookie', sc)
+        c.header('Set-Cookie', sc, { append: true })
       }
     }
 

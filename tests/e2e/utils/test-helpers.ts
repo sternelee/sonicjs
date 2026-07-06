@@ -485,12 +485,14 @@ export async function waitForHTMX(page: Page) {
  */
 export async function isAuthenticated(page: Page): Promise<boolean> {
   try {
-    const cookies = await page.context().cookies();
-    // Better Auth uses 'better-auth.session_token' cookie
-    const authCookie = cookies.find(c => c.name === 'better-auth.session_token' || c.name === 'auth_token');
-    return !!authCookie;
+    // Check server-side session rather than local cookies — more reliable across
+    // cookie attribute differences (HttpOnly, Secure, SameSite) in CI vs local.
+    const res = await page.request.get('/auth/get-session')
+    if (!res.ok()) return false
+    const body = await res.json().catch(() => null)
+    return !!(body?.user)
   } catch {
-    return false;
+    return false
   }
 }
 
@@ -576,7 +578,9 @@ export async function isFeatureAvailable(request: import('@playwright/test').API
       headers: { 'Content-Type': 'application/json', Origin: baseURL },
     }).catch(() => {})
     const res = await request.get(route)
-    return res.status() !== 404
+    // Only 2xx means the feature exists and is accessible. 401/403 mean auth failed
+    // (sign-in silently errored) — treat as unavailable, not as "feature present".
+    return res.ok()
   } catch {
     return false
   }
