@@ -678,7 +678,7 @@ export function createSonicJSApp(config: SonicJSConfig = {}): SonicJSApp {
     const userPlugins = (config.plugins?.register ?? []).filter(
       (p: any) => !PLUGIN_REGISTRY[p.id]
     )
-    setPluginMenu(userPlugins.flatMap((p: any) => (p.menu ?? [])))
+    setPluginMenu(userPlugins.flatMap((p: any) => (p.menu ?? []).map((m: any) => ({ ...m, pluginId: p.id }))))
     setPluginDefinitions(allMountedPlugins)
   }
 

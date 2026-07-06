@@ -119,6 +119,42 @@ function mapDocRowToContent(row: any, collectionId: string | null) {
     updated_at: documentSecondsToMs(row.updated_at),
   }
 }
+
+/**
+ * Project a content item to only the requested fields.
+ * Supports top-level fields (e.g. "title", "slug") and data sub-fields
+ * via dot notation (e.g. "data.excerpt", "data.body").
+ * Requesting "data" (no dot) returns the entire data object.
+ * Returns the original item unchanged when fields is empty.
+ */
+function projectFields(item: any, fields: string[]): any {
+  if (fields.length === 0) return item
+  const result: any = {}
+  const dataSubFields: string[] = []
+  for (const f of fields) {
+    if (f === 'data') {
+      result.data = item.data
+    } else if (f.startsWith('data.')) {
+      dataSubFields.push(f.slice(5))
+    } else if (Object.prototype.hasOwnProperty.call(item, f)) {
+      result[f] = item[f]
+    }
+  }
+  if (dataSubFields.length > 0 && !result.data) {
+    result.data = {}
+    for (const sub of dataSubFields) {
+      if (item.data && Object.prototype.hasOwnProperty.call(item.data, sub)) {
+        result.data[sub] = item.data[sub]
+      }
+    }
+  }
+  return result
+}
+
+function parseFieldsParam(raw: string | undefined): string[] {
+  if (!raw) return []
+  return raw.split(',').map(s => s.trim()).filter(Boolean)
+}
 import apiContentCrudRoutes, { resolveDocBacking, slugify } from './api-content-crud'
 import type { Bindings, Variables as AppVariables } from '../app'
 
@@ -651,6 +687,10 @@ apiRoutes.get('/content', optionalAuth(), async (c) => {
     const db = c.env.DB
     const queryParams = c.req.query()
 
+    // ?fields= projection — strip before filter parsing to avoid SQL errors
+    const projFields = parseFieldsParam(queryParams.fields)
+    if (queryParams.fields) delete queryParams.fields
+
     const role = c.get('user')?.role
 
     // Resolve collection scoping to document type ids (== collection name). Build a name→collectionId
@@ -754,7 +794,7 @@ apiRoutes.get('/content', optionalAuth(), async (c) => {
     const transformedResults = results.map((row: any) => mapDocRowToContent(row, collIdByName.get(row.type_id) ?? null))
 
     const responseData = {
-      data: transformedResults,
+      data: projFields.length ? transformedResults.map(item => projectFields(item, projFields)) : transformedResults,
       meta: addTimingMeta(c, {
         count: results.length,
         timestamp: new Date().toISOString(),
@@ -768,8 +808,8 @@ apiRoutes.get('/content', optionalAuth(), async (c) => {
       }, executionStart)
     }
 
-    // Cache the response only if cache is enabled
-    if (cacheEnabled) {
+    // Cache the response only if cache is enabled (skip when field projection active)
+    if (cacheEnabled && projFields.length === 0) {
       await cache.set(cacheKey, responseData)
     }
 
@@ -919,6 +959,10 @@ apiRoutes.get('/:collection', optionalAuth(), async (c) => {
     const db = c.env.DB
     const queryParams = c.req.query()
 
+    // ?fields= projection — strip before filter parsing
+    const projFields = parseFieldsParam(queryParams.fields)
+    if (queryParams.fields) delete queryParams.fields
+
     const record = getCollectionRegistry().getBySlugOrName(collection!)
     if (!record || record.isActive === false) {
       return c.json({ error: 'Collection not found' }, 404)
@@ -943,7 +987,8 @@ apiRoutes.get('/:collection', optionalAuth(), async (c) => {
     // Per-collection cache override — collection config can disable caching or set a custom TTL.
     const collectionCache = (record as any).cache as { enabled?: boolean; ttl?: number } | undefined
     const collectionCacheDisabled = collectionCache?.enabled === false
-    const cacheEnabled = c.get('cacheEnabled') && !collectionCacheDisabled
+    // Skip cache when field projection is active (projected shape must not be stored)
+    const cacheEnabled = c.get('cacheEnabled') && !collectionCacheDisabled && projFields.length === 0
     const cache = getCacheService(CACHE_CONFIGS.api!)
     const includeCollection = queryParams.include?.split(',').map(s => s.trim()).includes('collection')
     const cacheKey = cache.generateKey('collection-content-filtered', `${collection}:${JSON.stringify({ filter: normalizedFilter, query: queryResult.sql, includeCollection })}`)
@@ -967,7 +1012,7 @@ apiRoutes.get('/:collection', optionalAuth(), async (c) => {
 
     const transformedResults = results.map((row: any) => mapDocRowToContent(row, collIdByName.get(row.type_id) ?? null))
     const responseData = {
-      data: transformedResults,
+      data: projFields.length ? transformedResults.map(item => projectFields(item, projFields)) : transformedResults,
       meta: addTimingMeta(c, {
         ...(includeCollection ? { collection: collectionRecordToRow(record) } : {}),
         count: results.length,
@@ -1013,6 +1058,7 @@ apiRoutes.get('/:collection/:id', optionalAuth(), async (c) => {
 
     if (!docRow) return c.json({ error: 'Content not found' }, 404)
 
+    const projFields = parseFieldsParam(c.req.query('fields'))
     const coll = getCollectionRegistry().getByName(docRow.type_id)
     const transformedContent = {
       id: docRow.root_id,
@@ -1026,7 +1072,7 @@ apiRoutes.get('/:collection/:id', optionalAuth(), async (c) => {
     }
 
     dispatchHookEvent(c, 'content:read', { collection: docRow.type_id, id: docRow.root_id, data: transformedContent.data }, 'fire-and-forget')
-    return c.json({ data: transformedContent })
+    return c.json({ data: projFields.length ? projectFields(transformedContent, projFields) : transformedContent })
   } catch (error) {
     console.error('Error fetching content:', error)
     return c.json({ error: 'Failed to fetch content', details: error instanceof Error ? error.message : String(error) }, 500)
