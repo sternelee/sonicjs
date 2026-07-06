@@ -32,6 +32,7 @@ test.describe.serial('User-centric tenant memberships @auth', () => {
   test.beforeEach(() => { test.skip(!featureAvailable, 'Plugin/feature not available in this deployment') })
 
   test.beforeAll(() => {
+    if (!featureAvailable) return
     d1Exec(`INSERT INTO auth_user (id, email, first_name, last_name, created_at, updated_at) VALUES ('${UID}', '${UEMAIL}', 'Mem', 'Ber', 1, 1)`)
     for (const t of [T_A, T_B]) {
       d1Exec(`INSERT INTO auth_tenant (id, name, slug, status, notes, metadata, created_at, updated_at) VALUES ('${t}', '${t}', '${t}', 'active', '', '{}', 1, 1)`)
@@ -39,6 +40,7 @@ test.describe.serial('User-centric tenant memberships @auth', () => {
   })
 
   test.afterAll(() => {
+    if (!featureAvailable) return
     d1Exec(`DELETE FROM auth_tenant_member WHERE user_id = '${UID}'`)
     d1Exec(`DELETE FROM auth_tenant WHERE slug IN ('${T_A}','${T_B}')`)
     d1Exec(`DELETE FROM auth_user WHERE id = '${UID}'`)

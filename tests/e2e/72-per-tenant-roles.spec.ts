@@ -38,6 +38,7 @@ test.describe.serial('Per-tenant roles @auth', () => {
   test.beforeEach(() => { test.skip(!featureAvailable, 'Plugin/feature not available in this deployment') })
 
   test.beforeAll(() => {
+    if (!featureAvailable) return
     // Tenant vt + the admin enrolled there as a 'viewer' (downgraded from their global admin role).
     d1Exec(
       `INSERT INTO auth_tenant (id, name, slug, status, notes, metadata, created_at, updated_at)
@@ -50,6 +51,7 @@ test.describe.serial('Per-tenant roles @auth', () => {
   })
 
   test.afterAll(() => {
+    if (!featureAvailable) return
     d1Exec(`DELETE FROM auth_tenant_member WHERE id = 'm-${VT}'`)
     d1Exec(`DELETE FROM auth_tenant WHERE slug = '${VT}'`)
   })

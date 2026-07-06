@@ -566,10 +566,19 @@ export async function cleanupTestUsers(page: Page) {
  */
 export async function isFeatureAvailable(request: import('@playwright/test').APIRequestContext, route: string): Promise<boolean> {
   try {
-    const res = await request.get(route);
-    return res.status() !== 404;
+    const baseURL = process.env.BASE_URL || 'http://localhost:8787'
+    // Authenticate so that auth-protected admin routes return 200/404 rather than 302→login.
+    // Without auth, all /admin/* routes redirect to /auth/login (not 404), making it impossible
+    // to distinguish "plugin not installed" from "plugin installed but needs auth".
+    await request.post('/auth/seed-admin', { headers: { Origin: baseURL } }).catch(() => {})
+    await request.post('/auth/sign-in/email', {
+      data: { email: ADMIN_CREDENTIALS.email, password: ADMIN_CREDENTIALS.password },
+      headers: { 'Content-Type': 'application/json', Origin: baseURL },
+    }).catch(() => {})
+    const res = await request.get(route)
+    return res.status() !== 404
   } catch {
-    return false;
+    return false
   }
 }
 

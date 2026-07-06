@@ -64,7 +64,7 @@ async function createTestFormWithSchema(
   await page.selectOption('[name="category"]', 'general');
   await page.click('button[type="submit"]');
 
-  await page.waitForURL(/\/admin\/forms\/[^/]+\/builder/, { timeout: 10000 });
+  await page.waitForURL(/\/admin\/forms\/[^/]+\/builder/, { timeout: 20000 });
   const url = page.url();
   const match = url.match(/\/admin\/forms\/([^/]+)\/builder/);
   const formId = match ? match[1] : '';

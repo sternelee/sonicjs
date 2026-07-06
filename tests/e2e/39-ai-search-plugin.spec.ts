@@ -9,7 +9,7 @@ import {
 test.describe('AI Search Plugin @plugins', () => {
   let featureAvailable = false
   test.beforeAll(async ({ request }) => {
-    featureAvailable = await isFeatureAvailable(request, '/admin/plugins')
+    featureAvailable = await isFeatureAvailable(request, '/admin/plugins/ai-search')
   })
   test.beforeEach(() => { test.skip(!featureAvailable, 'Plugin/feature not available in this deployment') })
 

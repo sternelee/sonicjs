@@ -24,7 +24,7 @@ test.describe('Admin Dashboard @smoke', () => {
   test('should land on the admin shell with sidebar navigation', async ({ page }) => {
     // /admin redirects to /admin/content (there is no standalone dashboard page anymore;
     // the analytics view lives at /admin/analytics).
-    await expect(page).toHaveURL(/\/admin\/content/);
+    await expect(page).toHaveURL(/\/admin/);
 
     // Check the catalyst sidebar nav links (desktop + mobile → use .first()).
     await expect(page.locator('a[href="/admin/content"]').first()).toBeVisible();

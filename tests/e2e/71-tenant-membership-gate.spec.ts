@@ -40,6 +40,7 @@ test.describe.serial('Multi-Tenant membership gate @auth', () => {
   test.beforeEach(() => { test.skip(!featureAvailable, 'Plugin/feature not available in this deployment') })
 
   test.beforeAll(() => {
+    if (!featureAvailable) return
     // An active tenant with NO membership rows — the admin is not a member.
     d1Exec(
       `INSERT INTO auth_tenant (id, name, slug, status, notes, metadata, created_at, updated_at)
@@ -48,6 +49,7 @@ test.describe.serial('Multi-Tenant membership gate @auth', () => {
   })
 
   test.afterAll(() => {
+    if (!featureAvailable) return
     d1Exec(`DELETE FROM auth_tenant WHERE slug = '${ORPHAN_SLUG}'`)
     // Safety net: never leave the shared admin flagged super-admin for later specs.
     d1Exec(`UPDATE auth_user SET is_super_admin = 0 WHERE email = 'admin@sonicjs.com'`)

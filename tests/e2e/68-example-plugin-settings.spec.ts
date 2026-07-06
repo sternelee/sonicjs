@@ -4,7 +4,7 @@ import { loginAsAdmin, TEST_ORIGIN, isFeatureAvailable } from './utils/test-help
 test.describe('Example plugin — settings reflected in API @plugins', () => {
   let featureAvailable = false
   test.beforeAll(async ({ request }) => {
-    featureAvailable = await isFeatureAvailable(request, '/admin/plugins')
+    featureAvailable = await isFeatureAvailable(request, '/example')
   })
   test.beforeEach(() => { test.skip(!featureAvailable, 'Plugin/feature not available in this deployment') })
 

@@ -36,6 +36,7 @@ test.describe.serial('Tenant member management @auth', () => {
   test.beforeEach(() => { test.skip(!featureAvailable, 'Plugin/feature not available in this deployment') })
 
   test.beforeAll(() => {
+    if (!featureAvailable) return
     // A target user to add as a member (no login needed for them in this test).
     d1Exec(
       `INSERT INTO auth_user (id, email, first_name, last_name, created_at, updated_at)
@@ -44,6 +45,7 @@ test.describe.serial('Tenant member management @auth', () => {
   })
 
   test.afterAll(() => {
+    if (!featureAvailable) return
     d1Exec(`DELETE FROM auth_user WHERE id = 'u-${RUN}'`)
     d1Exec(`DELETE FROM auth_tenant WHERE slug = '${TENANT_SLUG}'`)
   })

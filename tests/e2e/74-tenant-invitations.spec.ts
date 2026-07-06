@@ -36,6 +36,7 @@ test.describe.serial('Tenant invitations @auth', () => {
   test.beforeEach(() => { test.skip(!featureAvailable, 'Plugin/feature not available in this deployment') })
 
   test.beforeAll(() => {
+    if (!featureAvailable) return
     // A tenant the admin is NOT a member of (seeded directly, so no auto-enroll).
     d1Exec(
       `INSERT INTO auth_tenant (id, name, slug, status, notes, metadata, created_at, updated_at)
@@ -44,6 +45,7 @@ test.describe.serial('Tenant invitations @auth', () => {
   })
 
   test.afterAll(() => {
+    if (!featureAvailable) return
     d1Exec(`DELETE FROM auth_tenant_member WHERE tenant_id = '${TENANT}'`)
     d1Exec(`DELETE FROM auth_tenant_invitation WHERE tenant_id = '${TENANT}'`)
     d1Exec(`DELETE FROM auth_tenant WHERE slug = '${TENANT}'`)

@@ -10,6 +10,7 @@ test.describe('Contact Form Plugin @plugins', () => {
 
   // Ensure plugin is activated before running tests
   test.beforeAll(async ({ browser }) => {
+    if (!featureAvailable) return
     const page = await browser.newPage();
     await loginAsAdmin(page);
     
