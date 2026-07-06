@@ -248,6 +248,12 @@ export class RbacService {
     return (role.data.grants ?? []).some((g) => this.grantMatches(g, resource, verb))
   }
 
+  /** True if a role document exists for this id or name. Use to distinguish "no RBAC role → default allow" from "role exists but no grant → deny". */
+  async hasRbacRole(idOrName: string): Promise<boolean> {
+    const roles = await this.listDocs<RoleData>(T_ROLE)
+    return roles.some((r) => r.slug === idOrName || r.data.name === idOrName)
+  }
+
   /** Does a single grant row satisfy the requested (resource, verb)? */
   private grantMatches(g: { resource: string; verb: string }, resource: string, verb: string): boolean {
     const resourceOk =
