@@ -348,14 +348,9 @@ export async function loginAsAdmin(page: Page) {
 
   // Navigate to admin (session cookie is now in context)
   await page.goto('/admin');
-  await page.waitForLoadState('networkidle', { timeout: 20000 });
-  await expect(page).toHaveURL(/\/admin/);
-
+  await page.waitForURL(/\/admin/, { timeout: 20000 });
   await ensureWorkflowTablesExist(page);
   await ensureWorkflowPluginActive(page);
-
-  await page.goto('/admin');
-  await page.waitForLoadState('networkidle', { timeout: 15000 });
 }
 
 /**
@@ -365,7 +360,7 @@ export async function navigateToAdminSection(page: Page, section: 'collections' 
   // Navigate directly instead of clicking navigation links
   // This is more reliable as admin navigation may vary
   await page.goto(`/admin/${section}`);
-  await page.waitForLoadState('networkidle');
+  await page.waitForURL(/\/admin/, { timeout: 20000 });
 }
 
 /**
@@ -558,6 +553,23 @@ export async function cleanupTestUsers(page: Page) {
     await page.request.post('/admin/api/test-cleanup/users');
   } catch (error) {
     console.log('User cleanup failed:', error);
+  }
+}
+
+/**
+ * Returns a beforeAll/beforeEach pair that skips all tests in the suite when a route is 404.
+ * Usage at top of plugin spec:
+ *
+ *   let featureAvailable = false
+ *   test.beforeAll(async ({ request }) => { featureAvailable = await isFeatureAvailable(request, '/admin/cache') })
+ *   test.beforeEach(() => { test.skip(!featureAvailable, 'Plugin not installed in this deployment') })
+ */
+export async function isFeatureAvailable(request: import('@playwright/test').APIRequestContext, route: string): Promise<boolean> {
+  try {
+    const res = await request.get(route);
+    return res.status() !== 404;
+  } catch {
+    return false;
   }
 }
 

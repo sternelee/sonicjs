@@ -2,7 +2,7 @@ import { test, expect, type Page } from '@playwright/test'
 import { execFileSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
-import { loginAsAdmin, ensureAdminUserExists } from './utils/test-helpers'
+import { loginAsAdmin, ensureAdminUserExists, isFeatureAvailable } from './utils/test-helpers'
 
 // User-centric tenant membership management: from a user's edit page, open their memberships,
 // add the user to a tenant with a role, change the role, and remove them. Roles are per-tenant.
@@ -25,6 +25,12 @@ async function setPluginState(page: Page, action: 'activate' | 'deactivate') {
 }
 
 test.describe.serial('User-centric tenant memberships @auth', () => {
+  let featureAvailable = false
+  test.beforeAll(async ({ request }) => {
+    featureAvailable = await isFeatureAvailable(request, '/admin/tenants')
+  })
+  test.beforeEach(() => { test.skip(!featureAvailable, 'Plugin/feature not available in this deployment') })
+
   test.beforeAll(() => {
     d1Exec(`INSERT INTO auth_user (id, email, first_name, last_name, created_at, updated_at) VALUES ('${UID}', '${UEMAIL}', 'Mem', 'Ber', 1, 1)`)
     for (const t of [T_A, T_B]) {

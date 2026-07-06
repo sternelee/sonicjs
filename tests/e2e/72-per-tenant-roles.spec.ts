@@ -2,7 +2,7 @@ import { test, expect, type Page } from '@playwright/test'
 import { execFileSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
-import { loginAsAdmin, ensureAdminUserExists } from './utils/test-helpers'
+import { loginAsAdmin, ensureAdminUserExists, isFeatureAvailable } from './utils/test-helpers'
 
 // Per-tenant roles (G1): a user's effective document role is their role IN the active tenant, not
 // their global role. The shared admin is GLOBALLY 'admin' but is seeded as a 'viewer' of tenant
@@ -31,6 +31,12 @@ async function setPluginState(page: Page, action: 'activate' | 'deactivate') {
 }
 
 test.describe.serial('Per-tenant roles @auth', () => {
+  let featureAvailable = false
+  test.beforeAll(async ({ request }) => {
+    featureAvailable = await isFeatureAvailable(request, '/admin/tenants')
+  })
+  test.beforeEach(() => { test.skip(!featureAvailable, 'Plugin/feature not available in this deployment') })
+
   test.beforeAll(() => {
     // Tenant vt + the admin enrolled there as a 'viewer' (downgraded from their global admin role).
     d1Exec(

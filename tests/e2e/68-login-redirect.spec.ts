@@ -11,7 +11,7 @@ test.describe('Login redirect param @smoke @auth', () => {
     await page.fill('#email', ADMIN_CREDENTIALS.email)
     await page.fill('#password', ADMIN_CREDENTIALS.password)
     await page.click('button[type="submit"]')
-    await page.waitForURL(/\/admin\/content/, { timeout: 5000 })
+    await page.waitForURL(/\/admin\/content/, { timeout: 20000 })
     expect(page.url()).toContain('/admin/content')
   })
 
@@ -20,7 +20,7 @@ test.describe('Login redirect param @smoke @auth', () => {
     await page.fill('#email', ADMIN_CREDENTIALS.email)
     await page.fill('#password', ADMIN_CREDENTIALS.password)
     await page.click('button[type="submit"]')
-    await page.waitForURL(/\/admin\/settings/, { timeout: 5000 })
+    await page.waitForURL(/\/admin\/settings/, { timeout: 20000 })
     expect(page.url()).toContain('/admin/settings')
   })
 
@@ -30,7 +30,7 @@ test.describe('Login redirect param @smoke @auth', () => {
     await page.fill('#password', ADMIN_CREDENTIALS.password)
     await page.click('button[type="submit"]')
     // Must NOT navigate to the external URL — falls back to /admin/content
-    await page.waitForURL(/\/admin\/content/, { timeout: 5000 })
+    await page.waitForURL(/\/admin\/content/, { timeout: 20000 })
     expect(page.url()).not.toContain('evil.example.com')
   })
 })

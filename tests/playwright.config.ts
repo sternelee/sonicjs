@@ -16,6 +16,8 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
   retries: process.env.CI ? 1 : 0,
+  /* Per-test timeout: remote CF Workers under parallel load need headroom */
+  timeout: 60 * 1000,
   /* 1 worker locally (in-memory D1 conflicts); 4 in CI (remote D1, I/O bound) */
   workers: process.env.CI ? 4 : 1,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */

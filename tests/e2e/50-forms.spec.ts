@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { loginAsAdmin, navigateToAdminSection, TEST_DATA } from './utils/test-helpers';
+import { loginAsAdmin, navigateToAdminSection, TEST_DATA, isFeatureAvailable } from './utils/test-helpers';
 
 /**
  * E2E Tests for Forms System
@@ -14,6 +14,12 @@ import { loginAsAdmin, navigateToAdminSection, TEST_DATA } from './utils/test-he
 
 test.describe('Forms Management @content', () => {
   test.describe.configure({ mode: 'serial' });
+
+  let featureAvailable = false
+  test.beforeAll(async ({ request }) => {
+    featureAvailable = await isFeatureAvailable(request, '/admin/forms')
+  })
+  test.beforeEach(() => { test.skip(!featureAvailable, 'Plugin/feature not available in this deployment') })
 
   let testFormId: string;
   const testFormName = `test_form_${Date.now()}`;

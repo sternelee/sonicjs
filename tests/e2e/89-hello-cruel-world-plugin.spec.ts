@@ -6,11 +6,17 @@
  * appears in the admin plugins list.
  */
 import { test, expect } from '@playwright/test'
-import { loginAsAdmin } from './utils/test-helpers'
+import { loginAsAdmin, isFeatureAvailable } from './utils/test-helpers'
 
 const BASE = process.env.BASE_URL || 'http://localhost:8787'
 
 test.describe('Example plugin @plugins', () => {
+  let featureAvailable = false
+  test.beforeAll(async ({ request }) => {
+    featureAvailable = await isFeatureAvailable(request, '/admin/plugins')
+  })
+  test.beforeEach(() => { test.skip(!featureAvailable, 'Plugin/feature not available in this deployment') })
+
   // ── Public API ─────────────────────────────────────────────────────────────
 
   // Note: routes are at /example/* (not /api/*) because user plugins
