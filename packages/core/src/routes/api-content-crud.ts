@@ -243,8 +243,8 @@ apiContentCrudRoutes.post('/', requireAuth(), requireRole(['admin', 'editor', 'a
         user?.userId,
       )
       const cache = getCacheService(CACHE_CONFIGS.api!)
-      await cache.invalidate('content-filtered:*')
-      await cache.invalidate('collection-content-filtered:*')
+      await cache.invalidate('api:content-filtered:*')
+      await cache.invalidate(`api:collection-content-filtered:${backing.coll.name}:*`)
 
       // Fire content:after:create for side-effect plugins (fire-and-forget).
       dispatchHookEvent(
@@ -325,8 +325,8 @@ apiContentCrudRoutes.put('/:id', requireAuth(), requireRole(['admin', 'editor', 
         await svc.unpublish(pub.id)
       }
       const cache = getCacheService(CACHE_CONFIGS.api!)
-      await cache.invalidate('content-filtered:*')
-      await cache.invalidate('collection-content-filtered:*')
+      await cache.invalidate('api:content-filtered:*')
+      await cache.invalidate(`api:collection-content-filtered:${docRow.type_id}:*`)
       const coll = getCollectionRegistry().getByName(docRow.type_id)
       const saved = await db.prepare('SELECT * FROM documents WHERE id = ?').bind(newDraft.id).first() as any
       const savedData = saved?.data ? JSON.parse(saved.data) : {}
@@ -381,8 +381,8 @@ apiContentCrudRoutes.delete('/:id', requireAuth(), requireRole(['admin', 'editor
       const now = Math.floor(Date.now() / 1000)
       await db.prepare("UPDATE documents SET deleted_at = ?, updated_at = ? WHERE root_id = ? AND tenant_id = ?").bind(now, now, id, tenantId).run()
       const cache = getCacheService(CACHE_CONFIGS.api!)
-      await cache.invalidate('content-filtered:*')
-      await cache.invalidate('collection-content-filtered:*')
+      await cache.invalidate('api:content-filtered:*')
+      await cache.invalidate(`api:collection-content-filtered:${docRow.type_id}:*`)
 
       // Fire content:after:delete (fire-and-forget).
       dispatchHookEvent(c, 'content:after:delete', { collection: docRow.type_id, id, data: {}, user: actor }, 'fire-and-forget')
