@@ -275,6 +275,7 @@ describe('renderAdminLayoutCatalyst', () => {
     });
 
     it('should render default menu items', () => {
+      // Users and Plugins require admin role — pass an admin user
       const html = renderAdminLayoutCatalyst({
         ...baseData,
         user: { name: 'Admin', email: 'admin@test.com', role: 'admin' },
@@ -320,6 +321,7 @@ describe('renderAdminLayoutCatalyst', () => {
 
   describe('Dynamic Menu Items', () => {
     it('should render dynamic menu items', () => {
+      // Dynamic items appear inside the Plugins submenu, which requires admin role
       const html = renderAdminLayoutCatalyst({
         ...baseData,
         user: { name: 'Admin', email: 'admin@test.com', role: 'admin' },
