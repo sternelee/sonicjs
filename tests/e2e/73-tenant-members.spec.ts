@@ -2,7 +2,7 @@ import { test, expect, type Page } from '@playwright/test'
 import { execFileSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
-import { loginAsAdmin, ensureAdminUserExists, isFeatureAvailable } from './utils/test-helpers'
+import { loginAsAdmin, ensureAdminUserExists, isFeatureAvailable, IS_REMOTE_DEPLOYMENT } from './utils/test-helpers'
 
 // Member management UI (G4): add a user to a tenant by email with a role, change their role, remove
 // them — all from /admin/tenants/<slug>/members. Lockout guards (last admin) covered by unit tests.
@@ -31,7 +31,7 @@ async function setPluginState(page: Page, action: 'activate' | 'deactivate') {
 test.describe.serial('Tenant member management @auth', () => {
   let featureAvailable = false
   test.beforeAll(async ({ request }) => {
-    featureAvailable = await isFeatureAvailable(request, '/admin/tenants')
+    featureAvailable = !IS_REMOTE_DEPLOYMENT && await isFeatureAvailable(request, '/admin/tenants')
   })
   test.beforeEach(() => { test.skip(!featureAvailable, 'Plugin/feature not available in this deployment') })
 

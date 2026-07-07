@@ -2,7 +2,7 @@ import { test, expect, type Page } from '@playwright/test'
 import { execFileSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
-import { loginAsAdmin, ensureAdminUserExists, ADMIN_CREDENTIALS, isFeatureAvailable } from './utils/test-helpers'
+import { loginAsAdmin, ensureAdminUserExists, ADMIN_CREDENTIALS, isFeatureAvailable, IS_REMOTE_DEPLOYMENT } from './utils/test-helpers'
 
 // Membership gate: an authed admin may only switch into / resolve tenants they belong to. Creating a
 // tenant auto-enrolls the creator (owner), so the happy path works; a tenant the admin is NOT a
@@ -35,7 +35,7 @@ async function setPluginState(page: Page, action: 'activate' | 'deactivate') {
 test.describe.serial('Multi-Tenant membership gate @auth', () => {
   let featureAvailable = false
   test.beforeAll(async ({ request }) => {
-    featureAvailable = await isFeatureAvailable(request, '/admin/tenants')
+    featureAvailable = !IS_REMOTE_DEPLOYMENT && await isFeatureAvailable(request, '/admin/tenants')
   })
   test.beforeEach(() => { test.skip(!featureAvailable, 'Plugin/feature not available in this deployment') })
 

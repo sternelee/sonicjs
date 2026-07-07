@@ -290,12 +290,15 @@ authRoutes.post('/login',
 
       // Forward BA session cookie(s) to client.
       // Use c.header() so headers survive into the c.json() response (c.res.headers mutations are discarded).
-      const rawSetCookie = baRes.headers.get('set-cookie')
-      if (rawSetCookie) {
-        c.header('Set-Cookie', rawSetCookie, { append: true })
-      } else if ((baRes.headers as any).getSetCookie) {
+      // Prefer getSetCookie() — headers.get('set-cookie') joins multiple cookies with ',' which corrupts them.
+      if ((baRes.headers as any).getSetCookie) {
         for (const sc of (baRes.headers as any).getSetCookie()) {
           c.header('Set-Cookie', sc, { append: true })
+        }
+      } else {
+        const rawSetCookie = baRes.headers.get('set-cookie')
+        if (rawSetCookie) {
+          c.header('Set-Cookie', rawSetCookie, { append: true })
         }
       }
 
@@ -667,12 +670,15 @@ authRoutes.post('/login/form',
     // raw JSON .token field would break session lookup — must use the full cookie value.
     // Use c.header() (not c.res.headers.append) — Hono's c.html() creates a new Response
     // from c's internal header store; mutations to c.res.headers are discarded.
-    const rawSetCookie = baRes.headers.get('set-cookie')
-    if (rawSetCookie) {
-      c.header('Set-Cookie', rawSetCookie, { append: true })
-    } else if ((baRes.headers as any).getSetCookie) {
+    // Prefer getSetCookie() — headers.get('set-cookie') joins multiple cookies with ',' which corrupts them.
+    if ((baRes.headers as any).getSetCookie) {
       for (const sc of (baRes.headers as any).getSetCookie()) {
         c.header('Set-Cookie', sc, { append: true })
+      }
+    } else {
+      const rawSetCookie = baRes.headers.get('set-cookie')
+      if (rawSetCookie) {
+        c.header('Set-Cookie', rawSetCookie, { append: true })
       }
     }
 

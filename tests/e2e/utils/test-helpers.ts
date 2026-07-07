@@ -5,6 +5,11 @@ import { Page, expect } from '@playwright/test';
 // send the server origin explicitly. Matches the baseURL resolution in tests/playwright.config.ts.
 export const TEST_ORIGIN = process.env.BASE_URL || 'http://localhost:8787';
 
+// True when running against a non-localhost deployment (e.g. CI preview).
+// Tenant tests use `wrangler d1 execute --local` which only affects local SQLite,
+// not the remote worker's D1 — skip those tests in remote deployments.
+export const IS_REMOTE_DEPLOYMENT = !TEST_ORIGIN.includes('localhost') && !TEST_ORIGIN.includes('127.0.0.1');
+
 // Default admin credentials for testing
 export const ADMIN_CREDENTIALS = {
   email: 'admin@sonicjs.com',

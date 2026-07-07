@@ -2,7 +2,7 @@ import { test, expect, type Page } from '@playwright/test'
 import { execFileSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
-import { loginAsAdmin, ensureAdminUserExists, isFeatureAvailable } from './utils/test-helpers'
+import { loginAsAdmin, ensureAdminUserExists, isFeatureAvailable, IS_REMOTE_DEPLOYMENT } from './utils/test-helpers'
 
 // Invitation flow (G3): invite an email to a tenant with a per-tenant role, accept via the link
 // (gated on the signed-in user's email matching the invite), and revoke pending invites. The admin
@@ -31,7 +31,7 @@ async function setPluginState(page: Page, action: 'activate' | 'deactivate') {
 test.describe.serial('Tenant invitations @auth', () => {
   let featureAvailable = false
   test.beforeAll(async ({ request }) => {
-    featureAvailable = await isFeatureAvailable(request, '/admin/tenants')
+    featureAvailable = !IS_REMOTE_DEPLOYMENT && await isFeatureAvailable(request, '/admin/tenants')
   })
   test.beforeEach(() => { test.skip(!featureAvailable, 'Plugin/feature not available in this deployment') })
 

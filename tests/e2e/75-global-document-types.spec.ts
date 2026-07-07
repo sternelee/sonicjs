@@ -2,7 +2,7 @@ import { test, expect, type Page } from '@playwright/test'
 import { execFileSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
-import { loginAsAdmin, ensureAdminUserExists, isFeatureAvailable } from './utils/test-helpers'
+import { loginAsAdmin, ensureAdminUserExists, isFeatureAvailable, IS_REMOTE_DEPLOYMENT } from './utils/test-helpers'
 
 // G5 — shared/global document types end-to-end through the canonical admin-documents route. A type
 // with settings.global=true is created from one tenant and is visible from another (shared pool),
@@ -28,7 +28,7 @@ async function setPluginState(page: Page, action: 'activate' | 'deactivate') {
 test.describe.serial('Global document types @content', () => {
   let featureAvailable = false
   test.beforeAll(async ({ request }) => {
-    featureAvailable = await isFeatureAvailable(request, '/admin/tenants')
+    featureAvailable = !IS_REMOTE_DEPLOYMENT && await isFeatureAvailable(request, '/admin/tenants')
   })
   test.beforeEach(() => { test.skip(!featureAvailable, 'Plugin/feature not available in this deployment') })
 
