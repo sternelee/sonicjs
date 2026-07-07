@@ -151,5 +151,5 @@ export function mockFetch(input: string | URL | Request, _init?: RequestInit): P
   if (regionFilter) employees = employees.filter(e => e.data.region === regionFilter)
 
   const page = employees.slice(offset, offset + limit)
-  return respond({ data: page, meta: { count: employees.length, timestamp: Date.now() } })
+  return respond({ data: page, meta: { count: page.length, timestamp: Date.now() } })
 }

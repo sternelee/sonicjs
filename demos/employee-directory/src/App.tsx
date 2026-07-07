@@ -28,7 +28,8 @@ const DEPT_TAILWIND: Record<string, string> = {
 
 export function App() {
   const [employees, setEmployees] = useState<EmployeeRecord[]>([])
-  const [total, setTotal] = useState(0)
+  const [pageCount, setPageCount] = useState(0)
+  const [hasNextPage, setHasNextPage] = useState(false)
   const [page, setPage] = useState(0)
   const [loading, setLoading] = useState(false)
   const [responseMs, setResponseMs] = useState<number | null>(null)
@@ -103,10 +104,12 @@ export function App() {
             ...(Object.keys(where).length ? { where } : {}),
           })
 
+        const rows = response.data as unknown as EmployeeRecord[]
         setResponseMs(Math.round(performance.now() - t0))
         setCacheSource(headers.get('sonicjs-source'))
-        setEmployees(response.data as unknown as EmployeeRecord[])
-        setTotal(response.meta.count)
+        setEmployees(rows)
+        setPageCount(response.meta.count)
+        setHasNextPage(response.meta.count === PAGE_SIZE)
       } catch (err) {
         console.error('SDK error:', err)
       } finally {
@@ -124,8 +127,6 @@ export function App() {
     setPage(0)
     setFilters(newFilters)
   }
-
-  const totalPages = Math.ceil(total / PAGE_SIZE)
 
   // For CodeSnippet: resolve filter IDs back to names for display
   const selectedDeptName = filters.department ? (deptMap.get(filters.department)?.name ?? filters.department) : ''
@@ -145,8 +146,8 @@ export function App() {
                 SonicJS SDK Demo
               </h1>
               <p className="text-slate-500 text-xs hidden sm:block">
-                Employee Directory · {total.toLocaleString()} records
-                {useMock && <span className="ml-2 text-yellow-500/80">· mock data</span>}
+                Employee Directory
+                {useMock && <span className="ml-1 text-yellow-500/80">· mock data</span>}
               </p>
             </div>
           </div>
@@ -178,11 +179,12 @@ export function App() {
             deptMap={deptMap}
             regionMap={regionMap}
           />
-          {totalPages > 1 && (
+          {(page > 0 || hasNextPage) && (
             <Pagination
               page={page}
-              totalPages={totalPages}
-              total={total}
+              pageSize={PAGE_SIZE}
+              count={pageCount}
+              hasNext={hasNextPage}
               onPrev={() => setPage((p) => p - 1)}
               onNext={() => setPage((p) => p + 1)}
             />

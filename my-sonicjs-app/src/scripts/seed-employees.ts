@@ -93,10 +93,16 @@ async function main() {
   const sonic = createClient({ url: CMS_URL!, apiKey: CMS_API_KEY })
   const rand = seededRand(42)
 
-  // 1. Seed departments
+  // 1. Seed departments (create or fetch existing)
   console.log('Seeding departments…')
   const deptIds: Record<string, string> = {}
+  const existingDepts = await sonic.collection('departments').list({ limit: 50, status: 'published' })
+  for (const rec of existingDepts.data as unknown as Array<{ id: string; data: { name: string } }>) {
+    deptIds[rec.data.name] = rec.id
+    console.log(`  (exists) ${rec.data.name} → ${rec.id}`)
+  }
   for (const dept of DEPARTMENTS_DATA) {
+    if (deptIds[dept.name]) continue
     const { data } = await sonic.collection('departments').create({
       title: dept.name,
       status: 'published',
@@ -106,10 +112,16 @@ async function main() {
     console.log(`  ✓ ${dept.icon} ${dept.name} → ${data.id}`)
   }
 
-  // 2. Seed regions
+  // 2. Seed regions (create or fetch existing)
   console.log('\nSeeding regions…')
   const regionIds: Record<string, string> = {}
+  const existingRegions = await sonic.collection('regions').list({ limit: 50, status: 'published' })
+  for (const rec of existingRegions.data as unknown as Array<{ id: string; data: { name: string } }>) {
+    regionIds[rec.data.name] = rec.id
+    console.log(`  (exists) ${rec.data.name} → ${rec.id}`)
+  }
   for (const region of REGIONS_DATA) {
+    if (regionIds[region.name]) continue
     const { data } = await sonic.collection('regions').create({
       title: region.display_name,
       status: 'published',
