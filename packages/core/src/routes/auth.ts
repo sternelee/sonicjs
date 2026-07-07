@@ -291,7 +291,7 @@ authRoutes.post('/login',
       const normalizedEmail = email.toLowerCase()
 
       const { createAuth } = await import('../auth/config')
-      const auth = createAuth(c.env)
+      const auth = createAuth(c.env, undefined, new URL(c.req.url).origin)
 
       const baReq = new Request(new URL('/auth/sign-in/email', c.req.url).href, {
         method: 'POST',
@@ -365,7 +365,7 @@ authRoutes.post('/logout', async (c) => {
   // Delegate to BA to invalidate the session server-side, then clear cookies.
   try {
     const { createAuth } = await import('../auth/config')
-    const auth = createAuth(c.env)
+    const auth = createAuth(c.env, undefined, new URL(c.req.url).origin)
     const baReq = new Request(new URL('/auth/sign-out', c.req.url).href, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Origin': new URL(c.req.url).origin, 'Cookie': c.req.header('Cookie') || '' },
@@ -374,7 +374,8 @@ authRoutes.post('/logout', async (c) => {
     await auth.handler(baReq)
   } catch { /* non-fatal — clear cookie regardless */ }
 
-  setCookie(c, 'better-auth.session_token', '', { httpOnly: true, sameSite: 'Lax', path: '/', maxAge: 0 })
+  const isSecure = new URL(c.req.url).protocol === 'https:'
+  setCookie(c, 'better-auth.session_token', '', { httpOnly: true, sameSite: 'Lax', path: '/', maxAge: 0, secure: isSecure })
   clearCsrfCookie(c)
   return c.json({ message: 'Logged out successfully' })
 })
@@ -383,7 +384,7 @@ authRoutes.get('/logout', async (c) => {
   // Delegate to BA to invalidate the session server-side, then clear cookies.
   try {
     const { createAuth } = await import('../auth/config')
-    const auth = createAuth(c.env)
+    const auth = createAuth(c.env, undefined, new URL(c.req.url).origin)
     const baReq = new Request(new URL('/auth/sign-out', c.req.url).href, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Origin': new URL(c.req.url).origin, 'Cookie': c.req.header('Cookie') || '' },
@@ -392,7 +393,8 @@ authRoutes.get('/logout', async (c) => {
     await auth.handler(baReq)
   } catch { /* non-fatal */ }
 
-  setCookie(c, 'better-auth.session_token', '', { httpOnly: true, sameSite: 'Lax', path: '/', maxAge: 0 })
+  const isSecure = new URL(c.req.url).protocol === 'https:'
+  setCookie(c, 'better-auth.session_token', '', { httpOnly: true, sameSite: 'Lax', path: '/', maxAge: 0, secure: isSecure })
   clearCsrfCookie(c)
   return c.redirect('/auth/login?message=You have been logged out successfully')
 })
@@ -668,7 +670,7 @@ authRoutes.post('/login/form',
 
     // Delegate to Better Auth — call sign-in/email, get session token, set BA cookie.
     const { createAuth } = await import('../auth/config')
-    const auth = createAuth(c.env)
+    const auth = createAuth(c.env, undefined, new URL(c.req.url).origin)
 
     const baReq = new Request(new URL('/auth/sign-in/email', c.req.url).href, {
       method: 'POST',
@@ -710,6 +712,14 @@ authRoutes.post('/login/form',
 
     const rawRedirect = c.req.query('redirect')
     const redirectUrl = rawRedirect && rawRedirect.startsWith('/') ? rawRedirect : '/admin/content'
+
+    // For HTMX requests: HX-Redirect triggers an immediate client-side navigation.
+    // For native form submissions (HTMX not loaded): the <script> setTimeout handles it.
+    const isHtmx = c.req.header('HX-Request') === 'true'
+    if (isHtmx) {
+      c.header('HX-Redirect', redirectUrl)
+      return c.html(html`<div id="form-response"><p class="text-sm text-green-600">Login successful! Redirecting...</p></div>`)
+    }
 
     return c.html(html`
       <div id="form-response">
