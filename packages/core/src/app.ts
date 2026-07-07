@@ -426,12 +426,21 @@ export function createSonicJSApp(config: SonicJSConfig = {}): SonicJSApp {
 
   // Global CORS middleware — covers /auth/*, /v1/*, and all other routes.
   // Set CORS_ORIGINS in wrangler.toml (comma-separated) to allow cross-origin requests.
+  // Supports wildcard prefix: "*.example.com" matches any subdomain of example.com.
   app.use('*', cors({
     origin: (origin, c) => {
       const allowed = (c.env as any)?.CORS_ORIGINS as string | undefined
       if (!allowed) return null
       const list = allowed.split(',').map((s: string) => s.trim())
-      return list.includes(origin) ? origin : null
+      const match = list.some((pattern: string) => {
+        if (pattern === origin) return true
+        if (pattern.startsWith('*.')) {
+          const suffix = pattern.slice(1) // e.g. ".pages.dev" from "*.pages.dev"
+          return origin.endsWith(suffix)
+        }
+        return false
+      })
+      return match ? origin : null
     },
     allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
