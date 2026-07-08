@@ -301,7 +301,7 @@ export async function autoRegisterCollectionDocumentTypes(db: D1Database): Promi
           maxVersionsPerRoot: 50,
           ...(collection.versioning ? { versioning: true } : {}),
         },
-        queryableFields: [],
+        queryableFields: collection.queryableFields ?? [],
       })
       registered.push(collection.name)
     } catch (error) {

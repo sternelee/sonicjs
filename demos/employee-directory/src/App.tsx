@@ -89,9 +89,8 @@ export function App() {
     async (currentPage: number, currentFilters: FilterState) => {
       setLoading(true)
       const where: Record<string, Record<string, string>> = {}
-      // Filter values are now IDs (reference IDs from dept/region collections)
-      if (currentFilters.department) where['department'] = { equals: currentFilters.department }
-      if (currentFilters.region) where['region'] = { equals: currentFilters.region }
+      if (currentFilters.department) where['data.department'] = { equals: currentFilters.department }
+      if (currentFilters.region) where['data.region'] = { equals: currentFilters.region }
 
       const t0 = performance.now()
       try {
