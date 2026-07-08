@@ -16,6 +16,8 @@ import { getDocumentRequestContext } from '../services/document-request-context'
 import { DocumentRepository } from '../services/document-repository'
 import { DocumentPermissionsService } from '../services/document-permissions'
 import { RbacService } from '../services/rbac'
+import { recordCatalogRequest } from '../plugins/cache/services/catalog'
+import { markStale, getAndConsumeStale } from '../plugins/cache/services/swr'
 
 // Anonymous principal = unauthenticated request. Authenticated users (even with role 'public')
 // must pass isAllowed so the document ACL is enforced — not just is_published.
@@ -812,8 +814,20 @@ apiRoutes.get('/content', optionalAuth(), async (c) => {
           }, executionStart)
         }
 
+        recordCatalogRequest({ cacheKey, collection: typeId ?? null, path: c.req.path, queryString: c.req.raw.url.split('?')[1] ?? '', source: cacheResult.source as 'memory' | 'kv' })
         return c.json(dataWithMeta)
       }
+
+      // SWR: serve stale value during revalidation window
+      const swrData = getAndConsumeStale(cacheKey)
+      if (swrData) {
+        c.header('X-Cache-Status', 'STALE')
+        c.header('X-Cache-Source', 'swr')
+        recordCatalogRequest({ cacheKey, collection: typeId ?? null, path: c.req.path, queryString: c.req.raw.url.split('?')[1] ?? '', source: 'swr' })
+        return c.json({ ...(swrData as any), meta: addTimingMeta(c, { ...(swrData as any).meta, cache: { hit: true, source: 'swr', stale: true } }, executionStart) })
+      }
+
+      recordCatalogRequest({ cacheKey, collection: typeId ?? null, path: c.req.path, queryString: c.req.raw.url.split('?')[1] ?? '', source: 'miss' })
     }
 
     // Cache miss - fetch from database
@@ -977,8 +991,20 @@ apiRoutes.get('/collections/:collection/content', optionalAuth(), async (c) => {
           }, executionStart)
         }
 
+        recordCatalogRequest({ cacheKey, collection: collection ?? null, path: c.req.path, queryString: c.req.raw.url.split('?')[1] ?? '', source: cacheResult.source as 'memory' | 'kv' })
         return c.json(dataWithMeta)
       }
+
+      // SWR: serve stale value during revalidation window
+      const swrData = getAndConsumeStale(cacheKey)
+      if (swrData) {
+        c.header('X-Cache-Status', 'STALE')
+        c.header('X-Cache-Source', 'swr')
+        recordCatalogRequest({ cacheKey, collection: collection ?? null, path: c.req.path, queryString: c.req.raw.url.split('?')[1] ?? '', source: 'swr' })
+        return c.json({ ...(swrData as any), meta: addTimingMeta(c, { ...(swrData as any).meta, cache: { hit: true, source: 'swr', stale: true } }, executionStart) })
+      }
+
+      recordCatalogRequest({ cacheKey, collection: collection ?? null, path: c.req.path, queryString: c.req.raw.url.split('?')[1] ?? '', source: 'miss' })
     }
 
     // Cache miss - fetch from database
@@ -1113,8 +1139,20 @@ apiRoutes.get('/:collection', optionalAuth(), async (c) => {
         c.header('X-Cache-Status', 'HIT')
         c.header('X-Cache-Source', cacheResult.source)
         if (cacheResult.ttl) c.header('X-Cache-TTL', Math.floor(cacheResult.ttl).toString())
+        recordCatalogRequest({ cacheKey, collection: collection ?? null, path: c.req.path, queryString: c.req.raw.url.split('?')[1] ?? '', source: cacheResult.source as 'memory' | 'kv' })
         return c.json({ ...cacheResult.data, meta: addTimingMeta(c, { ...cacheResult.data.meta, cache: { hit: true, source: cacheResult.source, ttl: cacheResult.ttl ? Math.floor(cacheResult.ttl) : undefined } }, executionStart) })
       }
+
+      // SWR: serve stale value during revalidation window
+      const swrData = getAndConsumeStale(cacheKey)
+      if (swrData) {
+        c.header('X-Cache-Status', 'STALE')
+        c.header('X-Cache-Source', 'swr')
+        recordCatalogRequest({ cacheKey, collection: collection ?? null, path: c.req.path, queryString: c.req.raw.url.split('?')[1] ?? '', source: 'swr' })
+        return c.json({ ...(swrData as any), meta: addTimingMeta(c, { ...(swrData as any).meta, cache: { hit: true, source: 'swr', stale: true } }, executionStart) })
+      }
+
+      recordCatalogRequest({ cacheKey, collection: collection ?? null, path: c.req.path, queryString: c.req.raw.url.split('?')[1] ?? '', source: 'miss' })
     }
 
     c.header('X-Cache-Status', 'MISS')
@@ -1270,6 +1308,12 @@ apiRoutes.post('/:collection', requireAuth(), requireRole(['admin', 'editor', 'a
     const doc = await svc.create(createDocumentSchema.parse({ typeId: backing.coll.name, tenantId: 'default', locale: 'default', title, slug: finalSlug, data: hookData, publishOnCreate: (status || 'draft') === 'published' }), user?.userId)
 
     const cache = getCacheService(CACHE_CONFIGS.api!)
+    // Stash memory-cached values for SWR before invalidating
+    const createAffectedKeys = (await cache.listKeys())
+      .map(k => k.key)
+      .filter(k => k.startsWith('api:content-filtered:') || k.startsWith(`api:collection-content-filtered:${backing.coll.name}:`))
+    const createStaleValues = await cache.getMany<any>(createAffectedKeys)
+    for (const [key, val] of createStaleValues) markStale(key, val, backing.coll.name)
     await cache.invalidate('api:content-filtered:*')
     await cache.invalidate(`api:collection-content-filtered:${backing.coll.name}:*`)
     dispatchHookEvent(c, 'content:after:create', { collection: backing.coll.name, id: doc.rootId, data: doc.data ?? {}, user: actor }, 'fire-and-forget')
@@ -1324,6 +1368,12 @@ apiRoutes.put('/:collection/:id', requireAuth(), requireRole(['admin', 'editor',
     }
 
     const cache = getCacheService(CACHE_CONFIGS.api!)
+    // Stash memory-cached values for SWR before invalidating
+    const updateAffectedKeys = (await cache.listKeys())
+      .map(k => k.key)
+      .filter(k => k.startsWith('api:content-filtered:') || k.startsWith(`api:collection-content-filtered:${docRow.type_id}:`))
+    const updateStaleValues = await cache.getMany<any>(updateAffectedKeys)
+    for (const [key, val] of updateStaleValues) markStale(key, val, docRow.type_id)
     await cache.invalidate('api:content-filtered:*')
     await cache.invalidate(`api:collection-content-filtered:${docRow.type_id}:*`)
     const coll = getCollectionRegistry().getByName(docRow.type_id)
@@ -1364,6 +1414,12 @@ apiRoutes.delete('/:collection/:id', requireAuth(), requireRole(['admin', 'edito
     const now = Math.floor(Date.now() / 1000)
     await db.prepare("UPDATE documents SET deleted_at = ?, updated_at = ? WHERE root_id = ? AND tenant_id = 'default'").bind(now, now, id).run()
     const cache = getCacheService(CACHE_CONFIGS.api!)
+    // Stash memory-cached values for SWR before invalidating
+    const deleteAffectedKeys = (await cache.listKeys())
+      .map(k => k.key)
+      .filter(k => k.startsWith('api:content-filtered:') || k.startsWith(`api:collection-content-filtered:${docRow.type_id}:`))
+    const deleteStaleValues = await cache.getMany<any>(deleteAffectedKeys)
+    for (const [key, val] of deleteStaleValues) markStale(key, val, docRow.type_id)
     await cache.invalidate('api:content-filtered:*')
     await cache.invalidate(`api:collection-content-filtered:${docRow.type_id}:*`)
     dispatchHookEvent(c, 'content:after:delete', { collection: docRow.type_id, id, data: {}, user: actor }, 'fire-and-forget')
