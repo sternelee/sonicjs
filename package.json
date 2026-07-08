@@ -11,6 +11,7 @@
   "scripts": {
     "predev": "test -d node_modules/@sonicjs-cms || npm install",
     "dev": "npm run dev --workspace=my-sonicjs-app",
+    "dev:demo": "npm run dev:demo --workspace=my-sonicjs-app",
     "dev:www": "npm run dev --workspace=www",
     "build": "npm run build:core && npm run build --workspace=my-sonicjs-app",
     "build:www": "npm run build --workspace=www",
