@@ -110,10 +110,14 @@ export class PluginBootstrapService {
           await this.updatePlugin(plugin);
         }
 
-        // ALWAYS ensure core-auth is active (critical for system functionality)
-        if (plugin.id === 'core-auth' && existingPlugin.status !== 'active') {
+        // Ensure bootstrapped plugins are active (defaultActive or core-auth).
+        // If a plugin enters the bootstrap list it should be on unless the user
+        // explicitly deactivated it — but we can't distinguish that from
+        // "never activated", so we activate all bootstrapped plugins that are
+        // currently inactive. This is safe: user can deactivate via admin UI.
+        if (existingPlugin.status !== 'active') {
           console.log(
-            `[PluginBootstrap] Core-auth plugin is inactive, activating it now...`
+            `[PluginBootstrap] Activating bootstrapped plugin: ${plugin.display_name}`
           );
           await this.pluginService.activatePlugin(plugin.id);
         }
