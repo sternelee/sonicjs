@@ -25,7 +25,7 @@ export class HttpClient {
   }
 
   private get fetchImpl(): typeof fetch {
-    return (this.opts.fetch as typeof fetch) ?? globalThis.fetch
+    return (this.opts.fetch as typeof fetch) ?? globalThis.fetch.bind(globalThis)
   }
 
   private async _fetchRaw(
