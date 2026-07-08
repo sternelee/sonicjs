@@ -209,7 +209,10 @@ export function renderCacheDashboard(data: CacheDashboardData): string {
     </div>
 
     <script>
-      function switchTab(tab) {
+      const VALID_TABS = ['overview', 'collection-settings', 'url-catalog']
+
+      function switchTab(tab, pushHash) {
+        if (!VALID_TABS.includes(tab)) tab = 'overview'
         // Update tab button styles
         document.querySelectorAll('.cache-tab').forEach(btn => {
           btn.classList.remove('border-zinc-950', 'dark:border-white', 'text-zinc-950', 'dark:text-white')
@@ -227,7 +230,20 @@ export function renderCacheDashboard(data: CacheDashboardData): string {
         })
         const activePanel = document.getElementById('tab-panel-' + tab)
         if (activePanel) activePanel.classList.remove('hidden')
+
+        // Sync URL hash (pushHash=false when called from hashchange to avoid loop)
+        if (pushHash !== false) location.hash = tab
       }
+
+      document.addEventListener('DOMContentLoaded', function () {
+        const hash = location.hash.slice(1)
+        switchTab(VALID_TABS.includes(hash) ? hash : 'overview', false)
+      })
+
+      window.addEventListener('hashchange', function () {
+        const hash = location.hash.slice(1)
+        switchTab(VALID_TABS.includes(hash) ? hash : 'overview', false)
+      })
 
       async function refreshStats() {
         window.location.reload()
