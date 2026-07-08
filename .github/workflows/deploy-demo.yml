@@ -38,7 +38,6 @@ jobs:
         run: cd demos/employee-directory && npm run build
         env:
           VITE_CMS_URL: ${{ secrets.DEMO_CMS_URL }}
-          VITE_API_KEY: ${{ secrets.DEMO_API_KEY }}
 
       - name: Deploy to Cloudflare Pages
         run: npx wrangler pages deploy demos/employee-directory/dist --project-name sonicjs-sdk-demo
