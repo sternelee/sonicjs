@@ -785,7 +785,7 @@ apiRoutes.get('/content', optionalAuth(), async (c) => {
     }
 
     // Non-anonymous / non-privileged users get per-request ACL filtering — skip cache.
-    const cacheEnabled = c.get('cacheEnabled') && cAnon
+    const cacheEnabled = c.get('cacheEnabled') && !cNeedsAcl
     const cache = getCacheService(CACHE_CONFIGS.api!)
     const cacheKey = cache.generateKey('content-filtered', JSON.stringify({ filter: normalizedFilter, query: queryResult.sql }))
 
@@ -948,7 +948,7 @@ apiRoutes.get('/collections/:collection/content', optionalAuth(), async (c) => {
 
     // Generate cache key
     // Non-privileged authenticated users get per-request ACL filtering — skip cache.
-    const cacheEnabled = c.get('cacheEnabled') && ccAnon
+    const cacheEnabled = c.get('cacheEnabled') && !ccNeedsAcl
     const cache = getCacheService(CACHE_CONFIGS.api!)
     const includeCollection = queryParams.include?.split(',').map(s => s.trim()).includes('collection')
     const cacheKey = cache.generateKey('collection-content-filtered', `${collection}:${JSON.stringify({ filter: normalizedFilter, query: queryResult.sql, includeCollection })}`)
@@ -1099,9 +1099,10 @@ apiRoutes.get('/:collection', optionalAuth(), async (c) => {
     // Per-collection cache override — collection config can disable caching or set a custom TTL.
     const collectionCache = (record as any).cache as { enabled?: boolean; ttl?: number } | undefined
     const collectionCacheDisabled = collectionCache?.enabled === false
-    // Authenticated non-anonymous users get per-request ACL filtering — skip cache to avoid
-    // serving a cached anonymous response that hasn't been filtered for their principal set.
-    const cacheEnabled = c.get('cacheEnabled') && !collectionCacheDisabled && projFields.length === 0 && anon
+    // Cache for anonymous AND privileged authenticated users (admin/editor) — both see the same
+    // published data on the public API. Only skip cache for non-privileged authed users who need
+    // per-principal ACL filtering (needsAcl=true), since their result set may differ.
+    const cacheEnabled = c.get('cacheEnabled') && !collectionCacheDisabled && projFields.length === 0 && !needsAcl
     const cache = getCacheService(CACHE_CONFIGS.api!)
     const includeCollection = queryParams.include?.split(',').map(s => s.trim()).includes('collection')
     const cacheKey = cache.generateKey('collection-content-filtered', `${collection}:${JSON.stringify({ filter: normalizedFilter, query: queryResult.sql, includeCollection })}`)
