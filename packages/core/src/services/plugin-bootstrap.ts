@@ -168,16 +168,23 @@ export class PluginBootstrapService {
       const corePlugins = this.CORE_PLUGINS.filter((p) => p.name.startsWith("core-"))
       if (!corePlugins.length) return false
 
-      // Single COUNT query instead of N individual selects.
+      // Single query: count installed AND count active. Bootstrap needed if any
+      // are missing OR if any bootstrapped plugin is installed but inactive.
       const slugs = corePlugins.map((p) => `'${p.id.replace(/'/g, "''")}'`).join(',')
       const res = await this.db
         .prepare(
-          `SELECT COUNT(DISTINCT slug) AS cnt FROM documents
+          `SELECT
+             COUNT(DISTINCT slug) AS installed,
+             COUNT(DISTINCT CASE WHEN json_extract(data, '$.status') = 'active' THEN slug END) AS active
+           FROM documents
            WHERE slug IN (${slugs}) AND type_id = 'plugin'
            AND tenant_id = 'default' AND is_current_draft = 1 AND deleted_at IS NULL`,
         )
-        .first<{ cnt: number }>()
-      return (res?.cnt ?? 0) < corePlugins.length
+        .first<{ installed: number; active: number }>()
+      const installed = res?.installed ?? 0
+      const active = res?.active ?? 0
+      // Needs bootstrap if any plugin missing OR any installed plugin is inactive
+      return installed < corePlugins.length || active < installed
     } catch (error) {
       console.error("[PluginBootstrap] Error checking bootstrap status:", error)
       return true
