@@ -11,6 +11,7 @@ import {
   collectCronSchedules,
   createScheduledHandler,
   createSonicJSApp,
+  demoLoginPlugin,
   emailReconciliationPlugin,
   getHookSystem,
   mcpPlugin,
@@ -39,7 +40,7 @@ const config: SonicJSConfig = {
   plugins: {
     // Add plugins to this array to activate them. Each plugin's register()
     // runs synchronously at startup; onBoot() runs async on first request.
-    register: [redirectPlugin, examplePlugin, mcpPlugin()],
+    register: [redirectPlugin, examplePlugin, mcpPlugin(), demoLoginPlugin],
     disableAll: false,
   },
 };

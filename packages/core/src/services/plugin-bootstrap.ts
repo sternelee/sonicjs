@@ -161,23 +161,22 @@ export class PluginBootstrapService {
    */
   async isBootstrapNeeded(): Promise<boolean> {
     try {
-      // Check if any core plugins are missing
-      for (const corePlugin of this.CORE_PLUGINS.filter((p) =>
-        p.name.startsWith("core-")
-      )) {
-        const exists = await this.pluginService.getPlugin(corePlugin.id);
-        if (!exists) {
-          return true;
-        }
-      }
-      return false;
+      const corePlugins = this.CORE_PLUGINS.filter((p) => p.name.startsWith("core-"))
+      if (!corePlugins.length) return false
+
+      // Single COUNT query instead of N individual selects.
+      const slugs = corePlugins.map((p) => `'${p.id.replace(/'/g, "''")}'`).join(',')
+      const res = await this.db
+        .prepare(
+          `SELECT COUNT(DISTINCT slug) AS cnt FROM documents
+           WHERE slug IN (${slugs}) AND type_id = 'plugin'
+           AND tenant_id = 'default' AND is_current_draft = 1 AND deleted_at IS NULL`,
+        )
+        .first<{ cnt: number }>()
+      return (res?.cnt ?? 0) < corePlugins.length
     } catch (error) {
-      // If there's an error (like table doesn't exist), we need bootstrap
-      console.error(
-        "[PluginBootstrap] Error checking bootstrap status:",
-        error
-      );
-      return true;
+      console.error("[PluginBootstrap] Error checking bootstrap status:", error)
+      return true
     }
   }
 
