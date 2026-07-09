@@ -83,7 +83,7 @@ export function App() {
   const handleEdgeToggle = (v: boolean) => {
     setEdgeMode(v)
     if (useMock) toggleEdgeMode(v)
-    else fetchEmployees(page, filters, !v)
+    // useEffect re-runs on edgeMode change and passes !edgeMode as bypassCache
   }
 
   const fetchEmployees = useCallback(
@@ -121,8 +121,8 @@ export function App() {
   )
 
   useEffect(() => {
-    fetchEmployees(page, filters)
-  }, [page, filters, fetchEmployees])
+    fetchEmployees(page, filters, !edgeMode)
+  }, [page, filters, edgeMode, fetchEmployees])
 
   const handleFilterChange = (newFilters: FilterState) => {
     setPage(0)
