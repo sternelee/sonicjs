@@ -75,9 +75,8 @@ export const employeesCollection = {
     public: ['read'],
   },
 
-  // Long cache TTL: employee data changes infrequently on the demo instance
   cache: {
     enabled: true,
-    ttl: 300,
+    ttl: 7_776_000, // 90 days — demo data is static, maximize cache hit rate
   },
 } satisfies CollectionConfig;
