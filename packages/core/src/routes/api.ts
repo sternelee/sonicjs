@@ -211,9 +211,10 @@ apiRoutes.use('*', async (c, next) => {
   c.header('X-Response-Time', `${totalTime}ms`)
 })
 
-// Check if cache plugin is active
+// Check if cache plugin is active; honour Cache-Control: no-cache bypass
 apiRoutes.use('*', async (c, next) => {
-  const cacheEnabled = await isPluginActive(c.env.DB, 'core-cache')
+  const bypass = c.req.header('Cache-Control') === 'no-cache'
+  const cacheEnabled = !bypass && await isPluginActive(c.env.DB, 'core-cache')
   c.set('cacheEnabled', cacheEnabled)
   await next()
 })
