@@ -28,7 +28,8 @@ function Skeleton() {
 }
 
 export function EmployeeGrid({ employees, loading, deptMap, regionMap }: Props) {
-  if (loading) {
+  // Initial load — no prior results to show, use skeletons
+  if (loading && employees.length === 0) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
         {Array.from({ length: 18 }, (_, i) => <Skeleton key={i} />)}
@@ -46,7 +47,10 @@ export function EmployeeGrid({ employees, loading, deptMap, regionMap }: Props) 
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+    <div
+      className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 transition-opacity duration-150"
+      style={{ opacity: loading ? 0.5 : 1 }}
+    >
       {employees.map((emp) => (
         <EmployeeCard key={emp.id} employee={emp} deptMap={deptMap} regionMap={regionMap} />
       ))}

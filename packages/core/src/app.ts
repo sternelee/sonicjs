@@ -443,7 +443,8 @@ export function createSonicJSApp(config: SonicJSConfig = {}): SonicJSApp {
       return match ? origin : null
     },
     allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
+    allowHeaders: ['Content-Type', 'Authorization', 'X-API-Key', 'Cache-Control'],
+    exposeHeaders: ['X-Cache-Status', 'X-Cache-Source', 'X-Cache-TTL', 'X-Response-Time'],
     credentials: true,
   }))
 

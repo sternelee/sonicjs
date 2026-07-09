@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { sonic, useMock } from './lib/client'
+import { sonic, sonicOrigin, useMock } from './lib/client'
 import { toggleEdgeMode } from './lib/mock-data'
 import type {
   EmployeeRecord, DepartmentRecord, RegionRecord,
@@ -83,18 +83,20 @@ export function App() {
   const handleEdgeToggle = (v: boolean) => {
     setEdgeMode(v)
     if (useMock) toggleEdgeMode(v)
+    else fetchEmployees(page, filters, !v)
   }
 
   const fetchEmployees = useCallback(
-    async (currentPage: number, currentFilters: FilterState) => {
+    async (currentPage: number, currentFilters: FilterState, bypassCache = false) => {
       setLoading(true)
       const where: Record<string, Record<string, string>> = {}
       if (currentFilters.department) where['data.department'] = { equals: currentFilters.department }
       if (currentFilters.region) where['data.region'] = { equals: currentFilters.region }
 
+      const client = (!useMock && bypassCache) ? sonicOrigin : sonic
       const t0 = performance.now()
       try {
-        const { data: response, headers } = await sonic
+        const { data: response, headers } = await client
           .collection('employees')
           .listWithHeaders({
             limit: PAGE_SIZE,
@@ -105,7 +107,7 @@ export function App() {
 
         const rows = response.data as unknown as EmployeeRecord[]
         setResponseMs(Math.round(performance.now() - t0))
-        setCacheSource(headers.get('sonicjs-source'))
+        setCacheSource(headers.get('x-cache-source') ?? headers.get('sonicjs-source'))
         setEmployees(rows)
         setPageCount(response.meta.count)
         setHasNextPage(response.meta.count === PAGE_SIZE)
@@ -150,7 +152,7 @@ export function App() {
               </p>
             </div>
           </div>
-          <SpeedBadge ms={responseMs} source={cacheSource} edgeMode={edgeMode} onToggle={handleEdgeToggle} />
+          <SpeedBadge ms={responseMs} source={cacheSource} edgeMode={edgeMode} onToggle={handleEdgeToggle} onRefresh={() => fetchEmployees(page, filters, !edgeMode)} loading={loading} />
         </div>
       </header>
 

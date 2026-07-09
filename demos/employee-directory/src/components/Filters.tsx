@@ -7,40 +7,65 @@ interface Props {
   onChange: (f: FilterState) => void
 }
 
-export function Filters({ filters, deptOptions, regionOptions, onChange }: Props) {
-  const set = (key: keyof FilterState, val: string) => onChange({ ...filters, [key]: val })
+function FilterGroup({ label, options, active, onSelect, renderLabel }: {
+  label: string
+  options: FilterOption[]
+  active: string
+  onSelect: (id: string) => void
+  renderLabel: (o: FilterOption) => string
+}) {
+  return (
+    <div>
+      <p className="text-xs text-slate-400 mb-2 uppercase tracking-wider">{label}</p>
+      <div className="flex flex-wrap gap-1.5">
+        <button
+          onClick={() => onSelect('')}
+          className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
+            active === ''
+              ? 'bg-emerald-500 text-white'
+              : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'
+          }`}
+        >
+          All
+        </button>
+        {options.map((o) => (
+          <button
+            key={o.id}
+            onClick={() => onSelect(active === o.id ? '' : o.id)}
+            className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
+              active === o.id
+                ? 'bg-emerald-500 text-white'
+                : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'
+            }`}
+          >
+            {renderLabel(o)}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
 
+export function Filters({ filters, deptOptions, regionOptions, onChange }: Props) {
   return (
     <div className="bg-slate-900 border border-white/10 rounded-xl p-4 space-y-4">
       <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">Filters</h2>
 
-      <div>
-        <label className="text-xs text-slate-400 mb-1.5 block">Department</label>
-        <select
-          value={filters.department}
-          onChange={(e) => set('department', e.target.value)}
-          className="w-full bg-slate-800 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 cursor-pointer"
-        >
-          <option value="">All Departments</option>
-          {deptOptions.map((d) => (
-            <option key={d.id} value={d.id}>{d.icon ? `${d.icon} ` : ''}{d.name}</option>
-          ))}
-        </select>
-      </div>
+      <FilterGroup
+        label="Department"
+        options={deptOptions}
+        active={filters.department}
+        onSelect={(id) => onChange({ ...filters, department: id })}
+        renderLabel={(o) => `${o.icon ? o.icon + ' ' : ''}${o.name}`}
+      />
 
-      <div>
-        <label className="text-xs text-slate-400 mb-1.5 block">Region</label>
-        <select
-          value={filters.region}
-          onChange={(e) => set('region', e.target.value)}
-          className="w-full bg-slate-800 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 cursor-pointer"
-        >
-          <option value="">All Regions</option>
-          {regionOptions.map((r) => (
-            <option key={r.id} value={r.id}>{r.flag ? `${r.flag} ` : ''}{r.name}</option>
-          ))}
-        </select>
-      </div>
+      <FilterGroup
+        label="Region"
+        options={regionOptions}
+        active={filters.region}
+        onSelect={(id) => onChange({ ...filters, region: id })}
+        renderLabel={(o) => `${o.flag ? o.flag + ' ' : ''}${o.name}`}
+      />
 
       {(filters.department || filters.region) && (
         <button

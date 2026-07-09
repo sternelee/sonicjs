@@ -12,4 +12,11 @@ export const sonic = createClient({
   fetch: useMock ? (mockFetch as typeof fetch) : undefined,
 })
 
+/** Client that sends Cache-Control: no-cache to bypass the edge cache and hit origin/DB. */
+export const sonicOrigin = createClient({
+  url: CMS_URL ?? 'https://demo.sonicjs.com',
+  apiKey: API_KEY,
+  headers: { 'Cache-Control': 'no-cache' },
+})
+
 export { useMock }
