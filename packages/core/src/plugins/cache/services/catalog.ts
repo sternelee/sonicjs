@@ -79,6 +79,12 @@ export function recordCatalogRequest(opts: {
   })
 }
 
+/** Hash a cache key to a short fixed-length string safe for use as a KV key. */
+async function kvSafeKey(cacheKey: string): Promise<string> {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(cacheKey))
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 32)
+}
+
 /** Schedule a throttled KV write for the given cache key. Call after recordCatalogRequest(). */
 export function scheduleKvWrite(cacheKey: string, ctx: CtxLike): void {
   if (!globalKv) return
@@ -87,7 +93,10 @@ export function scheduleKvWrite(cacheKey: string, ctx: CtxLike): void {
   const now = Date.now()
   if ((kvThrottle.get(cacheKey) ?? 0) > now - KV_THROTTLE_MS) return
   kvThrottle.set(cacheKey, now)
-  ctx.waitUntil(globalKv.put(`_catalog:${cacheKey}`, JSON.stringify(entry), { expirationTtl: KV_TTL }))
+  const kv = globalKv
+  ctx.waitUntil(
+    kvSafeKey(cacheKey).then(h => kv.put(`_catalog:${h}`, JSON.stringify(entry), { expirationTtl: KV_TTL }))
+  )
 }
 
 /** Load all KV-persisted catalog entries and merge into the in-memory map. */
