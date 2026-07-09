@@ -168,6 +168,10 @@ export function bootstrapMiddleware(config: SonicJSConfig = {}, allPlugins?: Arr
             "../plugins/cache/services/cache"
           );
           setGlobalKVNamespace(kv);
+          const { setGlobalCatalogKv } = await import(
+            "../plugins/cache/services/catalog"
+          );
+          setGlobalCatalogKv(kv);
         }
       } catch (error) {
         console.error("[Bootstrap] Error wiring CACHE_KV namespace:", error);

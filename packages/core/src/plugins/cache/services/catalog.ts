@@ -1,9 +1,23 @@
 /**
  * URL Catalog — tracks cache-eligible API requests for smart pre-warming.
- * Per-isolate, in-memory. Resets on isolate eviction. Bounded to MAX_CATALOG_SIZE.
+ * Per-isolate in-memory cache, with KV-backed persistence so all isolates
+ * share the same catalog (cross-isolate visibility in the admin dashboard).
  */
 
+interface KVLike {
+  list(opts: { prefix: string }): Promise<{ keys: { name: string }[] }>
+  get(key: string, type: 'json'): Promise<unknown>
+  put(key: string, value: string, opts?: { expirationTtl?: number }): Promise<void>
+  delete(key: string): Promise<void>
+}
+
+interface CtxLike {
+  waitUntil(p: Promise<unknown>): void
+}
+
 const MAX_CATALOG_SIZE = 500
+const KV_TTL = 86_400 // 24h
+const KV_THROTTLE_MS = 30_000 // write at most once per 30s per key
 
 export interface CatalogEntry {
   cacheKey: string
@@ -18,6 +32,13 @@ export interface CatalogEntry {
 }
 
 const catalog = new Map<string, CatalogEntry>()
+const kvThrottle = new Map<string, number>() // cacheKey → last KV write ms
+
+let globalKv: KVLike | null = null
+
+export function setGlobalCatalogKv(kv: KVLike): void {
+  globalKv = kv
+}
 
 export function recordCatalogRequest(opts: {
   cacheKey: string
@@ -56,6 +77,52 @@ export function recordCatalogRequest(opts: {
     lastSeen: now,
     firstSeen: now,
   })
+}
+
+/** Schedule a throttled KV write for the given cache key. Call after recordCatalogRequest(). */
+export function scheduleKvWrite(cacheKey: string, ctx: CtxLike): void {
+  if (!globalKv) return
+  const entry = catalog.get(cacheKey)
+  if (!entry) return
+  const now = Date.now()
+  if ((kvThrottle.get(cacheKey) ?? 0) > now - KV_THROTTLE_MS) return
+  kvThrottle.set(cacheKey, now)
+  ctx.waitUntil(globalKv.put(`_catalog:${cacheKey}`, JSON.stringify(entry), { expirationTtl: KV_TTL }))
+}
+
+/** Load all KV-persisted catalog entries and merge into the in-memory map. */
+export async function loadKvCatalog(): Promise<void> {
+  if (!globalKv) return
+  try {
+    const list = await globalKv.list({ prefix: '_catalog:' })
+    await Promise.all(list.keys.map(async ({ name }) => {
+      const entry = (await globalKv!.get(name, 'json')) as CatalogEntry | null
+      if (!entry?.cacheKey) return
+      const existing = catalog.get(entry.cacheKey)
+      if (existing) {
+        existing.hits = Math.max(existing.hits, entry.hits)
+        existing.misses = Math.max(existing.misses, entry.misses)
+        existing.staleServes = Math.max(existing.staleServes, entry.staleServes)
+        existing.lastSeen = Math.max(existing.lastSeen, entry.lastSeen)
+        existing.firstSeen = Math.min(existing.firstSeen, entry.firstSeen)
+      } else {
+        catalog.set(entry.cacheKey, entry)
+      }
+    }))
+  } catch (err) {
+    console.error('[Catalog] KV load error:', err)
+  }
+}
+
+/** Delete all KV-persisted catalog entries. */
+export async function clearKvCatalog(): Promise<void> {
+  if (!globalKv) return
+  try {
+    const list = await globalKv.list({ prefix: '_catalog:' })
+    await Promise.all(list.keys.map(({ name }) => globalKv!.delete(name)))
+  } catch (err) {
+    console.error('[Catalog] KV clear error:', err)
+  }
 }
 
 export function getCatalog(opts?: {
