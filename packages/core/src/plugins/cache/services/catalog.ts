@@ -16,7 +16,7 @@ interface CtxLike {
 }
 
 const MAX_CATALOG_SIZE = 500
-const KV_TTL = 86_400 // 24h
+const KV_TTL = 2_592_000 // 30 days
 const KV_THROTTLE_MS = 30_000 // write at most once per 30s per key
 
 export interface CatalogEntry {
