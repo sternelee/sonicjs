@@ -61,6 +61,14 @@ export interface PluginSettingsPageData {
   settingsTabData?: any
 }
 
+/**
+ * Plugins whose Settings tab is a static panel rather than a list of editable keys.
+ * They store no user-editable settings, so the key-count check below would hide the tab
+ * entirely — but the panel is the whole point (user-profiles documents its code-defined
+ * field model), so it has to be opted in explicitly.
+ */
+const STATIC_SETTINGS_PANEL_PLUGINS = new Set(['user-profiles'])
+
 export function renderPluginSettingsPage(data: PluginSettingsPageData): string {
   const { plugin, activity = [], user, settingsTabData } = data
   const isUninstalled = plugin.status === 'uninstalled'
@@ -70,7 +78,8 @@ export function renderPluginSettingsPage(data: PluginSettingsPageData): string {
   const pluginId = plugin.id || plugin.name
   const hasUserSettings = !isUninstalled && (pluginDef?.settingsTabContent != null ||
     Object.keys(plugin.settings || {}).some(k => !k.startsWith('_')) ||
-    hasCustomSettingsComponent(pluginId))
+    hasCustomSettingsComponent(pluginId) ||
+    STATIC_SETTINGS_PANEL_PLUGINS.has(pluginId))
   const defaultTab = isUninstalled ? 'info' : hasUserSettings ? 'settings' : 'info'
 
 

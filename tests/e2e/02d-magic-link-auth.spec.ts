@@ -1,10 +1,16 @@
 import { test, expect } from '@playwright/test';
+import { TEST_ORIGIN } from './utils/test-helpers';
 
 /**
  * Magic Link Authentication E2E Tests (Better Auth)
  *
  * Tests passwordless authentication via Better Auth's magic link plugin.
  * Endpoints: POST /auth/sign-in/magic-link (send), GET /auth/magic-link/verify (verify).
+ *
+ * Every request sends `Origin: TEST_ORIGIN`. Better Auth answers a POST from an untrusted origin
+ * with 403 INVALID_ORIGIN, and it trusts the base URL the request arrived on — so the header has
+ * to follow wherever the suite is pointed (local dev server, CI preview deploy) rather than a
+ * hardcoded port.
  */
 
 function uniqueEmail(prefix: string): string {
@@ -17,7 +23,7 @@ test.describe('Magic Link Authentication (Better Auth) @auth', () => {
     test('should accept valid email and return status true', async ({ request }) => {
       test.fixme(true, 'Email service (Resend/SMTP) not configured in CF preview worker — magic-link send returns non-200');
       const response = await request.post('/auth/sign-in/magic-link', {
-        headers: { 'Content-Type': 'application/json', 'Origin': 'http://localhost:9704' },
+        headers: { 'Content-Type': 'application/json', 'Origin': TEST_ORIGIN },
         data: { email: uniqueEmail('ml-valid') }
       });
 
@@ -30,7 +36,7 @@ test.describe('Magic Link Authentication (Better Auth) @auth', () => {
       test.fixme(true, 'Email service (Resend/SMTP) not configured in CF preview worker — magic-link send returns non-200');
       const email = uniqueEmail('ML-UPPERCASE');
       const response = await request.post('/auth/sign-in/magic-link', {
-        headers: { 'Content-Type': 'application/json', 'Origin': 'http://localhost:9704' },
+        headers: { 'Content-Type': 'application/json', 'Origin': TEST_ORIGIN },
         data: { email: email.toUpperCase() }
       });
 
@@ -41,7 +47,7 @@ test.describe('Magic Link Authentication (Better Auth) @auth', () => {
 
     test('should reject invalid email format with 400', async ({ request }) => {
       const response = await request.post('/auth/sign-in/magic-link', {
-        headers: { 'Content-Type': 'application/json', 'Origin': 'http://localhost:9704' },
+        headers: { 'Content-Type': 'application/json', 'Origin': TEST_ORIGIN },
         data: { email: 'not-an-email' }
       });
 
@@ -52,7 +58,7 @@ test.describe('Magic Link Authentication (Better Auth) @auth', () => {
 
     test('should reject empty email with 400', async ({ request }) => {
       const response = await request.post('/auth/sign-in/magic-link', {
-        headers: { 'Content-Type': 'application/json', 'Origin': 'http://localhost:9704' },
+        headers: { 'Content-Type': 'application/json', 'Origin': TEST_ORIGIN },
         data: { email: '' }
       });
 
@@ -61,7 +67,7 @@ test.describe('Magic Link Authentication (Better Auth) @auth', () => {
 
     test('should reject missing email field with 400', async ({ request }) => {
       const response = await request.post('/auth/sign-in/magic-link', {
-        headers: { 'Content-Type': 'application/json', 'Origin': 'http://localhost:9704' },
+        headers: { 'Content-Type': 'application/json', 'Origin': TEST_ORIGIN },
         data: {}
       });
 
@@ -75,11 +81,11 @@ test.describe('Magic Link Authentication (Better Auth) @auth', () => {
 
       const [r1, r2] = await Promise.all([
         request.post('/auth/sign-in/magic-link', {
-          headers: { 'Content-Type': 'application/json', 'Origin': 'http://localhost:9704' },
+          headers: { 'Content-Type': 'application/json', 'Origin': TEST_ORIGIN },
           data: { email: email1 }
         }),
         request.post('/auth/sign-in/magic-link', {
-          headers: { 'Content-Type': 'application/json', 'Origin': 'http://localhost:9704' },
+          headers: { 'Content-Type': 'application/json', 'Origin': TEST_ORIGIN },
           data: { email: email2 }
         }),
       ]);
@@ -98,7 +104,7 @@ test.describe('Magic Link Authentication (Better Auth) @auth', () => {
       const responses = await Promise.all(
         Array.from({ length: 10 }, () =>
           request.post('/auth/sign-in/magic-link', {
-            headers: { 'Content-Type': 'application/json', 'Origin': 'http://localhost:9704' },
+            headers: { 'Content-Type': 'application/json', 'Origin': TEST_ORIGIN },
             data: { email }
           })
         )
@@ -114,7 +120,7 @@ test.describe('Magic Link Authentication (Better Auth) @auth', () => {
   test.describe('GET /auth/magic-link/verify - Verify Magic Link', () => {
     test('should return 400 for missing token', async ({ request }) => {
       const response = await request.get('/auth/magic-link/verify', {
-        headers: { 'Origin': 'http://localhost:9704' },
+        headers: { 'Origin': TEST_ORIGIN },
         maxRedirects: 0
       });
 
@@ -125,7 +131,7 @@ test.describe('Magic Link Authentication (Better Auth) @auth', () => {
 
     test('should redirect with error for invalid token', async ({ request }) => {
       const response = await request.get('/auth/magic-link/verify?token=invalid-token', {
-        headers: { 'Origin': 'http://localhost:9704' },
+        headers: { 'Origin': TEST_ORIGIN },
         maxRedirects: 0
       });
 
@@ -138,7 +144,7 @@ test.describe('Magic Link Authentication (Better Auth) @auth', () => {
       const response = await request.get(
         '/auth/magic-link/verify?token=invalid-token&callbackURL=%2Fauth%2Flogin',
         {
-          headers: { 'Origin': 'http://localhost:9704' },
+          headers: { 'Origin': TEST_ORIGIN },
           maxRedirects: 0
         }
       );
@@ -162,7 +168,7 @@ test.describe('Magic Link Authentication (Better Auth) @auth', () => {
         const response = await request.get(
           `/auth/magic-link/verify?token=${encodeURIComponent(token)}`,
           {
-            headers: { 'Origin': 'http://localhost:9704' },
+            headers: { 'Origin': TEST_ORIGIN },
             maxRedirects: 0
           }
         );
@@ -182,7 +188,7 @@ test.describe('Magic Link Authentication (Better Auth) @auth', () => {
       const response = await request.get(
         `/auth/magic-link/verify?token=${longToken}`,
         {
-          headers: { 'Origin': 'http://localhost:9704' },
+          headers: { 'Origin': TEST_ORIGIN },
           maxRedirects: 0
         }
       );
@@ -196,7 +202,7 @@ test.describe('Magic Link Authentication (Better Auth) @auth', () => {
         const response = await request.get(
           `/auth/magic-link/verify?token=${encodeURIComponent(token)}`,
           {
-            headers: { 'Origin': 'http://localhost:9704' },
+            headers: { 'Origin': TEST_ORIGIN },
             maxRedirects: 0
           }
         );
@@ -211,7 +217,7 @@ test.describe('Magic Link Authentication (Better Auth) @auth', () => {
       const response = await request.post('/auth/sign-in/magic-link', {
         headers: {
           'Content-Type': 'application/json',
-          'Origin': 'http://localhost:9704'
+          'Origin': TEST_ORIGIN
         },
         data: 'invalid json'
       });
